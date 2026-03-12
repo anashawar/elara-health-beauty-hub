@@ -21,7 +21,7 @@ const BottomNav = () => {
         <div className="bg-card/90 backdrop-blur-xl border border-border/60 rounded-2xl shadow-lg mx-1 mb-2">
           <div className="flex items-center justify-around py-2">
             {navItems.map(({ icon: Icon, label, path }) => {
-              const isActive = location.pathname === path;
+              const isActive = location.pathname === path || (path === "/home" && location.pathname === "/");
               return (
                 <Link
                   key={path}
