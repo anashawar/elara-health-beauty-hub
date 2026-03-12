@@ -5,28 +5,36 @@ import { useProducts, useBrands } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
 import FloatingSearch from "@/components/layout/FloatingSearch";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const BrandPage = () => {
   const { id } = useParams<{ id: string }>();
   const { data: products = [] } = useProducts();
   const { data: brands = [] } = useBrands();
+  const { t, language } = useLanguage();
 
   const brand = brands.find((b) => b.id === id);
   const brandProducts = products.filter((p) => p.brand_id === id);
 
+  const getBrandName = (b: any) => {
+    if (language === "ar" && b.name_ar) return b.name_ar;
+    if (language === "ku" && b.name_ku) return b.name_ku;
+    return b.name;
+  };
+
+  const displayName = brand ? getBrandName(brand) : t("product.brand");
+
   return (
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
           <Link to={-1 as any} onClick={(e) => { e.preventDefault(); window.history.back(); }} className="p-1.5 -ml-1 rounded-xl hover:bg-secondary transition-colors">
-            <ArrowLeft className="w-5 h-5 text-foreground" />
+            <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
           </Link>
-          <h1 className="text-lg font-display font-bold text-foreground">{brand?.name || "Brand"}</h1>
+          <h1 className="text-lg font-display font-bold text-foreground">{displayName}</h1>
         </div>
       </header>
 
-      {/* Brand Hero */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -34,20 +42,19 @@ const BrandPage = () => {
       >
         {brand?.logo_url && (
           <div className="w-20 h-20 rounded-2xl bg-secondary overflow-hidden mb-4 shadow-md">
-            <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-cover" />
+            <img src={brand.logo_url} alt={displayName} className="w-full h-full object-cover" />
           </div>
         )}
-        <h2 className="text-xl font-display font-bold text-foreground">{brand?.name}</h2>
+        <h2 className="text-xl font-display font-bold text-foreground">{displayName}</h2>
         <p className="text-xs text-muted-foreground mt-1.5">
-          {brandProducts.length} product{brandProducts.length !== 1 ? "s" : ""} available
+          {brandProducts.length} {brandProducts.length !== 1 ? t("common.products").toLowerCase() : t("common.product").toLowerCase()} {t("product.available")}
         </p>
       </motion.div>
 
-      {/* Products Grid */}
       {brandProducts.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-16 px-4">
           <Package className="w-12 h-12 text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground">No products found for this brand</p>
+          <p className="text-sm text-muted-foreground">{t("product.noProductsFound")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 px-4 mt-5">

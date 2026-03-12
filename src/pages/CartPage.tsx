@@ -10,6 +10,7 @@ import { useState } from "react";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface AppliedCoupon {
   code: string;
@@ -20,15 +21,16 @@ interface AppliedCoupon {
 const CartPage = () => {
   const { cart, updateQuantity, removeFromCart, cartTotal, cartCount, clearCart } = useApp();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [coupon, setCoupon] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
 
   const statusConfig: Record<string, { label: string; color: string; icon: string }> = {
-    pending: { label: "Pending", color: "bg-amber-100 text-amber-700", icon: "⏳" },
-    processing: { label: "Processing", color: "bg-blue-100 text-blue-700", icon: "⚙️" },
-    on_the_way: { label: "On the Way", color: "bg-purple-100 text-purple-700", icon: "🚚" },
-    delivered: { label: "Delivered", color: "bg-green-100 text-green-700", icon: "✅" },
+    pending: { label: t("cart.pending"), color: "bg-amber-100 text-amber-700", icon: "⏳" },
+    processing: { label: t("cart.processing"), color: "bg-blue-100 text-blue-700", icon: "⚙️" },
+    on_the_way: { label: t("cart.onTheWay"), color: "bg-purple-100 text-purple-700", icon: "🚚" },
+    delivered: { label: t("cart.delivered"), color: "bg-green-100 text-green-700", icon: "✅" },
   };
 
   const { data: activeOrders } = useQuery({
@@ -71,25 +73,22 @@ const CartPage = () => {
     setCouponLoading(false);
 
     if (error || !data) {
-      toast("Invalid coupon code");
+      toast(t("cart.invalidCoupon"));
       return;
     }
 
-    // Check expiry
     if (data.expires_at && new Date(data.expires_at) < new Date()) {
-      toast("This coupon has expired");
+      toast(t("cart.couponExpired"));
       return;
     }
 
-    // Check max uses
     if (data.max_uses && data.current_uses >= data.max_uses) {
-      toast("This coupon has reached its usage limit");
+      toast(t("cart.couponLimitReached"));
       return;
     }
 
-    // Check minimum order
     if (data.min_order_amount && cartTotal < data.min_order_amount) {
-      toast(`Minimum order of ${formatPrice(data.min_order_amount)} required`);
+      toast(t("cart.minOrderRequired", { amount: formatPrice(data.min_order_amount) }));
       return;
     }
 
@@ -98,13 +97,13 @@ const CartPage = () => {
       discount_type: data.discount_type,
       discount_value: data.discount_value,
     });
-    toast("Coupon applied! 🎉");
+    toast(t("cart.couponApplied"));
   };
 
   const removeCoupon = () => {
     setAppliedCoupon(null);
     setCoupon("");
-    toast("Coupon removed");
+    toast(t("cart.couponRemoved"));
   };
 
   return (
@@ -114,18 +113,18 @@ const CartPage = () => {
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <Link to="/home" className="p-1.5 -ml-1 rounded-xl hover:bg-secondary transition-colors">
-              <ArrowLeft className="w-5 h-5 text-foreground" />
+              <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
             </Link>
             <div>
-              <h1 className="text-lg font-display font-bold text-foreground">My Bag</h1>
+              <h1 className="text-lg font-display font-bold text-foreground">{t("cart.myBag")}</h1>
               {cart.length > 0 && (
-                <p className="text-[10px] text-muted-foreground">{cartCount} item{cartCount !== 1 ? "s" : ""}</p>
+                <p className="text-[10px] text-muted-foreground">{cartCount} {cartCount !== 1 ? t("common.items") : t("common.item")}</p>
               )}
             </div>
           </div>
           {cart.length > 0 && (
             <button onClick={clearCart} className="text-xs text-destructive font-medium px-3 py-1.5 bg-destructive/10 rounded-lg">
-              Clear All
+              {t("cart.clearAll")}
             </button>
           )}
         </div>
@@ -140,12 +139,12 @@ const CartPage = () => {
           <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-secondary to-muted flex items-center justify-center mb-5">
             <ShoppingBag className="w-10 h-10 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-display font-bold text-foreground">Your bag is empty</h3>
+          <h3 className="text-xl font-display font-bold text-foreground">{t("cart.emptyBag")}</h3>
           <p className="text-sm text-muted-foreground mt-1.5 mb-6 text-center">
-            Looks like you haven't added anything yet ✨
+            {t("cart.emptyBagDesc")}
           </p>
           <Link to="/home" className="px-8 py-3.5 bg-primary text-primary-foreground font-bold rounded-2xl text-sm shadow-md">
-            Start Shopping
+            {t("common.startShopping")}
           </Link>
         </motion.div>
       ) : (
@@ -156,7 +155,7 @@ const CartPage = () => {
               <div className="flex items-center gap-2 mb-2">
                 <Truck className="w-4 h-4 text-primary" />
                 <p className="text-xs text-foreground font-medium">
-                  Add <span className="font-bold text-primary">{formatPrice(freeDeliveryLeft)}</span> for free delivery!
+                  {t("cart.freeDeliveryProgress", { amount: formatPrice(freeDeliveryLeft) })}
                 </p>
               </div>
               <div className="h-2 bg-secondary rounded-full overflow-hidden">
@@ -172,7 +171,7 @@ const CartPage = () => {
           {freeDeliveryLeft <= 0 && (
             <div className="mx-4 mt-4 bg-primary/10 rounded-2xl p-3 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" />
-              <p className="text-xs font-semibold text-primary">You've unlocked FREE delivery! 🎉</p>
+              <p className="text-xs font-semibold text-primary">{t("cart.unlockedFreeDelivery")}</p>
             </div>
           )}
 
@@ -243,9 +242,9 @@ const CartPage = () => {
                     <p className="text-xs font-bold text-primary">{appliedCoupon.code}</p>
                     <p className="text-[10px] text-muted-foreground">
                       {appliedCoupon.discount_type === "percentage"
-                        ? `${appliedCoupon.discount_value}% off`
-                        : `${formatPrice(appliedCoupon.discount_value)} off`}
-                      {" · "}You save {formatPrice(discount)}
+                        ? `${appliedCoupon.discount_value}% ${t("common.off").toLowerCase()}`
+                        : `${formatPrice(appliedCoupon.discount_value)} ${t("common.off").toLowerCase()}`}
+                      {" · "}{t("cart.youSave")} {formatPrice(discount)}
                     </p>
                   </div>
                 </div>
@@ -260,7 +259,7 @@ const CartPage = () => {
                   <input
                     value={coupon}
                     onChange={e => setCoupon(e.target.value.toUpperCase())}
-                    placeholder="Got a coupon code?"
+                    placeholder={t("cart.couponPlaceholder")}
                     className="flex-1 bg-transparent text-sm py-3 outline-none text-foreground placeholder:text-muted-foreground uppercase"
                     onKeyDown={e => e.key === "Enter" && handleApplyCoupon()}
                   />
@@ -270,7 +269,7 @@ const CartPage = () => {
                   disabled={couponLoading || !coupon.trim()}
                   className="px-5 bg-primary/10 text-primary font-bold text-sm rounded-xl hover:bg-primary/20 transition-colors disabled:opacity-50"
                 >
-                  {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+                  {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("common.apply")}
                 </button>
               </div>
             )}
@@ -279,27 +278,27 @@ const CartPage = () => {
           {/* Order Summary */}
           <div className="mx-4 mt-5 bg-card rounded-2xl border border-border/50 overflow-hidden">
             <div className="px-4 py-3 bg-secondary/30 border-b border-border/30">
-              <h3 className="text-sm font-bold text-foreground">Order Summary</h3>
+              <h3 className="text-sm font-bold text-foreground">{t("cart.orderSummary")}</h3>
             </div>
             <div className="p-4 space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Subtotal ({cartCount} items)</span>
+                <span className="text-muted-foreground">{t("cart.subtotal")} ({cartCount} {t("common.items")})</span>
                 <span className="font-semibold text-foreground">{formatPrice(cartTotal)}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-primary font-medium">Coupon ({appliedCoupon?.code})</span>
+                  <span className="text-primary font-medium">{t("cart.coupon")} ({appliedCoupon?.code})</span>
                   <span className="font-semibold text-primary">-{formatPrice(discount)}</span>
                 </div>
               )}
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Delivery</span>
+                <span className="text-muted-foreground">{t("cart.delivery")}</span>
                 <span className={`font-semibold ${deliveryFee === 0 ? "text-primary" : "text-foreground"}`}>
-                  {deliveryFee === 0 ? "FREE ✨" : formatPrice(deliveryFee)}
+                  {deliveryFee === 0 ? `${t("common.free")} ✨` : formatPrice(deliveryFee)}
                 </span>
               </div>
               <div className="border-t border-border/50 pt-3 flex justify-between items-baseline">
-                <span className="font-bold text-foreground">Total</span>
+                <span className="font-bold text-foreground">{t("cart.total")}</span>
                 <span className="text-xl font-extrabold text-foreground">{formatPrice(total)}</span>
               </div>
             </div>
@@ -312,7 +311,7 @@ const CartPage = () => {
                 to="/checkout"
                 className="block w-full text-center bg-primary text-primary-foreground font-bold py-4 rounded-2xl shadow-lg text-sm"
               >
-                Proceed to Checkout
+                {t("cart.proceedToCheckout")}
               </Link>
             </motion.div>
           </div>
@@ -325,10 +324,10 @@ const CartPage = () => {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Package className="w-4 h-4 text-primary" />
-              <h3 className="text-sm font-bold text-foreground">Your Active Orders</h3>
+              <h3 className="text-sm font-bold text-foreground">{t("cart.activeOrders")}</h3>
             </div>
             <Link to="/orders" className="text-xs text-primary font-medium flex items-center gap-0.5">
-              View All <ChevronRight className="w-3 h-3" />
+              {t("common.viewAll")} <ChevronRight className="w-3 h-3 rtl:rotate-180" />
             </Link>
           </div>
           <div className="space-y-2.5">
@@ -345,7 +344,7 @@ const CartPage = () => {
                     <span className="text-lg">{cfg.icon}</span>
                     <div>
                       <p className="text-xs font-semibold text-foreground">
-                        {itemCount} item{itemCount !== 1 ? "s" : ""} · {formatPrice(Number(order.total))}
+                        {itemCount} {itemCount !== 1 ? t("common.items") : t("common.item")} · {formatPrice(Number(order.total))}
                       </p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
                         {new Date(order.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
