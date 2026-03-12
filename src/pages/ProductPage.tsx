@@ -7,6 +7,7 @@ import { useApp } from "@/context/AppContext";
 import { useProducts, formatPrice } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
+import ReviewSection from "@/components/product/ReviewSection";
 
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -225,9 +226,6 @@ const ProductPage = () => {
         {/* Brand */}
         <div className="flex items-center gap-2">
           <Link to={`/brand/${product.brand_id}`} className="text-xs font-bold uppercase tracking-widest text-primary hover:underline">{product.brand}</Link>
-          <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
-            <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> 4.8
-          </span>
         </div>
 
         {/* Title */}
@@ -333,6 +331,9 @@ const ProductPage = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Reviews */}
+        <ReviewSection productId={product.id} />
 
         {/* Related Products */}
         {related.length > 0 && (
