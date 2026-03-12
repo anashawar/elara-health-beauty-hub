@@ -1,20 +1,36 @@
 import { useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
+import { useParams, Link, useSearchParams } from "react-router-dom";
+import { ArrowLeft, Search, SlidersHorizontal, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import BottomNav from "@/components/layout/BottomNav";
 import FloatingSearch from "@/components/layout/FloatingSearch";
 import ProductCard from "@/components/ProductCard";
-import { useProducts, useCategories, concerns } from "@/hooks/useProducts";
+import { useProducts, useCategories, useSubcategories, concerns } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 const CategoryPage = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeSubId = searchParams.get("sub") || null;
+
   const { data: allProducts = [] } = useProducts();
   const { data: categories = [] } = useCategories();
+  const { data: subcategories = [] } = useSubcategories();
   const { t, language } = useLanguage();
   const category = categories.find(c => c.slug === id);
   const BRANDS = [...new Set(allProducts.map(p => p.brand))];
+
+  // Get subcategories for this category
+  const categorySubs = useMemo(() => {
+    if (!category) return [];
+    return subcategories.filter(s => s.category_id === category.id);
+  }, [category, subcategories]);
+
+  const getSubName = (sub: any) => {
+    if (language === "ar" && sub.name_ar) return sub.name_ar;
+    if (language === "ku" && sub.name_ku) return sub.name_ku;
+    return sub.name;
+  };
 
   const SORT_OPTIONS = [
     { value: "relevance", label: t("categories.relevance") },
@@ -43,6 +59,11 @@ const CategoryPage = () => {
   const filteredProducts = useMemo(() => {
     let result = id ? allProducts.filter(p => p.category_slug === id) : [...allProducts];
 
+    // Filter by subcategory if selected
+    if (activeSubId) {
+      result = result.filter(p => p.subcategory_id === activeSubId);
+    }
+
     if (searchQuery.length > 1) {
       const q = searchQuery.toLowerCase();
       result = result.filter(p => p.title.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q));
@@ -66,7 +87,7 @@ const CategoryPage = () => {
     }
 
     return result;
-  }, [id, searchQuery, sortBy, selectedBrands, priceRange, selectedConditions]);
+  }, [id, activeSubId, searchQuery, sortBy, selectedBrands, priceRange, selectedConditions, allProducts]);
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
@@ -83,15 +104,66 @@ const CategoryPage = () => {
     setSelectedConditions([]);
   };
 
+  const handleSubClick = (subId: string | null) => {
+    if (subId === activeSubId) {
+      searchParams.delete("sub");
+    } else if (subId) {
+      searchParams.set("sub", subId);
+    } else {
+      searchParams.delete("sub");
+    }
+    setSearchParams(searchParams);
+  };
+
+  const activeSubName = activeSubId ? categorySubs.find(s => s.id === activeSubId) : null;
+
   return (
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
-          <Link to="/home" className="p-1">
+          <Link to={activeSubId ? `/category/${id}` : "/categories"} className="p-1" onClick={(e) => {
+            if (activeSubId) {
+              e.preventDefault();
+              handleSubClick(null);
+            }
+          }}>
             <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
           </Link>
-          <h1 className="text-lg font-bold text-foreground">{category ? getCatName(category) : t("categories.allProducts")}</h1>
+          <h1 className="text-lg font-bold text-foreground">
+            {activeSubName ? getSubName(activeSubName) : category ? getCatName(category) : t("categories.allProducts")}
+          </h1>
         </div>
+
+        {/* Subcategory chips */}
+        {categorySubs.length > 0 && (
+          <div className="px-4 pb-2">
+            <div className="flex gap-2 overflow-x-auto no-scrollbar">
+              <button
+                onClick={() => handleSubClick(null)}
+                className={`flex-shrink-0 px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors ${
+                  !activeSubId
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground hover:bg-accent"
+                }`}
+              >
+                {t("categories.viewAll")}
+              </button>
+              {categorySubs.map(sub => (
+                <button
+                  key={sub.id}
+                  onClick={() => handleSubClick(sub.id)}
+                  className={`flex-shrink-0 px-3.5 py-1.5 text-xs font-medium rounded-xl transition-colors ${
+                    activeSubId === sub.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-accent"
+                  }`}
+                >
+                  {sub.icon} {getSubName(sub)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="px-4 pb-3 flex items-center gap-2">
           <div className="flex-1 relative">

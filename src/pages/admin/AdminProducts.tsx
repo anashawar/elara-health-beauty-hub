@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon } from "lucide-react";
-import { formatPrice, useCategories, useBrands } from "@/hooks/useProducts";
+import { formatPrice, useCategories, useBrands, useSubcategories } from "@/hooks/useProducts";
 import { toast } from "sonner";
 
 interface ProductForm {
@@ -21,6 +21,7 @@ interface ProductForm {
   original_price: number | null;
   description: string;
   category_id: string;
+  subcategory_id: string;
   brand_id: string;
   is_new: boolean;
   is_trending: boolean;
@@ -33,7 +34,7 @@ interface ProductForm {
 
 const emptyForm: ProductForm = {
   title: "", slug: "", price: 0, original_price: null, description: "",
-  category_id: "", brand_id: "", is_new: false, is_trending: false, is_pick: false,
+  category_id: "", subcategory_id: "", brand_id: "", is_new: false, is_trending: false, is_pick: false,
   volume_ml: "", skin_type: "", country_of_origin: "", condition: "",
 };
 
@@ -61,13 +62,20 @@ export default function AdminProducts() {
 
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
+  const { data: allSubcategories = [] } = useSubcategories();
+
+  // Filter subcategories by selected category
+  const filteredSubcategories = useMemo(() => {
+    if (!form.category_id) return [];
+    return allSubcategories.filter(s => s.category_id === form.category_id);
+  }, [form.category_id, allSubcategories]);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["admin-products"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("*, brands(name), categories(name), product_images(id, image_url, sort_order)")
+        .select("*, brands(name), categories(name), product_images(id, image_url, sort_order), subcategories(name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -92,6 +100,7 @@ export default function AdminProducts() {
         original_price: f.original_price || null,
         description: f.description || null,
         category_id: f.category_id || null,
+        subcategory_id: f.subcategory_id || null,
         brand_id: f.brand_id || null,
         is_new: f.is_new,
         is_trending: f.is_trending,
@@ -140,7 +149,6 @@ export default function AdminProducts() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Delete images from storage & DB
       const { data: imgs } = await supabase.from("product_images").select("id, image_url").eq("product_id", id);
       if (imgs && imgs.length > 0) {
         await supabase.from("product_images").delete().eq("product_id", id);
@@ -203,7 +211,8 @@ export default function AdminProducts() {
     setForm({
       id: p.id, title: p.title, slug: p.slug, price: p.price,
       original_price: p.original_price, description: p.description || "",
-      category_id: p.category_id || "", brand_id: p.brand_id || "",
+      category_id: p.category_id || "", subcategory_id: p.subcategory_id || "",
+      brand_id: p.brand_id || "",
       is_new: p.is_new || false, is_trending: p.is_trending || false, is_pick: p.is_pick || false,
       volume_ml: p.volume_ml || "", skin_type: p.skin_type || "", country_of_origin: p.country_of_origin || "",
       condition: (p as any).condition || "",
@@ -247,7 +256,7 @@ export default function AdminProducts() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>Category</Label>
-                  <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
+                  <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v, subcategory_id: "" })}>
                     <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>
                       {categories.map((c: any) => (
@@ -257,16 +266,31 @@ export default function AdminProducts() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Brand</Label>
-                  <Select value={form.brand_id} onValueChange={(v) => setForm({ ...form, brand_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <Label>Subcategory</Label>
+                  <Select
+                    value={form.subcategory_id}
+                    onValueChange={(v) => setForm({ ...form, subcategory_id: v })}
+                    disabled={!form.category_id || filteredSubcategories.length === 0}
+                  >
+                    <SelectTrigger><SelectValue placeholder={!form.category_id ? "Select category first" : "Select"} /></SelectTrigger>
                     <SelectContent>
-                      {brands.map((b: any) => (
-                        <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                      {filteredSubcategories.map((s: any) => (
+                        <SelectItem key={s.id} value={s.id}>{s.icon} {s.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div>
+                <Label>Brand</Label>
+                <Select value={form.brand_id} onValueChange={(v) => setForm({ ...form, brand_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    {brands.map((b: any) => (
+                      <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Description</Label>
@@ -298,7 +322,6 @@ export default function AdminProducts() {
               <div>
                 <Label className="mb-2 block">Additional Images <span className="text-muted-foreground font-normal">(up to 10)</span></Label>
                 <div className="grid grid-cols-4 gap-2">
-                  {/* Existing images (when editing) */}
                   {existingImages.slice(editing ? 1 : 0).map((img) => (
                     <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
                       <img src={img.image_url} className="w-full h-full object-cover" alt="" />
@@ -307,7 +330,6 @@ export default function AdminProducts() {
                       </button>
                     </div>
                   ))}
-                  {/* New additional images */}
                   {additionalPreviews.map((url, idx) => (
                     <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
                       <img src={url} className="w-full h-full object-cover" alt="" />
@@ -316,7 +338,6 @@ export default function AdminProducts() {
                       </button>
                     </div>
                   ))}
-                  {/* Upload button */}
                   {(existingImages.length - (editing ? 1 : 0) + additionalImages.length) < 10 && (
                     <label className="aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
                       <ImageIcon className="h-5 w-5 text-muted-foreground" />
@@ -393,6 +414,7 @@ export default function AdminProducts() {
               <TableRow>
                 <TableHead>Product</TableHead>
                 <TableHead className="hidden md:table-cell">Category</TableHead>
+                <TableHead className="hidden md:table-cell">Subcategory</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead className="hidden md:table-cell">Flags</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
@@ -415,6 +437,7 @@ export default function AdminProducts() {
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{p.categories?.name || "—"}</TableCell>
+                  <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{p.subcategories?.name || "—"}</TableCell>
                   <TableCell className="text-sm font-medium">{formatPrice(p.price)}</TableCell>
                   <TableCell className="hidden md:table-cell">
                     <div className="flex gap-1">
@@ -434,7 +457,7 @@ export default function AdminProducts() {
                 </TableRow>
               ))}
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
