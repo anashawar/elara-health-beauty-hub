@@ -19,6 +19,7 @@ import SettingsPage from "./pages/SettingsPage";
 import BrandPage from "./pages/BrandPage";
 import NotFound from "./pages/NotFound";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import InstallPage from "./pages/InstallPage";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/addresses" element={<AddressesPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/install" element={<InstallPage />} />
             {/* Admin Panel */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
