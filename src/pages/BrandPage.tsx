@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Package } from "lucide-react";
+import { ArrowLeft, Package, MapPin, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useProducts, useBrands } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
@@ -13,8 +13,12 @@ const BrandPage = () => {
   const { data: brands = [] } = useBrands();
   const { t, language } = useLanguage();
 
-  const brand = brands.find((b) => b.id === id);
-  const brandProducts = products.filter((p) => p.brand_id === id);
+  // Support both slug and id lookup
+  const brand = brands.find((b) => b.slug === id) || brands.find((b) => b.id === id);
+  const brandProducts = products.filter((p) => p.brand_id === brand?.id);
+
+  // Get unique countries from brand products
+  const countries = [...new Set(brandProducts.map(p => p.country_of_origin).filter(Boolean))];
 
   const getBrandName = (b: any) => {
     if (language === "ar" && b.name_ar) return b.name_ar;
@@ -26,6 +30,7 @@ const BrandPage = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
+      {/* Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
           <Link to={-1 as any} onClick={(e) => { e.preventDefault(); window.history.back(); }} className="p-1.5 -ml-1 rounded-xl hover:bg-secondary transition-colors">
@@ -35,40 +40,63 @@ const BrandPage = () => {
         </div>
       </header>
 
+      {/* Brand Hero Card */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-4 mt-4 bg-card rounded-3xl border border-border/50 p-6 flex flex-col items-center text-center"
+        className="mx-4 mt-4 relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-card to-accent/10 border border-border/50"
       >
-        {brand?.logo_url && (
-          <div className="w-20 h-20 rounded-2xl bg-secondary overflow-hidden mb-4 shadow-md">
-            <img src={brand.logo_url} alt={displayName} className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
+        <div className="relative p-6 flex items-center gap-5">
+          {brand?.logo_url && (
+            <div className="w-20 h-20 rounded-2xl bg-card overflow-hidden shadow-premium border border-border/50 flex-shrink-0">
+              <img src={brand.logo_url} alt={displayName} className="w-full h-full object-cover" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl font-display font-bold text-foreground">{displayName}</h2>
+            {countries.length > 0 && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <MapPin className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                <span className="text-xs text-muted-foreground">{countries.join(", ")}</span>
+              </div>
+            )}
+            <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+              <span className="text-[11px] font-semibold">
+                {brandProducts.length} {brandProducts.length !== 1 ? t("common.products").toLowerCase() : t("common.product").toLowerCase()}
+              </span>
+            </div>
           </div>
-        )}
-        <h2 className="text-xl font-display font-bold text-foreground">{displayName}</h2>
-        <p className="text-xs text-muted-foreground mt-1.5">
-          {brandProducts.length} {brandProducts.length !== 1 ? t("common.products").toLowerCase() : t("common.product").toLowerCase()} {t("product.available")}
-        </p>
+        </div>
       </motion.div>
 
+      {/* Products */}
       {brandProducts.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-16 px-4">
-          <Package className="w-12 h-12 text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground">{t("product.noProductsFound")}</p>
+          <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+            <Package className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <p className="text-sm font-medium text-foreground mb-1">{t("product.noProductsFound")}</p>
+          <p className="text-xs text-muted-foreground">{t("product.checkBackLater") || "Check back later for new arrivals"}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 px-4 mt-5">
-          {brandProducts.map((product, idx) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.04 }}
-            >
-              <ProductCard product={product} />
-            </motion.div>
-          ))}
-        </div>
+        <>
+          <div className="px-4 mt-5 mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-foreground">{t("common.allProducts") || "All Products"}</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-3 px-4">
+            {brandProducts.map((product, idx) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.04 }}
+              >
+                <ProductCard product={product} />
+              </motion.div>
+            ))}
+          </div>
+        </>
       )}
 
       <FloatingSearch />
