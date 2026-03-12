@@ -1,5 +1,6 @@
 import { Search, Bell, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
+import elaraLogo from "@/assets/elara-logo.png";
 
 interface TopHeaderProps {
   onSearchClick: () => void;
@@ -10,9 +11,7 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
     <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
       <div className="flex items-center justify-between px-4 py-3 max-w-lg mx-auto">
         <Link to="/" className="flex items-center">
-          <h1 className="text-2xl font-display font-bold tracking-wide text-foreground">
-            ELARA
-          </h1>
+          <img src={elaraLogo} alt="ELARA" className="h-7" />
         </Link>
 
         <div className="flex items-center gap-1">
