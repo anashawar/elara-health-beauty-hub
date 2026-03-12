@@ -31,9 +31,9 @@ const ProfilePage = () => {
             <p className="text-xs text-muted-foreground mt-0.5">Sign in for a personalized experience</p>
           </div>
         </div>
-        <button className="w-full mt-4 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm hover:opacity-90 transition-opacity">
+        <Link to="/auth" className="block w-full mt-4 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm hover:opacity-90 transition-opacity text-center">
           Sign In / Create Account
-        </button>
+        </Link>
       </div>
 
       {/* Menu */}
