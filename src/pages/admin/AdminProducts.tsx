@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon, Languages } from "lucide-react";
 import { formatPrice, useCategories, useBrands, useSubcategories } from "@/hooks/useProducts";
 import { toast } from "sonner";
 
@@ -20,6 +20,8 @@ interface ProductForm {
   price: number;
   original_price: number | null;
   description: string;
+  usage_instructions: string;
+  benefits: string;
   category_id: string;
   subcategory_id: string;
   brand_id: string;
@@ -34,6 +36,7 @@ interface ProductForm {
 
 const emptyForm: ProductForm = {
   title: "", slug: "", price: 0, original_price: null, description: "",
+  usage_instructions: "", benefits: "",
   category_id: "", subcategory_id: "", brand_id: "", is_new: false, is_trending: false, is_pick: false,
   volume_ml: "", skin_type: "", country_of_origin: "", condition: "",
 };
@@ -59,6 +62,7 @@ export default function AdminProducts() {
   const [additionalPreviews, setAdditionalPreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<{ id: string; image_url: string; sort_order: number }[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [translating, setTranslating] = useState(false);
 
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
@@ -93,12 +97,15 @@ export default function AdminProducts() {
   const saveMutation = useMutation({
     mutationFn: async (f: ProductForm) => {
       setUploading(true);
+      const benefitsArray = f.benefits.trim() ? f.benefits.split("\n").map(b => b.trim()).filter(Boolean) : null;
       const payload: any = {
         title: f.title,
         slug: f.slug || f.title.toLowerCase().replace(/\s+/g, "-"),
         price: f.price,
         original_price: f.original_price || null,
         description: f.description || null,
+        usage_instructions: f.usage_instructions || null,
+        benefits: benefitsArray,
         category_id: f.category_id || null,
         subcategory_id: f.subcategory_id || null,
         brand_id: f.brand_id || null,
@@ -134,6 +141,28 @@ export default function AdminProducts() {
         for (let i = 0; i < additionalImages.length; i++) {
           const url = await uploadImage(additionalImages[i], productId, startOrder + i);
           await supabase.from("product_images").insert({ product_id: productId, image_url: url, sort_order: startOrder + i });
+        }
+      }
+
+      // Auto-translate in background
+      if (productId) {
+        try {
+          setTranslating(true);
+          const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate-product`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({ product_id: productId }),
+          });
+          if (resp.ok) {
+            toast.success("Translations generated (AR & KU)");
+          }
+        } catch (err) {
+          console.error("Translation failed:", err);
+        } finally {
+          setTranslating(false);
         }
       }
     },
@@ -211,6 +240,8 @@ export default function AdminProducts() {
     setForm({
       id: p.id, title: p.title, slug: p.slug, price: p.price,
       original_price: p.original_price, description: p.description || "",
+      usage_instructions: p.usage_instructions || "",
+      benefits: (p.benefits || []).join("\n"),
       category_id: p.category_id || "", subcategory_id: p.subcategory_id || "",
       brand_id: p.brand_id || "",
       is_new: p.is_new || false, is_trending: p.is_trending || false, is_pick: p.is_pick || false,
@@ -295,6 +326,14 @@ export default function AdminProducts() {
               <div>
                 <Label>Description</Label>
                 <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              </div>
+              <div>
+                <Label>Benefits <span className="text-muted-foreground font-normal">(one per line)</span></Label>
+                <Textarea rows={3} placeholder="Hydrates skin deeply&#10;Reduces fine lines&#10;Brightens complexion" value={form.benefits} onChange={(e) => setForm({ ...form, benefits: e.target.value })} />
+              </div>
+              <div>
+                <Label>How to Use</Label>
+                <Textarea rows={3} placeholder="Apply a small amount to clean, dry skin morning and evening..." value={form.usage_instructions} onChange={(e) => setForm({ ...form, usage_instructions: e.target.value })} />
               </div>
 
               {/* Main Image */}
@@ -391,9 +430,9 @@ export default function AdminProducts() {
                   <Switch checked={form.is_pick} onCheckedChange={(v) => setForm({ ...form, is_pick: v })} /> Staff Pick
                 </label>
               </div>
-              <Button onClick={() => saveMutation.mutate(form)} disabled={!form.title || !form.price || saveMutation.isPending || uploading}>
+              <Button onClick={() => saveMutation.mutate(form)} disabled={!form.title || !form.price || saveMutation.isPending || uploading || translating}>
                 {(saveMutation.isPending || uploading) && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
-                {editing ? "Update" : "Create"}
+                {translating ? <><Languages className="h-4 w-4 mr-1.5 animate-pulse" />Translating...</> : editing ? "Update" : "Create"}
               </Button>
             </div>
           </DialogContent>
