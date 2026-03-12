@@ -34,8 +34,15 @@ const AuthPage = () => {
         if (error) {
           toast(error.message);
         } else {
-          toast("Account created! Welcome to ELARA 🎉");
-          navigate("/");
+          // After signup, try to sign in immediately (works if auto-confirm is on)
+          const { error: signInError } = await signIn(email, password);
+          if (signInError) {
+            toast("Account created! Please check your email to verify, then sign in.");
+            setMode("login");
+          } else {
+            toast("Welcome to ELARA, " + (fullName.split(" ")[0] || "") + "! 🎉");
+            navigate("/home");
+          }
         }
       } else {
         const { error } = await signIn(email, password);
@@ -43,7 +50,7 @@ const AuthPage = () => {
           toast(error.message);
         } else {
           toast("Welcome back! 🎉");
-          navigate("/");
+          navigate("/home");
         }
       }
     } finally {
