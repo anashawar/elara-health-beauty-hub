@@ -283,9 +283,7 @@ const ElaraChatPage = () => {
                   }`}
                 >
                   {msg.role === "assistant" ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm [&>p]:mb-2 [&>ul]:mb-2 [&>ol]:mb-2 [&>h1]:text-base [&>h2]:text-sm [&>h3]:text-sm">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
+                    renderAssistantContent(msg.content)
                   ) : (
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                   )}
