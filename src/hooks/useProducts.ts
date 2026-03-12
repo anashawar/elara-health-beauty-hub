@@ -45,36 +45,59 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
 
   if (error) throw error;
 
-  return (products || []).map((p: any) => ({
-    id: p.id,
-    title: p.title,
-    slug: p.slug,
-    brand: p.brands?.name || "",
-    brand_id: p.brand_id,
-    category_id: p.category_id,
-    category_slug: p.categories?.slug || null,
-    subcategory_id: p.subcategory_id || null,
-    price: Number(p.price),
-    originalPrice: p.original_price ? Number(p.original_price) : null,
-    image: p.product_images?.[0]?.image_url || "/placeholder.svg",
-    images: (p.product_images || [])
-      .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
-      .map((img: any) => img.image_url),
-    tags: (p.product_tags || []).map((t: any) => t.tag),
-    description: p.description || "",
-    benefits: p.benefits || [],
-    usage: p.usage_instructions || "",
-    isNew: p.is_new || false,
-    isTrending: p.is_trending || false,
-    isPick: p.is_pick || false,
-    country_of_origin: p.country_of_origin,
-    form: p.form,
-    gender: p.gender,
-    volume_ml: p.volume_ml,
-    application: p.application,
-    skin_type: p.skin_type,
-    condition: p.condition || null,
-  }));
+  return (products || []).map((p: any) => {
+    const localizedTitle =
+      language === "ar" ? (p.title_ar || p.title) : language === "ku" ? (p.title_ku || p.title) : p.title;
+    const localizedDescription =
+      language === "ar"
+        ? (p.description_ar || p.description || "")
+        : language === "ku"
+          ? (p.description_ku || p.description || "")
+          : (p.description || "");
+    const localizedBenefits =
+      language === "ar"
+        ? (p.benefits_ar || p.benefits || [])
+        : language === "ku"
+          ? (p.benefits_ku || p.benefits || [])
+          : (p.benefits || []);
+    const localizedUsage =
+      language === "ar"
+        ? (p.usage_instructions_ar || p.usage_instructions || "")
+        : language === "ku"
+          ? (p.usage_instructions_ku || p.usage_instructions || "")
+          : (p.usage_instructions || "");
+
+    return {
+      id: p.id,
+      title: localizedTitle,
+      slug: p.slug,
+      brand: p.brands?.name || "",
+      brand_id: p.brand_id,
+      category_id: p.category_id,
+      category_slug: p.categories?.slug || null,
+      subcategory_id: p.subcategory_id || null,
+      price: Number(p.price),
+      originalPrice: p.original_price ? Number(p.original_price) : null,
+      image: p.product_images?.[0]?.image_url || "/placeholder.svg",
+      images: (p.product_images || [])
+        .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+        .map((img: any) => img.image_url),
+      tags: (p.product_tags || []).map((t: any) => t.tag),
+      description: localizedDescription,
+      benefits: localizedBenefits,
+      usage: localizedUsage,
+      isNew: p.is_new || false,
+      isTrending: p.is_trending || false,
+      isPick: p.is_pick || false,
+      country_of_origin: p.country_of_origin,
+      form: p.form,
+      gender: p.gender,
+      volume_ml: p.volume_ml,
+      application: p.application,
+      skin_type: p.skin_type,
+      condition: p.condition || null,
+    };
+  });
 }
 
 export function useProducts() {
