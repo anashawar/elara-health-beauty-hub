@@ -171,7 +171,7 @@ const AuthPage = () => {
             </button>
 
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/home")}
               className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
             >
               Continue as Guest
