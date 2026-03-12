@@ -28,10 +28,10 @@ const ProductPage = () => {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
-  const related = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const related = allProducts.filter(p => p.category_slug === product.category_slug && p.id !== product.id).slice(0, 4);
 
   const searchResults = searchQuery.length > 1
-    ? products.filter(p =>
+    ? allProducts.filter(p =>
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.brand.toLowerCase().includes(searchQuery.toLowerCase())
       ).slice(0, 5)
