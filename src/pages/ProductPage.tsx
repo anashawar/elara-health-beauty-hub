@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, Share2, ShoppingBag, Search, Truck, ShieldCheck, BadgeCheck, X, Star, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import SearchOverlay from "@/components/SearchOverlay";
@@ -12,6 +12,10 @@ import ReviewSection from "@/components/product/ReviewSection";
 
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
   const navigate = useNavigate();
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
   const [searchOpen, setSearchOpen] = useState(false);
