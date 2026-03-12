@@ -78,9 +78,11 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
 }
 
 export function useProducts() {
-  return useQuery({
-    queryKey: ["products"],
-    queryFn: fetchProducts,
+  const { language } = useLanguage();
+
+  return useQuery<ProductWithRelations[]>({
+    queryKey: ["products", language],
+    queryFn: () => fetchProducts(language),
   });
 }
 
