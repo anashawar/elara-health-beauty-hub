@@ -12,6 +12,10 @@ import ReviewSection from "@/components/product/ReviewSection";
 
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
   const navigate = useNavigate();
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
   const [searchOpen, setSearchOpen] = useState(false);
