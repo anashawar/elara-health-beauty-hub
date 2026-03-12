@@ -2,3 +2,6 @@ project_id = "mycpfwnfvtsgshdzggrm"
 
 [functions.elara-chat]
 verify_jwt = false
+
+[functions.translate-product]
+verify_jwt = false
