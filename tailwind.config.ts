@@ -16,6 +16,7 @@ export default {
       fontFamily: {
         sans: ["DM Sans", "sans-serif"],
         display: ["Playfair Display", "serif"],
+        arabic: ["IBM Plex Sans Arabic", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
