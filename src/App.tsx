@@ -60,6 +60,7 @@ const App = () => (
               <Route path="/addresses" element={<AddressesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/install" element={<InstallPage />} />
+              <Route path="/elara-ai" element={<ElaraChatPage />} />
               {/* Admin Panel */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
