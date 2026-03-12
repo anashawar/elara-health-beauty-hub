@@ -318,6 +318,49 @@ const CartPage = () => {
         </>
       )}
 
+      {/* Active Orders Section */}
+      {activeOrders && activeOrders.length > 0 && (
+        <div className="px-4 mt-6 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Package className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-bold text-foreground">Your Active Orders</h3>
+            </div>
+            <Link to="/orders" className="text-xs text-primary font-medium flex items-center gap-0.5">
+              View All <ChevronRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="space-y-2.5">
+            {activeOrders.map((order) => {
+              const cfg = statusConfig[order.status] || statusConfig.pending;
+              const itemCount = order.order_items?.reduce((s: number, i: any) => s + i.quantity, 0) || 0;
+              return (
+                <Link
+                  key={order.id}
+                  to="/orders"
+                  className="flex items-center justify-between bg-card rounded-2xl p-3.5 border border-border/40"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{cfg.icon}</span>
+                    <div>
+                      <p className="text-xs font-semibold text-foreground">
+                        {itemCount} item{itemCount !== 1 ? "s" : ""} · {formatPrice(Number(order.total))}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {new Date(order.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${cfg.color}`}>
+                    {cfg.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <BottomNav />
     </div>
   );
