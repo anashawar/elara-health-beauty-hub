@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, ShoppingBag, Search, Truck, ShieldCheck, BadgeCheck, X } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { products, formatPrice } from "@/data/products";
+import { useProducts, useProduct, formatPrice } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
 
