@@ -131,25 +131,88 @@ const ProductPage = () => {
         </AnimatePresence>
       </header>
 
-      {/* Product Image */}
-      <div className="px-4 pt-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative aspect-square bg-gradient-to-br from-secondary to-muted rounded-3xl overflow-hidden"
-        >
-          <img src={product.image} alt={product.title} className="w-full h-full object-cover" />
-          {discount > 0 && (
-            <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-bold px-3 py-1.5 rounded-xl shadow-md">
-              -{discount}% OFF
-            </div>
-          )}
-          {product.isNew && (
-            <div className="absolute top-3 right-3 bg-foreground text-background text-[10px] font-bold px-2.5 py-1 rounded-lg">
-              NEW
-            </div>
-          )}
-        </motion.div>
+      {/* Image Gallery Slider */}
+      <div className="relative">
+        {(() => {
+          const images = product.images && product.images.length > 0
+            ? product.images
+            : [product.image];
+          const total = images.length;
+
+          const goTo = (idx: number) => {
+            setCurrentSlide(idx);
+            if (sliderRef.current) {
+              sliderRef.current.scrollTo({ left: idx * sliderRef.current.offsetWidth, behavior: "smooth" });
+            }
+          };
+
+          const handleScroll = () => {
+            if (sliderRef.current) {
+              const idx = Math.round(sliderRef.current.scrollLeft / sliderRef.current.offsetWidth);
+              setCurrentSlide(idx);
+            }
+          };
+
+          return (
+            <>
+              <div
+                ref={sliderRef}
+                onScroll={handleScroll}
+                className="flex snap-x snap-mandatory overflow-x-auto no-scrollbar"
+                style={{ scrollbarWidth: "none" }}
+              >
+                {images.map((img, idx) => (
+                  <div key={idx} className="w-full flex-shrink-0 snap-center aspect-square bg-gradient-to-br from-secondary to-muted">
+                    <img src={img} alt={`${product.title} ${idx + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Discount & New badges */}
+              <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+                {discount > 0 && (
+                  <div className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1.5 rounded-xl shadow-md">
+                    -{discount}% OFF
+                  </div>
+                )}
+              </div>
+              {product.isNew && (
+                <div className="absolute top-3 right-3 bg-foreground text-background text-[10px] font-bold px-2.5 py-1 rounded-lg">
+                  NEW
+                </div>
+              )}
+
+              {/* Navigation arrows */}
+              {total > 1 && (
+                <>
+                  {currentSlide > 0 && (
+                    <button onClick={() => goTo(currentSlide - 1)} className="absolute left-2 top-1/2 -translate-y-1/2 bg-card/80 backdrop-blur-sm rounded-full p-1.5 shadow-md hover:bg-card transition-colors">
+                      <ChevronLeft className="w-4 h-4 text-foreground" />
+                    </button>
+                  )}
+                  {currentSlide < total - 1 && (
+                    <button onClick={() => goTo(currentSlide + 1)} className="absolute right-2 top-1/2 -translate-y-1/2 bg-card/80 backdrop-blur-sm rounded-full p-1.5 shadow-md hover:bg-card transition-colors">
+                      <ChevronRight className="w-4 h-4 text-foreground" />
+                    </button>
+                  )}
+                </>
+              )}
+
+              {/* Dot indicators */}
+              {total > 1 && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {images.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => goTo(idx)}
+                      className={`rounded-full transition-all duration-300 ${idx === currentSlide ? "w-6 h-2 bg-primary" : "w-2 h-2 bg-card/70"}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          );
+        })()}
       </div>
 
       {/* Product Info */}
