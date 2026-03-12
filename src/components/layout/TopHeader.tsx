@@ -44,15 +44,23 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
           </Link>
 
           <div className="flex flex-col items-end rtl:items-start">
-            <span className="text-xs font-medium text-foreground">
-              {t("common.hey")}, <span className="font-bold text-primary">{firstName}</span> 👋
-            </span>
-            <Link to={user ? "/addresses" : "/auth"} className="flex items-center gap-1 mt-0.5">
-              <MapPin className="w-3 h-3 text-primary" />
-              <span className="text-[10px] text-muted-foreground font-medium">
-                {userCity ? `${userCity}, ${t("common.iraq")}` : t("common.setLocation") || "Set location"}
-              </span>
-            </Link>
+            {user ? (
+              <>
+                <span className="text-xs font-medium text-foreground">
+                  {t("common.hey")}, <span className="font-bold text-primary">{firstName}</span> 👋
+                </span>
+                <Link to="/addresses" className="flex items-center gap-1 mt-0.5">
+                  <MapPin className="w-3 h-3 text-primary" />
+                  <span className="text-[10px] text-muted-foreground font-medium">
+                    {userCity ? `${userCity}, ${t("common.iraq")}` : t("common.setLocation") || "Set location"}
+                  </span>
+                </Link>
+              </>
+            ) : (
+              <Link to="/auth" className="text-xs font-medium text-primary hover:underline">
+                {t("common.signIn") || "Sign In"}
+              </Link>
+            )}
           </div>
         </div>
 
