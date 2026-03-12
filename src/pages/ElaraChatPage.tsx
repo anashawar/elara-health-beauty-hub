@@ -37,7 +37,7 @@ const quickQuestions: Record<string, string[]> = {
 };
 
 const ElaraChatPage = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const { data: products = [] } = useProducts();
   const queryClient = useQueryClient();
