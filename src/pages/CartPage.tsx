@@ -9,9 +9,9 @@ import { useState } from "react";
 const CartPage = () => {
   const { cart, updateQuantity, removeFromCart, cartTotal, cartCount, clearCart } = useApp();
   const [coupon, setCoupon] = useState("");
-  const deliveryFee = cartTotal >= 50000 ? 0 : 5000;
-  const freeDeliveryLeft = 50000 - cartTotal;
-  const freeDeliveryProgress = Math.min((cartTotal / 50000) * 100, 100);
+  const deliveryFee = cartTotal >= 40000 ? 0 : 5000;
+  const freeDeliveryLeft = 40000 - cartTotal;
+  const freeDeliveryProgress = Math.min((cartTotal / 40000) * 100, 100);
 
   return (
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
