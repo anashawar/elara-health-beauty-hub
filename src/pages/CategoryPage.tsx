@@ -16,7 +16,10 @@ const SORT_OPTIONS = [
 
 const CategoryPage = () => {
   const { id } = useParams<{ id: string }>();
-  const category = categories.find(c => c.id === id);
+  const { data: allProducts = [] } = useProducts();
+  const { data: categories = [] } = useCategories();
+  const category = categories.find(c => c.slug === id);
+  const BRANDS = [...new Set(allProducts.map(p => p.brand))];
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
