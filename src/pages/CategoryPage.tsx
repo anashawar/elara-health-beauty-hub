@@ -137,7 +137,7 @@ const CategoryPage = () => {
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
-          <Link to={activeSubId ? `/category/${id}` : "/categories"} className="p-1" onClick={(e) => {
+          <Link to={isConcernRoute ? "/home" : activeSubId ? `/category/${id}` : "/categories"} className="p-1" onClick={(e) => {
             if (activeSubId) {
               e.preventDefault();
               handleSubClick(null);
