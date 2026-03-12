@@ -382,6 +382,7 @@ export type Database = {
           benefits: string[] | null
           brand_id: string | null
           category_id: string | null
+          condition: string | null
           country_of_origin: string | null
           created_at: string
           description: string | null
@@ -405,6 +406,7 @@ export type Database = {
           benefits?: string[] | null
           brand_id?: string | null
           category_id?: string | null
+          condition?: string | null
           country_of_origin?: string | null
           created_at?: string
           description?: string | null
@@ -428,6 +430,7 @@ export type Database = {
           benefits?: string[] | null
           brand_id?: string | null
           category_id?: string | null
+          condition?: string | null
           country_of_origin?: string | null
           created_at?: string
           description?: string | null
