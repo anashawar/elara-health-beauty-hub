@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Eye } from "lucide-react";
+import { Loader2, Eye, User, Phone, MapPin } from "lucide-react";
 import { formatPrice } from "@/hooks/useProducts";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -29,10 +29,27 @@ export default function AdminOrders() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, order_items(*, products(title, product_images(image_url))), addresses(city, area, street)")
+        .select("*, order_items(*, products(title, product_images(image_url))), addresses(city, area, street, phone)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+
+      // Fetch profiles for all user_ids
+      const userIds = [...new Set((data || []).map((o: any) => o.user_id))];
+      let profilesMap: Record<string, any> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, phone")
+          .in("user_id", userIds);
+        if (profiles) {
+          profiles.forEach((p: any) => { profilesMap[p.user_id] = p; });
+        }
+      }
+
+      return (data || []).map((o: any) => ({
+        ...o,
+        profile: profilesMap[o.user_id] || null,
+      }));
     },
   });
 
@@ -60,6 +77,7 @@ export default function AdminOrders() {
             <TableHeader>
               <TableRow>
                 <TableHead>Order</TableHead>
+                <TableHead>Customer</TableHead>
                 <TableHead className="hidden md:table-cell">Date</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Status</TableHead>
@@ -72,6 +90,12 @@ export default function AdminOrders() {
                   <TableCell>
                     <p className="text-sm font-medium text-foreground">#{o.id.slice(0, 8)}</p>
                     <p className="text-xs text-muted-foreground">{o.order_items?.length} items</p>
+                  </TableCell>
+                  <TableCell>
+                    <p className="text-sm font-medium text-foreground">{o.profile?.full_name || "—"}</p>
+                    {(o.profile?.phone || o.addresses?.phone) && (
+                      <p className="text-xs text-muted-foreground">{o.profile?.phone || o.addresses?.phone}</p>
+                    )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                     {format(new Date(o.created_at), "MMM d, yyyy")}
@@ -104,15 +128,35 @@ export default function AdminOrders() {
                           <DialogTitle>Order #{o.id.slice(0, 8)}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4 mt-2">
+                          {/* Customer info */}
+                          <div className="bg-muted/50 rounded-xl p-3 space-y-2">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Customer</p>
+                            <div className="flex items-center gap-2 text-sm">
+                              <User className="w-4 h-4 text-muted-foreground" />
+                              <span className="font-medium">{o.profile?.full_name || "Guest"}</span>
+                            </div>
+                            {(o.profile?.phone || o.addresses?.phone) && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <Phone className="w-4 h-4 text-muted-foreground" />
+                                <span>{o.profile?.phone || o.addresses?.phone}</span>
+                              </div>
+                            )}
+                            {o.addresses && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <MapPin className="w-4 h-4 text-muted-foreground" />
+                                <span>{[o.addresses.area, o.addresses.street, o.addresses.city].filter(Boolean).join(", ")}</span>
+                              </div>
+                            )}
+                          </div>
+
                           <div className="text-sm space-y-1">
                             <p><span className="text-muted-foreground">Date:</span> {format(new Date(o.created_at), "PPP p")}</p>
                             <p><span className="text-muted-foreground">Payment:</span> {o.payment_method || "COD"}</p>
-                            {o.addresses && (
-                              <p><span className="text-muted-foreground">Address:</span> {[o.addresses.area, o.addresses.street, o.addresses.city].filter(Boolean).join(", ")}</p>
-                            )}
+                            <p><span className="text-muted-foreground">Status:</span> <Badge className={`${statusColors[o.status] || ""} text-xs border-0 ml-1`}>{o.status}</Badge></p>
                             {o.coupon_code && <p><span className="text-muted-foreground">Coupon:</span> {o.coupon_code}</p>}
                             {o.notes && <p><span className="text-muted-foreground">Notes:</span> {o.notes}</p>}
                           </div>
+
                           <div className="border-t border-border pt-3">
                             <p className="text-sm font-medium mb-2">Items</p>
                             {o.order_items?.map((item: any) => (
@@ -127,6 +171,7 @@ export default function AdminOrders() {
                               </div>
                             ))}
                           </div>
+
                           <div className="border-t border-border pt-3 space-y-1 text-sm">
                             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatPrice(o.subtotal)}</span></div>
                             {o.discount > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Discount</span><span className="text-destructive">-{formatPrice(o.discount)}</span></div>}
@@ -140,7 +185,7 @@ export default function AdminOrders() {
                 </TableRow>
               ))}
               {orders.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No orders yet</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No orders yet</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

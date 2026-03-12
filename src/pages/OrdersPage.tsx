@@ -14,12 +14,14 @@ const OrdersPage = () => {
 
   const statusConfig: Record<string, { label: string; color: string; step: number }> = {
     pending: { label: t("cart.pending"), color: "bg-amber-400", step: 0 },
-    processing: { label: t("cart.processing"), color: "bg-blue-400", step: 1 },
-    shipped: { label: t("cart.onTheWay"), color: "bg-primary", step: 2 },
-    delivered: { label: t("cart.delivered"), color: "bg-sage", step: 3 },
+    confirmed: { label: t("cart.confirmed") || "Confirmed", color: "bg-blue-400", step: 1 },
+    processing: { label: t("cart.processing"), color: "bg-purple-400", step: 2 },
+    shipped: { label: t("cart.onTheWay"), color: "bg-primary", step: 3 },
+    delivered: { label: t("cart.delivered"), color: "bg-sage", step: 4 },
+    cancelled: { label: t("cart.cancelled") || "Cancelled", color: "bg-destructive", step: -1 },
   };
 
-  const steps = [t("cart.pending"), t("cart.processing"), t("cart.onTheWay"), t("cart.delivered")];
+  const steps = [t("cart.pending"), t("cart.confirmed") || "Confirmed", t("cart.processing"), t("cart.onTheWay"), t("cart.delivered")];
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["orders", user?.id],
