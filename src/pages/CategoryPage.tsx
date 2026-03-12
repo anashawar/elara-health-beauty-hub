@@ -10,6 +10,8 @@ import { useLanguage } from "@/i18n/LanguageContext";
 
 const CategoryPage = () => {
   const { id } = useParams<{ id: string }>();
+  const routerLocation = useRouterLocation();
+  const isConcernRoute = routerLocation.pathname.startsWith("/concern/");
   const [searchParams, setSearchParams] = useSearchParams();
   const activeSubId = searchParams.get("sub") || null;
 
@@ -17,7 +19,8 @@ const CategoryPage = () => {
   const { data: categories = [] } = useCategories();
   const { data: subcategories = [] } = useSubcategories();
   const { t, language } = useLanguage();
-  const category = categories.find(c => c.slug === id);
+  const category = !isConcernRoute ? categories.find(c => c.slug === id) : null;
+  const activeConcern = isConcernRoute ? concerns.find(c => c.id === id) : null;
   const BRANDS = [...new Set(allProducts.map(p => p.brand))];
 
   // Get subcategories for this category
