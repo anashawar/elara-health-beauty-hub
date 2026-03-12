@@ -31,7 +31,7 @@ export interface ProductWithRelations {
   condition: string | null;
 }
 
-async function fetchProducts(): Promise<ProductWithRelations[]> {
+async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithRelations[]> {
   const { data: products, error } = await supabase
     .from("products")
     .select(`
