@@ -4,7 +4,7 @@ import { ArrowLeft, Search, SlidersHorizontal, X, ChevronDown } from "lucide-rea
 import { motion, AnimatePresence } from "framer-motion";
 import BottomNav from "@/components/layout/BottomNav";
 import ProductCard from "@/components/ProductCard";
-import { products, categories, concerns } from "@/data/products";
+import { useProducts, useCategories, concerns } from "@/hooks/useProducts";
 
 const SORT_OPTIONS = [
   { value: "relevance", label: "Relevance" },
@@ -13,8 +13,6 @@ const SORT_OPTIONS = [
   { value: "price-low", label: "Price (Lowest First)" },
   { value: "price-high", label: "Price (Highest First)" },
 ];
-
-const BRANDS = [...new Set(products.map(p => p.brand))];
 
 const CategoryPage = () => {
   const { id } = useParams<{ id: string }>();
