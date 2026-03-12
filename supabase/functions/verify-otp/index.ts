@@ -50,11 +50,24 @@ serve(async (req) => {
     const userEmail = email?.trim() || `${normalizedPhone.replace("+", "")}@phone.elara.app`;
     const tempPassword = `phone_${normalizedPhone}_${Date.now()}`;
 
-    // Try to find existing user by email or phone
+    // Try to find existing user by phone or email
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(
-      (u: any) => u.email === userEmail || u.phone === normalizedPhone
+    const userByPhone = existingUsers?.users?.find(
+      (u: any) => u.phone === normalizedPhone
     );
+    const userByEmail = existingUsers?.users?.find(
+      (u: any) => u.email === userEmail
+    );
+
+    // Prevent same phone number on multiple accounts
+    if (userByPhone && userByEmail && userByPhone.id !== userByEmail.id) {
+      return new Response(
+        JSON.stringify({ error: "This phone number is already linked to another account" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const existingUser = userByPhone || userByEmail;
 
     let session;
 
