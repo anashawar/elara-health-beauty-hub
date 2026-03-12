@@ -335,6 +335,9 @@ const ProductPage = () => {
           )}
         </AnimatePresence>
 
+        {/* Reviews */}
+        <ReviewSection productId={product.id} />
+
         {/* Related Products */}
         {related.length > 0 && (
           <div className="mt-8">
