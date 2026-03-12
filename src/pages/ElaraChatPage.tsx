@@ -385,7 +385,7 @@ const ElaraChatPage = () => {
               Your personal skincare & beauty pharmacist. Scientific, direct, evidence-based.
             </p>
             <div className="w-full space-y-2">
-              {quickQuestions.map((q, i) => (
+              {(quickQuestions[language] || quickQuestions.en).map((q, i) => (
                 <motion.button
                   key={i}
                   initial={{ opacity: 0, y: 10 }}
