@@ -41,6 +41,7 @@ const ElaraChatPage = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const { data: products = [] } = useProducts();
+  const { addToCart } = useApp();
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
