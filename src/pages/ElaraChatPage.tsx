@@ -1,12 +1,15 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingBag, ChevronRight } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingBag, Plus, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import BottomNav from "@/components/layout/BottomNav";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "sonner";
 import { useProducts } from "@/hooks/useProducts";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -21,14 +24,79 @@ const quickQuestions = [
 
 const ElaraChatPage = () => {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const { data: products = [] } = useProducts();
+  const queryClient = useQueryClient();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Parse [PRODUCT:id:slug:title:price] markers from AI response
+  // Fetch conversation list
+  const { data: conversations = [] } = useQuery({
+    queryKey: ["chat-conversations", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("chat_conversations")
+        .select("id, title, updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(20);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  // Load messages when conversation selected
+  useEffect(() => {
+    if (!conversationId || !user) return;
+    const loadMessages = async () => {
+      const { data } = await supabase
+        .from("chat_messages")
+        .select("role, content")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: true });
+      if (data) setMessages(data as Msg[]);
+    };
+    loadMessages();
+  }, [conversationId, user]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages]);
+
+  // Save message to DB
+  const saveMessage = useCallback(async (convId: string, role: string, content: string) => {
+    if (!user) return;
+    await supabase.from("chat_messages").insert({
+      conversation_id: convId,
+      role,
+      content,
+    });
+  }, [user]);
+
+  // Create or get conversation
+  const ensureConversation = useCallback(async (firstMessage: string): Promise<string> => {
+    if (conversationId) return conversationId;
+    if (!user) return "";
+    const title = firstMessage.slice(0, 50) + (firstMessage.length > 50 ? "..." : "");
+    const { data } = await supabase
+      .from("chat_conversations")
+      .insert({ user_id: user.id, title })
+      .select("id")
+      .single();
+    if (data) {
+      setConversationId(data.id);
+      queryClient.invalidateQueries({ queryKey: ["chat-conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["chat-count"] });
+      return data.id;
+    }
+    return "";
+  }, [conversationId, user, queryClient]);
+
+  // Parse [PRODUCT:id:slug:title:price] markers
   const renderAssistantContent = (content: string) => {
     const productRegex = /\[PRODUCT:([^:]+):([^:]+):([^\]]+?):([^\]]+?)\]/g;
     const parts: (string | { id: string; slug: string; title: string; price: string })[] = [];
@@ -36,15 +104,11 @@ const ElaraChatPage = () => {
     let match;
 
     while ((match = productRegex.exec(content)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push(content.slice(lastIndex, match.index));
-      }
+      if (match.index > lastIndex) parts.push(content.slice(lastIndex, match.index));
       parts.push({ id: match[1], slug: match[2], title: match[3], price: match[4] });
       lastIndex = match.index + match[0].length;
     }
-    if (lastIndex < content.length) {
-      parts.push(content.slice(lastIndex));
-    }
+    if (lastIndex < content.length) parts.push(content.slice(lastIndex));
 
     return (
       <div>
@@ -56,15 +120,11 @@ const ElaraChatPage = () => {
               </div>
             );
           }
-          // Render product card
           const product = products.find(p => p.id === part.id);
           const image = product?.image || "/placeholder.svg";
           return (
-            <Link
-              key={i}
-              to={`/product/${part.id}`}
-              className="flex items-center gap-3 my-2 p-2.5 rounded-xl bg-secondary/70 border border-border hover:border-primary/30 transition-all group"
-            >
+            <Link key={i} to={`/product/${part.id}`}
+              className="flex items-center gap-3 my-2 p-2.5 rounded-xl bg-secondary/70 border border-border hover:border-primary/30 transition-all group">
               <div className="w-12 h-12 rounded-lg bg-card overflow-hidden flex-shrink-0">
                 <img src={image} alt={part.title} className="w-full h-full object-cover" />
               </div>
@@ -82,10 +142,6 @@ const ElaraChatPage = () => {
     );
   };
 
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
-
   const streamChat = async (allMessages: Msg[]) => {
     const resp = await fetch(CHAT_URL, {
       method: "POST",
@@ -100,7 +156,6 @@ const ElaraChatPage = () => {
       const err = await resp.json().catch(() => ({ error: "Request failed" }));
       throw new Error(err.error || `Error ${resp.status}`);
     }
-
     if (!resp.body) throw new Error("No response body");
 
     const reader = resp.body.getReader();
@@ -118,17 +173,11 @@ const ElaraChatPage = () => {
       while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
         let line = textBuffer.slice(0, newlineIndex);
         textBuffer = textBuffer.slice(newlineIndex + 1);
-
         if (line.endsWith("\r")) line = line.slice(0, -1);
         if (line.startsWith(":") || line.trim() === "") continue;
         if (!line.startsWith("data: ")) continue;
-
         const jsonStr = line.slice(6).trim();
-        if (jsonStr === "[DONE]") {
-          streamDone = true;
-          break;
-        }
-
+        if (jsonStr === "[DONE]") { streamDone = true; break; }
         try {
           const parsed = JSON.parse(jsonStr);
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
@@ -174,6 +223,8 @@ const ElaraChatPage = () => {
         } catch { /* ignore */ }
       }
     }
+
+    return assistantSoFar;
   };
 
   const sendMessage = async (text: string) => {
@@ -183,15 +234,44 @@ const ElaraChatPage = () => {
     setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
+    setShowHistory(false);
 
     try {
-      await streamChat(updatedMessages);
+      const convId = await ensureConversation(text.trim());
+      if (convId) await saveMessage(convId, "user", text.trim());
+
+      const assistantContent = await streamChat(updatedMessages);
+
+      if (convId && assistantContent) {
+        await saveMessage(convId, "assistant", assistantContent);
+        // Update conversation timestamp
+        await supabase.from("chat_conversations").update({ updated_at: new Date().toISOString() }).eq("id", convId);
+      }
     } catch (e: any) {
       console.error(e);
       toast.error(e.message || "Failed to get response");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const startNewChat = () => {
+    setConversationId(null);
+    setMessages([]);
+    setShowHistory(false);
+  };
+
+  const loadConversation = (id: string) => {
+    setConversationId(id);
+    setShowHistory(false);
+  };
+
+  const deleteConversation = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await supabase.from("chat_conversations").delete().eq("id", id);
+    queryClient.invalidateQueries({ queryKey: ["chat-conversations"] });
+    queryClient.invalidateQueries({ queryKey: ["chat-count"] });
+    if (conversationId === id) startNewChat();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -221,19 +301,58 @@ const ElaraChatPage = () => {
               </div>
               <div>
                 <h1 className="text-sm font-display font-bold text-foreground">ELARA AI</h1>
-                <p className="text-[10px] text-muted-foreground">Skincare Expert</p>
+                <p className="text-[10px] text-muted-foreground">Senior Pharmacist</p>
               </div>
             </div>
           </div>
-          {messages.length > 0 && (
-            <button
-              onClick={() => setMessages([])}
-              className="p-2 rounded-xl hover:bg-secondary transition-colors"
-            >
-              <Trash2 className="w-4 h-4 text-muted-foreground" />
+          <div className="flex items-center gap-1">
+            {user && conversations.length > 0 && (
+              <button onClick={() => setShowHistory(!showHistory)} className="p-2 rounded-xl hover:bg-secondary transition-colors">
+                <MessageCircle className="w-4 h-4 text-muted-foreground" />
+              </button>
+            )}
+            <button onClick={startNewChat} className="p-2 rounded-xl hover:bg-secondary transition-colors">
+              <Plus className="w-4 h-4 text-muted-foreground" />
             </button>
-          )}
+          </div>
         </div>
+
+        {/* Conversation History Dropdown */}
+        <AnimatePresence>
+          {showHistory && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden border-t border-border"
+            >
+              <div className="max-h-60 overflow-y-auto px-4 py-2 space-y-1">
+                {conversations.map(conv => (
+                  <button
+                    key={conv.id}
+                    onClick={() => loadConversation(conv.id)}
+                    className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left transition-all ${
+                      conversationId === conv.id ? "bg-primary/10 border border-primary/20" : "hover:bg-secondary"
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-foreground truncate">{conv.title}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {new Date(conv.updated_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => deleteConversation(conv.id, e)}
+                      className="p-1 rounded-lg hover:bg-destructive/10 transition-colors ml-2 flex-shrink-0"
+                    >
+                      <Trash2 className="w-3 h-3 text-muted-foreground hover:text-destructive" />
+                    </button>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Chat Area */}
@@ -247,9 +366,9 @@ const ElaraChatPage = () => {
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center mb-4">
               <Sparkles className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-xl font-display font-bold text-foreground mb-1">Hi! I'm ELARA AI ✨</h2>
+            <h2 className="text-xl font-display font-bold text-foreground mb-1">ELARA AI ✨</h2>
             <p className="text-sm text-muted-foreground mb-6 max-w-[280px]">
-              Your personal skincare & beauty expert. Ask me anything about routines, products, or skin concerns.
+              Your personal skincare & beauty pharmacist. Scientific, direct, evidence-based.
             </p>
             <div className="w-full space-y-2">
               {quickQuestions.map((q, i) => (
@@ -291,11 +410,7 @@ const ElaraChatPage = () => {
               </motion.div>
             ))}
             {isLoading && messages[messages.length - 1]?.role === "user" && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex justify-start"
-              >
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
                 <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3">
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-4 h-4 text-primary animate-spin" />
