@@ -101,7 +101,7 @@ const ProductPage = () => {
 
       {/* Info */}
       <div className="px-4 pt-5">
-        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#8b37ef" }}>{product.brand}</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-primary">{product.brand}</p>
         <h1 className="text-2xl font-bold text-foreground mt-1">{product.title}</h1>
 
         <div className="flex items-center gap-2 mt-3">
