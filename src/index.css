@@ -80,6 +80,12 @@
   }
 }
 
+/* Apply IBM Plex Sans Arabic for RTL languages */
+html[dir="rtl"],
+html[dir="rtl"] * {
+  font-family: 'IBM Plex Sans Arabic', sans-serif !important;
+}
+
 /* Hide scrollbar for clean mobile feel */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
