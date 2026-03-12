@@ -32,6 +32,7 @@ export const useApp = () => {
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [pendingCoupon, setPendingCoupon] = useState<string | null>(null);
 
   const addToCart = useCallback((product: ProductWithRelations) => {
     setCart(prev => {
