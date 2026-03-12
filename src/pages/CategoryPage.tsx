@@ -103,7 +103,7 @@ const CategoryPage = () => {
     }
 
     return result;
-  }, [id, activeSubId, searchQuery, sortBy, selectedBrands, priceRange, selectedConditions, allProducts]);
+  }, [id, isConcernRoute, activeSubId, searchQuery, sortBy, selectedBrands, priceRange, selectedConditions, allProducts]);
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
