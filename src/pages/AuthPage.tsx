@@ -9,7 +9,13 @@ import { useAuth } from "@/hooks/useAuth";
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { signUp, signIn } = useAuth();
+  const { user, loading: authLoading, signUp, signIn } = useAuth();
+  
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/home", { replace: true });
+    }
+  }, [user, authLoading, navigate]);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
