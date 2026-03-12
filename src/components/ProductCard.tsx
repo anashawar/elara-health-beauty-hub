@@ -1,11 +1,11 @@
 import { Heart, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
-import type { Product } from "@/data/products";
-import { formatPrice } from "@/data/products";
+import type { ProductWithRelations } from "@/hooks/useProducts";
+import { formatPrice } from "@/hooks/useProducts";
 
 interface ProductCardProps {
-  product: Product;
+  product: ProductWithRelations;
   variant?: "horizontal" | "vertical";
 }
 

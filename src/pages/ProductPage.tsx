@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, ShoppingBag, Search, Truck, ShieldCheck, BadgeCheck, X } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { products, formatPrice } from "@/data/products";
+import { useProducts, useProduct, formatPrice } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
 
@@ -12,7 +12,8 @@ const ProductPage = () => {
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const product = products.find(p => p.id === id);
+  const { data: allProducts = [] } = useProducts();
+  const product = allProducts.find(p => p.id === id);
 
   if (!product) {
     return (
@@ -27,10 +28,10 @@ const ProductPage = () => {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
-  const related = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const related = allProducts.filter(p => p.category_slug === product.category_slug && p.id !== product.id).slice(0, 4);
 
   const searchResults = searchQuery.length > 1
-    ? products.filter(p =>
+    ? allProducts.filter(p =>
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.brand.toLowerCase().includes(searchQuery.toLowerCase())
       ).slice(0, 5)

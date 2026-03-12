@@ -8,10 +8,11 @@ import ConcernsSection from "@/components/home/ConcernsSection";
 import BrandsSection from "@/components/home/BrandsSection";
 import AskElaraCard from "@/components/home/AskElaraCard";
 import SearchOverlay from "@/components/SearchOverlay";
-import { products } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 
 const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);
+  const { data: products = [], isLoading } = useProducts();
 
   const trending = products.filter(p => p.isTrending);
   const picks = products.filter(p => p.isPick);
@@ -26,17 +27,20 @@ const Index = () => {
       <HeroBanner />
       <CategoryGrid />
 
-      <ProductSection title="Trending Now" subtitle="Most popular this week" products={trending} viewAllLink="/categories" />
-
-      <AskElaraCard />
-
-      <ProductSection title="ELARA Picks" subtitle="Curated just for you" products={picks} viewAllLink="/categories" />
-
-      <ProductSection title="Special Offers" subtitle="Limited time deals" products={offers} viewAllLink="/categories" />
-
-      <BrandsSection />
-
-      <ProductSection title="New Arrivals" subtitle="Fresh additions to our collection" products={newArrivals} viewAllLink="/categories" />
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
+        <>
+          <ProductSection title="Trending Now" subtitle="Most popular this week" products={trending} viewAllLink="/categories" />
+          <AskElaraCard />
+          <ProductSection title="ELARA Picks" subtitle="Curated just for you" products={picks} viewAllLink="/categories" />
+          <ProductSection title="Special Offers" subtitle="Limited time deals" products={offers} viewAllLink="/categories" />
+          <BrandsSection />
+          <ProductSection title="New Arrivals" subtitle="Fresh additions to our collection" products={newArrivals} viewAllLink="/categories" />
+        </>
+      )}
 
       <ConcernsSection />
 

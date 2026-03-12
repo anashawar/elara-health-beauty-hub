@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { products } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
 
 const WishlistPage = () => {
   const { wishlist } = useApp();
+  const { data: products = [] } = useProducts();
   const wishlistProducts = products.filter(p => wishlist.includes(p.id));
 
   return (

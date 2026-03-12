@@ -4,7 +4,7 @@ import { ArrowLeft, Search, SlidersHorizontal, X, ChevronDown } from "lucide-rea
 import { motion, AnimatePresence } from "framer-motion";
 import BottomNav from "@/components/layout/BottomNav";
 import ProductCard from "@/components/ProductCard";
-import { products, categories, concerns } from "@/data/products";
+import { useProducts, useCategories, concerns } from "@/hooks/useProducts";
 
 const SORT_OPTIONS = [
   { value: "relevance", label: "Relevance" },
@@ -14,11 +14,12 @@ const SORT_OPTIONS = [
   { value: "price-high", label: "Price (Highest First)" },
 ];
 
-const BRANDS = [...new Set(products.map(p => p.brand))];
-
 const CategoryPage = () => {
   const { id } = useParams<{ id: string }>();
-  const category = categories.find(c => c.id === id);
+  const { data: allProducts = [] } = useProducts();
+  const { data: categories = [] } = useCategories();
+  const category = categories.find(c => c.slug === id);
+  const BRANDS = [...new Set(allProducts.map(p => p.brand))];
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -31,7 +32,7 @@ const CategoryPage = () => {
   const activeFilterCount = (sortBy !== "relevance" ? 1 : 0) + selectedBrands.length + selectedConditions.length + (priceRange[0] > 0 || priceRange[1] < 200000 ? 1 : 0);
 
   const filteredProducts = useMemo(() => {
-    let result = id ? products.filter(p => p.category === id) : products;
+    let result = id ? allProducts.filter(p => p.category_slug === id) : [...allProducts];
 
     if (searchQuery.length > 1) {
       const q = searchQuery.toLowerCase();

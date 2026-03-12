@@ -1,37 +1,35 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useBanners } from "@/hooks/useProducts";
 
-const banners = [
-  {
-    id: 1,
-    title: "Glow This Season",
-    subtitle: "Up to 40% off premium skincare",
-    gradient: "from-rose-light to-champagne",
-    accent: "text-primary",
-  },
-  {
-    id: 2,
-    title: "Wellness Essentials",
-    subtitle: "Vitamins & supplements for your best self",
-    gradient: "from-sage-light to-champagne",
-    accent: "text-sage",
-  },
-  {
-    id: 3,
-    title: "Beauty Favorites",
-    subtitle: "Discover trending makeup & cosmetics",
-    gradient: "from-accent to-blush",
-    accent: "text-primary",
-  },
+const fallbackBanners = [
+  { id: "1", title: "Glow This Season", subtitle: "Up to 40% off premium skincare", gradient: "from-rose-light to-champagne", accent: "text-primary" },
+  { id: "2", title: "Wellness Essentials", subtitle: "Vitamins & supplements for your best self", gradient: "from-sage-light to-champagne", accent: "text-sage" },
+  { id: "3", title: "Beauty Favorites", subtitle: "Discover trending makeup & cosmetics", gradient: "from-accent to-blush", accent: "text-primary" },
+];
+
+const gradients = [
+  { gradient: "from-rose-light to-champagne", accent: "text-primary" },
+  { gradient: "from-sage-light to-champagne", accent: "text-sage" },
+  { gradient: "from-accent to-blush", accent: "text-primary" },
 ];
 
 const HeroBanner = () => {
+  const { data: dbBanners = [] } = useBanners();
   const [current, setCurrent] = useState(0);
+
+  const banners = dbBanners.length > 0
+    ? dbBanners.map((b, i) => ({
+        id: b.id,
+        title: b.title || "Shop Now",
+        subtitle: b.subtitle || "",
+        ...gradients[i % gradients.length],
+      }))
+    : fallbackBanners;
 
   useEffect(() => {
     const timer = setInterval(() => setCurrent(p => (p + 1) % banners.length), 4000);
     return () => clearInterval(timer);
-  }, []);
+  }, [banners.length]);
 
   return (
     <div className="relative mx-4 mt-4 rounded-2xl overflow-hidden shadow-premium">

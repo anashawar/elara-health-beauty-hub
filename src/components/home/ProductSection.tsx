@@ -1,17 +1,19 @@
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProductCard from "@/components/ProductCard";
-import type { Product } from "@/data/products";
+import type { ProductWithRelations } from "@/hooks/useProducts";
 
 interface ProductSectionProps {
   title: string;
   subtitle?: string;
-  products: Product[];
+  products: ProductWithRelations[];
   viewAllLink?: string;
   horizontal?: boolean;
 }
 
 const ProductSection = ({ title, subtitle, products, viewAllLink, horizontal = true }: ProductSectionProps) => {
+  if (products.length === 0) return null;
+
   return (
     <section className="mt-8">
       <div className="flex items-center justify-between px-4 mb-3">
