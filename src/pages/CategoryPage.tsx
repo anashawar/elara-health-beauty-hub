@@ -322,6 +322,7 @@ const CategoryPage = () => {
         )}
       </AnimatePresence>
 
+      <FloatingSearch />
       <BottomNav />
     </div>
   );

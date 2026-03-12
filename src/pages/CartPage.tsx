@@ -362,6 +362,7 @@ const CartPage = () => {
         </div>
       )}
 
+      <FloatingSearch />
       <BottomNav />
     </div>
   );

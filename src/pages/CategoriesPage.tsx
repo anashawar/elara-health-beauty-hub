@@ -176,6 +176,7 @@ const CategoriesPage = () => {
         })}
       </div>
 
+      <FloatingSearch />
       <BottomNav />
     </div>
   );

@@ -64,6 +64,7 @@ const BrandPage = () => {
         </div>
       )}
 
+      <FloatingSearch />
       <BottomNav />
     </div>
   );
