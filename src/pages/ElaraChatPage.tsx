@@ -138,8 +138,6 @@ const ElaraChatPage = () => {
           }
           const product = products.find(p => p.id === part.id);
           const image = product?.image || "/placeholder.svg";
-          const product = products.find(p => p.id === part.id);
-          const image = product?.image || "/placeholder.svg";
           return (
             <div key={i} className="flex items-center gap-3 my-2 p-2.5 rounded-xl bg-secondary/70 border border-border transition-all">
               <Link to={`/product/${part.id}`} className="flex items-center gap-3 flex-1 min-w-0">
