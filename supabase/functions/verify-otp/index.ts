@@ -11,7 +11,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { phone, code, full_name } = await req.json();
+    const { phone, code, full_name, email } = await req.json();
     if (!phone || !code) throw new Error("Phone and code are required");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -46,27 +46,26 @@ serve(async (req) => {
     // Mark OTP as verified
     await supabase.from("otp_verifications").update({ verified: true }).eq("id", otpRecord.id);
 
-    // Check if user exists with this phone as email (we use phone@elara.phone as email)
-    const fakeEmail = `${normalizedPhone.replace("+", "")}@phone.elara.app`;
+    // Use the real email if provided, otherwise fall back to phone-based email
+    const userEmail = email?.trim() || `${normalizedPhone.replace("+", "")}@phone.elara.app`;
     const tempPassword = `phone_${normalizedPhone}_${Date.now()}`;
 
-    // Try to find existing user
+    // Try to find existing user by email or phone
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find(
-      (u: any) => u.email === fakeEmail || u.phone === normalizedPhone
+      (u: any) => u.email === userEmail || u.phone === normalizedPhone
     );
 
     let session;
 
     if (existingUser) {
-      // Sign in existing user — generate a session
+      // Sign in existing user
       const { data, error } = await supabase.auth.admin.generateLink({
         type: "magiclink",
-        email: fakeEmail,
+        email: existingUser.email!,
       });
       if (error) throw error;
 
-      // Use the token to create a session
       const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
         token_hash: data.properties.hashed_token,
         type: "magiclink",
@@ -74,9 +73,9 @@ serve(async (req) => {
       if (sessionError) throw sessionError;
       session = sessionData.session;
     } else {
-      // Create new user
+      // Create new user with real email
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-        email: fakeEmail,
+        email: userEmail,
         phone: normalizedPhone,
         email_confirm: true,
         phone_confirm: true,
@@ -95,7 +94,7 @@ serve(async (req) => {
       // Generate session for new user
       const { data, error } = await supabase.auth.admin.generateLink({
         type: "magiclink",
-        email: fakeEmail,
+        email: userEmail,
       });
       if (error) throw error;
 

@@ -13,7 +13,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { phone, full_name } = await req.json();
+    const { phone, full_name, email } = await req.json();
     if (!phone) throw new Error("Phone number is required");
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -46,12 +46,8 @@ serve(async (req) => {
     });
     if (insertError) throw insertError;
 
-    // Store full_name temporarily if provided (for signup)
-    // We'll pass it through to verify-otp
-
-    // Send SMS via Twilio gateway
-    // Get Twilio phone number from env or use a default
-    const fromNumber = Deno.env.get("TWILIO_PHONE_NUMBER") || "+15005550006"; // Twilio test number fallback
+    // Send WhatsApp message via Twilio gateway
+    const fromNumber = Deno.env.get("TWILIO_PHONE_NUMBER") || "+14155238886";
     
     const smsResponse = await fetch(`${GATEWAY_URL}/Messages.json`, {
       method: "POST",
@@ -61,16 +57,16 @@ serve(async (req) => {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
-        To: normalizedPhone,
-        From: fromNumber,
+        To: `whatsapp:${normalizedPhone}`,
+        From: `whatsapp:${fromNumber}`,
         Body: `Your ELARA verification code is: ${code}. Valid for 5 minutes.`,
       }),
     });
 
     const smsData = await smsResponse.json();
     if (!smsResponse.ok) {
-      console.error("Twilio error:", JSON.stringify(smsData));
-      throw new Error(`SMS sending failed: ${smsData.message || smsData.error_message || "Unknown error"}`);
+      console.error("Twilio WhatsApp error:", JSON.stringify(smsData));
+      throw new Error(`WhatsApp sending failed: ${smsData.message || smsData.error_message || "Unknown error"}`);
     }
 
     return new Response(
