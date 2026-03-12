@@ -68,7 +68,11 @@ export type Database = {
           link_url: string | null
           sort_order: number | null
           subtitle: string | null
+          subtitle_ar: string | null
+          subtitle_ku: string | null
           title: string | null
+          title_ar: string | null
+          title_ku: string | null
         }
         Insert: {
           created_at?: string
@@ -78,7 +82,11 @@ export type Database = {
           link_url?: string | null
           sort_order?: number | null
           subtitle?: string | null
+          subtitle_ar?: string | null
+          subtitle_ku?: string | null
           title?: string | null
+          title_ar?: string | null
+          title_ku?: string | null
         }
         Update: {
           created_at?: string
@@ -88,7 +96,11 @@ export type Database = {
           link_url?: string | null
           sort_order?: number | null
           subtitle?: string | null
+          subtitle_ar?: string | null
+          subtitle_ku?: string | null
           title?: string | null
+          title_ar?: string | null
+          title_ku?: string | null
         }
         Relationships: []
       }
@@ -98,6 +110,8 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          name_ar: string | null
+          name_ku: string | null
           slug: string
         }
         Insert: {
@@ -105,6 +119,8 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          name_ar?: string | null
+          name_ku?: string | null
           slug: string
         }
         Update: {
@@ -112,6 +128,8 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          name_ar?: string | null
+          name_ku?: string | null
           slug?: string
         }
         Relationships: []
@@ -158,6 +176,8 @@ export type Database = {
           icon: string | null
           id: string
           name: string
+          name_ar: string | null
+          name_ku: string | null
           slug: string
           sort_order: number | null
         }
@@ -167,6 +187,8 @@ export type Database = {
           icon?: string | null
           id?: string
           name: string
+          name_ar?: string | null
+          name_ku?: string | null
           slug: string
           sort_order?: number | null
         }
@@ -176,6 +198,8 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+          name_ar?: string | null
+          name_ku?: string | null
           slug?: string
           sort_order?: number | null
         }
@@ -380,12 +404,16 @@ export type Database = {
         Row: {
           application: string | null
           benefits: string[] | null
+          benefits_ar: string[] | null
+          benefits_ku: string[] | null
           brand_id: string | null
           category_id: string | null
           condition: string | null
           country_of_origin: string | null
           created_at: string
           description: string | null
+          description_ar: string | null
+          description_ku: string | null
           form: string | null
           gender: string | null
           id: string
@@ -397,19 +425,27 @@ export type Database = {
           skin_type: string | null
           slug: string
           title: string
+          title_ar: string | null
+          title_ku: string | null
           updated_at: string
           usage_instructions: string | null
+          usage_instructions_ar: string | null
+          usage_instructions_ku: string | null
           volume_ml: string | null
         }
         Insert: {
           application?: string | null
           benefits?: string[] | null
+          benefits_ar?: string[] | null
+          benefits_ku?: string[] | null
           brand_id?: string | null
           category_id?: string | null
           condition?: string | null
           country_of_origin?: string | null
           created_at?: string
           description?: string | null
+          description_ar?: string | null
+          description_ku?: string | null
           form?: string | null
           gender?: string | null
           id?: string
@@ -421,19 +457,27 @@ export type Database = {
           skin_type?: string | null
           slug: string
           title: string
+          title_ar?: string | null
+          title_ku?: string | null
           updated_at?: string
           usage_instructions?: string | null
+          usage_instructions_ar?: string | null
+          usage_instructions_ku?: string | null
           volume_ml?: string | null
         }
         Update: {
           application?: string | null
           benefits?: string[] | null
+          benefits_ar?: string[] | null
+          benefits_ku?: string[] | null
           brand_id?: string | null
           category_id?: string | null
           condition?: string | null
           country_of_origin?: string | null
           created_at?: string
           description?: string | null
+          description_ar?: string | null
+          description_ku?: string | null
           form?: string | null
           gender?: string | null
           id?: string
@@ -445,8 +489,12 @@ export type Database = {
           skin_type?: string | null
           slug?: string
           title?: string
+          title_ar?: string | null
+          title_ku?: string | null
           updated_at?: string
           usage_instructions?: string | null
+          usage_instructions_ar?: string | null
+          usage_instructions_ku?: string | null
           volume_ml?: string | null
         }
         Relationships: [
