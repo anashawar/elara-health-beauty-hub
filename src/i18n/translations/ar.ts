@@ -217,8 +217,6 @@ export const ar = {
     welcomeToElara: "أهلاً بك في إيلارا، {{name}}!",
     signInFirst: "يرجى تسجيل الدخول أولاً",
   },
-    signInFirst: "يرجى تسجيل الدخول أولاً",
-  },
   wishlist: {
     title: "المفضلة",
     noSavedItems: "لا توجد عناصر محفوظة",
