@@ -6,18 +6,20 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatPrice } from "@/hooks/useProducts";
 import BottomNav from "@/components/layout/BottomNav";
 import { motion } from "framer-motion";
-
-const statusConfig: Record<string, { label: string; color: string; step: number }> = {
-  pending: { label: "Pending", color: "bg-amber-400", step: 0 },
-  processing: { label: "Processing", color: "bg-blue-400", step: 1 },
-  shipped: { label: "On the Way", color: "bg-primary", step: 2 },
-  delivered: { label: "Delivered", color: "bg-sage", step: 3 },
-};
-
-const steps = ["Pending", "Processing", "On the Way", "Delivered"];
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const OrdersPage = () => {
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
+
+  const statusConfig: Record<string, { label: string; color: string; step: number }> = {
+    pending: { label: t("cart.pending"), color: "bg-amber-400", step: 0 },
+    processing: { label: t("cart.processing"), color: "bg-blue-400", step: 1 },
+    shipped: { label: t("cart.onTheWay"), color: "bg-primary", step: 2 },
+    delivered: { label: t("cart.delivered"), color: "bg-sage", step: 3 },
+  };
+
+  const steps = [t("cart.pending"), t("cart.processing"), t("cart.onTheWay"), t("cart.delivered")];
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["orders", user?.id],
@@ -39,15 +41,15 @@ const OrdersPage = () => {
       <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
         <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
           <div className="flex items-center gap-3 px-4 py-3">
-            <Link to="/profile" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground" /></Link>
-            <h1 className="text-lg font-display font-bold text-foreground">My Orders</h1>
+            <Link to="/profile" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" /></Link>
+            <h1 className="text-lg font-display font-bold text-foreground">{t("orders.title")}</h1>
           </div>
         </header>
         <div className="flex flex-col items-center justify-center py-20 px-4">
           <Package className="w-16 h-16 text-muted-foreground/30 mb-4" />
-          <p className="text-sm text-muted-foreground mb-4">Sign in to view your orders</p>
+          <p className="text-sm text-muted-foreground mb-4">{t("orders.signInToView")}</p>
           <Link to="/auth" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm">
-            Sign In
+            {t("common.signIn")}
           </Link>
         </div>
         <BottomNav />
@@ -59,8 +61,8 @@ const OrdersPage = () => {
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
-          <Link to="/profile" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground" /></Link>
-          <h1 className="text-lg font-display font-bold text-foreground">My Orders</h1>
+          <Link to="/profile" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" /></Link>
+          <h1 className="text-lg font-display font-bold text-foreground">{t("orders.title")}</h1>
         </div>
       </header>
 
@@ -71,10 +73,10 @@ const OrdersPage = () => {
       ) : orders.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 px-4">
           <Package className="w-16 h-16 text-muted-foreground/30 mb-4" />
-          <p className="text-base font-semibold text-foreground mb-1">No orders yet</p>
-          <p className="text-sm text-muted-foreground mb-4">Start shopping to see your orders here</p>
+          <p className="text-base font-semibold text-foreground mb-1">{t("orders.noOrders")}</p>
+          <p className="text-sm text-muted-foreground mb-4">{t("orders.noOrdersDesc")}</p>
           <Link to="/home" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm">
-            Start Shopping
+            {t("common.startShopping")}
           </Link>
         </div>
       ) : (
@@ -90,7 +92,6 @@ const OrdersPage = () => {
                 transition={{ delay: idx * 0.05 }}
                 className="bg-card rounded-2xl p-4 shadow-premium"
               >
-                {/* Order header */}
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="text-[10px] text-muted-foreground">
@@ -103,7 +104,6 @@ const OrdersPage = () => {
                   </span>
                 </div>
 
-                {/* Progress tracker */}
                 <div className="flex items-center gap-1 mb-4">
                   {steps.map((step, i) => (
                     <div key={step} className="flex-1 flex flex-col items-center gap-1">
@@ -115,7 +115,6 @@ const OrdersPage = () => {
                   ))}
                 </div>
 
-                {/* Items preview */}
                 <div className="space-y-2 mb-3">
                   {items.slice(0, 3).map((item: any) => {
                     const img = item.products?.product_images?.[0]?.image_url;
@@ -126,20 +125,19 @@ const OrdersPage = () => {
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-foreground truncate">{item.products?.title}</p>
-                          <p className="text-[10px] text-muted-foreground">Qty: {item.quantity}</p>
+                          <p className="text-[10px] text-muted-foreground">{t("orders.qty")}: {item.quantity}</p>
                         </div>
                         <p className="text-xs font-semibold text-foreground">{formatPrice(item.price * item.quantity)}</p>
                       </div>
                     );
                   })}
                   {items.length > 3 && (
-                    <p className="text-[10px] text-muted-foreground">+{items.length - 3} more items</p>
+                    <p className="text-[10px] text-muted-foreground">{t("orders.moreItems", { count: items.length - 3 })}</p>
                   )}
                 </div>
 
-                {/* Total */}
                 <div className="flex items-center justify-between pt-3 border-t border-border/50">
-                  <span className="text-xs text-muted-foreground">Total</span>
+                  <span className="text-xs text-muted-foreground">{t("cart.total")}</span>
                   <span className="text-sm font-bold text-foreground">{formatPrice(Number(order.total))}</span>
                 </div>
               </motion.div>
