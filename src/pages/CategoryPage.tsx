@@ -60,7 +60,20 @@ const CategoryPage = () => {
   };
 
   const filteredProducts = useMemo(() => {
-    let result = id ? allProducts.filter(p => p.category_slug === id) : [...allProducts];
+    let result: typeof allProducts;
+    
+    if (isConcernRoute && id) {
+      // Filter by condition field OR tags matching the concern id
+      result = allProducts.filter(p => 
+        p.condition === id || 
+        (p.condition && p.condition.split(",").map(s => s.trim()).includes(id)) ||
+        p.tags.includes(id)
+      );
+    } else if (id) {
+      result = allProducts.filter(p => p.category_slug === id);
+    } else {
+      result = [...allProducts];
+    }
 
     // Filter by subcategory if selected
     if (activeSubId) {
