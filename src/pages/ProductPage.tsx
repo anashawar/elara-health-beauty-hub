@@ -234,8 +234,8 @@ const ProductPage = () => {
         <h1 className="text-xl font-display font-bold text-foreground mt-1.5 leading-tight">{product.title}</h1>
 
         {/* Price */}
-        <div className="flex items-baseline gap-2.5 mt-3">
-          <span className="text-2xl font-extrabold text-foreground">{formatPrice(product.price)}</span>
+        <div className="flex items-baseline gap-2.5 mt-2">
+          <span className="text-2xl font-extrabold text-primary">{formatPrice(product.price)}</span>
           {product.originalPrice && (
             <span className="text-sm text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
           )}
