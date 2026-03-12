@@ -6,10 +6,12 @@ const CategoryGrid = () => {
 
   if (categories.length === 0) return null;
 
+  const displayCategories = categories.slice(0, 8);
+
   return (
     <section className="px-4 mt-6">
       <div className="grid grid-cols-4 gap-2">
-        {categories.map(cat => (
+        {displayCategories.map(cat => (
           <Link
             key={cat.id}
             to={`/category/${cat.slug}`}
