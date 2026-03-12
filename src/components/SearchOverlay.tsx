@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, X, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { products, categories } from "@/data/products";
+import { useProducts, useCategories } from "@/hooks/useProducts";
 
 interface SearchOverlayProps {
   isOpen: boolean;
