@@ -7,6 +7,7 @@ import { useApp } from "@/context/AppContext";
 import { useProducts, formatPrice } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
+import ReviewSection from "@/components/product/ReviewSection";
 
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
