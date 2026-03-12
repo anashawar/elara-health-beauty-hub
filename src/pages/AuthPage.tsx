@@ -73,9 +73,7 @@ const AuthPage = () => {
   return (
     <div className="min-h-screen bg-background max-w-lg mx-auto flex flex-col">
       <header className="px-5 pt-6 pb-2 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="p-1">
-          <ArrowLeft className="w-5 h-5 text-foreground" />
-        </button>
+        <div className="flex-1" />
       </header>
 
       <div className="flex-1 px-5 overflow-hidden">
