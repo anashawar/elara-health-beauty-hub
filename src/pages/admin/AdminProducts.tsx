@@ -158,6 +158,10 @@ export default function AdminProducts() {
           });
           if (resp.ok) {
             toast.success("Translations generated (AR & KU)");
+          } else {
+            const errData = await resp.json().catch(() => ({}));
+            console.error("Translation error:", errData);
+            toast.error("Translation failed: " + (errData.error || resp.statusText));
           }
         } catch (err) {
           console.error("Translation failed:", err);
