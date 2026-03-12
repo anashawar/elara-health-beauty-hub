@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import elaraLogo from "@/assets/elara-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TopHeaderProps {
   onSearchClick: () => void;
@@ -13,7 +15,24 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
   const { t } = useLanguage();
   
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || t("common.guest");
-  const userCity = "Baghdad";
+
+  const { data: defaultAddress } = useQuery({
+    queryKey: ["default-address", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("addresses")
+        .select("city, area")
+        .eq("user_id", user!.id)
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const userCity = defaultAddress?.city || defaultAddress?.area || "";
 
   return (
     <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
@@ -28,10 +47,12 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
             <span className="text-xs font-medium text-foreground">
               {t("common.hey")}, <span className="font-bold text-primary">{firstName}</span> 👋
             </span>
-            <div className="flex items-center gap-1 mt-0.5">
+            <Link to={user ? "/addresses" : "/auth"} className="flex items-center gap-1 mt-0.5">
               <MapPin className="w-3 h-3 text-primary" />
-              <span className="text-[10px] text-muted-foreground font-medium">{userCity}, {t("common.iraq")}</span>
-            </div>
+              <span className="text-[10px] text-muted-foreground font-medium">
+                {userCity ? `${userCity}, ${t("common.iraq")}` : t("common.setLocation") || "Set location"}
+              </span>
+            </Link>
           </div>
         </div>
 
