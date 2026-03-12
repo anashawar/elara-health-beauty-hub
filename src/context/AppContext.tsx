@@ -1,15 +1,15 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
-import type { Product } from "@/data/products";
+import type { ProductWithRelations } from "@/hooks/useProducts";
 
 interface CartItem {
-  product: Product;
+  product: ProductWithRelations;
   quantity: number;
 }
 
 interface AppContextType {
   cart: CartItem[];
   wishlist: string[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: ProductWithRelations) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   toggleWishlist: (productId: string) => void;
@@ -31,7 +31,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
 
-  const addToCart = useCallback((product: Product) => {
+  const addToCart = useCallback((product: ProductWithRelations) => {
     setCart(prev => {
       const existing = prev.find(i => i.product.id === product.id);
       if (existing) {

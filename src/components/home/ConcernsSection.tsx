@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { concerns } from "@/data/products";
+import { concerns } from "@/hooks/useProducts";
 
 const ConcernsSection = () => {
   return (
