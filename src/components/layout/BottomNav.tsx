@@ -1,13 +1,13 @@
-import { Home, LayoutGrid, Heart, ShoppingBag, UserRound } from "lucide-react";
+import { Home, Store, LayoutGrid, Heart, UserRound } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { motion } from "framer-motion";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/" },
-  { icon: LayoutGrid, label: "Shop", path: "/categories" },
-  { icon: Heart, label: "Wishlist", path: "/wishlist" },
-  { icon: ShoppingBag, label: "Bag", path: "/cart" },
+  { icon: Store, label: "Shop", path: "/shop" },
+  { icon: LayoutGrid, label: "Categories", path: "/categories" },
+  { icon: Heart, label: "Fav", path: "/wishlist" },
   { icon: UserRound, label: "Me", path: "/profile" },
 ];
 
@@ -43,15 +43,6 @@ const BottomNav = () => {
                           : "text-muted-foreground stroke-[1.8px]"
                       }`}
                     />
-                    {label === "Bag" && cartCount > 0 && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center px-1"
-                      >
-                        {cartCount}
-                      </motion.span>
-                    )}
                   </div>
                   <span
                     className={`text-[10px] transition-colors duration-200 ${
