@@ -1,1 +1,4 @@
 project_id = "mycpfwnfvtsgshdzggrm"
+
+[functions.elara-chat]
+verify_jwt = false
