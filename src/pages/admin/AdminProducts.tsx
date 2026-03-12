@@ -143,6 +143,28 @@ export default function AdminProducts() {
           await supabase.from("product_images").insert({ product_id: productId, image_url: url, sort_order: startOrder + i });
         }
       }
+
+      // Auto-translate in background
+      if (productId) {
+        try {
+          setTranslating(true);
+          const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate-product`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({ product_id: productId }),
+          });
+          if (resp.ok) {
+            toast.success("Translations generated (AR & KU)");
+          }
+        } catch (err) {
+          console.error("Translation failed:", err);
+        } finally {
+          setTranslating(false);
+        }
+      }
     },
     onSuccess: () => {
       setUploading(false);
