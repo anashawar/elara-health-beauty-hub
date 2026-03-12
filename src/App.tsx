@@ -56,6 +56,7 @@ const App = () => (
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/addresses" element={<AddressesPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/install" element={<InstallPage />} />
             {/* Admin Panel */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
