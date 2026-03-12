@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon } from "lucide-react";
 import { formatPrice, useCategories, useBrands } from "@/hooks/useProducts";
 import { toast } from "sonner";
 
@@ -28,13 +28,21 @@ interface ProductForm {
   volume_ml: string;
   skin_type: string;
   country_of_origin: string;
+  condition: string;
 }
 
 const emptyForm: ProductForm = {
   title: "", slug: "", price: 0, original_price: null, description: "",
   category_id: "", brand_id: "", is_new: false, is_trending: false, is_pick: false,
-  volume_ml: "", skin_type: "", country_of_origin: "",
+  volume_ml: "", skin_type: "", country_of_origin: "", condition: "",
 };
+
+const BUCKET = "product-images";
+
+function getPublicUrl(path: string) {
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+}
 
 export default function AdminProducts() {
   const qc = useQueryClient();
@@ -42,6 +50,14 @@ export default function AdminProducts() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [editing, setEditing] = useState(false);
+
+  // Image state
+  const [mainImage, setMainImage] = useState<File | null>(null);
+  const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
+  const [additionalImages, setAdditionalImages] = useState<File[]>([]);
+  const [additionalPreviews, setAdditionalPreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<{ id: string; image_url: string; sort_order: number }[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
@@ -51,16 +67,25 @@ export default function AdminProducts() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("*, brands(name), categories(name), product_images(image_url)")
+        .select("*, brands(name), categories(name), product_images(id, image_url, sort_order)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
+  const uploadImage = async (file: File, productId: string, sortOrder: number): Promise<string> => {
+    const ext = file.name.split(".").pop();
+    const path = `${productId}/${Date.now()}-${sortOrder}.${ext}`;
+    const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true });
+    if (error) throw error;
+    return getPublicUrl(path);
+  };
+
   const saveMutation = useMutation({
     mutationFn: async (f: ProductForm) => {
-      const payload = {
+      setUploading(true);
+      const payload: any = {
         title: f.title,
         slug: f.slug || f.title.toLowerCase().replace(/\s+/g, "-"),
         price: f.price,
@@ -74,28 +99,52 @@ export default function AdminProducts() {
         volume_ml: f.volume_ml || null,
         skin_type: f.skin_type || null,
         country_of_origin: f.country_of_origin || null,
+        condition: f.condition || null,
       };
+
+      let productId = f.id;
+
       if (f.id) {
         const { error } = await supabase.from("products").update(payload).eq("id", f.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("products").insert(payload);
+        const { data, error } = await supabase.from("products").insert(payload).select("id").single();
         if (error) throw error;
+        productId = data.id;
+      }
+
+      // Upload main image
+      if (mainImage && productId) {
+        const url = await uploadImage(mainImage, productId, 0);
+        await supabase.from("product_images").insert({ product_id: productId, image_url: url, sort_order: 0 });
+      }
+
+      // Upload additional images
+      if (additionalImages.length > 0 && productId) {
+        const startOrder = (existingImages.length > 0 ? Math.max(...existingImages.map(i => i.sort_order)) : 0) + 1;
+        for (let i = 0; i < additionalImages.length; i++) {
+          const url = await uploadImage(additionalImages[i], productId, startOrder + i);
+          await supabase.from("product_images").insert({ product_id: productId, image_url: url, sort_order: startOrder + i });
+        }
       }
     },
     onSuccess: () => {
+      setUploading(false);
       qc.invalidateQueries({ queryKey: ["admin-products"] });
       qc.invalidateQueries({ queryKey: ["products"] });
       toast.success(editing ? "Product updated" : "Product created");
-      setOpen(false);
-      setForm(emptyForm);
-      setEditing(false);
+      resetForm();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => { setUploading(false); toast.error(e.message); },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Delete images from storage & DB
+      const { data: imgs } = await supabase.from("product_images").select("id, image_url").eq("product_id", id);
+      if (imgs && imgs.length > 0) {
+        await supabase.from("product_images").delete().eq("product_id", id);
+      }
       const { error } = await supabase.from("products").delete().eq("id", id);
       if (error) throw error;
     },
@@ -106,6 +155,45 @@ export default function AdminProducts() {
     },
     onError: (e) => toast.error(e.message),
   });
+
+  const deleteExistingImage = async (imgId: string) => {
+    const { error } = await supabase.from("product_images").delete().eq("id", imgId);
+    if (error) { toast.error(error.message); return; }
+    setExistingImages(prev => prev.filter(i => i.id !== imgId));
+    toast.success("Image removed");
+  };
+
+  const resetForm = () => {
+    setOpen(false);
+    setForm(emptyForm);
+    setEditing(false);
+    setMainImage(null);
+    setMainImagePreview(null);
+    setAdditionalImages([]);
+    setAdditionalPreviews([]);
+    setExistingImages([]);
+  };
+
+  const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setMainImage(file);
+      setMainImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const maxNew = 10 - existingImages.length - additionalImages.length;
+    const toAdd = files.slice(0, maxNew);
+    setAdditionalImages(prev => [...prev, ...toAdd]);
+    setAdditionalPreviews(prev => [...prev, ...toAdd.map(f => URL.createObjectURL(f))]);
+  };
+
+  const removeAdditional = (idx: number) => {
+    setAdditionalImages(prev => prev.filter((_, i) => i !== idx));
+    setAdditionalPreviews(prev => prev.filter((_, i) => i !== idx));
+  };
 
   const filtered = products.filter((p: any) =>
     p.title.toLowerCase().includes(search.toLowerCase())
@@ -118,7 +206,13 @@ export default function AdminProducts() {
       category_id: p.category_id || "", brand_id: p.brand_id || "",
       is_new: p.is_new || false, is_trending: p.is_trending || false, is_pick: p.is_pick || false,
       volume_ml: p.volume_ml || "", skin_type: p.skin_type || "", country_of_origin: p.country_of_origin || "",
+      condition: (p as any).condition || "",
     });
+    const sorted = [...(p.product_images || [])].sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+    setExistingImages(sorted);
+    if (sorted.length > 0) {
+      setMainImagePreview(sorted[0].image_url);
+    }
     setEditing(true);
     setOpen(true);
   };
@@ -127,11 +221,11 @@ export default function AdminProducts() {
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h1 className="text-2xl font-display font-bold text-foreground">Products</h1>
-        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setForm(emptyForm); setEditing(false); } }}>
+        <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); else setOpen(true); }}>
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="h-4 w-4 mr-1.5" />Add Product</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editing ? "Edit Product" : "Add Product"}</DialogTitle>
             </DialogHeader>
@@ -178,11 +272,80 @@ export default function AdminProducts() {
                 <Label>Description</Label>
                 <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
-              <div className="grid grid-cols-3 gap-3">
+
+              {/* Main Image */}
+              <div>
+                <Label className="mb-2 block">Main Image</Label>
+                {mainImagePreview ? (
+                  <div className="relative w-full h-40 rounded-xl overflow-hidden border border-border bg-muted">
+                    <img src={mainImagePreview} className="w-full h-full object-cover" alt="Main" />
+                    {!editing || mainImage ? (
+                      <button onClick={() => { setMainImage(null); setMainImagePreview(null); }} className="absolute top-2 right-2 bg-background/80 rounded-full p-1 hover:bg-destructive hover:text-destructive-foreground transition-colors">
+                        <X className="h-4 w-4" />
+                      </button>
+                    ) : null}
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-32 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+                    <Upload className="h-6 w-6 text-muted-foreground mb-1.5" />
+                    <span className="text-sm text-muted-foreground">Click to upload main image</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleMainImageChange} />
+                  </label>
+                )}
+              </div>
+
+              {/* Additional Images */}
+              <div>
+                <Label className="mb-2 block">Additional Images <span className="text-muted-foreground font-normal">(up to 10)</span></Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {/* Existing images (when editing) */}
+                  {existingImages.slice(editing ? 1 : 0).map((img) => (
+                    <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
+                      <img src={img.image_url} className="w-full h-full object-cover" alt="" />
+                      <button onClick={() => deleteExistingImage(img.id)} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground transition-all">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {/* New additional images */}
+                  {additionalPreviews.map((url, idx) => (
+                    <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
+                      <img src={url} className="w-full h-full object-cover" alt="" />
+                      <button onClick={() => removeAdditional(idx)} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground transition-all">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {/* Upload button */}
+                  {(existingImages.length - (editing ? 1 : 0) + additionalImages.length) < 10 && (
+                    <label className="aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
+                      <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-[10px] text-muted-foreground mt-0.5">Add</span>
+                      <input type="file" accept="image/*" multiple className="hidden" onChange={handleAdditionalImagesChange} />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Condition</Label>
+                  <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="like_new">Like New</SelectItem>
+                      <SelectItem value="good">Good</SelectItem>
+                      <SelectItem value="fair">Fair</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div>
                   <Label>Volume (ml)</Label>
                   <Input value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} />
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>Skin Type</Label>
                   <Input value={form.skin_type} onChange={(e) => setForm({ ...form, skin_type: e.target.value })} />
@@ -203,8 +366,8 @@ export default function AdminProducts() {
                   <Switch checked={form.is_pick} onCheckedChange={(v) => setForm({ ...form, is_pick: v })} /> Staff Pick
                 </label>
               </div>
-              <Button onClick={() => saveMutation.mutate(form)} disabled={!form.title || !form.price || saveMutation.isPending}>
-                {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
+              <Button onClick={() => saveMutation.mutate(form)} disabled={!form.title || !form.price || saveMutation.isPending || uploading}>
+                {(saveMutation.isPending || uploading) && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
                 {editing ? "Update" : "Create"}
               </Button>
             </div>
@@ -236,8 +399,10 @@ export default function AdminProducts() {
                 <TableRow key={p.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      {p.product_images?.[0]?.image_url && (
+                      {p.product_images?.[0]?.image_url ? (
                         <img src={p.product_images[0].image_url} className="w-10 h-10 rounded-lg object-cover" alt="" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center"><ImageIcon className="h-4 w-4 text-muted-foreground" /></div>
                       )}
                       <div>
                         <p className="font-medium text-sm text-foreground line-clamp-1">{p.title}</p>
