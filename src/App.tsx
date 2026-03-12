@@ -21,6 +21,7 @@ import BrandPage from "./pages/BrandPage";
 import NotFound from "./pages/NotFound";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import InstallPage from "./pages/InstallPage";
+import ElaraChatPage from "./pages/ElaraChatPage";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
