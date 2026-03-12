@@ -27,7 +27,7 @@ export interface ProductWithRelations {
   volume_ml: string | null;
   application: string | null;
   skin_type: string | null;
-}
+  condition: string | null;
 
 async function fetchProducts(): Promise<ProductWithRelations[]> {
   const { data: products, error } = await supabase
