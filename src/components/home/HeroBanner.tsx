@@ -101,13 +101,27 @@ const HeroBanner = () => {
               </button>
             )}
 
-            <Link
-              to={banner.ctaLink}
-              className="mt-3 inline-flex items-center gap-1.5 px-5 py-2 bg-white text-foreground text-xs font-semibold rounded-xl w-fit hover:bg-white/90 transition-all shadow-lg"
-            >
-              {banner.cta}
-              <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
-            </Link>
+            {banner.coupon ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingCoupon(banner.coupon!);
+                  navigate(banner.ctaLink);
+                }}
+                className="mt-3 inline-flex items-center gap-1.5 px-5 py-2 bg-white text-foreground text-xs font-semibold rounded-xl w-fit hover:bg-white/90 transition-all shadow-lg"
+              >
+                {banner.cta}
+                <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
+              </button>
+            ) : (
+              <Link
+                to={banner.ctaLink}
+                className="mt-3 inline-flex items-center gap-1.5 px-5 py-2 bg-white text-foreground text-xs font-semibold rounded-xl w-fit hover:bg-white/90 transition-all shadow-lg"
+              >
+                {banner.cta}
+                <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
+              </Link>
+            )}
           </div>
         </div>
       ))}
