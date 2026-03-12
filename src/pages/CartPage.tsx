@@ -18,9 +18,31 @@ interface AppliedCoupon {
 
 const CartPage = () => {
   const { cart, updateQuantity, removeFromCart, cartTotal, cartCount, clearCart } = useApp();
+  const { user } = useAuth();
   const [coupon, setCoupon] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
+
+  const statusConfig: Record<string, { label: string; color: string; icon: string }> = {
+    pending: { label: "Pending", color: "bg-amber-100 text-amber-700", icon: "⏳" },
+    processing: { label: "Processing", color: "bg-blue-100 text-blue-700", icon: "⚙️" },
+    on_the_way: { label: "On the Way", color: "bg-purple-100 text-purple-700", icon: "🚚" },
+    delivered: { label: "Delivered", color: "bg-green-100 text-green-700", icon: "✅" },
+  };
+
+  const { data: activeOrders } = useQuery({
+    queryKey: ["active-orders", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("orders")
+        .select("id, status, total, created_at, order_items(quantity)")
+        .in("status", ["pending", "processing", "on_the_way"])
+        .order("created_at", { ascending: false })
+        .limit(3);
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
   const discount = appliedCoupon
     ? appliedCoupon.discount_type === "percentage"
