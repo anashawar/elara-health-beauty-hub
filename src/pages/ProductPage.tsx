@@ -42,16 +42,26 @@ const ProductPage = () => {
 
   return (
     <div className="min-h-screen bg-background pb-36 max-w-lg mx-auto">
+      {/* Search Overlay */}
+      <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
-        <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-1 rounded-xl hover:bg-secondary transition-colors">
+        <div className="flex items-center gap-2 px-4 py-3">
+          <button onClick={() => navigate(-1)} className="p-2 -ml-1 rounded-xl hover:bg-secondary transition-colors flex-shrink-0">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
-          <div className="flex items-center gap-1">
-            <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 rounded-xl hover:bg-secondary transition-colors">
-              <Search className="w-5 h-5 text-foreground" />
-            </button>
+
+          {/* Search bar */}
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="flex-1 flex items-center gap-2.5 px-4 py-2.5 bg-secondary/80 rounded-xl border border-border hover:border-primary/30 transition-all duration-200"
+          >
+            <Search className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Search products, brands...</span>
+          </button>
+
+          <div className="flex items-center gap-0.5 flex-shrink-0">
             <button
               onClick={async () => {
                 const shareData = {
@@ -66,9 +76,7 @@ const ProductPage = () => {
                     await navigator.clipboard.writeText(window.location.href);
                     toast("Link copied to clipboard!");
                   }
-                } catch (e) {
-                  // user cancelled share
-                }
+                } catch (e) {}
               }}
               className="p-2 rounded-xl hover:bg-secondary transition-colors"
             >
@@ -79,50 +87,6 @@ const ProductPage = () => {
             </button>
           </div>
         </div>
-        <AnimatePresence>
-          {searchOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden px-4 pb-3"
-            >
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  autoFocus
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search for..."
-                  className="w-full pl-9 pr-9 py-2.5 bg-secondary rounded-xl text-sm text-foreground placeholder:text-muted-foreground outline-none"
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <X className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                )}
-              </div>
-              {searchResults.length > 0 && (
-                <div className="mt-2 bg-card rounded-xl border border-border shadow-lg overflow-hidden">
-                  {searchResults.map(p => (
-                    <Link
-                      key={p.id}
-                      to={`/product/${p.id}`}
-                      onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
-                      className="flex items-center gap-3 px-3 py-2.5 hover:bg-secondary/50 transition-colors"
-                    >
-                      <img src={p.image} alt={p.title} className="w-10 h-10 rounded-lg object-cover" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{p.title}</p>
-                        <p className="text-xs text-muted-foreground">{p.brand} · {formatPrice(p.price)}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
       </header>
 
       {/* Image Gallery Slider */}
