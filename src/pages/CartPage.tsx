@@ -6,7 +6,7 @@ import { formatPrice } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/layout/BottomNav";
 import FloatingSearch from "@/components/layout/FloatingSearch";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
