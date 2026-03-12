@@ -145,12 +145,29 @@ const CategoryPage = () => {
           }}>
             <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
           </Link>
-          <h1 className="text-lg font-bold text-foreground">
-            {activeConcern 
-              ? `${activeConcern.icon} ${t(`concerns.${id === "dryskin" ? "drySkin" : id === "hairloss" ? "hairLoss" : id === "sensitive" ? "sensitiveSkin" : id === "weightloss" ? "weightLoss" : id}`) || activeConcern.name}`
-              : activeSubName ? getSubName(activeSubName) : category ? getCatName(category) : t("categories.allProducts")}
-          </h1>
+          {!activeConcern && (
+            <h1 className="text-lg font-bold text-foreground">
+              {activeSubName ? getSubName(activeSubName) : category ? getCatName(category) : t("categories.allProducts")}
+            </h1>
+          )}
         </div>
+
+        {/* Concern hero header */}
+        {activeConcern && (
+          <div className="px-5 pb-4 pt-1">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/40 flex items-center justify-center text-2xl shadow-sm">
+                {activeConcern.icon}
+              </div>
+              <div>
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Products for</p>
+                <h1 className="text-xl font-display font-bold text-foreground -mt-0.5">
+                  {t(`concerns.${id === "dryskin" ? "drySkin" : id === "hairloss" ? "hairLoss" : id === "sensitive" ? "sensitiveSkin" : id === "weightloss" ? "weightLoss" : id}`) || activeConcern.name}
+                </h1>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Subcategory chips */}
         {categorySubs.length > 0 && (
