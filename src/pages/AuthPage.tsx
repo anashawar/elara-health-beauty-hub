@@ -1,31 +1,33 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, User, ArrowRight, ArrowLeft, Eye, EyeOff, Phone, MapPin, Navigation, Loader2 } from "lucide-react";
+import { User, ArrowRight, Phone, MapPin, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const cities = ["Baghdad", "Erbil", "Basra", "Sulaymaniyah", "Najaf", "Karbala", "Kirkuk", "Mosul", "Duhok"];
 
-type Step = "auth" | "address" | "forgot";
+type Step = "phone" | "otp" | "address";
+
+const OTP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading, signUp, signIn } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
 
-  const [step, setStep] = useState<Step>("auth");
-  const [mode, setMode] = useState<"login" | "signup">("signup");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [step, setStep] = useState<Step>("phone");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [normalizedPhone, setNormalizedPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [countdown, setCountdown] = useState(0);
 
   const [city, setCity] = useState("");
   const [area, setArea] = useState("");
@@ -34,55 +36,81 @@ const AuthPage = () => {
   const [floor, setFloor] = useState("");
 
   useEffect(() => {
-    if (!authLoading && user && step === "auth") {
+    if (!authLoading && user && step === "phone") {
       navigate("/home", { replace: true });
     }
   }, [user, authLoading, navigate, step]);
 
-  const handleAuth = async () => {
-    if (mode === "signup") {
-      if (!fullName.trim()) { toast(t("auth.enterName")); return; }
-      if (!phone.trim()) { toast(t("auth.enterPhone")); return; }
-      if (!email.trim()) { toast(t("auth.enterEmail")); return; }
-      if (!password || password.length < 6) { toast(t("auth.passwordMin")); return; }
+  // Countdown timer for resend
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
-      setLoading(true);
-      try {
-        const { error } = await signUp(email, password, fullName, phone);
-        if (error) { toast(error.message); return; }
+  const handleSendOTP = async () => {
+    if (!phone.trim()) { toast(t("auth.enterPhone")); return; }
 
-        const { error: signInError } = await signIn(email, password);
-        if (signInError) {
-          toast(t("auth.accountCreatedVerify"));
-          setMode("login");
-          return;
-        }
+    setLoading(true);
+    try {
+      const resp = await fetch(`${OTP_URL}/send-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ phone: phone.trim(), full_name: fullName.trim() }),
+      });
 
-        const { data: { user: newUser } } = await supabase.auth.getUser();
-        if (newUser) {
-          await supabase.from("profiles").insert({
-            user_id: newUser.id,
-            full_name: fullName,
-            phone: phone,
-          });
-        }
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Failed to send OTP");
 
-        toast(t("auth.accountCreated"));
+      setNormalizedPhone(data.phone);
+      setStep("otp");
+      setCountdown(60);
+      toast(t("auth.otpSent") || "Verification code sent!");
+    } catch (e: any) {
+      toast(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    if (otpCode.length !== 6) { toast(t("auth.enterOtp") || "Enter the 6-digit code"); return; }
+
+    setLoading(true);
+    try {
+      const resp = await fetch(`${OTP_URL}/verify-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ phone: normalizedPhone, code: otpCode, full_name: fullName.trim() }),
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Verification failed");
+
+      if (data.session) {
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+      }
+
+      if (data.isNewUser) {
+        toast(t("auth.accountCreated") || "Account created!");
         setStep("address");
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      if (!email || !password) { toast(t("auth.fillAllFields")); return; }
-      setLoading(true);
-      try {
-        const { error } = await signIn(email, password);
-        if (error) { toast(error.message); return; }
-        toast(t("auth.welcomeBackToast"));
+      } else {
+        toast(t("auth.welcomeBackToast") || "Welcome back!");
         navigate("/home");
-      } finally {
-        setLoading(false);
       }
+    } catch (e: any) {
+      toast(e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -102,13 +130,13 @@ const AuthPage = () => {
         street: street || null,
         building: building || null,
         floor: floor || null,
-        phone: phone || null,
+        phone: normalizedPhone || null,
         is_default: true,
       });
 
       if (error) { toast(error.message); return; }
 
-      toast(t("auth.welcomeToElara", { name: fullName.split(" ")[0] }));
+      toast(t("auth.welcomeToElara", { name: fullName.split(" ")[0] }) || "Welcome to ELARA!");
       navigate("/home");
     } finally {
       setLoading(false);
@@ -123,19 +151,19 @@ const AuthPage = () => {
 
   return (
     <div className="min-h-screen bg-background max-w-lg mx-auto flex flex-col">
-      {mode === "signup" && (
-        <div className="px-5 pt-6 pb-2 flex gap-2">
-          <div className={`h-1 flex-1 rounded-full transition-colors duration-300 bg-primary`} />
-          <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === "address" ? "bg-primary" : "bg-muted"}`} />
-        </div>
-      )}
-      {mode === "login" && <div className="pt-8" />}
+      {/* Progress bar */}
+      <div className="px-5 pt-6 pb-2 flex gap-2">
+        <div className="h-1 flex-1 rounded-full transition-colors duration-300 bg-primary" />
+        <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === "otp" || step === "address" ? "bg-primary" : "bg-muted"}`} />
+        <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === "address" ? "bg-primary" : "bg-muted"}`} />
+      </div>
 
       <div className="flex-1 px-5 overflow-hidden">
         <AnimatePresence mode="wait">
-          {step === "auth" && (
+          {/* Step 1: Phone + Name */}
+          {step === "phone" && (
             <motion.div
-              key={mode}
+              key="phone"
               variants={slideVariants}
               initial="enter"
               animate="center"
@@ -145,101 +173,46 @@ const AuthPage = () => {
             >
               <div>
                 <h1 className="text-2xl font-display font-bold text-foreground">
-                  {mode === "login" ? t("auth.welcomeBack") : t("auth.createAccount")}
+                  {t("auth.createAccount") || "Create Account"}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {mode === "login" ? t("auth.signInToAccount") : t("auth.joinElara")}
+                  {t("auth.joinElara") || "Enter your phone number to get started"}
                 </p>
               </div>
 
               <div className="space-y-3">
-                {mode === "signup" && (
-                  <>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">{t("auth.fullName")}</label>
-                      <div className="relative">
-                        <User className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          placeholder={t("auth.enterFullName")}
-                          className="pl-10 rtl:pl-3 rtl:pr-10 h-12 rounded-xl border-border bg-card"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">{t("auth.phoneNumber")}</label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          placeholder="+964 XXX XXX XXXX"
-                          type="tel"
-                          className="pl-10 rtl:pl-3 rtl:pr-10 h-12 rounded-xl border-border bg-card"
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">{t("auth.email")}</label>
+                  <label className="text-xs font-medium text-muted-foreground">{t("auth.fullName")}</label>
                   <div className="relative">
-                    <Mail className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <User className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      type="email"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder={t("auth.enterFullName")}
                       className="pl-10 rtl:pl-3 rtl:pr-10 h-12 rounded-xl border-border bg-card"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">{t("auth.password")}</label>
+                  <label className="text-xs font-medium text-muted-foreground">{t("auth.phoneNumber")}</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <div className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">+964</div>
                     <Input
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder={t("auth.minChars")}
-                      type={showPassword ? "text" : "password"}
-                      className="pl-10 rtl:pl-10 rtl:pr-10 pr-10 h-12 rounded-xl border-border bg-card"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ""))}
+                      placeholder="7XX XXX XXXX"
+                      type="tel"
+                      className="pl-14 rtl:pl-3 rtl:pr-14 h-12 rounded-xl border-border bg-card"
+                      maxLength={11}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
-                    </button>
                   </div>
                 </div>
               </div>
 
-              {mode === "login" && (
-                <button
-                  onClick={() => setStep("forgot")}
-                  className="w-full text-right rtl:text-left text-xs text-primary font-medium hover:underline -mt-1"
-                >
-                  {t("auth.forgotPassword")}
-                </button>
-              )}
-
-              <Button onClick={handleAuth} disabled={loading} className="w-full h-12 rounded-xl text-sm font-semibold gap-2">
-                {loading ? t("auth.pleaseWait") : mode === "login" ? t("common.signIn") : t("auth.createAccount")}
-                {!loading && <ArrowRight className="w-4 h-4 rtl:rotate-180" />}
+              <Button onClick={handleSendOTP} disabled={loading} className="w-full h-12 rounded-xl text-sm font-semibold gap-2">
+                {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("auth.sending") || "Sending..."}</> : <>{t("auth.sendCode") || "Send Verification Code"} <ArrowRight className="w-4 h-4 rtl:rotate-180" /></>}
               </Button>
-
-              <button
-                onClick={() => setMode(mode === "login" ? "signup" : "login")}
-                className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
-              >
-                {mode === "login" ? t("auth.noAccount") : t("auth.hasAccount")}
-              </button>
 
               <button
                 onClick={() => navigate("/home")}
@@ -250,67 +223,65 @@ const AuthPage = () => {
             </motion.div>
           )}
 
-          {step === "forgot" && (
+          {/* Step 2: OTP Verification */}
+          {step === "otp" && (
             <motion.div
-              key="forgot"
+              key="otp"
               variants={slideVariants}
               initial="enter"
               animate="center"
               exit="exit"
               transition={{ duration: 0.25 }}
-              className="space-y-5"
+              className="space-y-6"
             >
-              <div>
-                <h1 className="text-2xl font-display font-bold text-foreground">{t("auth.resetPassword")}</h1>
-                <p className="text-sm text-muted-foreground mt-1">{t("auth.resetDesc")}</p>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">{t("auth.email")}</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    type="email"
-                    className="pl-10 rtl:pl-3 rtl:pr-10 h-12 rounded-xl border-border bg-card"
-                  />
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/40 flex items-center justify-center mx-auto mb-4">
+                  <ShieldCheck className="w-8 h-8 text-primary" />
                 </div>
+                <h1 className="text-2xl font-display font-bold text-foreground">
+                  {t("auth.verifyPhone") || "Verify Phone"}
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t("auth.codeSentTo") || "Enter the code sent to"} <span className="font-semibold text-foreground">{normalizedPhone}</span>
+                </p>
               </div>
 
-              <Button
-                onClick={async () => {
-                  if (!email.trim()) { toast(t("auth.enterEmail")); return; }
-                  setLoading(true);
-                  try {
-                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                      redirectTo: `${window.location.origin}/reset-password`,
-                    });
-                    if (error) { toast(error.message); return; }
-                    toast(t("auth.resetLinkSent"));
-                    setStep("auth");
-                    setMode("login");
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                disabled={loading}
-                className="w-full h-12 rounded-xl text-sm font-semibold gap-2"
-              >
-                {loading ? t("auth.sending") : t("auth.sendResetLink")}
-                {!loading && <ArrowRight className="w-4 h-4 rtl:rotate-180" />}
+              <div className="flex justify-center">
+                <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} className="w-12 h-14 text-lg rounded-xl" />
+                    <InputOTPSlot index={1} className="w-12 h-14 text-lg rounded-xl" />
+                    <InputOTPSlot index={2} className="w-12 h-14 text-lg rounded-xl" />
+                    <InputOTPSlot index={3} className="w-12 h-14 text-lg rounded-xl" />
+                    <InputOTPSlot index={4} className="w-12 h-14 text-lg rounded-xl" />
+                    <InputOTPSlot index={5} className="w-12 h-14 text-lg rounded-xl" />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+
+              <Button onClick={handleVerifyOTP} disabled={loading || otpCode.length !== 6} className="w-full h-12 rounded-xl text-sm font-semibold gap-2">
+                {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("auth.verifying") || "Verifying..."}</> : <>{t("auth.verify") || "Verify"} <ArrowRight className="w-4 h-4 rtl:rotate-180" /></>}
               </Button>
 
-              <button
-                onClick={() => { setStep("auth"); setMode("login"); }}
-                className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
-              >
-                {t("auth.backToSignIn")}
-              </button>
+              <div className="text-center space-y-2">
+                {countdown > 0 ? (
+                  <p className="text-xs text-muted-foreground">{t("auth.resendIn") || "Resend in"} {countdown}s</p>
+                ) : (
+                  <button onClick={handleSendOTP} disabled={loading} className="text-sm text-primary font-medium hover:underline">
+                    {t("auth.resendCode") || "Resend Code"}
+                  </button>
+                )}
+                <button
+                  onClick={() => { setStep("phone"); setOtpCode(""); }}
+                  className="block w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {t("auth.changeNumber") || "Change number"}
+                </button>
+              </div>
             </motion.div>
           )}
 
+          {/* Step 3: Address */}
           {step === "address" && (
             <motion.div
               key="address"
