@@ -95,6 +95,14 @@ const AuthPage = () => {
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || "Verification failed");
 
+      if (data.isNewUser) {
+        toast(t("auth.accountCreated") || "Account created!");
+        setStep("address");
+      } else {
+        toast(t("auth.welcomeBackToast") || "Welcome back!");
+      }
+
+      // Set session AFTER updating step to avoid redirect race condition
       if (data.session) {
         await supabase.auth.setSession({
           access_token: data.session.access_token,
@@ -102,11 +110,7 @@ const AuthPage = () => {
         });
       }
 
-      if (data.isNewUser) {
-        toast(t("auth.accountCreated") || "Account created!");
-        setStep("address");
-      } else {
-        toast(t("auth.welcomeBackToast") || "Welcome back!");
+      if (!data.isNewUser) {
         navigate("/home");
       }
     } catch (e: any) {
