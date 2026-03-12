@@ -61,7 +61,7 @@ export default function AdminProducts() {
   const [additionalImages, setAdditionalImages] = useState<File[]>([]);
   const [additionalPreviews, setAdditionalPreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<{ id: string; image_url: string; sort_order: number }[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [translating, setTranslating] = useState(false);
 
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
