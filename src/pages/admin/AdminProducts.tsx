@@ -327,6 +327,14 @@ export default function AdminProducts() {
                 <Label>Description</Label>
                 <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
+              <div>
+                <Label>Benefits <span className="text-muted-foreground font-normal">(one per line)</span></Label>
+                <Textarea rows={3} placeholder="Hydrates skin deeply&#10;Reduces fine lines&#10;Brightens complexion" value={form.benefits} onChange={(e) => setForm({ ...form, benefits: e.target.value })} />
+              </div>
+              <div>
+                <Label>How to Use</Label>
+                <Textarea rows={3} placeholder="Apply a small amount to clean, dry skin morning and evening..." value={form.usage_instructions} onChange={(e) => setForm({ ...form, usage_instructions: e.target.value })} />
+              </div>
 
               {/* Main Image */}
               <div>
