@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Minus, Plus, Trash2, Tag, ShoppingBag, Sparkles, Truck, X, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Trash2, Tag, ShoppingBag, Sparkles, Truck, X, CheckCircle2, Loader2, Package, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/context/AppContext";
 import { formatPrice } from "@/hooks/useProducts";
@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/layout/BottomNav";
 import { useState } from "react";
 import { toast } from "@/components/ui/sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
 
 interface AppliedCoupon {
   code: string;
