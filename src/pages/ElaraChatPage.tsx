@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingBag, Plus, MessageCircle } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingBag, ShoppingCart, Plus, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import BottomNav from "@/components/layout/BottomNav";
@@ -10,6 +10,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useApp } from "@/context/AppContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -40,6 +41,7 @@ const ElaraChatPage = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const { data: products = [] } = useProducts();
+  const { addToCart } = useApp();
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -137,19 +139,31 @@ const ElaraChatPage = () => {
           const product = products.find(p => p.id === part.id);
           const image = product?.image || "/placeholder.svg";
           return (
-            <Link key={i} to={`/product/${part.id}`}
-              className="flex items-center gap-3 my-2 p-2.5 rounded-xl bg-secondary/70 border border-border hover:border-primary/30 transition-all group">
-              <div className="w-12 h-12 rounded-lg bg-card overflow-hidden flex-shrink-0">
-                <img src={image} alt={part.title} className="w-full h-full object-cover" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-foreground truncate">{part.title}</p>
-                <p className="text-[11px] text-primary font-bold">{part.price}</p>
-              </div>
-              <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <ShoppingBag className="w-3.5 h-3.5 text-primary" />
-              </div>
-            </Link>
+            <div key={i} className="flex items-center gap-3 my-2 p-2.5 rounded-xl bg-secondary/70 border border-border transition-all">
+              <Link to={`/product/${part.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="w-12 h-12 rounded-lg bg-card overflow-hidden flex-shrink-0">
+                  <img src={image} alt={part.title} className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-foreground truncate">{part.title}</p>
+                  <p className="text-[11px] text-primary font-bold">{part.price}</p>
+                </div>
+              </Link>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (product) {
+                    addToCart(product);
+                    toast.success(`${part.title} added to cart`);
+                  } else {
+                    toast.error("Product not found");
+                  }
+                }}
+                className="flex-shrink-0 w-8 h-8 rounded-xl bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors active:scale-95"
+              >
+                <ShoppingCart className="w-4 h-4 text-primary-foreground" />
+              </button>
+            </div>
           );
         })}
       </div>
