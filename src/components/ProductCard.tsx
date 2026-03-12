@@ -33,7 +33,7 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
         <div className="p-3">
           <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{product.brand}</p>
           <Link to={`/product/${product.id}`}>
-            <h3 className="text-xs font-medium text-foreground mt-0.5 line-clamp-2 leading-snug">{product.title}</h3>
+            <h3 className="text-xs font-bold text-foreground mt-0.5 line-clamp-2 leading-snug tracking-tight">{product.title}</h3>
           </Link>
           <div className="flex items-center gap-1.5 mt-2">
             <span className="text-sm font-bold text-foreground">{formatPrice(product.price)}</span>
