@@ -9,6 +9,8 @@ interface SearchOverlayProps {
 }
 
 const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
+  const { data: products = [] } = useProducts();
+  const { data: categories = [] } = useCategories();
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
