@@ -18,7 +18,7 @@ const ProfilePage = () => {
   const handleSignOut = async () => {
     await signOut();
     toast("Signed out");
-    navigate("/");
+    navigate("/home");
   };
 
   return (
