@@ -17,6 +17,8 @@ interface AppContextType {
   cartTotal: number;
   cartCount: number;
   clearCart: () => void;
+  pendingCoupon: string | null;
+  setPendingCoupon: (code: string | null) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
