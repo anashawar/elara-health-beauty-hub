@@ -4,73 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Sparkles } from "lucide-react";
 import BottomNav from "@/components/layout/BottomNav";
 import FloatingSearch from "@/components/layout/FloatingSearch";
-import { useCategories } from "@/hooks/useProducts";
+import { useCategories, useSubcategories } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
-
-const subCategories: Record<string, { name: string; icon: string }[]> = {
-  skincare: [
-    { name: "Cleansers", icon: "🧼" },
-    { name: "Moisturizers", icon: "💧" },
-    { name: "Serums", icon: "✨" },
-    { name: "Sunscreen", icon: "☀️" },
-    { name: "Masks", icon: "🎭" },
-    { name: "Toners", icon: "🌸" },
-  ],
-  haircare: [
-    { name: "Shampoo", icon: "🧴" },
-    { name: "Conditioner", icon: "💆" },
-    { name: "Hair Oil", icon: "🫧" },
-    { name: "Treatments", icon: "💇" },
-    { name: "Styling", icon: "💫" },
-  ],
-  bodycare: [
-    { name: "Body Wash", icon: "🚿" },
-    { name: "Body Lotion", icon: "🧴" },
-    { name: "Deodorant", icon: "🌿" },
-    { name: "Hand Cream", icon: "🤲" },
-  ],
-  makeup: [
-    { name: "Lips", icon: "💋" },
-    { name: "Eyes", icon: "👁️" },
-    { name: "Face", icon: "✨" },
-    { name: "Nails", icon: "💅" },
-  ],
-  vitamins: [
-    { name: "Multivitamins", icon: "💊" },
-    { name: "Vitamin D", icon: "☀️" },
-    { name: "Omega-3", icon: "🐟" },
-    { name: "Iron", icon: "💪" },
-  ],
-  personalcare: [
-    { name: "Oral Care", icon: "🪥" },
-    { name: "Feminine Care", icon: "🌷" },
-    { name: "Shaving", icon: "🪒" },
-  ],
-  otc: [
-    { name: "Pain Relief", icon: "💊" },
-    { name: "Cold & Flu", icon: "🤧" },
-    { name: "Digestive", icon: "🫄" },
-    { name: "First Aid", icon: "🩹" },
-  ],
-  wellness: [
-    { name: "Supplements", icon: "🌿" },
-    { name: "Probiotics", icon: "🦠" },
-    { name: "Protein", icon: "💪" },
-  ],
-  motherbaby: [
-    { name: "Baby Care", icon: "👶" },
-    { name: "Diapers", icon: "🧷" },
-    { name: "Maternity", icon: "🤰" },
-  ],
-  devices: [
-    { name: "Skin Devices", icon: "🔬" },
-    { name: "Hair Tools", icon: "💇" },
-    { name: "Oral Devices", icon: "🪥" },
-  ],
-};
 
 const CategoriesPage = () => {
   const { data: categories = [] } = useCategories();
+  const { data: subcategories = [] } = useSubcategories();
   const { t, language } = useLanguage();
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
 
@@ -82,6 +21,12 @@ const CategoriesPage = () => {
     if (language === "ar" && cat.name_ar) return cat.name_ar;
     if (language === "ku" && cat.name_ku) return cat.name_ku;
     return cat.name;
+  };
+
+  const getSubName = (sub: any) => {
+    if (language === "ar" && sub.name_ar) return sub.name_ar;
+    if (language === "ku" && sub.name_ku) return sub.name_ku;
+    return sub.name;
   };
 
   return (
@@ -96,7 +41,7 @@ const CategoriesPage = () => {
       <div className="px-4 mt-4 space-y-3">
         {categories.map((cat, idx) => {
           const isExpanded = expandedSlug === cat.slug;
-          const subs = subCategories[cat.slug] || [];
+          const subs = subcategories.filter(s => s.category_id === cat.id);
 
           return (
             <motion.div
@@ -107,7 +52,7 @@ const CategoriesPage = () => {
               className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden"
             >
               <button
-                onClick={() => toggleExpand(cat.slug)}
+                onClick={() => subs.length > 0 ? toggleExpand(cat.slug) : null}
                 className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-secondary/30 transition-colors"
               >
                 <span className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-xl">
@@ -157,13 +102,13 @@ const CategoriesPage = () => {
                       <div className="grid grid-cols-3 gap-2 mt-2">
                         {subs.map((sub) => (
                           <Link
-                            key={sub.name}
-                            to={`/category/${cat.slug}?sub=${encodeURIComponent(sub.name)}`}
+                            key={sub.id}
+                            to={`/category/${cat.slug}?sub=${sub.id}`}
                             className="flex flex-col items-center gap-1 py-3 px-2 rounded-xl bg-secondary/40 hover:bg-secondary transition-colors"
                           >
                             <span className="text-lg">{sub.icon}</span>
                             <span className="text-[10px] font-medium text-foreground text-center leading-tight">
-                              {sub.name}
+                              {getSubName(sub)}
                             </span>
                           </Link>
                         ))}

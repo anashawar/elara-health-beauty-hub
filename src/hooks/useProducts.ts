@@ -9,6 +9,7 @@ export interface ProductWithRelations {
   brand_id: string | null;
   category_id: string | null;
   category_slug: string | null;
+  subcategory_id: string | null;
   price: number;
   originalPrice: number | null;
   image: string;
@@ -50,6 +51,7 @@ async function fetchProducts(): Promise<ProductWithRelations[]> {
     brand_id: p.brand_id,
     category_id: p.category_id,
     category_slug: p.categories?.slug || null,
+    subcategory_id: p.subcategory_id || null,
     price: Number(p.price),
     originalPrice: p.original_price ? Number(p.original_price) : null,
     image: p.product_images?.[0]?.image_url || "/placeholder.svg",
@@ -90,6 +92,8 @@ export function useProduct(id: string | undefined) {
 export interface CategoryRow {
   id: string;
   name: string;
+  name_ar?: string | null;
+  name_ku?: string | null;
   slug: string;
   icon: string | null;
   color: string | null;
@@ -102,6 +106,31 @@ export function useCategories() {
     queryFn: async (): Promise<CategoryRow[]> => {
       const { data, error } = await supabase
         .from("categories")
+        .select("*")
+        .order("sort_order");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+export interface SubcategoryRow {
+  id: string;
+  category_id: string;
+  name: string;
+  name_ar: string | null;
+  name_ku: string | null;
+  slug: string;
+  icon: string | null;
+  sort_order: number | null;
+}
+
+export function useSubcategories() {
+  return useQuery({
+    queryKey: ["subcategories"],
+    queryFn: async (): Promise<SubcategoryRow[]> => {
+      const { data, error } = await supabase
+        .from("subcategories")
         .select("*")
         .order("sort_order");
       if (error) throw error;
