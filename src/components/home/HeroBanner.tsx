@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Gift, Truck, ShieldCheck, ArrowRight, Copy } from "lucide-react";
 import bannerDiscount from "@/assets/banner-discount.jpg";
 import bannerDelivery from "@/assets/banner-delivery.jpg";
 import bannerOriginal from "@/assets/banner-original.jpg";
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useApp } from "@/context/AppContext";
 
 const HeroBanner = () => {
   const [current, setCurrent] = useState(0);
