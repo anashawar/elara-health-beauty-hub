@@ -16,6 +16,7 @@ const CheckoutPage = () => {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [notes, setNotes] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cod");
   const deliveryFee = cartTotal >= 40000 ? 0 : 5000;
 
   const { data: addresses = [], isLoading: addressesLoading } = useQuery({
