@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Search, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import elaraLogo from "@/assets/elara-logo.png";
 
@@ -7,16 +7,34 @@ interface TopHeaderProps {
 }
 
 const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
+  // TODO: replace with real user data from auth context
+  const userName = "Guest";
+  const userCity = "Baghdad";
+
   return (
     <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
-      <div className="flex items-center gap-3 px-4 py-3 max-w-lg mx-auto">
-        <Link to="/" className="flex-shrink-0">
-          <img src={elaraLogo} alt="ELARA" className="h-7" />
-        </Link>
+      <div className="max-w-lg mx-auto px-4 py-3 space-y-2.5">
+        {/* Top row: Logo + Welcome */}
+        <div className="flex items-center justify-between">
+          <Link to="/" className="flex-shrink-0">
+            <img src={elaraLogo} alt="ELARA" className="h-7" />
+          </Link>
 
+          <div className="flex flex-col items-end">
+            <span className="text-xs font-medium text-foreground">
+              Hey, <span className="font-bold text-primary">{userName}</span> 👋
+            </span>
+            <div className="flex items-center gap-1 mt-0.5">
+              <MapPin className="w-3 h-3 text-primary" />
+              <span className="text-[10px] text-muted-foreground font-medium">{userCity}, Iraq</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Search bar */}
         <button
           onClick={onSearchClick}
-          className="flex-1 flex items-center gap-2.5 px-4 py-2.5 bg-secondary/80 rounded-xl border border-border hover:border-primary/30 transition-all duration-200"
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 bg-secondary/80 rounded-xl border border-border hover:border-primary/30 transition-all duration-200"
         >
           <Search className="w-4 h-4 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">Search products, brands...</span>
