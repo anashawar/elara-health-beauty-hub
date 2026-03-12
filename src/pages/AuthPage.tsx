@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, ArrowRight, Phone, MapPin, Loader2, ShieldCheck } from "lucide-react";
+import { User, ArrowRight, Phone, MapPin, Loader2, ShieldCheck, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
@@ -23,6 +23,7 @@ const AuthPage = () => {
 
   const [step, setStep] = useState<Step>("phone");
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [normalizedPhone, setNormalizedPhone] = useState("");
@@ -50,6 +51,7 @@ const AuthPage = () => {
 
   const handleSendOTP = async () => {
     if (!phone.trim()) { toast(t("auth.enterPhone")); return; }
+    if (!email.trim()) { toast(t("auth.enterEmail") || "Please enter your email"); return; }
 
     setLoading(true);
     try {
@@ -59,7 +61,7 @@ const AuthPage = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ phone: phone.trim(), full_name: fullName.trim() }),
+        body: JSON.stringify({ phone: phone.trim(), full_name: fullName.trim(), email: email.trim() }),
       });
 
       const data = await resp.json();
@@ -68,7 +70,7 @@ const AuthPage = () => {
       setNormalizedPhone(data.phone);
       setStep("otp");
       setCountdown(60);
-      toast(t("auth.otpSent") || "Verification code sent!");
+      toast(t("auth.otpSent") || "Verification code sent via WhatsApp!");
     } catch (e: any) {
       toast(e.message);
     } finally {
@@ -87,7 +89,7 @@ const AuthPage = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ phone: normalizedPhone, code: otpCode, full_name: fullName.trim() }),
+        body: JSON.stringify({ phone: normalizedPhone, code: otpCode, full_name: fullName.trim(), email: email.trim() }),
       });
 
       const data = await resp.json();
@@ -160,7 +162,7 @@ const AuthPage = () => {
 
       <div className="flex-1 px-5 overflow-hidden">
         <AnimatePresence mode="wait">
-          {/* Step 1: Phone + Name */}
+          {/* Step 1: Phone + Name + Email */}
           {step === "phone" && (
             <motion.div
               key="phone"
@@ -176,7 +178,7 @@ const AuthPage = () => {
                   {t("auth.createAccount") || "Create Account"}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {t("auth.joinElara") || "Enter your phone number to get started"}
+                  {t("auth.joinElara") || "Enter your details to get started"}
                 </p>
               </div>
 
@@ -195,6 +197,20 @@ const AuthPage = () => {
                 </div>
 
                 <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">{t("auth.email") || "Email"}</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder={t("auth.enterEmail") || "your@email.com"}
+                      type="email"
+                      className="pl-10 rtl:pl-3 rtl:pr-10 h-12 rounded-xl border-border bg-card"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">{t("auth.phoneNumber")}</label>
                   <div className="relative">
                     <div className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">+964</div>
@@ -207,6 +223,9 @@ const AuthPage = () => {
                       maxLength={11}
                     />
                   </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    {t("auth.whatsappNote") || "A verification code will be sent via WhatsApp"}
+                  </p>
                 </div>
               </div>
 
@@ -242,7 +261,7 @@ const AuthPage = () => {
                   {t("auth.verifyPhone") || "Verify Phone"}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {t("auth.codeSentTo") || "Enter the code sent to"} <span className="font-semibold text-foreground">{normalizedPhone}</span>
+                  {t("auth.whatsappCodeSentTo") || "Enter the code sent via WhatsApp to"} <span className="font-semibold text-foreground">{normalizedPhone}</span>
                 </p>
               </div>
 
