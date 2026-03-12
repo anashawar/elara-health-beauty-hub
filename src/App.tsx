@@ -18,6 +18,14 @@ import AddressesPage from "./pages/AddressesPage";
 import SettingsPage from "./pages/SettingsPage";
 import BrandPage from "./pages/BrandPage";
 import NotFound from "./pages/NotFound";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminCategories from "./pages/admin/AdminCategories";
+import AdminBanners from "./pages/admin/AdminBanners";
+import AdminBrands from "./pages/admin/AdminBrands";
+import AdminCoupons from "./pages/admin/AdminCoupons";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +53,16 @@ const App = () => (
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/addresses" element={<AddressesPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            {/* Admin Panel */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="products" element={<AdminProducts />} />
+              <Route path="orders" element={<AdminOrders />} />
+              <Route path="categories" element={<AdminCategories />} />
+              <Route path="banners" element={<AdminBanners />} />
+              <Route path="brands" element={<AdminBrands />} />
+              <Route path="coupons" element={<AdminCoupons />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
