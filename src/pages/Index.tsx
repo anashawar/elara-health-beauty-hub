@@ -7,6 +7,7 @@ import ProductSection from "@/components/home/ProductSection";
 import ConcernsSection from "@/components/home/ConcernsSection";
 import BrandsSection from "@/components/home/BrandsSection";
 import AskElaraCard from "@/components/home/AskElaraCard";
+import DealsBanner from "@/components/home/DealsBanner";
 import SearchOverlay from "@/components/SearchOverlay";
 import { useProducts } from "@/hooks/useProducts";
 
@@ -37,6 +38,7 @@ const Index = () => {
           <BrandsSection />
           <AskElaraCard />
           <ConcernsSection />
+          <DealsBanner />
           <ProductSection title="ELARA Picks" subtitle="Curated just for you" products={picks} viewAllLink="/categories" />
           <ProductSection title="Special Offers" subtitle="Limited time deals" products={offers} viewAllLink="/categories" />
           <ProductSection title="New Arrivals" subtitle="Fresh additions to our collection" products={newArrivals} viewAllLink="/categories" />
