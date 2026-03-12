@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, User, ArrowRight, ArrowLeft, Eye, EyeOff } from "lucide-react";
@@ -9,7 +9,13 @@ import { useAuth } from "@/hooks/useAuth";
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { signUp, signIn } = useAuth();
+  const { user, loading: authLoading, signUp, signIn } = useAuth();
+  
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/home", { replace: true });
+    }
+  }, [user, authLoading, navigate]);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,8 +40,15 @@ const AuthPage = () => {
         if (error) {
           toast(error.message);
         } else {
-          toast("Account created! Welcome to ELARA 🎉");
-          navigate("/");
+          // After signup, try to sign in immediately (works if auto-confirm is on)
+          const { error: signInError } = await signIn(email, password);
+          if (signInError) {
+            toast("Account created! Please check your email to verify, then sign in.");
+            setMode("login");
+          } else {
+            toast("Welcome to ELARA, " + (fullName.split(" ")[0] || "") + "! 🎉");
+            navigate("/home");
+          }
         }
       } else {
         const { error } = await signIn(email, password);
@@ -43,7 +56,7 @@ const AuthPage = () => {
           toast(error.message);
         } else {
           toast("Welcome back! 🎉");
-          navigate("/");
+          navigate("/home");
         }
       }
     } finally {
@@ -60,9 +73,7 @@ const AuthPage = () => {
   return (
     <div className="min-h-screen bg-background max-w-lg mx-auto flex flex-col">
       <header className="px-5 pt-6 pb-2 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="p-1">
-          <ArrowLeft className="w-5 h-5 text-foreground" />
-        </button>
+        <div className="flex-1" />
       </header>
 
       <div className="flex-1 px-5 overflow-hidden">
@@ -158,7 +169,7 @@ const AuthPage = () => {
             </button>
 
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/home")}
               className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
             >
               Continue as Guest

@@ -73,7 +73,7 @@ const OrdersPage = () => {
           <Package className="w-16 h-16 text-muted-foreground/30 mb-4" />
           <p className="text-base font-semibold text-foreground mb-1">No orders yet</p>
           <p className="text-sm text-muted-foreground mb-4">Start shopping to see your orders here</p>
-          <Link to="/" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm">
+          <Link to="/home" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm">
             Start Shopping
           </Link>
         </div>

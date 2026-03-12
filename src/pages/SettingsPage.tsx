@@ -67,7 +67,7 @@ const SettingsPage = () => {
   const handleSignOut = async () => {
     await signOut();
     toast("Signed out");
-    navigate("/");
+    navigate("/home");
   };
 
   if (authLoading) return null;

@@ -16,7 +16,7 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
       <div className="max-w-lg mx-auto px-4 py-3 space-y-2.5">
         {/* Top row: Logo + Welcome */}
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex-shrink-0">
+          <Link to="/home" className="flex-shrink-0">
             <img src={elaraLogo} alt="ELARA" className="h-7" />
           </Link>
 

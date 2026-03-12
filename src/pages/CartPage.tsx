@@ -88,7 +88,7 @@ const CartPage = () => {
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <Link to="/" className="p-1.5 -ml-1 rounded-xl hover:bg-secondary transition-colors">
+            <Link to="/home" className="p-1.5 -ml-1 rounded-xl hover:bg-secondary transition-colors">
               <ArrowLeft className="w-5 h-5 text-foreground" />
             </Link>
             <div>
@@ -119,7 +119,7 @@ const CartPage = () => {
           <p className="text-sm text-muted-foreground mt-1.5 mb-6 text-center">
             Looks like you haven't added anything yet ✨
           </p>
-          <Link to="/" className="px-8 py-3.5 bg-primary text-primary-foreground font-bold rounded-2xl text-sm shadow-md">
+          <Link to="/home" className="px-8 py-3.5 bg-primary text-primary-foreground font-bold rounded-2xl text-sm shadow-md">
             Start Shopping
           </Link>
         </motion.div>
