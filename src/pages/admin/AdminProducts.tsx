@@ -215,6 +215,8 @@ export default function AdminProducts() {
     setForm({
       id: p.id, title: p.title, slug: p.slug, price: p.price,
       original_price: p.original_price, description: p.description || "",
+      usage_instructions: p.usage_instructions || "",
+      benefits: (p.benefits || []).join("\n"),
       category_id: p.category_id || "", subcategory_id: p.subcategory_id || "",
       brand_id: p.brand_id || "",
       is_new: p.is_new || false, is_trending: p.is_trending || false, is_pick: p.is_pick || false,
