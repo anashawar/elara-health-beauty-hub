@@ -1,59 +1,127 @@
 import { useState, useEffect } from "react";
-import { useBanners } from "@/hooks/useProducts";
+import { Link } from "react-router-dom";
+import { Gift, Truck, ShieldCheck, ArrowRight, Copy } from "lucide-react";
+import bannerDiscount from "@/assets/banner-discount.jpg";
+import bannerDelivery from "@/assets/banner-delivery.jpg";
+import bannerOriginal from "@/assets/banner-original.jpg";
+import { toast } from "sonner";
 
-const fallbackBanners = [
-  { id: "1", title: "Glow This Season", subtitle: "Up to 40% off premium skincare", gradient: "from-rose-light to-champagne", accent: "text-primary" },
-  { id: "2", title: "Wellness Essentials", subtitle: "Vitamins & supplements for your best self", gradient: "from-sage-light to-champagne", accent: "text-sage" },
-  { id: "3", title: "Beauty Favorites", subtitle: "Discover trending makeup & cosmetics", gradient: "from-accent to-blush", accent: "text-primary" },
-];
-
-const gradients = [
-  { gradient: "from-rose-light to-champagne", accent: "text-primary" },
-  { gradient: "from-sage-light to-champagne", accent: "text-sage" },
-  { gradient: "from-accent to-blush", accent: "text-primary" },
+const banners = [
+  {
+    id: "1",
+    tag: "NEW USER OFFER",
+    tagIcon: Gift,
+    title: "15% OFF",
+    subtitle: "on your first order!",
+    coupon: "ELARA15",
+    cta: "Shop Now",
+    ctaLink: "/categories",
+    image: bannerDiscount,
+    overlay: "from-violet-950/80 via-violet-900/60 to-transparent",
+  },
+  {
+    id: "2",
+    tag: "FREE DELIVERY",
+    tagIcon: Truck,
+    title: "Free Delivery",
+    subtitle: "Shop 40,000 IQD and get free delivery to your door!",
+    cta: "Start Shopping",
+    ctaLink: "/categories",
+    image: bannerDelivery,
+    overlay: "from-amber-950/80 via-amber-900/50 to-transparent",
+  },
+  {
+    id: "3",
+    tag: "100% AUTHENTIC",
+    tagIcon: ShieldCheck,
+    title: "Everything is Original",
+    subtitle: "Reasonable prices & verified brands you can trust.",
+    cta: "Explore Brands",
+    ctaLink: "/categories",
+    image: bannerOriginal,
+    overlay: "from-purple-950/80 via-purple-900/50 to-transparent",
+  },
 ];
 
 const HeroBanner = () => {
-  const { data: dbBanners = [] } = useBanners();
   const [current, setCurrent] = useState(0);
 
-  const banners = dbBanners.length > 0
-    ? dbBanners.map((b, i) => ({
-        id: b.id,
-        title: b.title || "Shop Now",
-        subtitle: b.subtitle || "",
-        ...gradients[i % gradients.length],
-      }))
-    : fallbackBanners;
-
   useEffect(() => {
-    const timer = setInterval(() => setCurrent(p => (p + 1) % banners.length), 4000);
+    const timer = setInterval(() => setCurrent(p => (p + 1) % banners.length), 5000);
     return () => clearInterval(timer);
-  }, [banners.length]);
+  }, []);
+
+  const copyCoupon = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast.success(`Coupon "${code}" copied!`);
+  };
 
   return (
-    <div className="relative mx-4 mt-4 rounded-2xl overflow-hidden shadow-premium">
-      <div className="relative">
-        {banners.map((banner, idx) => (
-          <div
-            key={banner.id}
-            className={`${idx === current ? "block" : "hidden"} bg-gradient-to-br ${banner.gradient} p-8 min-h-[180px] flex flex-col justify-center transition-all duration-500`}
-          >
-            <p className={`text-xs font-semibold uppercase tracking-widest ${banner.accent} mb-2`}>ELARA</p>
-            <h2 className="text-2xl font-display font-bold text-foreground mb-1">{banner.title}</h2>
-            <p className="text-sm text-muted-foreground">{banner.subtitle}</p>
-            <button className="mt-4 px-6 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl w-fit hover:opacity-90 transition-opacity">
-              Shop Now
-            </button>
+    <div className="relative mx-4 mt-4 rounded-2xl overflow-hidden shadow-premium h-[200px]">
+      {banners.map((banner, idx) => (
+        <div
+          key={banner.id}
+          className={`absolute inset-0 transition-all duration-700 ease-in-out ${
+            idx === current ? "opacity-100 scale-100" : "opacity-0 scale-105"
+          }`}
+        >
+          {/* Background image */}
+          <img
+            src={banner.image}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            loading={idx === 0 ? "eager" : "lazy"}
+          />
+          {/* Gradient overlay */}
+          <div className={`absolute inset-0 bg-gradient-to-r ${banner.overlay}`} />
+
+          {/* Content */}
+          <div className="relative h-full flex flex-col justify-center px-6 py-5 z-10 max-w-[70%]">
+            {/* Tag */}
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider text-white w-fit mb-2">
+              <banner.tagIcon className="w-3 h-3" />
+              {banner.tag}
+            </span>
+
+            <h2 className="text-2xl font-display font-bold text-white leading-tight">
+              {banner.title}
+            </h2>
+            <p className="text-xs text-white/80 mt-1 leading-relaxed">
+              {banner.subtitle}
+            </p>
+
+            {/* Coupon code */}
+            {banner.coupon && (
+              <button
+                onClick={() => copyCoupon(banner.coupon!)}
+                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 text-white text-xs font-mono font-bold w-fit hover:bg-white/30 transition-colors"
+              >
+                <Copy className="w-3 h-3" />
+                {banner.coupon}
+              </button>
+            )}
+
+            {/* CTA */}
+            <Link
+              to={banner.ctaLink}
+              className="mt-3 inline-flex items-center gap-1.5 px-5 py-2 bg-white text-foreground text-xs font-semibold rounded-xl w-fit hover:bg-white/90 transition-all shadow-lg"
+            >
+              {banner.cta}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
-        ))}
-      </div>
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+        </div>
+      ))}
+
+      {/* Dots */}
+      <div className="absolute bottom-3 right-4 flex gap-1.5 z-20">
         {banners.map((_, idx) => (
           <button
             key={idx}
             onClick={() => setCurrent(idx)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${idx === current ? "w-6 bg-primary" : "w-1.5 bg-foreground/20"}`}
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              idx === current ? "w-6 bg-white" : "w-1.5 bg-white/40"
+            }`}
           />
         ))}
       </div>
