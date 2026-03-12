@@ -1,14 +1,16 @@
 import { Search, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import elaraLogo from "@/assets/elara-logo.png";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TopHeaderProps {
   onSearchClick: () => void;
 }
 
 const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
-  // TODO: replace with real user data from auth context
-  const userName = "Guest";
+  const { user } = useAuth();
+  
+  const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "Guest";
   const userCity = "Baghdad";
 
   return (
@@ -22,7 +24,7 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
 
           <div className="flex flex-col items-end">
             <span className="text-xs font-medium text-foreground">
-              Hey, <span className="font-bold text-primary">{userName}</span> 👋
+              Hey, <span className="font-bold text-primary">{firstName}</span> 👋
             </span>
             <div className="flex items-center gap-1 mt-0.5">
               <MapPin className="w-3 h-3 text-primary" />

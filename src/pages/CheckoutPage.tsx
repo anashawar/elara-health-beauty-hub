@@ -1,17 +1,74 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, MapPin, ChevronDown } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useApp } from "@/context/AppContext";
 import { formatPrice } from "@/hooks/useProducts";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/layout/BottomNav";
-import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const CheckoutPage = () => {
   const { cart, cartTotal, clearCart } = useApp();
+  const { user } = useAuth();
   const [submitted, setSubmitted] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [showAddressPicker, setShowAddressPicker] = useState(false);
+  const [notes, setNotes] = useState("");
   const deliveryFee = cartTotal >= 40000 ? 0 : 5000;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { data: addresses = [], isLoading: addressesLoading } = useQuery({
+    queryKey: ["addresses", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("addresses")
+        .select("*")
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Auto-select default address
+  const selectedAddress = addresses.find(a => a.id === selectedAddressId)
+    || addresses.find(a => a.is_default)
+    || addresses[0]
+    || null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (user && selectedAddress) {
+      // Save order to database
+      const { data: order, error: orderError } = await supabase.from("orders").insert({
+        user_id: user.id,
+        address_id: selectedAddress.id,
+        subtotal: cartTotal,
+        delivery_fee: deliveryFee,
+        discount: 0,
+        total: cartTotal + deliveryFee,
+        payment_method: "cod",
+        notes: notes || null,
+        status: "pending",
+      }).select().single();
+
+      if (orderError) {
+        console.error(orderError);
+      } else if (order) {
+        // Save order items
+        const items = cart.map(item => ({
+          order_id: order.id,
+          product_id: item.product.id,
+          quantity: item.quantity,
+          price: item.product.price,
+        }));
+        await supabase.from("order_items").insert(items);
+      }
+    }
+
     setSubmitted(true);
     clearCart();
   };
@@ -19,9 +76,14 @@ const CheckoutPage = () => {
   if (submitted) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 max-w-lg mx-auto">
-        <div className="w-20 h-20 rounded-full bg-sage/20 flex items-center justify-center mb-4">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 15 }}
+          className="w-20 h-20 rounded-full bg-sage/20 flex items-center justify-center mb-4"
+        >
           <Check className="w-10 h-10 text-sage" />
-        </div>
+        </motion.div>
         <h2 className="text-2xl font-display font-bold text-foreground mb-2">Order Placed!</h2>
         <p className="text-sm text-muted-foreground text-center mb-6">Your order has been placed successfully. We'll notify you when it ships.</p>
         <Link to="/home" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-2xl text-sm">
@@ -42,15 +104,87 @@ const CheckoutPage = () => {
       </header>
 
       <form onSubmit={handleSubmit} className="px-4 mt-4 space-y-4">
-        <div className="bg-card rounded-2xl p-4 shadow-premium space-y-3">
-          <h3 className="text-sm font-bold text-foreground">Delivery Address</h3>
-          <input required placeholder="Full Name" className="w-full bg-secondary text-foreground text-sm px-4 py-3 rounded-xl outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20" />
-          <input required placeholder="Mobile Number" type="tel" className="w-full bg-secondary text-foreground text-sm px-4 py-3 rounded-xl outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20" />
-          <input required placeholder="City" className="w-full bg-secondary text-foreground text-sm px-4 py-3 rounded-xl outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20" />
-          <input required placeholder="Address / Area" className="w-full bg-secondary text-foreground text-sm px-4 py-3 rounded-xl outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20" />
-          <textarea placeholder="Order Notes (optional)" rows={2} className="w-full bg-secondary text-foreground text-sm px-4 py-3 rounded-xl outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 resize-none" />
+        {/* Delivery Address */}
+        <div className="bg-card rounded-2xl p-4 shadow-premium">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-foreground">Delivery Address</h3>
+            {addresses.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setShowAddressPicker(!showAddressPicker)}
+                className="text-xs text-primary font-medium flex items-center gap-1"
+              >
+                Change <ChevronDown className={`w-3 h-3 transition-transform ${showAddressPicker ? "rotate-180" : ""}`} />
+              </button>
+            )}
+          </div>
+
+          {addressesLoading ? (
+            <div className="flex justify-center py-4">
+              <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : selectedAddress ? (
+            <div className="flex items-start gap-3 p-3 bg-secondary/50 rounded-xl">
+              <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-foreground">{selectedAddress.label || "Address"} — {selectedAddress.city}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {[selectedAddress.area, selectedAddress.street, selectedAddress.building, selectedAddress.floor].filter(Boolean).join(", ")}
+                </p>
+                {selectedAddress.phone && (
+                  <p className="text-xs text-muted-foreground mt-0.5">📞 {selectedAddress.phone}</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-xs text-muted-foreground mb-2">No saved addresses</p>
+              <Link to="/addresses" className="text-xs text-primary font-medium">Add Address</Link>
+            </div>
+          )}
+
+          {/* Address picker dropdown */}
+          <AnimatePresence>
+            {showAddressPicker && addresses.length > 1 && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="mt-3 space-y-2 overflow-hidden"
+              >
+                {addresses.map(addr => (
+                  <button
+                    key={addr.id}
+                    type="button"
+                    onClick={() => { setSelectedAddressId(addr.id); setShowAddressPicker(false); }}
+                    className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
+                      (selectedAddress?.id === addr.id) ? "border-primary bg-primary/5" : "border-border bg-card"
+                    }`}
+                  >
+                    <p className="text-xs font-semibold text-foreground">{addr.label || "Address"} — {addr.city}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {[addr.area, addr.street, addr.building].filter(Boolean).join(", ")}
+                    </p>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
+        {/* Notes */}
+        <div className="bg-card rounded-2xl p-4 shadow-premium">
+          <h3 className="text-sm font-bold text-foreground mb-2">Order Notes</h3>
+          <textarea
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            placeholder="Any special instructions? (optional)"
+            rows={2}
+            className="w-full bg-secondary text-foreground text-sm px-4 py-3 rounded-xl outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 resize-none"
+          />
+        </div>
+
+        {/* Payment */}
         <div className="bg-card rounded-2xl p-4 shadow-premium">
           <h3 className="text-sm font-bold text-foreground mb-3">Payment Method</h3>
           <label className="flex items-center gap-3 p-3 bg-secondary rounded-xl cursor-pointer">
@@ -62,6 +196,7 @@ const CheckoutPage = () => {
           </label>
         </div>
 
+        {/* Order Summary */}
         <div className="bg-card rounded-2xl p-4 shadow-premium">
           <h3 className="text-sm font-bold text-foreground mb-3">Order Summary</h3>
           <div className="space-y-1.5">
@@ -84,7 +219,11 @@ const CheckoutPage = () => {
           </div>
         </div>
 
-        <button type="submit" className="w-full bg-primary text-primary-foreground font-semibold py-4 rounded-2xl hover:opacity-90 transition-opacity text-sm">
+        <button
+          type="submit"
+          disabled={!selectedAddress && !!user}
+          className="w-full bg-primary text-primary-foreground font-semibold py-4 rounded-2xl hover:opacity-90 transition-opacity text-sm disabled:opacity-50"
+        >
           Place Order — {formatPrice(cartTotal + deliveryFee)}
         </button>
       </form>
