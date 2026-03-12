@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Sparkles } from "lucide-react";
 import BottomNav from "@/components/layout/BottomNav";
+import FloatingSearch from "@/components/layout/FloatingSearch";
 import { useCategories } from "@/hooks/useProducts";
 
 // Sub-categories mapping per category slug
@@ -175,6 +176,7 @@ const CategoriesPage = () => {
         })}
       </div>
 
+      <FloatingSearch />
       <BottomNav />
     </div>
   );

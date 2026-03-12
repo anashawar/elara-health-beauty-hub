@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useProducts, useBrands } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
+import FloatingSearch from "@/components/layout/FloatingSearch";
 
 const BrandPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -63,6 +64,7 @@ const BrandPage = () => {
         </div>
       )}
 
+      <FloatingSearch />
       <BottomNav />
     </div>
   );
