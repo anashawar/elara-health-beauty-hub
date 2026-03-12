@@ -10,10 +10,12 @@ import AskElaraCard from "@/components/home/AskElaraCard";
 import DealsBanner from "@/components/home/DealsBanner";
 import SearchOverlay from "@/components/SearchOverlay";
 import { useProducts } from "@/hooks/useProducts";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const { data: products = [], isLoading } = useProducts();
+  const { t } = useLanguage();
 
   const trending = products.filter(p => p.isTrending);
   const picks = products.filter(p => p.isPick);
@@ -34,19 +36,19 @@ const Index = () => {
         </div>
       ) : (
         <>
-          <ProductSection title="Trending Now 🔥" subtitle="Most popular this week" products={trending} viewAllLink="/categories" variant="trending" />
+          <ProductSection title={t("home.trendingNow")} subtitle={t("home.mostPopular")} products={trending} viewAllLink="/categories" variant="trending" />
           <BrandsSection />
           <AskElaraCard />
           <ConcernsSection />
           <DealsBanner />
-          <ProductSection title="ELARA Picks" subtitle="Curated just for you" products={picks} viewAllLink="/categories" />
-          <ProductSection title="Special Offers" subtitle="Limited time deals" products={offers} viewAllLink="/categories" />
-          <ProductSection title="New Arrivals" subtitle="Fresh additions to our collection" products={newArrivals} viewAllLink="/categories" />
+          <ProductSection title={t("home.elaraPicks")} subtitle={t("home.curatedForYou")} products={picks} viewAllLink="/categories" />
+          <ProductSection title={t("home.specialOffers")} subtitle={t("home.limitedDeals")} products={offers} viewAllLink="/categories" />
+          <ProductSection title={t("home.newArrivals")} subtitle={t("home.freshAdditions")} products={newArrivals} viewAllLink="/categories" />
         </>
       )}
 
       <div className="mt-8 mb-4 px-4 text-center">
-        <p className="text-xs text-muted-foreground">ELARA — Iraq's Smart Health & Beauty Platform</p>
+        <p className="text-xs text-muted-foreground">ELARA — {t("common.tagline")}</p>
       </div>
 
       <BottomNav />

@@ -1,8 +1,10 @@
 import { useBrands } from "@/hooks/useProducts";
 import { Star } from "lucide-react";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const BrandsSection = () => {
   const { data: brands = [] } = useBrands();
+  const { t } = useLanguage();
 
   if (brands.length === 0) return null;
 
@@ -12,7 +14,7 @@ const BrandsSection = () => {
         <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
           <Star className="w-4 h-4 text-primary" />
         </div>
-        <h2 className="text-lg font-display font-bold text-foreground">Featured Brands</h2>
+        <h2 className="text-lg font-display font-bold text-foreground">{t("home.featuredBrands")}</h2>
       </div>
       <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
         {brands.map(brand => (

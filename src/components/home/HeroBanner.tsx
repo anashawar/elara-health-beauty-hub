@@ -5,46 +5,48 @@ import bannerDiscount from "@/assets/banner-discount.jpg";
 import bannerDelivery from "@/assets/banner-delivery.jpg";
 import bannerOriginal from "@/assets/banner-original.jpg";
 import { toast } from "sonner";
-
-const banners = [
-  {
-    id: "1",
-    tag: "NEW USER OFFER",
-    tagIcon: Gift,
-    title: "15% OFF",
-    subtitle: "on your first order!",
-    coupon: "ELARA15",
-    cta: "Shop Now",
-    ctaLink: "/categories",
-    image: bannerDiscount,
-    overlay: "from-violet-950/80 via-violet-900/60 to-transparent",
-  },
-  {
-    id: "2",
-    tag: "FREE DELIVERY",
-    tagIcon: Truck,
-    title: "Free Delivery",
-    subtitle: "Shop 40,000 IQD and get free delivery to your door!",
-    cta: "Start Shopping",
-    ctaLink: "/categories",
-    image: bannerDelivery,
-    overlay: "from-amber-950/80 via-amber-900/50 to-transparent",
-  },
-  {
-    id: "3",
-    tag: "100% AUTHENTIC",
-    tagIcon: ShieldCheck,
-    title: "Everything is Original",
-    subtitle: "Reasonable prices & verified brands you can trust.",
-    cta: "Explore Brands",
-    ctaLink: "/categories",
-    image: bannerOriginal,
-    overlay: "from-purple-950/80 via-purple-900/50 to-transparent",
-  },
-];
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const HeroBanner = () => {
   const [current, setCurrent] = useState(0);
+  const { t } = useLanguage();
+
+  const banners = [
+    {
+      id: "1",
+      tag: t("banner.newUserOffer"),
+      tagIcon: Gift,
+      title: t("banner.title1"),
+      subtitle: t("banner.subtitle1"),
+      coupon: "ELARA15",
+      cta: t("banner.shopNow"),
+      ctaLink: "/categories",
+      image: bannerDiscount,
+      overlay: "from-violet-950/80 via-violet-900/60 to-transparent",
+    },
+    {
+      id: "2",
+      tag: t("banner.freeDelivery"),
+      tagIcon: Truck,
+      title: t("banner.title2"),
+      subtitle: t("banner.subtitle2"),
+      cta: t("banner.startShopping"),
+      ctaLink: "/categories",
+      image: bannerDelivery,
+      overlay: "from-amber-950/80 via-amber-900/50 to-transparent",
+    },
+    {
+      id: "3",
+      tag: t("banner.authentic"),
+      tagIcon: ShieldCheck,
+      title: t("banner.title3"),
+      subtitle: t("banner.subtitle3"),
+      cta: t("banner.exploreBrands"),
+      ctaLink: "/categories",
+      image: bannerOriginal,
+      overlay: "from-purple-950/80 via-purple-900/50 to-transparent",
+    },
+  ];
 
   useEffect(() => {
     const timer = setInterval(() => setCurrent(p => (p + 1) % banners.length), 5000);
@@ -53,7 +55,7 @@ const HeroBanner = () => {
 
   const copyCoupon = (code: string) => {
     navigator.clipboard.writeText(code);
-    toast.success(`Coupon "${code}" copied!`);
+    toast.success(t("banner.couponCopied", { code }));
   };
 
   return (
@@ -65,19 +67,15 @@ const HeroBanner = () => {
             idx === current ? "opacity-100 scale-100" : "opacity-0 scale-105"
           }`}
         >
-          {/* Background image */}
           <img
             src={banner.image}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
             loading={idx === 0 ? "eager" : "lazy"}
           />
-          {/* Gradient overlay */}
-          <div className={`absolute inset-0 bg-gradient-to-r ${banner.overlay}`} />
+          <div className={`absolute inset-0 bg-gradient-to-r rtl:bg-gradient-to-l ${banner.overlay}`} />
 
-          {/* Content */}
           <div className="relative h-full flex flex-col justify-center px-6 py-5 z-10 max-w-[70%]">
-            {/* Tag */}
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider text-white w-fit mb-2">
               <banner.tagIcon className="w-3 h-3" />
               {banner.tag}
@@ -90,7 +88,6 @@ const HeroBanner = () => {
               {banner.subtitle}
             </p>
 
-            {/* Coupon code */}
             {banner.coupon && (
               <button
                 onClick={() => copyCoupon(banner.coupon!)}
@@ -101,20 +98,18 @@ const HeroBanner = () => {
               </button>
             )}
 
-            {/* CTA */}
             <Link
               to={banner.ctaLink}
               className="mt-3 inline-flex items-center gap-1.5 px-5 py-2 bg-white text-foreground text-xs font-semibold rounded-xl w-fit hover:bg-white/90 transition-all shadow-lg"
             >
               {banner.cta}
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
             </Link>
           </div>
         </div>
       ))}
 
-      {/* Dots */}
-      <div className="absolute bottom-3 right-4 flex gap-1.5 z-20">
+      <div className="absolute bottom-3 right-4 rtl:right-auto rtl:left-4 flex gap-1.5 z-20">
         {banners.map((_, idx) => (
           <button
             key={idx}

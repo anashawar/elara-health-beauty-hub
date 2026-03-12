@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import type { ProductWithRelations } from "@/hooks/useProducts";
 import { formatPrice } from "@/hooks/useProducts";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface ProductCardProps {
   product: ProductWithRelations;
@@ -11,6 +12,7 @@ interface ProductCardProps {
 
 const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
+  const { t } = useLanguage();
   const wishlisted = isInWishlist(product.id);
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
@@ -23,10 +25,10 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
           <div className="relative aspect-square overflow-hidden bg-secondary">
             <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
             {discount > 0 && (
-              <span className="absolute top-2 left-2 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-lg">-{discount}%</span>
+              <span className="absolute top-2 left-2 rtl:left-auto rtl:right-2 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-lg">-{discount}%</span>
             )}
             {product.isNew && (
-              <span className="absolute top-2 left-2 bg-sage text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-lg">NEW</span>
+              <span className="absolute top-2 left-2 rtl:left-auto rtl:right-2 bg-sage text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-lg">{t("common.new")}</span>
             )}
           </div>
         </Link>
@@ -46,7 +48,7 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
               onClick={() => addToCart(product)}
               className="flex-1 flex items-center justify-center gap-1 bg-primary text-primary-foreground text-[10px] font-semibold py-2 rounded-xl hover:opacity-90 transition-opacity"
             >
-              <Plus className="w-3 h-3" /> Add
+              <Plus className="w-3 h-3" /> {t("product.add")}
             </button>
             <button
               onClick={() => toggleWishlist(product.id)}
@@ -66,14 +68,14 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
         <div className="relative aspect-square overflow-hidden bg-secondary">
           <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
           {discount > 0 && (
-            <span className="absolute top-2 left-2 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-lg">-{discount}%</span>
+            <span className="absolute top-2 left-2 rtl:left-auto rtl:right-2 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-lg">-{discount}%</span>
           )}
           {product.isNew && !discount && (
-            <span className="absolute top-2 left-2 bg-sage text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-lg">NEW</span>
+            <span className="absolute top-2 left-2 rtl:left-auto rtl:right-2 bg-sage text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-lg">{t("common.new")}</span>
           )}
           <button
             onClick={(e) => { e.preventDefault(); toggleWishlist(product.id); }}
-            className="absolute top-2 right-2 p-1.5 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card transition-colors"
+            className="absolute top-2 right-2 rtl:right-auto rtl:left-2 p-1.5 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card transition-colors"
           >
             <Heart className={`w-4 h-4 ${wishlisted ? "fill-primary text-primary" : "text-muted-foreground"}`} />
           </button>
@@ -94,7 +96,7 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
           onClick={() => addToCart(product)}
           className="w-full flex items-center justify-center gap-1 bg-primary text-primary-foreground text-xs font-semibold py-2.5 rounded-xl mt-3 hover:opacity-90 transition-opacity"
         >
-          <Plus className="w-3.5 h-3.5" /> Add to Cart
+          <Plus className="w-3.5 h-3.5" /> {t("product.addToCart")}
         </button>
       </div>
     </div>

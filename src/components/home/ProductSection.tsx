@@ -2,6 +2,7 @@ import { ChevronRight, Flame } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProductCard from "@/components/ProductCard";
 import type { ProductWithRelations } from "@/hooks/useProducts";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface ProductSectionProps {
   title: string;
@@ -13,6 +14,7 @@ interface ProductSectionProps {
 }
 
 const ProductSection = ({ title, subtitle, products, viewAllLink, horizontal = true, variant = "default" }: ProductSectionProps) => {
+  const { t } = useLanguage();
   if (products.length === 0) return null;
 
   const isTrending = variant === "trending";
@@ -33,7 +35,7 @@ const ProductSection = ({ title, subtitle, products, viewAllLink, horizontal = t
         </div>
         {viewAllLink && (
           <Link to={viewAllLink} className="flex items-center gap-0.5 text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors">
-            View All <ChevronRight className="w-3.5 h-3.5" />
+            {t("common.viewAll")} <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
           </Link>
         )}
       </div>
