@@ -159,7 +159,7 @@ const ProductPage = () => {
       >
         {/* Brand */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-widest text-primary">{product.brand}</span>
+          <Link to={`/brand/${product.brand_id}`} className="text-xs font-bold uppercase tracking-widest text-primary hover:underline">{product.brand}</Link>
           <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
             <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> 4.8
           </span>
