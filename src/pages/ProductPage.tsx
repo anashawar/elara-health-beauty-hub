@@ -36,13 +36,6 @@ const ProductPage = () => {
 
   const related = allProducts.filter(p => p.category_slug === product.category_slug && p.id !== product.id).slice(0, 4);
 
-  const searchResults = searchQuery.length > 1
-    ? allProducts.filter(p =>
-        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.brand.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 5)
-    : [];
-
   const handleAddToCart = () => {
     addToCart(product);
   };
