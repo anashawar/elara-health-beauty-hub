@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Gift, Truck, ShieldCheck, ArrowRight, Copy } from "lucide-react";
 import bannerDiscount from "@/assets/banner-discount.jpg";
 import bannerDelivery from "@/assets/banner-delivery.jpg";
 import bannerOriginal from "@/assets/banner-original.jpg";
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useApp } from "@/context/AppContext";
 
 const HeroBanner = () => {
   const [current, setCurrent] = useState(0);
   const { t } = useLanguage();
+  const { setPendingCoupon } = useApp();
+  const navigate = useNavigate();
 
   const banners = [
     {
@@ -98,13 +101,27 @@ const HeroBanner = () => {
               </button>
             )}
 
-            <Link
-              to={banner.ctaLink}
-              className="mt-3 inline-flex items-center gap-1.5 px-5 py-2 bg-white text-foreground text-xs font-semibold rounded-xl w-fit hover:bg-white/90 transition-all shadow-lg"
-            >
-              {banner.cta}
-              <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
-            </Link>
+            {banner.coupon ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingCoupon(banner.coupon!);
+                  navigate(banner.ctaLink);
+                }}
+                className="mt-3 inline-flex items-center gap-1.5 px-5 py-2 bg-white text-foreground text-xs font-semibold rounded-xl w-fit hover:bg-white/90 transition-all shadow-lg"
+              >
+                {banner.cta}
+                <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
+              </button>
+            ) : (
+              <Link
+                to={banner.ctaLink}
+                className="mt-3 inline-flex items-center gap-1.5 px-5 py-2 bg-white text-foreground text-xs font-semibold rounded-xl w-fit hover:bg-white/90 transition-all shadow-lg"
+              >
+                {banner.cta}
+                <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
+              </Link>
+            )}
           </div>
         </div>
       ))}

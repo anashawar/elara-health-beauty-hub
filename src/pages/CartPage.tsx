@@ -6,7 +6,7 @@ import { formatPrice } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/layout/BottomNav";
 import FloatingSearch from "@/components/layout/FloatingSearch";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -19,12 +19,44 @@ interface AppliedCoupon {
 }
 
 const CartPage = () => {
-  const { cart, updateQuantity, removeFromCart, cartTotal, cartCount, clearCart } = useApp();
+  const { cart, updateQuantity, removeFromCart, cartTotal, cartCount, clearCart, pendingCoupon, setPendingCoupon } = useApp();
   const { user } = useAuth();
   const { t } = useLanguage();
   const [coupon, setCoupon] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
+  const autoApplied = useRef(false);
+
+  // Auto-apply pending coupon from banner
+  useEffect(() => {
+    if (pendingCoupon && !autoApplied.current && !appliedCoupon && cart.length > 0) {
+      autoApplied.current = true;
+      setCoupon(pendingCoupon);
+      setPendingCoupon(null);
+      // Auto-apply after a short delay to let state settle
+      const applyPending = async () => {
+        setCouponLoading(true);
+        const { data, error } = await supabase
+          .from("coupons")
+          .select("*")
+          .eq("code", pendingCoupon.toUpperCase())
+          .eq("is_active", true)
+          .maybeSingle();
+        setCouponLoading(false);
+        if (!error && data) {
+          if (data.expires_at && new Date(data.expires_at) < new Date()) return;
+          if (data.max_uses && data.current_uses >= data.max_uses) return;
+          setAppliedCoupon({
+            code: data.code,
+            discount_type: data.discount_type,
+            discount_value: data.discount_value,
+          });
+          toast(t("cart.couponApplied"));
+        }
+      };
+      applyPending();
+    }
+  }, [pendingCoupon, cart.length]);
 
   const statusConfig: Record<string, { label: string; color: string; icon: string }> = {
     pending: { label: t("cart.pending"), color: "bg-amber-100 text-amber-700", icon: "⏳" },

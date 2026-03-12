@@ -17,6 +17,8 @@ interface AppContextType {
   cartTotal: number;
   cartCount: number;
   clearCart: () => void;
+  pendingCoupon: string | null;
+  setPendingCoupon: (code: string | null) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -30,6 +32,7 @@ export const useApp = () => {
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [pendingCoupon, setPendingCoupon] = useState<string | null>(null);
 
   const addToCart = useCallback((product: ProductWithRelations) => {
     setCart(prev => {
@@ -65,7 +68,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const clearCart = useCallback(() => setCart([]), []);
 
   return (
-    <AppContext.Provider value={{ cart, wishlist, addToCart, removeFromCart, updateQuantity, toggleWishlist, isInWishlist, cartTotal, cartCount, clearCart }}>
+    <AppContext.Provider value={{ cart, wishlist, addToCart, removeFromCart, updateQuantity, toggleWishlist, isInWishlist, cartTotal, cartCount, clearCart, pendingCoupon, setPendingCoupon }}>
       {children}
     </AppContext.Provider>
   );
