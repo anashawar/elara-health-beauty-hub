@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const cities = ["Baghdad", "Erbil", "Basra", "Sulaymaniyah", "Najaf", "Karbala", "Kirkuk", "Mosul", "Duhok"];
 
-type Step = "auth" | "address";
+type Step = "auth" | "address" | "forgot";
 
 const AuthPage = () => {
   const navigate = useNavigate();
