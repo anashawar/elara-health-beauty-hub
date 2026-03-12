@@ -15,12 +15,26 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elara-chat`;
 
-const quickQuestions = [
-  "What's a good skincare routine for beginners?",
-  "How to treat acne scars?",
-  "Best vitamins for hair growth?",
-  "Morning vs night skincare routine?",
-];
+const quickQuestions: Record<string, string[]> = {
+  en: [
+    "What's a good skincare routine for beginners?",
+    "How to treat acne scars?",
+    "Best vitamins for hair growth?",
+    "Morning vs night skincare routine?",
+  ],
+  ar: [
+    "شنو أحسن روتين للعناية بالبشرة للمبتدئين؟",
+    "شلون أعالج آثار حب الشباب؟",
+    "شنو أحسن فيتامينات لنمو الشعر؟",
+    "شنو الفرق بين روتين الصبح والليل؟",
+  ],
+  ku: [
+    "باشترین ڕوتینی چاودێری پێست بۆ سەرەتاکان چییە؟",
+    "چۆن شوێنەکانی دانەی ڕوو چارەسەر بکەم؟",
+    "باشترین ڤیتامین بۆ گەشەی قژ چییە؟",
+    "جیاوازی ڕوتینی بەیانی و شەو چییە؟",
+  ],
+};
 
 const ElaraChatPage = () => {
   const { t } = useLanguage();
