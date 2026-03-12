@@ -1,4 +1,4 @@
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import elaraLogo from "@/assets/elara-logo.png";
 import { useAuth } from "@/hooks/useAuth";
@@ -64,14 +64,23 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
           </div>
         </div>
 
-        {/* Search bar */}
-        <button
-          onClick={onSearchClick}
-          className="w-full flex items-center gap-2.5 px-4 py-2.5 bg-secondary/80 rounded-xl border border-border hover:border-primary/30 transition-all duration-200"
-        >
-          <Search className="w-4 h-4 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">{t("common.search")}</span>
-        </button>
+        {/* Search bar + AI button */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onSearchClick}
+            className="flex-1 flex items-center gap-2.5 px-4 py-2.5 bg-secondary/80 rounded-xl border border-border hover:border-primary/30 transition-all duration-200"
+          >
+            <Search className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">{t("common.search")}</span>
+          </button>
+          <Link
+            to="/elara-ai"
+            className="flex items-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-primary to-primary/80 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex-shrink-0"
+          >
+            <Sparkles className="w-4 h-4 text-primary-foreground" />
+            <span className="text-xs font-bold text-primary-foreground">AI</span>
+          </Link>
+        </div>
       </div>
     </header>
   );
