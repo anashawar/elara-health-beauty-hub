@@ -20,6 +20,8 @@ interface ProductForm {
   price: number;
   original_price: number | null;
   description: string;
+  usage_instructions: string;
+  benefits: string;
   category_id: string;
   subcategory_id: string;
   brand_id: string;
@@ -34,6 +36,7 @@ interface ProductForm {
 
 const emptyForm: ProductForm = {
   title: "", slug: "", price: 0, original_price: null, description: "",
+  usage_instructions: "", benefits: "",
   category_id: "", subcategory_id: "", brand_id: "", is_new: false, is_trending: false, is_pick: false,
   volume_ml: "", skin_type: "", country_of_origin: "", condition: "",
 };
