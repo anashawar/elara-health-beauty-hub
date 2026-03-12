@@ -329,14 +329,18 @@ export default function AdminProducts() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Condition</Label>
+                  <Label>Skin Concern</Label>
                   <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v })}>
                     <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="like_new">Like New</SelectItem>
-                      <SelectItem value="good">Good</SelectItem>
-                      <SelectItem value="fair">Fair</SelectItem>
+                      <SelectItem value="acne">Acne</SelectItem>
+                      <SelectItem value="dryskin">Dry Skin</SelectItem>
+                      <SelectItem value="hyperpigmentation">Hyperpigmentation</SelectItem>
+                      <SelectItem value="hairloss">Hair Loss</SelectItem>
+                      <SelectItem value="dandruff">Dandruff</SelectItem>
+                      <SelectItem value="sensitive">Sensitive Skin</SelectItem>
+                      <SelectItem value="immunity">Immunity</SelectItem>
+                      <SelectItem value="weightloss">Weight Loss</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
