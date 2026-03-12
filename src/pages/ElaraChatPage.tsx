@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Send, Sparkles, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingBag, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import BottomNav from "@/components/layout/BottomNav";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "sonner";
+import { useProducts } from "@/hooks/useProducts";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
