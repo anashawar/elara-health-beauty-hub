@@ -119,7 +119,7 @@ const CartPage = () => {
           <p className="text-sm text-muted-foreground mt-1.5 mb-6 text-center">
             Looks like you haven't added anything yet ✨
           </p>
-          <Link to="/" className="px-8 py-3.5 bg-primary text-primary-foreground font-bold rounded-2xl text-sm shadow-md">
+          <Link to="/home" className="px-8 py-3.5 bg-primary text-primary-foreground font-bold rounded-2xl text-sm shadow-md">
             Start Shopping
           </Link>
         </motion.div>

@@ -79,7 +79,7 @@ const CategoryPage = () => {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
-          <Link to="/" className="p-1">
+          <Link to="/home" className="p-1">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </Link>
           <h1 className="text-lg font-bold text-foreground">{category?.name || "All Products"}</h1>

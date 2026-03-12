@@ -27,7 +27,7 @@ const WishlistPage = () => {
           </div>
           <h3 className="text-lg font-display font-bold text-foreground">No saved items</h3>
           <p className="text-sm text-muted-foreground mt-1 mb-6">Save your favorites here</p>
-          <Link to="/" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-2xl text-sm">
+          <Link to="/home" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-2xl text-sm">
             Start Shopping
           </Link>
         </div>

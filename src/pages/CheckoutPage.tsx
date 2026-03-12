@@ -24,7 +24,7 @@ const CheckoutPage = () => {
         </div>
         <h2 className="text-2xl font-display font-bold text-foreground mb-2">Order Placed!</h2>
         <p className="text-sm text-muted-foreground text-center mb-6">Your order has been placed successfully. We'll notify you when it ships.</p>
-        <Link to="/" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-2xl text-sm">
+        <Link to="/home" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-2xl text-sm">
           Continue Shopping
         </Link>
         <BottomNav />
