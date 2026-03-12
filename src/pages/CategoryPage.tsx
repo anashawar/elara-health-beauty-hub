@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams, Link, useSearchParams } from "react-router-dom";
+import { useParams, useLocation as useRouterLocation, Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Search, SlidersHorizontal, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import BottomNav from "@/components/layout/BottomNav";
