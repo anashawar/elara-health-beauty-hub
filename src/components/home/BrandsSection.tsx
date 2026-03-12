@@ -1,6 +1,7 @@
 import { useBrands } from "@/hooks/useProducts";
 import { Star } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { Link } from "react-router-dom";
 
 const BrandsSection = () => {
   const { data: brands = [] } = useBrands();
@@ -18,7 +19,8 @@ const BrandsSection = () => {
       </div>
       <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
         {brands.map(brand => (
-          <div
+          <Link
+            to={`/brand/${brand.slug}`}
             key={brand.id}
             className="flex-shrink-0 w-20 flex flex-col items-center gap-2 p-3 bg-card rounded-2xl border border-border shadow-sm hover:shadow-premium hover:border-primary/30 transition-all duration-200"
           >
@@ -26,7 +28,7 @@ const BrandsSection = () => {
               <img src={brand.logo_url || "/placeholder.svg"} alt={brand.name} className="w-full h-full object-cover" loading="lazy" />
             </div>
             <span className="text-[10px] font-bold text-foreground text-center leading-tight">{brand.name}</span>
-          </div>
+          </Link>
         ))}
       </div>
     </section>
