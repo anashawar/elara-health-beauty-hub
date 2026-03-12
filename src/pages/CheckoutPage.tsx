@@ -16,6 +16,7 @@ const CheckoutPage = () => {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [notes, setNotes] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cod");
   const deliveryFee = cartTotal >= 40000 ? 0 : 5000;
 
   const { data: addresses = [], isLoading: addressesLoading } = useQuery({
@@ -50,7 +51,7 @@ const CheckoutPage = () => {
         delivery_fee: deliveryFee,
         discount: 0,
         total: cartTotal + deliveryFee,
-        payment_method: "cod",
+        payment_method: paymentMethod,
         notes: notes || null,
         status: "pending",
       }).select().single();
@@ -187,13 +188,37 @@ const CheckoutPage = () => {
         {/* Payment */}
         <div className="bg-card rounded-2xl p-4 shadow-premium">
           <h3 className="text-sm font-bold text-foreground mb-3">Payment Method</h3>
-          <label className="flex items-center gap-3 p-3 bg-secondary rounded-xl cursor-pointer">
-            <input type="radio" name="payment" defaultChecked className="accent-primary" />
-            <div>
-              <p className="text-sm font-medium text-foreground">Cash on Delivery (COD)</p>
-              <p className="text-[10px] text-muted-foreground">Pay when you receive your order</p>
-            </div>
-          </label>
+          <div className="space-y-2">
+            {[
+              { value: "cod", label: "Cash on Delivery", desc: "Pay when you receive your order", icon: "💵" },
+              { value: "fib", label: "FIB (First Iraqi Bank)", desc: "Pay via FIB mobile app", icon: "🏦" },
+              { value: "zaincash", label: "ZainCash", desc: "Pay with your ZainCash wallet", icon: "📱" },
+              { value: "qicard", label: "Qi Card", desc: "Pay using your Qi Card", icon: "💳" },
+            ].map(method => (
+              <label
+                key={method.value}
+                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer border-2 transition-all ${
+                  paymentMethod === method.value
+                    ? "border-primary bg-primary/5"
+                    : "border-transparent bg-secondary"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="payment"
+                  value={method.value}
+                  checked={paymentMethod === method.value}
+                  onChange={() => setPaymentMethod(method.value)}
+                  className="accent-primary"
+                />
+                <span className="text-lg">{method.icon}</span>
+                <div>
+                  <p className="text-sm font-medium text-foreground">{method.label}</p>
+                  <p className="text-[10px] text-muted-foreground">{method.desc}</p>
+                </div>
+              </label>
+            ))}
+          </div>
         </div>
 
         {/* Order Summary */}
