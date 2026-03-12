@@ -8,7 +8,7 @@ import { useState } from "react";
 const CheckoutPage = () => {
   const { cart, cartTotal, clearCart } = useApp();
   const [submitted, setSubmitted] = useState(false);
-  const deliveryFee = cartTotal > 50000 ? 0 : 5000;
+  const deliveryFee = cartTotal >= 40000 ? 0 : 5000;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
