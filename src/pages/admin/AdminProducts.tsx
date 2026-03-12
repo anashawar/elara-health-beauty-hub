@@ -97,12 +97,15 @@ export default function AdminProducts() {
   const saveMutation = useMutation({
     mutationFn: async (f: ProductForm) => {
       setUploading(true);
+      const benefitsArray = f.benefits.trim() ? f.benefits.split("\n").map(b => b.trim()).filter(Boolean) : null;
       const payload: any = {
         title: f.title,
         slug: f.slug || f.title.toLowerCase().replace(/\s+/g, "-"),
         price: f.price,
         original_price: f.original_price || null,
         description: f.description || null,
+        usage_instructions: f.usage_instructions || null,
+        benefits: benefitsArray,
         category_id: f.category_id || null,
         subcategory_id: f.subcategory_id || null,
         brand_id: f.brand_id || null,
