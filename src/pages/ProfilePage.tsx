@@ -1,14 +1,28 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronRight, Heart, MapPin, Settings, Package, LogOut } from "lucide-react";
+import { ArrowLeft, ChevronRight, Heart, MapPin, Settings, Package, LogOut, Sparkles, MessageCircle } from "lucide-react";
 import BottomNav from "@/components/layout/BottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/sonner";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const ProfilePage = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const { t } = useLanguage();
+
+  const { data: chatCount = 0 } = useQuery({
+    queryKey: ["chat-count", user?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("chat_conversations")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user!.id);
+      return count || 0;
+    },
+    enabled: !!user,
+  });
 
   const menuItems = [
     { icon: Package, label: t("profile.myOrders"), path: "/orders" },
@@ -60,6 +74,31 @@ const ProfilePage = () => {
           </Link>
         )}
       </div>
+
+      {/* ELARA AI Section */}
+      <Link to="/elara-ai" className="block mx-4 mt-4">
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 rounded-2xl p-4 shadow-premium border border-primary/20 relative overflow-hidden group hover:shadow-xl transition-all">
+          <div className="absolute top-2 right-2 opacity-10">
+            <Sparkles className="w-16 h-16 text-primary" />
+          </div>
+          <div className="relative flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center flex-shrink-0 shadow-md">
+              <Sparkles className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-display font-bold text-foreground">ELARA AI</h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Your personal skincare expert</p>
+              {user && chatCount > 0 && (
+                <div className="flex items-center gap-1 mt-1">
+                  <MessageCircle className="w-3 h-3 text-primary" />
+                  <span className="text-[10px] text-primary font-medium">{chatCount} conversation{chatCount !== 1 ? "s" : ""}</span>
+                </div>
+              )}
+            </div>
+            <ChevronRight className="w-5 h-5 text-primary rtl:rotate-180 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </div>
+      </Link>
 
       {/* Menu */}
       <div className="mx-4 mt-4 bg-card rounded-2xl shadow-premium overflow-hidden">
