@@ -33,9 +33,9 @@ export default function AdminOrders() {
         .order("created_at", { ascending: false });
       if (error) throw error;
 
-      // Fetch profiles for all user_ids
+      // Fetch profiles for all unique user_ids
       const userIds = [...new Set((data || []).map((o: any) => o.user_id))];
-      let profilesMap: Record<string, any> = {};
+      const profilesMap: Record<string, any> = {};
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
           .from("profiles")
@@ -46,9 +46,25 @@ export default function AdminOrders() {
         }
       }
 
+      // Fetch addresses separately for orders where join returned null
+      const missingAddrIds = (data || [])
+        .filter((o: any) => !o.addresses && o.address_id)
+        .map((o: any) => o.address_id);
+      const addressMap: Record<string, any> = {};
+      if (missingAddrIds.length > 0) {
+        const { data: addrs } = await supabase
+          .from("addresses")
+          .select("id, city, area, street, phone")
+          .in("id", missingAddrIds);
+        if (addrs) {
+          addrs.forEach((a: any) => { addressMap[a.id] = a; });
+        }
+      }
+
       return (data || []).map((o: any) => ({
         ...o,
         profile: profilesMap[o.user_id] || null,
+        addresses: o.addresses || addressMap[o.address_id] || null,
       }));
     },
   });
