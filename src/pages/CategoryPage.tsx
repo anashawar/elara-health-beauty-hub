@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams, Link, useSearchParams } from "react-router-dom";
+import { useParams, useLocation as useRouterLocation, Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Search, SlidersHorizontal, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import BottomNav from "@/components/layout/BottomNav";
@@ -10,6 +10,8 @@ import { useLanguage } from "@/i18n/LanguageContext";
 
 const CategoryPage = () => {
   const { id } = useParams<{ id: string }>();
+  const routerLocation = useRouterLocation();
+  const isConcernRoute = routerLocation.pathname.startsWith("/concern/");
   const [searchParams, setSearchParams] = useSearchParams();
   const activeSubId = searchParams.get("sub") || null;
 
@@ -17,7 +19,8 @@ const CategoryPage = () => {
   const { data: categories = [] } = useCategories();
   const { data: subcategories = [] } = useSubcategories();
   const { t, language } = useLanguage();
-  const category = categories.find(c => c.slug === id);
+  const category = !isConcernRoute ? categories.find(c => c.slug === id) : null;
+  const activeConcern = isConcernRoute ? concerns.find(c => c.id === id) : null;
   const BRANDS = [...new Set(allProducts.map(p => p.brand))];
 
   // Get subcategories for this category
@@ -57,7 +60,20 @@ const CategoryPage = () => {
   };
 
   const filteredProducts = useMemo(() => {
-    let result = id ? allProducts.filter(p => p.category_slug === id) : [...allProducts];
+    let result: typeof allProducts;
+    
+    if (isConcernRoute && id) {
+      // Filter by condition field OR tags matching the concern id
+      result = allProducts.filter(p => 
+        p.condition === id || 
+        (p.condition && p.condition.split(",").map(s => s.trim()).includes(id)) ||
+        p.tags.includes(id)
+      );
+    } else if (id) {
+      result = allProducts.filter(p => p.category_slug === id);
+    } else {
+      result = [...allProducts];
+    }
 
     // Filter by subcategory if selected
     if (activeSubId) {
@@ -87,7 +103,7 @@ const CategoryPage = () => {
     }
 
     return result;
-  }, [id, activeSubId, searchQuery, sortBy, selectedBrands, priceRange, selectedConditions, allProducts]);
+  }, [id, isConcernRoute, activeSubId, searchQuery, sortBy, selectedBrands, priceRange, selectedConditions, allProducts]);
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
@@ -121,7 +137,7 @@ const CategoryPage = () => {
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
-          <Link to={activeSubId ? `/category/${id}` : "/categories"} className="p-1" onClick={(e) => {
+          <Link to={isConcernRoute ? "/home" : activeSubId ? `/category/${id}` : "/categories"} className="p-1" onClick={(e) => {
             if (activeSubId) {
               e.preventDefault();
               handleSubClick(null);
@@ -130,7 +146,9 @@ const CategoryPage = () => {
             <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
           </Link>
           <h1 className="text-lg font-bold text-foreground">
-            {activeSubName ? getSubName(activeSubName) : category ? getCatName(category) : t("categories.allProducts")}
+            {activeConcern 
+              ? `${activeConcern.icon} ${t(`concerns.${id === "dryskin" ? "drySkin" : id === "hairloss" ? "hairLoss" : id === "sensitive" ? "sensitiveSkin" : id === "weightloss" ? "weightLoss" : id}`) || activeConcern.name}`
+              : activeSubName ? getSubName(activeSubName) : category ? getCatName(category) : t("categories.allProducts")}
           </h1>
         </div>
 

@@ -391,23 +391,43 @@ export default function AdminProducts() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Skin Concern</Label>
-                  <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="acne">Acne</SelectItem>
-                      <SelectItem value="dryskin">Dry Skin</SelectItem>
-                      <SelectItem value="hyperpigmentation">Hyperpigmentation</SelectItem>
-                      <SelectItem value="hairloss">Hair Loss</SelectItem>
-                      <SelectItem value="dandruff">Dandruff</SelectItem>
-                      <SelectItem value="sensitive">Sensitive Skin</SelectItem>
-                      <SelectItem value="immunity">Immunity</SelectItem>
-                      <SelectItem value="weightloss">Weight Loss</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div>
+                <Label>Skin Concerns <span className="text-muted-foreground font-normal">(multi-select)</span></Label>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {[
+                    { value: "acne", label: "🎯 Acne" },
+                    { value: "dryskin", label: "💧 Dry Skin" },
+                    { value: "hyperpigmentation", label: "🌟 Hyperpigmentation" },
+                    { value: "hairloss", label: "💇 Hair Loss" },
+                    { value: "dandruff", label: "❄️ Dandruff" },
+                    { value: "sensitive", label: "🌸 Sensitive Skin" },
+                    { value: "immunity", label: "🛡️ Immunity" },
+                    { value: "weightloss", label: "⚡ Weight Loss" },
+                  ].map(c => {
+                    const selected = (form.condition || "").split(",").map(s => s.trim()).filter(Boolean);
+                    const isSelected = selected.includes(c.value);
+                    return (
+                      <label key={c.value} className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-colors text-sm ${
+                        isSelected ? "bg-primary/10 border-primary/30 text-primary font-medium" : "border-border hover:bg-secondary"
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {
+                            const newSelected = isSelected
+                              ? selected.filter(s => s !== c.value)
+                              : [...selected, c.value];
+                            setForm({ ...form, condition: newSelected.join(",") });
+                          }}
+                          className="sr-only"
+                        />
+                        {c.label}
+                      </label>
+                    );
+                  })}
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>Volume (ml)</Label>
                   <Input value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} />

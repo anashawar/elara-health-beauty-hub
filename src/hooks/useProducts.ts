@@ -27,6 +27,7 @@ export interface ProductWithRelations {
   volume_ml: string | null;
   application: string | null;
   skin_type: string | null;
+  condition: string | null;
 }
 
 async function fetchProducts(): Promise<ProductWithRelations[]> {
@@ -71,6 +72,7 @@ async function fetchProducts(): Promise<ProductWithRelations[]> {
     volume_ml: p.volume_ml,
     application: p.application,
     skin_type: p.skin_type,
+    condition: p.condition || null,
   }));
 }
 
