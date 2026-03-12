@@ -57,9 +57,21 @@ const ProductPage = () => {
               <Search className="w-5 h-5 text-foreground" />
             </button>
             <button
-              onClick={() => {
-                if (navigator.share) {
-                  navigator.share({ title: product.title, url: window.location.href });
+              onClick={async () => {
+                const shareData = {
+                  title: product.title,
+                  text: `Check out ${product.title} by ${product.brand} on ELARA!`,
+                  url: window.location.href,
+                };
+                try {
+                  if (navigator.share) {
+                    await navigator.share(shareData);
+                  } else {
+                    await navigator.clipboard.writeText(window.location.href);
+                    toast("Link copied to clipboard!");
+                  }
+                } catch (e) {
+                  // user cancelled share
                 }
               }}
               className="p-2 rounded-xl hover:bg-secondary transition-colors"
