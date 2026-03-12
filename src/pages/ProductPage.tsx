@@ -356,7 +356,8 @@ const ProductPage = () => {
             className="w-full flex items-center justify-center gap-2.5 bg-primary text-primary-foreground font-bold py-4 rounded-2xl shadow-lg hover:opacity-90 transition-opacity text-sm"
           >
             <ShoppingBag className="w-5 h-5" />
-            Add to Cart · {formatPrice(product.price)}
+            Add to Cart
+          </motion.button>
           </motion.button>
         </div>
       </div>
