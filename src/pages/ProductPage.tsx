@@ -15,7 +15,6 @@ const ProductPage = () => {
   const navigate = useNavigate();
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [showDetails, setShowDetails] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
