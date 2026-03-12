@@ -7,19 +7,16 @@ const CategoryGrid = () => {
   if (categories.length === 0) return null;
 
   return (
-    <section className="px-4 mt-8">
-      <h2 className="text-lg font-display font-bold text-foreground mb-4">Shop by Category</h2>
-      <div className="grid grid-cols-5 gap-3">
+    <section className="px-4 mt-6">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
         {categories.map(cat => (
           <Link
             key={cat.id}
             to={`/category/${cat.slug}`}
-            className="flex flex-col items-center gap-1.5 group"
+            className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 bg-card rounded-2xl border border-border shadow-sm hover:shadow-premium hover:border-primary/30 transition-all duration-200"
           >
-            <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${cat.color || "from-gray-100 to-gray-50"} flex items-center justify-center text-2xl shadow-sm group-hover:shadow-premium transition-shadow duration-200`}>
-              {cat.icon}
-            </div>
-            <span className="text-[10px] font-medium text-center text-muted-foreground leading-tight">{cat.name}</span>
+            <span className="text-xl">{cat.icon}</span>
+            <span className="text-xs font-bold text-foreground whitespace-nowrap">{cat.name}</span>
           </Link>
         ))}
       </div>

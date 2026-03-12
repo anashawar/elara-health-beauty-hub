@@ -33,16 +33,15 @@ const Index = () => {
         </div>
       ) : (
         <>
-          <ProductSection title="Trending Now" subtitle="Most popular this week" products={trending} viewAllLink="/categories" />
+          <ProductSection title="Trending Now 🔥" subtitle="Most popular this week" products={trending} viewAllLink="/categories" variant="trending" />
+          <BrandsSection />
           <AskElaraCard />
+          <ConcernsSection />
           <ProductSection title="ELARA Picks" subtitle="Curated just for you" products={picks} viewAllLink="/categories" />
           <ProductSection title="Special Offers" subtitle="Limited time deals" products={offers} viewAllLink="/categories" />
-          <BrandsSection />
           <ProductSection title="New Arrivals" subtitle="Fresh additions to our collection" products={newArrivals} viewAllLink="/categories" />
         </>
       )}
-
-      <ConcernsSection />
 
       <div className="mt-8 mb-4 px-4 text-center">
         <p className="text-xs text-muted-foreground">ELARA — Iraq's Smart Health & Beauty Platform</p>
