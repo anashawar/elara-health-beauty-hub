@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/sonner";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface ReviewSectionProps {
   productId: string;
@@ -62,12 +63,15 @@ const StarRating = ({
 
 const ReviewSection = ({ productId }: ReviewSectionProps) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [rating, setRating] = useState(0);
   const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
   const [name, setName] = useState("");
+
+  const ratingLabels = ["", t("product.poor"), t("product.fair"), t("product.good"), t("product.great"), t("product.excellent")];
 
   const { data: reviews = [], isLoading } = useQuery({
     queryKey: ["reviews", productId],
@@ -104,7 +108,7 @@ const ReviewSection = ({ productId }: ReviewSectionProps) => {
       setTitle("");
       setComment("");
       setName("");
-      toast("Review submitted! ✨");
+      toast(t("product.reviewSubmitted"));
     },
     onError: (e: Error) => {
       toast(e.message);
@@ -137,19 +141,16 @@ const ReviewSection = ({ productId }: ReviewSectionProps) => {
 
   return (
     <div className="mt-8">
-      <h3 className="text-base font-display font-bold text-foreground mb-4">Reviews & Ratings</h3>
+      <h3 className="text-base font-display font-bold text-foreground mb-4">{t("product.reviewsAndRatings")}</h3>
 
-      {/* Rating Summary Card */}
       <div className="bg-card rounded-2xl border border-border/50 p-4">
         <div className="flex items-center gap-5">
-          {/* Big average */}
           <div className="text-center">
             <p className="text-4xl font-extrabold text-foreground">{avgRating.toFixed(1)}</p>
             <StarRating rating={Math.round(avgRating)} size="sm" />
-            <p className="text-[10px] text-muted-foreground mt-1">{reviews.length} review{reviews.length !== 1 ? "s" : ""}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{reviews.length} {reviews.length !== 1 ? t("product.reviews") : t("product.review")}</p>
           </div>
 
-          {/* Rating bars */}
           <div className="flex-1 space-y-1">
             {ratingCounts.map(rc => (
               <div key={rc.star} className="flex items-center gap-2">
@@ -168,7 +169,6 @@ const ReviewSection = ({ productId }: ReviewSectionProps) => {
         </div>
       </div>
 
-      {/* Write Review Button */}
       {user && !userHasReviewed && (
         <motion.button
           whileTap={{ scale: 0.97 }}
@@ -176,17 +176,16 @@ const ReviewSection = ({ productId }: ReviewSectionProps) => {
           className="w-full mt-3 flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-2xl text-sm font-semibold text-primary hover:from-primary/15 transition-all"
         >
           <Star className="w-4 h-4" />
-          Write a Review
+          {t("product.writeReview")}
         </motion.button>
       )}
 
       {!user && (
         <p className="text-center text-xs text-muted-foreground mt-3 py-3 bg-secondary/50 rounded-xl">
-          <a href="/auth" className="text-primary font-semibold">Sign in</a> to write a review
+          <a href="/auth" className="text-primary font-semibold">{t("product.signInToReview")}</a> {t("product.signInToReviewText")}
         </p>
       )}
 
-      {/* Review Form */}
       <AnimatePresence>
         {showForm && (
           <motion.div
@@ -197,13 +196,12 @@ const ReviewSection = ({ productId }: ReviewSectionProps) => {
           >
             <div className="mt-3 bg-card rounded-2xl border border-primary/20 p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-bold text-foreground">Your Review</h4>
-                <button onClick={() => setShowForm(false)} className="text-xs text-muted-foreground">Cancel</button>
+                <h4 className="text-sm font-bold text-foreground">{t("product.yourReview")}</h4>
+                <button onClick={() => setShowForm(false)} className="text-xs text-muted-foreground">{t("common.cancel")}</button>
               </div>
 
-              {/* Star selector */}
               <div className="flex flex-col items-center gap-2 py-2">
-                <p className="text-xs text-muted-foreground">Tap to rate</p>
+                <p className="text-xs text-muted-foreground">{t("product.tapToRate")}</p>
                 <StarRating rating={rating} onRate={setRating} size="lg" interactive />
                 {rating > 0 && (
                   <motion.p
@@ -211,41 +209,37 @@ const ReviewSection = ({ productId }: ReviewSectionProps) => {
                     animate={{ opacity: 1, y: 0 }}
                     className="text-xs font-semibold text-primary"
                   >
-                    {["", "Poor", "Fair", "Good", "Great", "Excellent"][rating]}
+                    {ratingLabels[rating]}
                   </motion.p>
                 )}
               </div>
 
-              {/* Name */}
               <input
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="Your name (optional)"
+                placeholder={t("product.yourName")}
                 maxLength={50}
                 className="w-full bg-secondary text-foreground text-sm px-4 py-3 rounded-xl outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20"
               />
 
-              {/* Title */}
               <input
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                placeholder="Review title (optional)"
+                placeholder={t("product.reviewTitle")}
                 maxLength={100}
                 className="w-full bg-secondary text-foreground text-sm px-4 py-3 rounded-xl outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20"
               />
 
-              {/* Comment */}
               <textarea
                 value={comment}
                 onChange={e => setComment(e.target.value)}
-                placeholder="Share your experience with this product..."
+                placeholder={t("product.reviewPlaceholder")}
                 rows={3}
                 maxLength={500}
                 className="w-full bg-secondary text-foreground text-sm px-4 py-3 rounded-xl outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 resize-none"
               />
-              <p className="text-[10px] text-muted-foreground text-right -mt-2">{comment.length}/500</p>
+              <p className="text-[10px] text-muted-foreground text-right rtl:text-left -mt-2">{comment.length}/500</p>
 
-              {/* Submit */}
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => submitMutation.mutate()}
@@ -257,14 +251,13 @@ const ReviewSection = ({ productId }: ReviewSectionProps) => {
                 ) : (
                   <Send className="w-4 h-4" />
                 )}
-                Submit Review
+                {t("product.submitReview")}
               </motion.button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Reviews List */}
       {isLoading ? (
         <div className="flex justify-center py-6">
           <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -303,8 +296,8 @@ const ReviewSection = ({ productId }: ReviewSectionProps) => {
         </div>
       ) : (
         <div className="text-center py-8">
-          <p className="text-muted-foreground text-sm">No reviews yet</p>
-          <p className="text-xs text-muted-foreground mt-1">Be the first to share your experience!</p>
+          <p className="text-muted-foreground text-sm">{t("product.noReviews")}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t("product.beFirst")}</p>
         </div>
       )}
     </div>

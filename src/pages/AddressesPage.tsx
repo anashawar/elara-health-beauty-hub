@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import BottomNav from "@/components/layout/BottomNav";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const cities = ["Baghdad", "Erbil", "Basra", "Sulaymaniyah", "Najaf", "Karbala", "Kirkuk", "Mosul", "Duhok"];
 
@@ -26,6 +27,7 @@ const emptyForm: AddressForm = { label: "Home", city: "", area: "", street: "", 
 
 const AddressesPage = () => {
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -71,7 +73,7 @@ const AddressesPage = () => {
       setShowForm(false);
       setEditingId(null);
       setForm(emptyForm);
-      toast("Address saved!");
+      toast(t("addresses.addressSaved"));
     },
     onError: (e: any) => toast(e.message),
   });
@@ -83,21 +85,20 @@ const AddressesPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["addresses"] });
-      toast("Address deleted");
+      toast(t("addresses.addressDeleted"));
     },
   });
 
   const setDefaultMutation = useMutation({
     mutationFn: async (id: string) => {
       if (!user) return;
-      // Clear all defaults first
       await supabase.from("addresses").update({ is_default: false }).eq("user_id", user.id);
       const { error } = await supabase.from("addresses").update({ is_default: true }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["addresses"] });
-      toast("Default address updated");
+      toast(t("addresses.defaultUpdated"));
     },
   });
 
@@ -117,10 +118,16 @@ const AddressesPage = () => {
 
   const handleSave = () => {
     if (!form.city) {
-      toast("Please select a city");
+      toast(t("auth.selectCity"));
       return;
     }
     saveMutation.mutate({ ...form, id: editingId || undefined });
+  };
+
+  const labelMap: Record<string, string> = {
+    Home: t("addresses.home"),
+    Work: t("addresses.work"),
+    Other: t("addresses.other"),
   };
 
   if (authLoading) return null;
@@ -130,14 +137,14 @@ const AddressesPage = () => {
       <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
         <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
           <div className="flex items-center gap-3 px-4 py-3">
-            <Link to="/profile" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground" /></Link>
-            <h1 className="text-lg font-display font-bold text-foreground">My Addresses</h1>
+            <Link to="/profile" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" /></Link>
+            <h1 className="text-lg font-display font-bold text-foreground">{t("addresses.title")}</h1>
           </div>
         </header>
         <div className="flex flex-col items-center justify-center py-20 px-4">
           <MapPin className="w-16 h-16 text-muted-foreground/30 mb-4" />
-          <p className="text-sm text-muted-foreground mb-4">Sign in to manage your addresses</p>
-          <Link to="/auth" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm">Sign In</Link>
+          <p className="text-sm text-muted-foreground mb-4">{t("addresses.signInToManage")}</p>
+          <Link to="/auth" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm">{t("common.signIn")}</Link>
         </div>
         <BottomNav />
       </div>
@@ -149,8 +156,8 @@ const AddressesPage = () => {
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <Link to="/profile" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground" /></Link>
-            <h1 className="text-lg font-display font-bold text-foreground">My Addresses</h1>
+            <Link to="/profile" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" /></Link>
+            <h1 className="text-lg font-display font-bold text-foreground">{t("addresses.title")}</h1>
           </div>
           {!showForm && (
             <button
@@ -172,14 +179,13 @@ const AddressesPage = () => {
             className="mx-4 mt-4 bg-card rounded-2xl p-4 shadow-premium overflow-hidden"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-foreground">{editingId ? "Edit Address" : "New Address"}</h3>
+              <h3 className="text-sm font-bold text-foreground">{editingId ? t("addresses.editAddress") : t("addresses.newAddress")}</h3>
               <button onClick={() => { setShowForm(false); setEditingId(null); }}>
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
 
             <div className="space-y-3">
-              {/* Label */}
               <div className="flex gap-2">
                 {["Home", "Work", "Other"].map(l => (
                   <button
@@ -189,14 +195,13 @@ const AddressesPage = () => {
                       form.label === l ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border"
                     }`}
                   >
-                    {l}
+                    {labelMap[l] || l}
                   </button>
                 ))}
               </div>
 
-              {/* City */}
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">City *</label>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.city")} *</label>
                 <div className="grid grid-cols-3 gap-2">
                   {cities.map(c => (
                     <button
@@ -212,16 +217,16 @@ const AddressesPage = () => {
                 </div>
               </div>
 
-              <Input value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))} placeholder="Area / Neighborhood" className="h-11 rounded-xl bg-secondary border-border text-sm" />
-              <Input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder="Street name" className="h-11 rounded-xl bg-secondary border-border text-sm" />
+              <Input value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))} placeholder={t("auth.area")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+              <Input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder={t("auth.streetPlaceholder")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
               <div className="grid grid-cols-2 gap-3">
-                <Input value={form.building} onChange={e => setForm(f => ({ ...f, building: e.target.value }))} placeholder="Building" className="h-11 rounded-xl bg-secondary border-border text-sm" />
-                <Input value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} placeholder="Floor / Apt" className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                <Input value={form.building} onChange={e => setForm(f => ({ ...f, building: e.target.value }))} placeholder={t("auth.building")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                <Input value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} placeholder={t("auth.floor")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
               </div>
-              <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="Phone number" type="tel" className="h-11 rounded-xl bg-secondary border-border text-sm" />
+              <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder={t("auth.phoneNumber")} type="tel" className="h-11 rounded-xl bg-secondary border-border text-sm" />
 
               <Button onClick={handleSave} disabled={saveMutation.isPending} className="w-full h-11 rounded-xl text-sm font-semibold">
-                {saveMutation.isPending ? "Saving..." : editingId ? "Update Address" : "Save Address"}
+                {saveMutation.isPending ? t("auth.saving") : editingId ? t("addresses.updateAddress") : t("addresses.saveAddress")}
               </Button>
             </div>
           </motion.div>
@@ -235,13 +240,13 @@ const AddressesPage = () => {
       ) : addresses.length === 0 && !showForm ? (
         <div className="flex flex-col items-center justify-center py-20 px-4">
           <MapPin className="w-16 h-16 text-muted-foreground/30 mb-4" />
-          <p className="text-base font-semibold text-foreground mb-1">No addresses yet</p>
-          <p className="text-sm text-muted-foreground mb-4">Add your first delivery address</p>
+          <p className="text-base font-semibold text-foreground mb-1">{t("addresses.noAddresses")}</p>
+          <p className="text-sm text-muted-foreground mb-4">{t("addresses.addFirst")}</p>
           <button
             onClick={() => setShowForm(true)}
             className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm"
           >
-            Add Address
+            {t("addresses.addAddress")}
           </button>
         </div>
       ) : (
@@ -259,10 +264,10 @@ const AddressesPage = () => {
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-foreground bg-secondary px-2.5 py-1 rounded-lg">
-                    {addr.label || "Address"}
+                    {labelMap[addr.label || ""] || addr.label || t("addresses.title")}
                   </span>
                   {addr.is_default && (
-                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">Default</span>
+                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{t("addresses.default")}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-1">
@@ -284,7 +289,7 @@ const AddressesPage = () => {
                   onClick={() => setDefaultMutation.mutate(addr.id)}
                   className="mt-3 flex items-center gap-1.5 text-xs text-primary font-medium"
                 >
-                  <Star className="w-3.5 h-3.5" /> Set as default
+                  <Star className="w-3.5 h-3.5" /> {t("addresses.setAsDefault")}
                 </button>
               )}
             </motion.div>

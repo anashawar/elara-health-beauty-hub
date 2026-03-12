@@ -8,10 +8,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/layout/BottomNav";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const CheckoutPage = () => {
   const { cart, cartTotal, clearCart } = useApp();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [submitted, setSubmitted] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
@@ -33,7 +35,6 @@ const CheckoutPage = () => {
     enabled: !!user,
   });
 
-  // Auto-select default address
   const selectedAddress = addresses.find(a => a.id === selectedAddressId)
     || addresses.find(a => a.is_default)
     || addresses[0]
@@ -43,7 +44,6 @@ const CheckoutPage = () => {
     e.preventDefault();
 
     if (user && selectedAddress) {
-      // Save order to database
       const { data: order, error: orderError } = await supabase.from("orders").insert({
         user_id: user.id,
         address_id: selectedAddress.id,
@@ -59,7 +59,6 @@ const CheckoutPage = () => {
       if (orderError) {
         console.error(orderError);
       } else if (order) {
-        // Save order items
         const items = cart.map(item => ({
           order_id: order.id,
           product_id: item.product.id,
@@ -85,22 +84,29 @@ const CheckoutPage = () => {
         >
           <Check className="w-10 h-10 text-sage" />
         </motion.div>
-        <h2 className="text-2xl font-display font-bold text-foreground mb-2">Order Placed!</h2>
-        <p className="text-sm text-muted-foreground text-center mb-6">Your order has been placed successfully. We'll notify you when it ships.</p>
+        <h2 className="text-2xl font-display font-bold text-foreground mb-2">{t("checkout.orderPlaced")}</h2>
+        <p className="text-sm text-muted-foreground text-center mb-6">{t("checkout.orderPlacedDesc")}</p>
         <Link to="/home" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-2xl text-sm">
-          Continue Shopping
+          {t("common.continueShopping")}
         </Link>
         <BottomNav />
       </div>
     );
   }
 
+  const paymentMethods = [
+    { value: "cod", label: t("checkout.cod"), desc: t("checkout.codDesc"), icon: "💵" },
+    { value: "fib", label: t("checkout.fib"), desc: t("checkout.fibDesc"), icon: "🏦" },
+    { value: "zaincash", label: t("checkout.zaincash"), desc: t("checkout.zaincashDesc"), icon: "📱" },
+    { value: "qicard", label: t("checkout.qicard"), desc: t("checkout.qicardDesc"), icon: "💳" },
+  ];
+
   return (
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
-          <Link to="/cart" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground" /></Link>
-          <h1 className="text-lg font-display font-bold text-foreground">Checkout</h1>
+          <Link to="/cart" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" /></Link>
+          <h1 className="text-lg font-display font-bold text-foreground">{t("checkout.title")}</h1>
         </div>
       </header>
 
@@ -108,14 +114,14 @@ const CheckoutPage = () => {
         {/* Delivery Address */}
         <div className="bg-card rounded-2xl p-4 shadow-premium">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-foreground">Delivery Address</h3>
+            <h3 className="text-sm font-bold text-foreground">{t("checkout.deliveryAddress")}</h3>
             {addresses.length > 1 && (
               <button
                 type="button"
                 onClick={() => setShowAddressPicker(!showAddressPicker)}
                 className="text-xs text-primary font-medium flex items-center gap-1"
               >
-                Change <ChevronDown className={`w-3 h-3 transition-transform ${showAddressPicker ? "rotate-180" : ""}`} />
+                {t("checkout.change")} <ChevronDown className={`w-3 h-3 transition-transform ${showAddressPicker ? "rotate-180" : ""}`} />
               </button>
             )}
           </div>
@@ -128,7 +134,7 @@ const CheckoutPage = () => {
             <div className="flex items-start gap-3 p-3 bg-secondary/50 rounded-xl">
               <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium text-foreground">{selectedAddress.label || "Address"} — {selectedAddress.city}</p>
+                <p className="text-sm font-medium text-foreground">{selectedAddress.label || t("addresses.title")} — {selectedAddress.city}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {[selectedAddress.area, selectedAddress.street, selectedAddress.building, selectedAddress.floor].filter(Boolean).join(", ")}
                 </p>
@@ -139,12 +145,11 @@ const CheckoutPage = () => {
             </div>
           ) : (
             <div className="text-center py-4">
-              <p className="text-xs text-muted-foreground mb-2">No saved addresses</p>
-              <Link to="/addresses" className="text-xs text-primary font-medium">Add Address</Link>
+              <p className="text-xs text-muted-foreground mb-2">{t("checkout.noAddresses")}</p>
+              <Link to="/addresses" className="text-xs text-primary font-medium">{t("checkout.addAddress")}</Link>
             </div>
           )}
 
-          {/* Address picker dropdown */}
           <AnimatePresence>
             {showAddressPicker && addresses.length > 1 && (
               <motion.div
@@ -162,7 +167,7 @@ const CheckoutPage = () => {
                       (selectedAddress?.id === addr.id) ? "border-primary bg-primary/5" : "border-border bg-card"
                     }`}
                   >
-                    <p className="text-xs font-semibold text-foreground">{addr.label || "Address"} — {addr.city}</p>
+                    <p className="text-xs font-semibold text-foreground">{addr.label || t("addresses.title")} — {addr.city}</p>
                     <p className="text-[10px] text-muted-foreground">
                       {[addr.area, addr.street, addr.building].filter(Boolean).join(", ")}
                     </p>
@@ -175,11 +180,11 @@ const CheckoutPage = () => {
 
         {/* Notes */}
         <div className="bg-card rounded-2xl p-4 shadow-premium">
-          <h3 className="text-sm font-bold text-foreground mb-2">Order Notes</h3>
+          <h3 className="text-sm font-bold text-foreground mb-2">{t("checkout.orderNotes")}</h3>
           <textarea
             value={notes}
             onChange={e => setNotes(e.target.value)}
-            placeholder="Any special instructions? (optional)"
+            placeholder={t("checkout.notesPlaceholder")}
             rows={2}
             className="w-full bg-secondary text-foreground text-sm px-4 py-3 rounded-xl outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 resize-none"
           />
@@ -187,14 +192,9 @@ const CheckoutPage = () => {
 
         {/* Payment */}
         <div className="bg-card rounded-2xl p-4 shadow-premium">
-          <h3 className="text-sm font-bold text-foreground mb-3">Payment Method</h3>
+          <h3 className="text-sm font-bold text-foreground mb-3">{t("checkout.paymentMethod")}</h3>
           <div className="space-y-2">
-            {[
-              { value: "cod", label: "Cash on Delivery", desc: "Pay when you receive your order", icon: "💵" },
-              { value: "fib", label: "FIB (First Iraqi Bank)", desc: "Pay via FIB mobile app", icon: "🏦" },
-              { value: "zaincash", label: "ZainCash", desc: "Pay with your ZainCash wallet", icon: "📱" },
-              { value: "qicard", label: "Qi Card", desc: "Pay using your Qi Card", icon: "💳" },
-            ].map(method => (
+            {paymentMethods.map(method => (
               <label
                 key={method.value}
                 className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer border-2 transition-all ${
@@ -223,7 +223,7 @@ const CheckoutPage = () => {
 
         {/* Order Summary */}
         <div className="bg-card rounded-2xl p-4 shadow-premium">
-          <h3 className="text-sm font-bold text-foreground mb-3">Order Summary</h3>
+          <h3 className="text-sm font-bold text-foreground mb-3">{t("cart.orderSummary")}</h3>
           <div className="space-y-1.5">
             {cart.map(item => (
               <div key={item.product.id} className="flex justify-between text-sm">
@@ -232,13 +232,13 @@ const CheckoutPage = () => {
               </div>
             ))}
             <div className="border-t border-border pt-2 mt-2 flex justify-between text-sm">
-              <span className="text-muted-foreground">Delivery</span>
+              <span className="text-muted-foreground">{t("cart.delivery")}</span>
               <span className={deliveryFee === 0 ? "text-sage font-medium" : "text-foreground font-medium"}>
-                {deliveryFee === 0 ? "Free" : formatPrice(deliveryFee)}
+                {deliveryFee === 0 ? t("common.free") : formatPrice(deliveryFee)}
               </span>
             </div>
             <div className="border-t border-border pt-2 flex justify-between">
-              <span className="font-bold text-foreground">Total</span>
+              <span className="font-bold text-foreground">{t("cart.total")}</span>
               <span className="font-bold text-foreground text-lg">{formatPrice(cartTotal + deliveryFee)}</span>
             </div>
           </div>
@@ -249,7 +249,7 @@ const CheckoutPage = () => {
           disabled={!selectedAddress && !!user}
           className="w-full bg-primary text-primary-foreground font-semibold py-4 rounded-2xl hover:opacity-90 transition-opacity text-sm disabled:opacity-50"
         >
-          Place Order — {formatPrice(cartTotal + deliveryFee)}
+          {t("checkout.placeOrder")} — {formatPrice(cartTotal + deliveryFee)}
         </button>
       </form>
 

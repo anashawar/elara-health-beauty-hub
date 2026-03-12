@@ -5,8 +5,8 @@ import { ChevronRight, Sparkles } from "lucide-react";
 import BottomNav from "@/components/layout/BottomNav";
 import FloatingSearch from "@/components/layout/FloatingSearch";
 import { useCategories } from "@/hooks/useProducts";
+import { useLanguage } from "@/i18n/LanguageContext";
 
-// Sub-categories mapping per category slug
 const subCategories: Record<string, { name: string; icon: string }[]> = {
   skincare: [
     { name: "Cleansers", icon: "🧼" },
@@ -71,23 +71,28 @@ const subCategories: Record<string, { name: string; icon: string }[]> = {
 
 const CategoriesPage = () => {
   const { data: categories = [] } = useCategories();
+  const { t, language } = useLanguage();
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
 
   const toggleExpand = (slug: string) => {
     setExpandedSlug(prev => (prev === slug ? null : slug));
   };
 
+  const getCatName = (cat: any) => {
+    if (language === "ar" && cat.name_ar) return cat.name_ar;
+    if (language === "ku" && cat.name_ku) return cat.name_ku;
+    return cat.name;
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
           <Sparkles className="w-5 h-5 text-primary" />
-          <h1 className="text-lg font-display font-bold text-foreground">Categories</h1>
+          <h1 className="text-lg font-display font-bold text-foreground">{t("categories.title")}</h1>
         </div>
       </header>
 
-      {/* Category list */}
       <div className="px-4 mt-4 space-y-3">
         {categories.map((cat, idx) => {
           const isExpanded = expandedSlug === cat.slug;
@@ -101,7 +106,6 @@ const CategoriesPage = () => {
               transition={{ delay: idx * 0.04 }}
               className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden"
             >
-              {/* Category header row */}
               <button
                 onClick={() => toggleExpand(cat.slug)}
                 className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-secondary/30 transition-colors"
@@ -109,15 +113,15 @@ const CategoriesPage = () => {
                 <span className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-xl">
                   {cat.icon}
                 </span>
-                <span className="flex-1 text-left text-sm font-semibold text-foreground">
-                  {cat.name}
+                <span className="flex-1 text-left rtl:text-right text-sm font-semibold text-foreground">
+                  {getCatName(cat)}
                 </span>
                 {subs.length > 0 ? (
                   <motion.div
                     animate={{ rotate: isExpanded ? 90 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" />
                   </motion.div>
                 ) : (
                   <Link
@@ -125,12 +129,11 @@ const CategoriesPage = () => {
                     onClick={(e) => e.stopPropagation()}
                     className="text-xs text-primary font-medium px-3 py-1.5 bg-primary/10 rounded-lg"
                   >
-                    View All
+                    {t("categories.viewAll")}
                   </Link>
                 )}
               </button>
 
-              {/* Sub-categories */}
               <AnimatePresence>
                 {isExpanded && subs.length > 0 && (
                   <motion.div
@@ -141,18 +144,16 @@ const CategoriesPage = () => {
                     className="overflow-hidden"
                   >
                     <div className="px-4 pb-3 pt-1 border-t border-border/30">
-                      {/* View All link */}
                       <Link
                         to={`/category/${cat.slug}`}
                         className="flex items-center gap-2 px-3 py-2.5 mb-1 rounded-xl bg-primary/5 hover:bg-primary/10 transition-colors"
                       >
                         <span className="text-xs">🔍</span>
                         <span className="text-xs font-semibold text-primary">
-                          View All {cat.name}
+                          {t("categories.viewAll")} {getCatName(cat)}
                         </span>
                       </Link>
 
-                      {/* Sub-category grid */}
                       <div className="grid grid-cols-3 gap-2 mt-2">
                         {subs.map((sub) => (
                           <Link
