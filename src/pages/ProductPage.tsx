@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, Share2, ShoppingBag, Search, Truck, ShieldCheck, BadgeCheck, X, Star, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+import SearchOverlay from "@/components/SearchOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/components/ui/sonner";
 import { useApp } from "@/context/AppContext";
