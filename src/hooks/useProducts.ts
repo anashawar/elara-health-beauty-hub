@@ -72,6 +72,7 @@ async function fetchProducts(): Promise<ProductWithRelations[]> {
     volume_ml: p.volume_ml,
     application: p.application,
     skin_type: p.skin_type,
+    condition: p.condition || null,
   }));
 }
 
