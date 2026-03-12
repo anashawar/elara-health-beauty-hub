@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Heart, ShoppingBag, Search, Truck, ShieldCheck, BadgeCheck, X } from "lucide-react";
+import { ArrowLeft, Heart, Share2, ShoppingBag, Search, Truck, ShieldCheck, BadgeCheck, X, Star, ChevronDown, ChevronUp } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/context/AppContext";
-import { useProducts, useProduct, formatPrice } from "@/hooks/useProducts";
+import { useProducts, formatPrice } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
 
@@ -12,6 +13,7 @@ const ProductPage = () => {
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showDetails, setShowDetails] = useState(false);
   const { data: allProducts = [] } = useProducts();
   const product = allProducts.find(p => p.id === id);
 
@@ -37,164 +39,227 @@ const ProductPage = () => {
       ).slice(0, 5)
     : [];
 
+  const handleAddToCart = () => {
+    addToCart(product);
+  };
+
   return (
-    <div className="min-h-screen bg-background pb-32 max-w-lg mx-auto">
+    <div className="min-h-screen bg-background pb-36 max-w-lg mx-auto">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate(-1)} className="p-1">
+          <button onClick={() => navigate(-1)} className="p-2 -ml-1 rounded-xl hover:bg-secondary transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setSearchOpen(!searchOpen)} className="p-1">
+          <div className="flex items-center gap-1">
+            <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 rounded-xl hover:bg-secondary transition-colors">
               <Search className="w-5 h-5 text-foreground" />
             </button>
-            <button onClick={() => toggleWishlist(product.id)} className="p-1">
-              <Heart className={`w-5 h-5 ${wishlisted ? "fill-primary text-primary" : "text-foreground"}`} />
+            <button
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({ title: product.title, url: window.location.href });
+                }
+              }}
+              className="p-2 rounded-xl hover:bg-secondary transition-colors"
+            >
+              <Share2 className="w-5 h-5 text-foreground" />
+            </button>
+            <button onClick={() => toggleWishlist(product.id)} className="p-2 rounded-xl hover:bg-secondary transition-colors">
+              <Heart className={`w-5 h-5 transition-all ${wishlisted ? "fill-primary text-primary scale-110" : "text-foreground"}`} />
             </button>
           </div>
         </div>
-        {searchOpen && (
-          <div className="px-4 pb-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                autoFocus
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search for..."
-                className="w-full pl-9 pr-9 py-2.5 bg-secondary rounded-xl text-sm text-foreground placeholder:text-muted-foreground outline-none"
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </button>
-              )}
-            </div>
-            {searchResults.length > 0 && (
-              <div className="mt-2 bg-card rounded-xl border border-border shadow-lg overflow-hidden">
-                {searchResults.map(p => (
-                  <Link
-                    key={p.id}
-                    to={`/product/${p.id}`}
-                    onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
-                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-secondary/50 transition-colors"
-                  >
-                    <img src={p.image} alt={p.title} className="w-10 h-10 rounded-lg object-cover" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{p.title}</p>
-                      <p className="text-xs text-muted-foreground">{p.brand} · {formatPrice(p.price)}</p>
-                    </div>
-                  </Link>
-                ))}
+        <AnimatePresence>
+          {searchOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden px-4 pb-3"
+            >
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  autoFocus
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search for..."
+                  className="w-full pl-9 pr-9 py-2.5 bg-secondary rounded-xl text-sm text-foreground placeholder:text-muted-foreground outline-none"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                )}
               </div>
-            )}
-          </div>
-        )}
+              {searchResults.length > 0 && (
+                <div className="mt-2 bg-card rounded-xl border border-border shadow-lg overflow-hidden">
+                  {searchResults.map(p => (
+                    <Link
+                      key={p.id}
+                      to={`/product/${p.id}`}
+                      onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
+                      className="flex items-center gap-3 px-3 py-2.5 hover:bg-secondary/50 transition-colors"
+                    >
+                      <img src={p.image} alt={p.title} className="w-10 h-10 rounded-lg object-cover" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{p.title}</p>
+                        <p className="text-xs text-muted-foreground">{p.brand} · {formatPrice(p.price)}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
-      {/* Image - smaller & modern */}
+      {/* Product Image */}
       <div className="px-4 pt-4">
-        <div className="aspect-[4/3] bg-secondary rounded-2xl overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative aspect-square bg-gradient-to-br from-secondary to-muted rounded-3xl overflow-hidden"
+        >
           <img src={product.image} alt={product.title} className="w-full h-full object-cover" />
-        </div>
+          {discount > 0 && (
+            <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-bold px-3 py-1.5 rounded-xl shadow-md">
+              -{discount}% OFF
+            </div>
+          )}
+          {product.isNew && (
+            <div className="absolute top-3 right-3 bg-foreground text-background text-[10px] font-bold px-2.5 py-1 rounded-lg">
+              NEW
+            </div>
+          )}
+        </motion.div>
       </div>
 
-      {/* Info */}
-      <div className="px-4 pt-5">
-        <p className="text-xs font-semibold uppercase tracking-widest text-primary">{product.brand}</p>
-        <h1 className="text-2xl font-bold text-foreground mt-1">{product.title}</h1>
+      {/* Product Info */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="px-4 pt-5"
+      >
+        {/* Brand */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-primary">{product.brand}</span>
+          <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+            <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> 4.8
+          </span>
+        </div>
 
-        <div className="flex items-center gap-2 mt-3">
-          <span className="text-lg font-bold text-foreground">{formatPrice(product.price)}</span>
+        {/* Title */}
+        <h1 className="text-xl font-display font-bold text-foreground mt-1.5 leading-tight">{product.title}</h1>
+
+        {/* Price */}
+        <div className="flex items-baseline gap-2.5 mt-3">
+          <span className="text-2xl font-extrabold text-foreground">{formatPrice(product.price)}</span>
           {product.originalPrice && (
-            <>
-              <span className="text-xs text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
-              <span className="text-[10px] font-bold text-primary bg-rose-light px-2 py-0.5 rounded-lg">-{discount}%</span>
-            </>
+            <span className="text-sm text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
           )}
         </div>
 
-        {/* Free Delivery Banner */}
-        <div className="mt-4 flex items-center gap-2.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/60 rounded-xl px-3.5 py-2.5">
-          <Truck className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-          <p className="text-xs font-semibold text-emerald-700">Shop 40,000 IQD and get <span className="font-extrabold">FREE DELIVERY</span></p>
-        </div>
-
-        {/* Trust Icons */}
-        <div className="grid grid-cols-3 gap-2 mt-4">
+        {/* Quick Info Pills */}
+        <div className="flex gap-2 mt-4 overflow-x-auto no-scrollbar">
           {[
-            { icon: Truck, label: "Fast Delivery" },
-            { icon: ShieldCheck, label: "100% Original Product" },
-            { icon: BadgeCheck, label: "Verified Brands" },
+            { icon: Truck, text: "Free delivery 40K+" },
+            { icon: ShieldCheck, text: "100% Original" },
+            { icon: BadgeCheck, text: "Verified" },
           ].map(item => (
-            <div key={item.label} className="flex flex-col items-center gap-1.5 bg-secondary/60 rounded-xl py-3 px-2">
-              <item.icon className="w-5 h-5 text-primary" />
-              <span className="text-[10px] font-semibold text-foreground text-center leading-tight">{item.label}</span>
+            <div key={item.text} className="flex items-center gap-1.5 bg-secondary/70 rounded-full px-3 py-2 flex-shrink-0">
+              <item.icon className="w-3.5 h-3.5 text-primary" />
+              <span className="text-[10px] font-semibold text-foreground whitespace-nowrap">{item.text}</span>
             </div>
           ))}
         </div>
 
         {/* Tags */}
         {product.tags.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5 mt-5">
-            <span className="text-xs font-semibold text-foreground mr-1">Used for:</span>
+          <div className="flex flex-wrap items-center gap-1.5 mt-4">
             {product.tags.map(tag => (
-              <span key={tag} className="text-[10px] font-medium bg-secondary text-secondary-foreground px-3 py-1.5 rounded-xl">{tag}</span>
+              <span key={tag} className="text-[10px] font-semibold bg-primary/10 text-primary px-3 py-1.5 rounded-full">{tag}</span>
             ))}
           </div>
         )}
 
-        {/* Description */}
-        <div className="mt-6">
-          <h3 className="text-sm font-bold text-foreground mb-2">Description</h3>
+        {/* Description Card */}
+        <div className="mt-5 bg-card rounded-2xl border border-border/50 p-4">
           <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
         </div>
 
-        {/* Benefits */}
-        <div className="mt-5">
-          <h3 className="text-sm font-bold text-foreground mb-2">Benefits</h3>
-          <ul className="space-y-1.5">
-            {product.benefits.map(b => (
-              <li key={b} className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                {b}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* Expandable Details */}
+        <button
+          onClick={() => setShowDetails(!showDetails)}
+          className="w-full flex items-center justify-between mt-4 py-3 px-4 bg-card rounded-2xl border border-border/50"
+        >
+          <span className="text-sm font-semibold text-foreground">Details & How to Use</span>
+          {showDetails ? (
+            <ChevronUp className="w-4 h-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          )}
+        </button>
 
-        {/* Usage */}
-        <div className="mt-5">
-          <h3 className="text-sm font-bold text-foreground mb-2">How to Use</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">{product.usage}</p>
-        </div>
+        <AnimatePresence>
+          {showDetails && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="bg-card rounded-b-2xl border-x border-b border-border/50 px-4 pb-4 -mt-2 pt-4 space-y-5">
+                {/* Benefits */}
+                {product.benefits.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-primary mb-2">Benefits</h3>
+                    <ul className="space-y-1.5">
+                      {product.benefits.map(b => (
+                        <li key={b} className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-        {/* Specifications Table */}
-        <div className="mt-6">
-          <h3 className="text-sm font-bold text-foreground mb-3">Specifications</h3>
-          <div className="rounded-xl border border-border overflow-hidden">
-            {[
-              { label: "Brand", value: product.brand },
-              { label: "Country of Origin", value: "—" },
-              { label: "Form", value: "—" },
-              { label: "Gender", value: "—" },
-              { label: "Volume (ml)", value: "—" },
-              { label: "Application", value: "—" },
-              { label: "Type of Skin", value: product.tags.length > 0 ? product.tags.join(", ") : "—" },
-            ].map((row, i) => (
-              <div key={row.label} className={`flex items-center text-sm ${i % 2 === 0 ? "bg-secondary/40" : "bg-card"}`}>
-                <span className="w-2/5 px-3.5 py-2.5 font-medium text-muted-foreground">{row.label}</span>
-                <span className="w-3/5 px-3.5 py-2.5 text-foreground">{row.value}</span>
+                {/* Usage */}
+                {product.usage && (
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-primary mb-2">How to Use</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{product.usage}</p>
+                  </div>
+                )}
+
+                {/* Specs */}
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-primary mb-2">Specifications</h3>
+                  <div className="rounded-xl overflow-hidden border border-border/50">
+                    {[
+                      { label: "Brand", value: product.brand },
+                      { label: "Skin Type", value: product.tags.length > 0 ? product.tags.join(", ") : "All" },
+                    ].map((row, i) => (
+                      <div key={row.label} className={`flex text-sm ${i % 2 === 0 ? "bg-secondary/30" : "bg-card"}`}>
+                        <span className="w-2/5 px-3 py-2.5 font-medium text-muted-foreground">{row.label}</span>
+                        <span className="w-3/5 px-3 py-2.5 text-foreground">{row.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Related */}
+        {/* Related Products */}
         {related.length > 0 && (
           <div className="mt-8">
-            <h3 className="text-lg font-bold text-foreground mb-3">You May Also Like</h3>
+            <h3 className="text-base font-display font-bold text-foreground mb-3">You May Also Like</h3>
             <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
               {related.map(p => (
                 <ProductCard key={p.id} product={p} variant="horizontal" />
@@ -202,20 +267,19 @@ const ProductPage = () => {
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
 
-      {/* Fixed Bottom CTA */}
-      <div className="fixed bottom-16 left-0 right-0 z-40 bg-card/95 backdrop-blur-lg border-t border-border px-4 py-3">
-        <div className="flex gap-3 max-w-lg mx-auto">
-          <button
-            onClick={() => addToCart(product)}
-            className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground font-semibold py-3.5 rounded-2xl hover:opacity-90 transition-opacity"
+      {/* Fixed Bottom Add to Cart */}
+      <div className="fixed bottom-20 left-0 right-0 z-40 px-4 pb-2">
+        <div className="max-w-lg mx-auto">
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={handleAddToCart}
+            className="w-full flex items-center justify-center gap-2.5 bg-primary text-primary-foreground font-bold py-4 rounded-2xl shadow-lg hover:opacity-90 transition-opacity text-sm"
           >
-            <ShoppingBag className="w-4 h-4" /> Add to Cart
-          </button>
-          <button className="px-6 bg-foreground text-background font-semibold py-3.5 rounded-2xl hover:opacity-90 transition-opacity">
-            Buy Now
-          </button>
+            <ShoppingBag className="w-5 h-5" />
+            Add to Cart · {formatPrice(product.price)}
+          </motion.button>
         </div>
       </div>
 
