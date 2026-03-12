@@ -67,7 +67,7 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
             <div className="mb-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Categories</p>
               {filteredCategories.map(cat => (
-                <Link key={cat.id} to={`/category/${cat.id}`} onClick={onClose} className="flex items-center justify-between py-2.5 border-b border-border/50">
+                <Link key={cat.id} to={`/category/${cat.slug}`} onClick={onClose} className="flex items-center justify-between py-2.5 border-b border-border/50">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{cat.icon}</span>
                     <span className="text-sm font-medium text-foreground">{cat.name}</span>

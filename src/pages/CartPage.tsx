@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, Minus, Plus, Trash2, Tag } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { formatPrice } from "@/data/products";
+import { formatPrice } from "@/hooks/useProducts";
 import BottomNav from "@/components/layout/BottomNav";
 import { useState } from "react";
 

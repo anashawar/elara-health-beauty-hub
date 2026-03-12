@@ -32,7 +32,7 @@ const CategoryPage = () => {
   const activeFilterCount = (sortBy !== "relevance" ? 1 : 0) + selectedBrands.length + selectedConditions.length + (priceRange[0] > 0 || priceRange[1] < 200000 ? 1 : 0);
 
   const filteredProducts = useMemo(() => {
-    let result = id ? products.filter(p => p.category === id) : products;
+    let result = id ? allProducts.filter(p => p.category_slug === id) : [...allProducts];
 
     if (searchQuery.length > 1) {
       const q = searchQuery.toLowerCase();
