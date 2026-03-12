@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, Share2, ShoppingBag, Search, Truck, ShieldCheck, BadgeCheck, X, Star, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
