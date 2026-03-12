@@ -12,7 +12,8 @@ const ProductPage = () => {
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const product = products.find(p => p.id === id);
+  const { data: allProducts = [] } = useProducts();
+  const product = allProducts.find(p => p.id === id);
 
   if (!product) {
     return (
