@@ -51,7 +51,7 @@ const CheckoutPage = () => {
         delivery_fee: deliveryFee,
         discount: 0,
         total: cartTotal + deliveryFee,
-        payment_method: "cod",
+        payment_method: paymentMethod,
         notes: notes || null,
         status: "pending",
       }).select().single();
