@@ -358,7 +358,6 @@ const ProductPage = () => {
             <ShoppingBag className="w-5 h-5" />
             Add to Cart
           </motion.button>
-          </motion.button>
         </div>
       </div>
 
