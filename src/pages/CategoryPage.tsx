@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import BottomNav from "@/components/layout/BottomNav";
+import FloatingSearch from "@/components/layout/FloatingSearch";
 import ProductCard from "@/components/ProductCard";
 import { useProducts, useCategories, concerns } from "@/hooks/useProducts";
 
