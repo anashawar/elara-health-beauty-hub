@@ -146,7 +146,9 @@ const CategoryPage = () => {
             <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
           </Link>
           <h1 className="text-lg font-bold text-foreground">
-            {activeSubName ? getSubName(activeSubName) : category ? getCatName(category) : t("categories.allProducts")}
+            {activeConcern 
+              ? `${activeConcern.icon} ${t(`concerns.${id === "dryskin" ? "drySkin" : id === "hairloss" ? "hairLoss" : id === "sensitive" ? "sensitiveSkin" : id === "weightloss" ? "weightLoss" : id}`) || activeConcern.name}`
+              : activeSubName ? getSubName(activeSubName) : category ? getCatName(category) : t("categories.allProducts")}
           </h1>
         </div>
 
