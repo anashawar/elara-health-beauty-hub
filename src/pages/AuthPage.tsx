@@ -312,6 +312,7 @@ const AuthPage = () => {
                 Back to Sign In
               </button>
             </motion.div>
+          )}
 
           {step === "address" && (
             <motion.div
