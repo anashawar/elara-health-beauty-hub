@@ -217,8 +217,6 @@ export const ku = {
     welcomeToElara: "بەخێربێیت بۆ ئێلارا، {{name}}!",
     signInFirst: "تکایە سەرەتا بچۆرە ژوورەوە",
   },
-    signInFirst: "تکایە سەرەتا بچۆرەژوورەوە",
-  },
   wishlist: {
     title: "دڵخوازەکان",
     noSavedItems: "هیچ دانەیەکی پاشەکەوتکراو نییە",
