@@ -4,19 +4,21 @@ import { useApp } from "@/context/AppContext";
 import { useProducts } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const WishlistPage = () => {
   const { wishlist } = useApp();
   const { data: products = [] } = useProducts();
+  const { t } = useLanguage();
   const wishlistProducts = products.filter(p => wishlist.includes(p.id));
 
   return (
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
-          <Link to="/home" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground" /></Link>
-          <h1 className="text-lg font-display font-bold text-foreground">Wishlist</h1>
-          <span className="text-xs text-muted-foreground ml-1">({wishlistProducts.length})</span>
+          <Link to="/home" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" /></Link>
+          <h1 className="text-lg font-display font-bold text-foreground">{t("wishlist.title")}</h1>
+          <span className="text-xs text-muted-foreground ms-1">({wishlistProducts.length})</span>
         </div>
       </header>
 
@@ -25,10 +27,10 @@ const WishlistPage = () => {
           <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-4">
             <span className="text-3xl">💝</span>
           </div>
-          <h3 className="text-lg font-display font-bold text-foreground">No saved items</h3>
-          <p className="text-sm text-muted-foreground mt-1 mb-6">Save your favorites here</p>
+          <h3 className="text-lg font-display font-bold text-foreground">{t("wishlist.noSavedItems")}</h3>
+          <p className="text-sm text-muted-foreground mt-1 mb-6">{t("wishlist.saveYourFavorites")}</p>
           <Link to="/home" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-2xl text-sm">
-            Start Shopping
+            {t("common.startShopping")}
           </Link>
         </div>
       ) : (

@@ -2,6 +2,7 @@ import { Search, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import elaraLogo from "@/assets/elara-logo.png";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface TopHeaderProps {
   onSearchClick: () => void;
@@ -9,8 +10,9 @@ interface TopHeaderProps {
 
 const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   
-  const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "Guest";
+  const firstName = user?.user_metadata?.full_name?.split(" ")[0] || t("common.guest");
   const userCity = "Baghdad";
 
   return (
@@ -22,13 +24,13 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
             <img src={elaraLogo} alt="ELARA" className="h-7" />
           </Link>
 
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-end rtl:items-start">
             <span className="text-xs font-medium text-foreground">
-              Hey, <span className="font-bold text-primary">{firstName}</span> 👋
+              {t("common.hey")}, <span className="font-bold text-primary">{firstName}</span> 👋
             </span>
             <div className="flex items-center gap-1 mt-0.5">
               <MapPin className="w-3 h-3 text-primary" />
-              <span className="text-[10px] text-muted-foreground font-medium">{userCity}, Iraq</span>
+              <span className="text-[10px] text-muted-foreground font-medium">{userCity}, {t("common.iraq")}</span>
             </div>
           </div>
         </div>
@@ -39,7 +41,7 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
           className="w-full flex items-center gap-2.5 px-4 py-2.5 bg-secondary/80 rounded-xl border border-border hover:border-primary/30 transition-all duration-200"
         >
           <Search className="w-4 h-4 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">Search products, brands...</span>
+          <span className="text-xs text-muted-foreground">{t("common.search")}</span>
         </button>
       </div>
     </header>

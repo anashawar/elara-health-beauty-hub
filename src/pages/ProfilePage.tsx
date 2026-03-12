@@ -3,21 +3,23 @@ import { ArrowLeft, ChevronRight, Heart, MapPin, Settings, Package, LogOut } fro
 import BottomNav from "@/components/layout/BottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/sonner";
-
-const menuItems = [
-  { icon: Package, label: "My Orders", path: "/orders" },
-  { icon: Heart, label: "Wishlist", path: "/wishlist" },
-  { icon: MapPin, label: "Addresses", path: "/addresses" },
-  { icon: Settings, label: "Settings", path: "/settings" },
-];
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const ProfilePage = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
+
+  const menuItems = [
+    { icon: Package, label: t("profile.myOrders"), path: "/orders" },
+    { icon: Heart, label: t("profile.wishlist"), path: "/wishlist" },
+    { icon: MapPin, label: t("profile.addresses"), path: "/addresses" },
+    { icon: Settings, label: t("profile.settings"), path: "/settings" },
+  ];
 
   const handleSignOut = async () => {
     await signOut();
-    toast("Signed out");
+    toast(t("profile.signedOut"));
     navigate("/home");
   };
 
@@ -25,8 +27,8 @@ const ProfilePage = () => {
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
-          <Link to="/home" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground" /></Link>
-          <h1 className="text-lg font-display font-bold text-foreground">Profile</h1>
+          <Link to="/home" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" /></Link>
+          <h1 className="text-lg font-display font-bold text-foreground">{t("profile.title")}</h1>
         </div>
       </header>
 
@@ -40,21 +42,21 @@ const ProfilePage = () => {
             {user ? (
               <>
                 <h3 className="text-base font-bold text-foreground">
-                  {user.user_metadata?.full_name || "ELARA User"}
+                  {user.user_metadata?.full_name || t("profile.elaraUser")}
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">{user.email}</p>
               </>
             ) : (
               <>
-                <h3 className="text-base font-bold text-foreground">Welcome to ELARA</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Sign in for a personalized experience</p>
+                <h3 className="text-base font-bold text-foreground">{t("profile.welcome")}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">{t("profile.signInForPersonalized")}</p>
               </>
             )}
           </div>
         </div>
         {!user && (
           <Link to="/auth" className="block w-full mt-4 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm hover:opacity-90 transition-opacity text-center">
-            Sign In / Create Account
+            {t("profile.signInCreateAccount")}
           </Link>
         )}
       </div>
@@ -63,7 +65,7 @@ const ProfilePage = () => {
       <div className="mx-4 mt-4 bg-card rounded-2xl shadow-premium overflow-hidden">
         {menuItems.map((item, idx) => (
           <Link
-            key={item.label}
+            key={item.path}
             to={item.path}
             className={`flex items-center justify-between px-4 py-4 hover:bg-secondary/50 transition-colors ${idx < menuItems.length - 1 ? "border-b border-border/50" : ""}`}
           >
@@ -71,7 +73,7 @@ const ProfilePage = () => {
               <item.icon className="w-5 h-5 text-muted-foreground" />
               <span className="text-sm font-medium text-foreground">{item.label}</span>
             </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" />
           </Link>
         ))}
       </div>
@@ -84,13 +86,13 @@ const ProfilePage = () => {
             className="w-full flex items-center gap-3 px-4 py-4 hover:bg-destructive/5 transition-colors text-destructive"
           >
             <LogOut className="w-5 h-5" />
-            <span className="text-sm font-medium">Sign Out</span>
+            <span className="text-sm font-medium">{t("common.signOut")}</span>
           </button>
         </div>
       )}
 
       <div className="mx-4 mt-4 text-center">
-        <p className="text-[10px] text-muted-foreground">ELARA v1.0 — Iraq's Smart Health & Beauty</p>
+        <p className="text-[10px] text-muted-foreground">ELARA {t("common.version")} — {t("common.tagline")}</p>
       </div>
 
       <BottomNav />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Phone, Save, LogOut } from "lucide-react";
+import { ArrowLeft, User, Phone, Save, LogOut, Globe } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import BottomNav from "@/components/layout/BottomNav";
 import { motion } from "framer-motion";
+import { useLanguage, type Language } from "@/i18n/LanguageContext";
 
 const SettingsPage = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t, language, setLanguage } = useLanguage();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
 
@@ -48,7 +50,6 @@ const SettingsPage = () => {
         full_name: fullName || null,
         phone: phone || null,
       };
-      // Upsert: if profile exists update, otherwise insert
       if (profile) {
         const { error } = await supabase.from("profiles").update(payload).eq("id", profile.id);
         if (error) throw error;
@@ -59,16 +60,22 @@ const SettingsPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast("Profile updated!");
+      toast(t("settings.profileUpdated"));
     },
     onError: (e: any) => toast(e.message),
   });
 
   const handleSignOut = async () => {
     await signOut();
-    toast("Signed out");
+    toast(t("profile.signedOut"));
     navigate("/home");
   };
+
+  const languages: { code: Language; label: string; native: string }[] = [
+    { code: "en", label: t("settings.english"), native: "English" },
+    { code: "ar", label: t("settings.arabic"), native: "العربية" },
+    { code: "ku", label: t("settings.kurdish"), native: "کوردی" },
+  ];
 
   if (authLoading) return null;
 
@@ -77,15 +84,39 @@ const SettingsPage = () => {
       <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
         <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
           <div className="flex items-center gap-3 px-4 py-3">
-            <Link to="/profile" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground" /></Link>
-            <h1 className="text-lg font-display font-bold text-foreground">Settings</h1>
+            <Link to="/profile" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" /></Link>
+            <h1 className="text-lg font-display font-bold text-foreground">{t("settings.title")}</h1>
           </div>
         </header>
         <div className="flex flex-col items-center justify-center py-20 px-4">
           <User className="w-16 h-16 text-muted-foreground/30 mb-4" />
-          <p className="text-sm text-muted-foreground mb-4">Sign in to manage your settings</p>
-          <Link to="/auth" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm">Sign In</Link>
+          <p className="text-sm text-muted-foreground mb-4">{t("settings.signInToManage")}</p>
+          <Link to="/auth" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm">{t("common.signIn")}</Link>
         </div>
+
+        {/* Language selector always visible */}
+        <div className="mx-4 mt-4 bg-card rounded-2xl p-4 shadow-premium">
+          <div className="flex items-center gap-2 mb-3">
+            <Globe className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-bold text-foreground">{t("settings.language")}</h3>
+          </div>
+          <div className="flex gap-2">
+            {languages.map(lang => (
+              <button
+                key={lang.code}
+                onClick={() => setLanguage(lang.code)}
+                className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all ${
+                  language === lang.code
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card text-foreground border-border hover:border-primary/50"
+                }`}
+              >
+                {lang.native}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <BottomNav />
       </div>
     );
@@ -95,8 +126,8 @@ const SettingsPage = () => {
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
-          <Link to="/profile" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground" /></Link>
-          <h1 className="text-lg font-display font-bold text-foreground">Settings</h1>
+          <Link to="/profile" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" /></Link>
+          <h1 className="text-lg font-display font-bold text-foreground">{t("settings.title")}</h1>
         </div>
       </header>
 
@@ -110,40 +141,63 @@ const SettingsPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="px-4 mt-4 space-y-4"
         >
+          {/* Language */}
+          <div className="bg-card rounded-2xl p-4 shadow-premium">
+            <div className="flex items-center gap-2 mb-3">
+              <Globe className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-bold text-foreground">{t("settings.language")}</h3>
+            </div>
+            <div className="flex gap-2">
+              {languages.map(lang => (
+                <button
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code)}
+                  className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all ${
+                    language === lang.code
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card text-foreground border-border hover:border-primary/50"
+                  }`}
+                >
+                  {lang.native}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Profile Info */}
           <div className="bg-card rounded-2xl p-4 shadow-premium space-y-4">
-            <h3 className="text-sm font-bold text-foreground">Profile Information</h3>
+            <h3 className="text-sm font-bold text-foreground">{t("settings.profileInfo")}</h3>
             
             <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Email</label>
+              <label className="text-xs font-medium text-muted-foreground">{t("auth.email")}</label>
               <div className="h-11 px-4 rounded-xl bg-muted flex items-center">
                 <span className="text-sm text-muted-foreground">{user.email}</span>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Full Name</label>
+              <label className="text-xs font-medium text-muted-foreground">{t("auth.fullName")}</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <User className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
-                  placeholder="Your name"
-                  className="pl-10 h-11 rounded-xl bg-secondary border-border text-sm"
+                  placeholder={t("settings.yourName")}
+                  className="ps-10 h-11 rounded-xl bg-secondary border-border text-sm"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Phone Number</label>
+              <label className="text-xs font-medium text-muted-foreground">{t("auth.phoneNumber")}</label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Phone className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   value={phone}
                   onChange={e => setPhone(e.target.value)}
                   placeholder="+964 XXX XXX XXXX"
                   type="tel"
-                  className="pl-10 h-11 rounded-xl bg-secondary border-border text-sm"
+                  className="ps-10 h-11 rounded-xl bg-secondary border-border text-sm"
                 />
               </div>
             </div>
@@ -154,7 +208,7 @@ const SettingsPage = () => {
               className="w-full h-11 rounded-xl text-sm font-semibold gap-2"
             >
               <Save className="w-4 h-4" />
-              {saveMutation.isPending ? "Saving..." : "Save Changes"}
+              {saveMutation.isPending ? t("auth.saving") : t("settings.saveChanges")}
             </Button>
           </div>
 
@@ -165,7 +219,7 @@ const SettingsPage = () => {
               className="w-full flex items-center gap-3 px-4 py-4 hover:bg-destructive/5 transition-colors text-destructive"
             >
               <LogOut className="w-5 h-5" />
-              <span className="text-sm font-medium">Sign Out</span>
+              <span className="text-sm font-medium">{t("common.signOut")}</span>
             </button>
           </div>
         </motion.div>

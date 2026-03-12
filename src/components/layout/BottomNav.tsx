@@ -1,19 +1,21 @@
 import { Home, LayoutGrid, ShoppingBag, Heart, UserRound } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { motion } from "framer-motion";
-
-const navItems = [
-  { icon: Home, label: "Home", path: "/home" },
-  { icon: LayoutGrid, label: "Categories", path: "/categories" },
-  { icon: ShoppingBag, label: "Cart", path: "/cart" },
-  { icon: Heart, label: "Fav", path: "/wishlist" },
-  { icon: UserRound, label: "Me", path: "/profile" },
-];
 
 const BottomNav = () => {
   const location = useLocation();
   const { cartCount } = useApp();
+  const { t } = useLanguage();
+
+  const navItems = [
+    { icon: Home, label: t("nav.home"), path: "/home" },
+    { icon: LayoutGrid, label: t("nav.categories"), path: "/categories" },
+    { icon: ShoppingBag, label: t("nav.cart"), path: "/cart" },
+    { icon: Heart, label: t("nav.fav"), path: "/wishlist" },
+    { icon: UserRound, label: t("nav.me"), path: "/profile" },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50">
@@ -43,7 +45,7 @@ const BottomNav = () => {
                           : "text-muted-foreground stroke-[1.8px]"
                       }`}
                     />
-                    {label === "Cart" && cartCount > 0 && (
+                    {label === t("nav.cart") && cartCount > 0 && (
                       <motion.span
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
