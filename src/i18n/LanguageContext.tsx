@@ -64,7 +64,12 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     document.documentElement.dir = dir;
     document.documentElement.lang = language === "ku" ? "ckb" : language;
-  }, [dir, language]);
+    if (isRTL) {
+      document.documentElement.style.fontFamily = "'IBM Plex Sans Arabic', sans-serif";
+    } else {
+      document.documentElement.style.fontFamily = "";
+    }
+  }, [dir, language, isRTL]);
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>): string => {
