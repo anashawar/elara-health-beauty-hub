@@ -11,6 +11,8 @@ import { useApp } from "@/context/AppContext";
 const HeroBanner = () => {
   const [current, setCurrent] = useState(0);
   const { t } = useLanguage();
+  const { setPendingCoupon } = useApp();
+  const navigate = useNavigate();
 
   const banners = [
     {
