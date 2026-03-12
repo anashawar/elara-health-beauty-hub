@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const cities = ["Baghdad", "Erbil", "Basra", "Sulaymaniyah", "Najaf", "Karbala", "Kirkuk", "Mosul", "Duhok"];
 
-type Step = "auth" | "address";
+type Step = "auth" | "address" | "forgot";
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -223,6 +223,15 @@ const AuthPage = () => {
                 </div>
               </div>
 
+              {mode === "login" && (
+                <button
+                  onClick={() => setStep("forgot")}
+                  className="w-full text-right text-xs text-primary font-medium hover:underline -mt-1"
+                >
+                  Forgot password?
+                </button>
+              )}
+
               <Button onClick={handleAuth} disabled={loading} className="w-full h-12 rounded-xl text-sm font-semibold gap-2">
                 {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
                 {!loading && <ArrowRight className="w-4 h-4" />}
@@ -240,6 +249,67 @@ const AuthPage = () => {
                 className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
               >
                 Continue as Guest
+              </button>
+            </motion.div>
+          )}
+
+          {step === "forgot" && (
+            <motion.div
+              key="forgot"
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.25 }}
+              className="space-y-5"
+            >
+              <div>
+                <h1 className="text-2xl font-display font-bold text-foreground">Reset Password</h1>
+                <p className="text-sm text-muted-foreground mt-1">Enter your email and we'll send you a reset link</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    type="email"
+                    className="pl-10 h-12 rounded-xl border-border bg-card"
+                  />
+                </div>
+              </div>
+
+              <Button
+                onClick={async () => {
+                  if (!email.trim()) { toast("Please enter your email"); return; }
+                  setLoading(true);
+                  try {
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                      redirectTo: `${window.location.origin}/reset-password`,
+                    });
+                    if (error) { toast(error.message); return; }
+                    toast("Reset link sent! Check your inbox 📧");
+                    setStep("auth");
+                    setMode("login");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="w-full h-12 rounded-xl text-sm font-semibold gap-2"
+              >
+                {loading ? "Sending..." : "Send Reset Link"}
+                {!loading && <ArrowRight className="w-4 h-4" />}
+              </Button>
+
+              <button
+                onClick={() => { setStep("auth"); setMode("login"); }}
+                className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
+              >
+                Back to Sign In
               </button>
             </motion.div>
           )}

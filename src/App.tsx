@@ -18,6 +18,7 @@ import AddressesPage from "./pages/AddressesPage";
 import SettingsPage from "./pages/SettingsPage";
 import BrandPage from "./pages/BrandPage";
 import NotFound from "./pages/NotFound";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/addresses" element={<AddressesPage />} />
             <Route path="/settings" element={<SettingsPage />} />
