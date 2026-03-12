@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Send, Sparkles, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingBag, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import BottomNav from "@/components/layout/BottomNav";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "sonner";
+import { useProducts } from "@/hooks/useProducts";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -20,11 +21,66 @@ const quickQuestions = [
 
 const ElaraChatPage = () => {
   const { t } = useLanguage();
+  const { data: products = [] } = useProducts();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Parse [PRODUCT:id:slug:title:price] markers from AI response
+  const renderAssistantContent = (content: string) => {
+    const productRegex = /\[PRODUCT:([^:]+):([^:]+):([^\]]+?):([^\]]+?)\]/g;
+    const parts: (string | { id: string; slug: string; title: string; price: string })[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = productRegex.exec(content)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(content.slice(lastIndex, match.index));
+      }
+      parts.push({ id: match[1], slug: match[2], title: match[3], price: match[4] });
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < content.length) {
+      parts.push(content.slice(lastIndex));
+    }
+
+    return (
+      <div>
+        {parts.map((part, i) => {
+          if (typeof part === "string") {
+            return (
+              <div key={i} className="prose prose-sm dark:prose-invert max-w-none text-sm [&>p]:mb-2 [&>ul]:mb-2 [&>ol]:mb-2 [&>h1]:text-base [&>h2]:text-sm [&>h3]:text-sm">
+                <ReactMarkdown>{part}</ReactMarkdown>
+              </div>
+            );
+          }
+          // Render product card
+          const product = products.find(p => p.id === part.id);
+          const image = product?.image || "/placeholder.svg";
+          return (
+            <Link
+              key={i}
+              to={`/product/${part.id}`}
+              className="flex items-center gap-3 my-2 p-2.5 rounded-xl bg-secondary/70 border border-border hover:border-primary/30 transition-all group"
+            >
+              <div className="w-12 h-12 rounded-lg bg-card overflow-hidden flex-shrink-0">
+                <img src={image} alt={part.title} className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-foreground truncate">{part.title}</p>
+                <p className="text-[11px] text-primary font-bold">{part.price}</p>
+              </div>
+              <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <ShoppingBag className="w-3.5 h-3.5 text-primary" />
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    );
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -227,9 +283,7 @@ const ElaraChatPage = () => {
                   }`}
                 >
                   {msg.role === "assistant" ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm [&>p]:mb-2 [&>ul]:mb-2 [&>ol]:mb-2 [&>h1]:text-base [&>h2]:text-sm [&>h3]:text-sm">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
+                    renderAssistantContent(msg.content)
                   ) : (
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                   )}
