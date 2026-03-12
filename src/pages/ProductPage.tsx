@@ -15,6 +15,8 @@ const ProductPage = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showDetails, setShowDetails] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const sliderRef = useRef<HTMLDivElement>(null);
   const { data: allProducts = [] } = useProducts();
   const product = allProducts.find(p => p.id === id);
 
