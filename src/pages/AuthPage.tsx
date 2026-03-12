@@ -223,6 +223,15 @@ const AuthPage = () => {
                 </div>
               </div>
 
+              {mode === "login" && (
+                <button
+                  onClick={() => setStep("forgot")}
+                  className="w-full text-right text-xs text-primary font-medium hover:underline -mt-1"
+                >
+                  Forgot password?
+                </button>
+              )}
+
               <Button onClick={handleAuth} disabled={loading} className="w-full h-12 rounded-xl text-sm font-semibold gap-2">
                 {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
                 {!loading && <ArrowRight className="w-4 h-4" />}
