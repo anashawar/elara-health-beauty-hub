@@ -29,9 +29,17 @@ export default function AdminOrders() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, order_items(*, products(title, product_images(image_url))), addresses(city, area, street)")
+        .select("*, order_items(*, products(title, product_images(image_url))), addresses(city, area, street, phone), profiles!orders_user_id_fkey(full_name, phone)")
         .order("created_at", { ascending: false });
-      if (error) throw error;
+      if (error) {
+        // fallback without profile join
+        const { data: d2, error: e2 } = await supabase
+          .from("orders")
+          .select("*, order_items(*, products(title, product_images(image_url))), addresses(city, area, street, phone)")
+          .order("created_at", { ascending: false });
+        if (e2) throw e2;
+        return d2;
+      }
       return data;
     },
   });
