@@ -32,16 +32,17 @@ const HeroBanner = () => {
   const { t } = useLanguage();
   const { setPendingCoupon } = useApp();
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   // Fetch hero-style offers
   const { data: heroOffers = [] } = useQuery({
     queryKey: ["active-offers-hero"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from("offers")
-        .select("*")
+        .select("*") as any)
         .eq("is_active", true)
-        .eq("banner_style" as any, "hero")
+        .eq("banner_style", "hero")
         .order("sort_order");
       if (error) throw error;
       const now = new Date();
