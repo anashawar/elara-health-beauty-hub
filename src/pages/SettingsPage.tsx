@@ -20,6 +20,8 @@ const SettingsPage = () => {
   const { t, language, setLanguage } = useLanguage();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [gender, setGender] = useState("");
+  const [birthdate, setBirthdate] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
 
   const { data: profile, isLoading } = useQuery({
