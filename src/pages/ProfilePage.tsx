@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronRight, Heart, MapPin, Settings, Package, LogOut, Sparkles, MessageCircle, Info, HelpCircle, FileText, Lock } from "lucide-react";
+import { ChevronRight, Heart, MapPin, Settings, Package, LogOut, Sparkles, MessageCircle, Info, HelpCircle, FileText, Lock, UserRound } from "lucide-react";
 import BottomNav from "@/components/layout/BottomNav";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -53,7 +53,7 @@ const ProfilePage = () => {
       {/* Mobile header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border md:hidden">
         <div className="flex items-center gap-3 px-4 py-3">
-          <Link to="/home" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" /></Link>
+          <UserRound className="w-5 h-5 text-primary" />
           <h1 className="text-lg font-display font-bold text-foreground">{t("profile.title")}</h1>
         </div>
       </header>

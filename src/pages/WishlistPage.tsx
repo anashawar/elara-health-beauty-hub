@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { useProducts } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
@@ -24,7 +24,7 @@ const WishlistPage = () => {
       {/* Mobile header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border md:hidden">
         <div className="flex items-center gap-3 px-4 py-3">
-          <Link to="/home" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" /></Link>
+          <Heart className="w-5 h-5 text-primary" />
           <h1 className="text-lg font-display font-bold text-foreground">{t("wishlist.title")}</h1>
           <span className="text-xs text-muted-foreground ms-1">({wishlistProducts.length})</span>
         </div>

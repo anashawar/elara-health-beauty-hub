@@ -1,11 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { useSwipeBack } from "@/hooks/useSwipeBack";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/context/AppContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import Index from "./pages/Index";
+import CollectionPage from "./pages/CollectionPage";
 import CategoryPage from "./pages/CategoryPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import ProductPage from "./pages/ProductPage";
@@ -38,6 +40,11 @@ import AdminCoupons from "./pages/admin/AdminCoupons";
 
 const queryClient = new QueryClient();
 
+const SwipeBackWrapper = ({ children }: { children: React.ReactNode }) => {
+  useSwipeBack();
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -46,12 +53,14 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <SwipeBackWrapper>
             <Routes>
               <Route path="/" element={<AuthPage />} />
               <Route path="/home" element={<Index />} />
               <Route path="/categories" element={<CategoriesPage />} />
               <Route path="/shop" element={<CategoryPage />} />
               <Route path="/category/:id" element={<CategoryPage />} />
+              <Route path="/collection/:type" element={<CollectionPage />} />
               <Route path="/concern/:id" element={<CategoryPage />} />
               <Route path="/product/:id" element={<ProductPage />} />
               <Route path="/brand/:id" element={<BrandPage />} />
@@ -82,6 +91,7 @@ const App = () => (
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </SwipeBackWrapper>
           </BrowserRouter>
         </AppProvider>
       </LanguageProvider>

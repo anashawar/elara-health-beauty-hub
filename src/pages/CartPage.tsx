@@ -149,16 +149,11 @@ const CartPage = () => {
       {/* Mobile Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Link to="/home" className="p-1.5 -ml-1 rounded-xl hover:bg-secondary transition-colors">
-              <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
-            </Link>
-            <div>
-              <h1 className="text-lg font-display font-bold text-foreground">{t("cart.myBag")}</h1>
-              {cart.length > 0 && (
-                <p className="text-[10px] text-muted-foreground">{cartCount} {cartCount !== 1 ? t("common.items") : t("common.item")}</p>
-              )}
-            </div>
+          <div>
+            <h1 className="text-lg font-display font-bold text-foreground">{t("cart.myBag")}</h1>
+            {cart.length > 0 && (
+              <p className="text-[10px] text-muted-foreground">{cartCount} {cartCount !== 1 ? t("common.items") : t("common.item")}</p>
+            )}
           </div>
           {cart.length > 0 && (
             <button onClick={clearCart} className="text-xs text-destructive font-medium px-3 py-1.5 bg-destructive/10 rounded-lg">
