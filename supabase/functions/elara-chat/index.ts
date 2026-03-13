@@ -37,7 +37,14 @@ async function getProductCatalog(): Promise<string> {
   }).join("\n");
 }
 
-function buildSystemPrompt(catalog: string, userName: string | null, userGender: string | null, userAge: number | null, isKurdistan: boolean): string {
+function buildSystemPrompt(catalog: string, userName: string | null, userGender: string | null, userAge: number | null, isKurdistan: boolean, userLanguage: string): string {
+  const langMap: Record<string, string> = {
+    en: "English",
+    ar: "Arabic (Iraqi Baghdadi dialect)",
+    ku: "Kurdish Sorani",
+  };
+  const respondInLang = langMap[userLanguage] || "the same language the user writes in";
+  const langInstruction = `CRITICAL LANGUAGE RULE: You MUST ALWAYS respond in ${respondInLang}, regardless of what language the user writes in. This is the user's chosen app language. Your personality stays the same but your language of response MUST be ${respondInLang}.`;
   const nameInstruction = userName 
     ? `The user's name is "${userName}". Use their name naturally in conversation — like a friend would. Say their name occasionally (not every message).`
     : `You don't know the user's name yet. Be warm and friendly anyway.`;
@@ -70,10 +77,10 @@ ${genderInstruction}
 ${ageInstruction}
 
 LANGUAGES:
-- ALWAYS reply in the SAME language the user writes in.
-- For Kurdish Sorani: use natural warm Sorani dialect from Erbil. This is your strongest language.
-- For English: be warm and friendly, sprinkle in Kurdish words sometimes.
-- For Arabic: you can speak Arabic but with a Kurdish accent/flavor. You're Kurdish, not Arab.
+${langInstruction}
+- Keep your Kurdish personality and warmth regardless of language.
+- When speaking English, sprinkle in Kurdish expressions naturally.
+- When speaking Arabic, maintain your Kurdish identity/accent.
 - Product names can stay in English/original language.
 
 PRODUCT CATALOG (recommend from these when relevant):
@@ -112,10 +119,10 @@ ${genderInstruction}
 ${ageInstruction}
 
 LANGUAGES:
-- ALWAYS reply in the SAME language the user writes in.
-- For Iraqi Arabic: use warm Baghdadi Iraqi dialect. This is your strongest language. Use چ for feminine "you" (شلونچ، عندچ).
-- For English: be warm and friendly, sprinkle in Iraqi expressions sometimes.
-- For Kurdish: you can understand basic Kurdish but prefer Arabic. You're Iraqi Arab.
+${langInstruction}
+- Keep your Iraqi Baghdadi personality and warmth regardless of language.
+- When speaking English, sprinkle in Iraqi expressions naturally.
+- When speaking Kurdish, maintain your Iraqi Arab identity.
 - Product names can stay in English/original language.
 
 PRODUCT CATALOG (recommend from these when relevant):
@@ -140,7 +147,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, user_name, user_gender, user_birthdate, user_city } = await req.json();
+    const { messages, user_name, user_gender, user_birthdate, user_city, user_language } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -157,7 +164,7 @@ serve(async (req) => {
     const isKurdistan = isKurdistanRegion(user_city || null);
     const catalog = await getProductCatalog();
     const firstName = user_name ? user_name.split(" ")[0] : null;
-    const systemPrompt = buildSystemPrompt(catalog, firstName, user_gender || null, userAge, isKurdistan);
+    const systemPrompt = buildSystemPrompt(catalog, firstName, user_gender || null, userAge, isKurdistan, user_language || "en");
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
