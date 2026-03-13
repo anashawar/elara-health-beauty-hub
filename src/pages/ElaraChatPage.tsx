@@ -426,7 +426,7 @@ const ElaraChatPage = () => {
           <div className="sticky bottom-0 z-40 md:relative md:bottom-auto">
             <div className="md:hidden fixed left-0 right-0 z-40" style={{ bottom: `calc(60px + env(safe-area-inset-bottom, 0px))` }}>
               <div className="app-container px-3 pb-2">
-                <form onSubmit={handleSubmit} className="flex items-end gap-2 bg-card/90 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg">
+                <form onSubmit={handleSubmit} className="flex items-end gap-2 glass-heavy border border-border/30 rounded-2xl p-2 shadow-float">
                   <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
                     placeholder="Ask about skincare, routines, products..." rows={1}
                     className="flex-1 bg-transparent text-foreground text-sm px-3 py-2 resize-none outline-none placeholder:text-muted-foreground max-h-24"

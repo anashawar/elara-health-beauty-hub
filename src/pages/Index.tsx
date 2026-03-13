@@ -25,7 +25,7 @@ const Index = () => {
   const newArrivals = products.filter(p => p.isNew);
 
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-8">
+    <div className="min-h-screen bg-background pb-24 md:pb-8 scroll-bounce" style={{ minHeight: '-webkit-fill-available' }}>
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <TopHeader onSearchClick={() => setSearchOpen(true)} />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />

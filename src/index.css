@@ -179,3 +179,66 @@ header[class*="sticky"] {
 /* Hide scrollbar for clean mobile feel */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Mobile UX: momentum scroll & overscroll ── */
+.overflow-y-auto,
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent body overscroll / pull-to-refresh on the shell */
+html, body {
+  overscroll-behavior-y: none;
+}
+
+/* Allow natural rubber-band feel inside scrollable containers */
+.scroll-bounce {
+  overscroll-behavior: auto;
+}
+
+/* Remove tap highlight on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent iOS zoom on inputs (min 16px) */
+input, textarea, select {
+  font-size: 16px !important;
+}
+@media (min-width: 768px) {
+  input, textarea, select {
+    font-size: inherit !important;
+  }
+}
+
+/* Smooth horizontal scrollers */
+.scroll-smooth-x {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+.scroll-smooth-x > * {
+  scroll-snap-align: start;
+}
+
+/* Prevent text selection on interactive elements */
+button, a, nav, [role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* iOS-style active press */
+.press-scale {
+  transition: transform 120ms ease-out;
+}
+.press-scale:active {
+  transform: scale(0.97);
+}
+
+/* Sticky header safe area (consistent) */
+.sticky-header-safe {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding-top: env(safe-area-inset-top, 0px);
+}

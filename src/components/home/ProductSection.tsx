@@ -76,7 +76,7 @@ const ProductSection = ({ title, subtitle, products, viewAllLink, horizontal = t
         )}
       </div>
       {horizontal ? (
-        <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-2">
+        <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth-x px-4 pb-2">
           {products.map(p => (
             <ProductCard key={p.id} product={p} variant="horizontal" />
           ))}
