@@ -102,7 +102,7 @@ export default function AdminOffers() {
         discount_type: f.discount_type,
         discount_value: f.discount_value,
         target_type: f.target_type,
-        target_id: f.target_id || null,
+        target_id: f.target_id && !f.target_id.includes(",") ? f.target_id : null,
         target_name: f.target_name || null,
         link_url: f.link_url || null,
         banner_style: f.banner_style,
@@ -125,6 +125,7 @@ export default function AdminOffers() {
       qc.invalidateQueries({ queryKey: ["active-offers-gallery"] });
       qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
       qc.invalidateQueries({ queryKey: ["active-offers-pricing"] });
+      qc.invalidateQueries({ queryKey: ["today-offers-slider"] });
       toast.success(editing ? "Offer updated" : "Offer created");
       resetForm();
     },
