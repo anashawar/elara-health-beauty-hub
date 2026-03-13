@@ -552,21 +552,49 @@ const AuthPage = () => {
               <div className="space-y-3">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-2 block">{t("auth.city")} *</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {cities.map(c => (
-                      <button
-                        key={c}
-                        onClick={() => setCity(c)}
-                        className={`py-2.5 px-2 text-xs font-medium rounded-xl border transition-all ${
-                          city === c
-                            ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
-                            : "bg-muted/40 text-foreground border-border/60 hover:border-primary/50"
-                        }`}
-                      >
-                        {c}
-                      </button>
-                    ))}
-                  </div>
+                  <Select value={city} onValueChange={setCity}>
+                    <SelectTrigger className="h-11 rounded-2xl bg-muted/40 border-border/60 text-sm">
+                      <SelectValue placeholder={t("auth.selectCity") || "Select city"} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {iraqCities.map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* GPS Location */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                    {t("addresses.gpsLocation") || "📍 GPS Location"}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGetLocation}
+                    disabled={gpsLoading}
+                    className={`w-full flex items-center justify-center gap-2.5 py-3 rounded-2xl border-2 border-dashed transition-all text-sm font-semibold ${
+                      gpsLat
+                        ? "border-primary/40 bg-primary/5 text-primary"
+                        : "border-border/60 bg-muted/40 text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                    }`}
+                  >
+                    {gpsLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Navigation className="w-4 h-4" />
+                    )}
+                    {gpsLoading
+                      ? (t("addresses.gettingLocation") || "Getting location...")
+                      : gpsLat
+                        ? (t("addresses.locationSaved") || "📍 Location saved")
+                        : (t("addresses.useMyLocation") || "Use my current location")}
+                  </button>
+                  {gpsLat && (
+                    <p className="text-[10px] text-muted-foreground mt-1 text-center">
+                      {gpsLat.toFixed(5)}, {gpsLng?.toFixed(5)}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
