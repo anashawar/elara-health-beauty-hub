@@ -14,7 +14,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import elaraLogo from "@/assets/elara-logo.png";
 
-const cities = ["Baghdad", "Erbil", "Basra", "Sulaymaniyah", "Najaf", "Karbala", "Kirkuk", "Mosul", "Duhok"];
+import { iraqCities } from "@/data/iraqCities";
 
 type Step = "phone" | "otp" | "address";
 type AuthMode = "signup" | "signin";
