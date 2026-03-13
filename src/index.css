@@ -86,6 +86,14 @@ html[dir="rtl"] * {
   font-family: 'IBM Plex Sans Arabic', sans-serif !important;
 }
 
+/* iOS safe area support for Capacitor */
+html, body {
+  padding: 0;
+  margin: 0;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
 /* Hide scrollbar for clean mobile feel */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
