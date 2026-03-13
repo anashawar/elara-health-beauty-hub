@@ -550,10 +550,21 @@ export default function AdminProducts() {
                   })}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <Label>Volume</Label>
+                  <Input value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} placeholder="e.g. 50" />
+                </div>
                 <div>
-                  <Label>Volume (ml)</Label>
-                  <Input value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} />
+                  <Label>Unit</Label>
+                  <Select value={form.volume_unit} onValueChange={(v) => setForm({ ...form, volume_unit: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["ml", "g", "oz", "fl oz", "L", "kg", "pcs", "sheets", "capsules", "tablets"].map(u => (
+                        <SelectItem key={u} value={u}>{u}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div>
