@@ -29,6 +29,7 @@ interface ProductForm {
   is_new: boolean;
   is_trending: boolean;
   is_pick: boolean;
+  in_stock: boolean;
   volume_ml: string;
   skin_type: string;
   country_of_origin: string; // derived from brand, kept for edit compatibility
