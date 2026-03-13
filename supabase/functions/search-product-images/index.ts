@@ -7,136 +7,102 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-/** Reject non-product images by URL pattern */
 function isJunkImage(url: string): boolean {
   const lower = url.toLowerCase();
-  const rejectPatterns = [
+  const reject = [
     "logo", "icon", "favicon", "banner", "sprite", "avatar",
     "placeholder", "loading", "pixel", "tracking", "badge",
     "flag", "arrow", "button", "social", "facebook", "twitter",
     "instagram", "youtube", "pinterest", "tiktok", "linkedin",
     "1x1", "spacer", "blank", "transparent", "ad-", "ads/",
     "widget", "16x16", "32x32", "48x48", "64x64",
-    "payment", "shipping", "cart", "checkout", "star", "rating",
-    "review", "user", "profile", "author", "comment",
+    "payment", "shipping", "cart", "checkout", "star-", "rating",
+    "review", "/user", "profile", "author", "comment",
     "newsletter", "subscribe", "popup", "modal", "close",
-    "menu", "nav", "header", "footer", "sidebar",
-    "thumb", "_xs.", "_sm.", "mini", "tiny", "/small/",
-    "gif", ".svg",
+    "menu", "nav-", "/header", "/footer", "sidebar",
+    ".gif", ".svg", "data:image",
   ];
-  return rejectPatterns.some(p => lower.includes(p));
+  return reject.some(p => lower.includes(p));
 }
 
-/** Check if URL looks like a product image */
-function scoreImageUrl(url: string, titleWords: string[], brandSlug: string): number {
+function scoreImage(url: string, titleWords: string[], brandSlug: string): number {
   const lower = url.toLowerCase();
   if (isJunkImage(lower)) return -1;
   if (!/\.(jpg|jpeg|png|webp)/i.test(lower.split("?")[0])) return -1;
 
-  let score = 0;
+  let score = 1; // base score for valid image
 
   // Brand in URL
-  if (brandSlug && lower.includes(brandSlug)) score += 6;
+  if (brandSlug && brandSlug.length > 2 && lower.includes(brandSlug)) score += 8;
 
-  // Product title words in URL
-  const matched = titleWords.filter(w => lower.includes(w));
-  score += matched.length * 3;
+  // Title words in URL
+  const matched = titleWords.filter(w => w.length > 3 && lower.includes(w));
+  score += matched.length * 4;
 
-  // Trusted e-commerce domains
+  // Trusted product image domains
   const trusted = [
     "cloudinary", "shopify", "cdn.shopify", "scene7", "akamaized",
     "imgix", "fastly", "amazonaws", "cloudfront",
     "iherb", "lookfantastic", "notino", "notinoimg", "sephora",
     "ulta", "cultbeauty", "dermstore", "skinstore",
     "chemistwarehouse", "boots.com", "superdrug",
-    "feelunique", "beautybay", "caretobeauty", "cocooncenter",
-    "farmacias", "pharmacyonline", "amazon", "ebay",
+    "feelunique", "beautybay", "caretobeauty",
+    "amazon", "media-amazon", "images-na.ssl-images-amazon",
   ];
-  if (trusted.some(d => lower.includes(d))) score += 5;
+  if (trusted.some(d => lower.includes(d))) score += 6;
 
-  // Product image path patterns
-  const productPaths = ["/product", "/media/catalog/", "/image/product", "/p/", "/images/product"];
-  if (productPaths.some(p => lower.includes(p))) score += 4;
+  // Product path patterns
+  if (/\/product|\/media\/catalog|\/image\/product|\/p\//i.test(lower)) score += 5;
 
   // High-res indicators
-  if (/(\d{3,4})x(\d{3,4})/.exec(lower)) {
-    const m = /(\d{3,4})x(\d{3,4})/.exec(lower)!;
-    const w = parseInt(m[1]), h = parseInt(m[2]);
-    if (w >= 500 && h >= 500) score += 5;
+  const sizeMatch = /(\d{3,4})x(\d{3,4})/.exec(lower);
+  if (sizeMatch) {
+    const w = parseInt(sizeMatch[1]), h = parseInt(sizeMatch[2]);
+    if (w >= 400 && h >= 400) score += 4;
+    if (w >= 800 && h >= 800) score += 3;
   }
-  if (/w[_=]([5-9]\d{2}|[1-9]\d{3})/.test(lower)) score += 3;
 
   // Low-res penalty
-  if (/(\d{1,2})x(\d{1,2})[^0-9]/.test(lower)) score -= 5;
+  if (/_thumb|_xs\.|_sm\.|\/thumb\/|\/small\/|_50x|_75x|_100x|_150x/i.test(lower)) score -= 8;
 
   return score;
 }
 
-/** Upgrade thumbnail URLs to full-size */
 function upgradeToHighRes(url: string): string {
   let u = url;
   u = u.replace(/_(?:100x100|150x150|200x200|300x300|thumb|small|xs|sm|s)\./gi, ".");
   u = u.replace(/\/(?:thumb|small|thumbnail|xs|sm)\//, "/large/");
   u = u.replace(/_\d+x\d*(\.\w+)$/, "$1");
-  u = u.replace(/_\d+x(\.\w+)$/, "$1");
   return u;
 }
 
-/** Verify image URL is accessible and large enough for quality */
-async function verifyImage(url: string): Promise<{ ok: boolean; size: number }> {
+async function verifyImage(url: string): Promise<boolean> {
   try {
     const resp = await fetch(url, { method: "HEAD", redirect: "follow" });
-    if (!resp.ok) return { ok: false, size: 0 };
+    if (!resp.ok) return false;
     const ct = resp.headers.get("content-type") || "";
-    if (!ct.startsWith("image/")) return { ok: false, size: 0 };
+    if (!ct.startsWith("image/")) return false;
     const size = parseInt(resp.headers.get("content-length") || "0");
-    // Reject images smaller than 15KB (likely thumbnails/placeholders/blurry)
-    if (size > 0 && size < 15000) return { ok: false, size };
-    return { ok: true, size };
+    if (size > 0 && size < 10000) return false; // Reject < 10KB
+    return true;
   } catch {
-    return { ok: false, size: 0 };
+    return false;
   }
 }
 
-/** Extract image URLs from HTML content */
-function extractImagesFromHtml(html: string): string[] {
+/** Extract image URLs from markdown content */
+function extractImagesFromMarkdown(markdown: string): string[] {
   const images: string[] = [];
-  // OG image (highest priority - always the main product photo)
-  const ogMatch = html.match(/property=["']og:image["'][^>]*content=["']([^"']+)/i)
-    || html.match(/content=["']([^"']+)["'][^>]*property=["']og:image/i);
-  if (ogMatch) images.push(ogMatch[1]);
 
-  // Twitter image
-  const twMatch = html.match(/name=["']twitter:image["'][^>]*content=["']([^"']+)/i)
-    || html.match(/content=["']([^"']+)["'][^>]*name=["']twitter:image/i);
-  if (twMatch) images.push(twMatch[1]);
+  // ![alt](url)
+  const mdRegex = /!\[.*?\]\((https?:\/\/[^\s)]+)\)/gi;
+  let m;
+  while ((m = mdRegex.exec(markdown)) !== null) images.push(m[1]);
 
-  // Product structured data (JSON-LD)
-  const jsonLdMatches = html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
-  for (const m of jsonLdMatches) {
-    try {
-      const data = JSON.parse(m[1]);
-      const extractImages = (obj: any) => {
-        if (!obj) return;
-        if (obj.image) {
-          const imgs = Array.isArray(obj.image) ? obj.image : [obj.image];
-          for (const img of imgs) {
-            if (typeof img === "string") images.push(img);
-            else if (img?.url) images.push(img.url);
-          }
-        }
-        if (Array.isArray(obj)) obj.forEach(extractImages);
-        if (obj["@graph"]) extractImages(obj["@graph"]);
-      };
-      extractImages(data);
-    } catch { /* ignore */ }
-  }
-
-  // Large img tags (with product-like src)
-  const imgRegex = /<img[^>]+src=["']([^"']+\.(jpg|jpeg|png|webp)[^"']*)/gi;
-  let match;
-  while ((match = imgRegex.exec(html)) !== null) {
-    images.push(match[1]);
+  // Bare image URLs
+  const urlRegex = /(https?:\/\/[^\s"'<>]+\.(jpg|jpeg|png|webp)(\?[^\s"'<>]*)?)/gi;
+  while ((m = urlRegex.exec(markdown)) !== null) {
+    if (!images.includes(m[1])) images.push(m[1]);
   }
 
   return images;
@@ -154,13 +120,11 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { product_ids } = await req.json();
-    if (!product_ids || !Array.isArray(product_ids) || product_ids.length === 0) {
-      throw new Error("product_ids array is required");
-    }
+    if (!product_ids?.length) throw new Error("product_ids array is required");
 
     const { data: products, error: pErr } = await supabase
       .from("products")
-      .select("id, title, brands(name), volume_ml, volume_unit, form")
+      .select("id, title, brands(name), volume_ml, form")
       .in("id", product_ids);
     if (pErr) throw pErr;
 
@@ -181,25 +145,24 @@ serve(async (req) => {
       const brandName = (product as any).brands?.name || "";
       const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, "");
       const titleWords = product.title.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
+      const fullName = `${brandName} ${product.title}`.trim();
 
-      // Build a precise product identifier for search
-      const productFullName = `${brandName} ${product.title}`.trim();
-
-      // Strategy: Search for the product on known retailer sites, then SCRAPE the actual product page
+      // Multiple search strategies — from most specific to broader
       const searchQueries = [
-        `${productFullName} site:iherb.com OR site:lookfantastic.com OR site:notino.com OR site:sephora.com`,
-        `"${productFullName}" product`,
-        `${productFullName} site:amazon.com OR site:boots.com OR site:cultbeauty.com OR site:beautybay.com`,
+        `"${fullName}" product photo`,
+        `${fullName} site:lookfantastic.com OR site:notino.com OR site:caretobeauty.com OR site:iherb.com`,
+        `${fullName} site:amazon.com OR site:sephora.com OR site:beautybay.com OR site:boots.com`,
       ];
 
       try {
-        const collectedImages: { url: string; score: number; source: string }[] = [];
+        const candidates: { url: string; score: number }[] = [];
+        let paymentRequired = false;
 
         for (const query of searchQueries) {
-          if (collectedImages.length >= 6) break;
+          if (candidates.length >= 20 || paymentRequired) break;
 
-          // Step 1: Search to find product page URLs
-          const searchResp = await fetch("https://api.firecrawl.dev/v1/search", {
+          console.log(`Searching: ${query}`);
+          const resp = await fetch("https://api.firecrawl.dev/v1/search", {
             method: "POST",
             headers: {
               Authorization: `Bearer ${apiKey}`,
@@ -207,118 +170,91 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               query,
-              limit: 3,
+              limit: 5,
+              scrapeOptions: {
+                formats: ["markdown"],
+                onlyMainContent: true,
+                waitFor: 1500,
+              },
             }),
           });
 
-          if (!searchResp.ok) {
-            const errText = await searchResp.text();
-            console.error(`Search error:`, searchResp.status, errText);
-            if (searchResp.status === 402) {
-              results.push({ id: product.id, status: "payment_required" });
-              break;
-            }
+          if (!resp.ok) {
+            const errText = await resp.text();
+            console.error(`Search error: ${resp.status} ${errText}`);
+            if (resp.status === 402) { paymentRequired = true; break; }
             continue;
           }
 
-          const searchData = await searchResp.json();
-          const searchResults = searchData.data || [];
+          const data = await resp.json();
+          const searchResults = data.data || [];
 
-          // Step 2: Scrape the top result pages to get their actual product images
-          for (const result of searchResults.slice(0, 2)) {
-            const pageUrl = result.url;
-            if (!pageUrl) continue;
+          for (const result of searchResults) {
+            const md = result.markdown || "";
+            const pageImages = extractImagesFromMarkdown(md);
 
-            try {
-              const scrapeResp = await fetch("https://api.firecrawl.dev/v1/scrape", {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${apiKey}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  url: pageUrl,
-                  formats: ["html"],
-                  onlyMainContent: false, // Need full page for OG tags and structured data
-                  waitFor: 2000, // Wait for images to load
-                }),
-              });
+            // Also check metadata for images
+            if (result.metadata?.ogImage) pageImages.unshift(result.metadata.ogImage);
 
-              if (!scrapeResp.ok) {
-                await scrapeResp.text(); // consume body
-                continue;
+            for (const imgUrl of pageImages) {
+              if (!imgUrl.startsWith("http")) continue;
+              const score = scoreImage(imgUrl, titleWords, brandSlug);
+              if (score > 0) {
+                candidates.push({ url: upgradeToHighRes(imgUrl), score });
               }
-
-              const scrapeData = await scrapeResp.json();
-              const html = scrapeData.data?.html || scrapeData.html || "";
-
-              if (!html) continue;
-
-              // Extract all image candidates from the scraped HTML
-              const pageImages = extractImagesFromHtml(html);
-
-              for (const imgUrl of pageImages) {
-                if (!imgUrl.startsWith("http")) continue;
-                const score = scoreImageUrl(imgUrl, titleWords, brandSlug);
-                if (score >= 0) {
-                  collectedImages.push({
-                    url: upgradeToHighRes(imgUrl),
-                    score: score + (pageImages.indexOf(imgUrl) < 3 ? 8 : 0), // Boost OG/structured data images (first extracted)
-                    source: pageUrl,
-                  });
-                }
-              }
-            } catch (scrapeErr) {
-              console.error(`Scrape error for ${pageUrl}:`, scrapeErr);
             }
-
-            await new Promise(r => setTimeout(r, 300));
           }
 
-          await new Promise(r => setTimeout(r, 400));
+          await new Promise(r => setTimeout(r, 500));
         }
 
-        // Sort by score, deduplicate, verify
-        collectedImages.sort((a, b) => b.score - a.score);
+        if (paymentRequired) {
+          results.push({ id: product.id, status: "payment_required" });
+          continue;
+        }
+
+        // Sort, deduplicate, verify
+        candidates.sort((a, b) => b.score - a.score);
         const seen = new Set<string>();
-        const candidates: string[] = [];
-        for (const c of collectedImages) {
-          const normalized = c.url.split("?")[0].toLowerCase().replace(/\/+$/, "");
-          if (seen.has(normalized)) continue;
-          seen.add(normalized);
-          candidates.push(c.url);
-          if (candidates.length >= 10) break;
+        const uniqueCandidates: string[] = [];
+        for (const c of candidates) {
+          const norm = c.url.split("?")[0].toLowerCase().replace(/\/+$/, "");
+          if (seen.has(norm)) continue;
+          seen.add(norm);
+          uniqueCandidates.push(c.url);
+          if (uniqueCandidates.length >= 12) break;
         }
 
-        // Verify: accessible, good size, not blurry thumbnails
-        const verifiedImages: string[] = [];
-        for (const url of candidates) {
-          if (verifiedImages.length >= 4) break;
-          const result = await verifyImage(url);
-          if (result.ok) {
-            console.log(`✓ Verified: ${url} (${result.size} bytes)`);
-            verifiedImages.push(url);
+        console.log(`${uniqueCandidates.length} unique candidates for "${fullName}"`);
+
+        // Verify accessibility and quality
+        const verified: string[] = [];
+        for (const url of uniqueCandidates) {
+          if (verified.length >= 4) break;
+          const ok = await verifyImage(url);
+          if (ok) {
+            console.log(`✓ ${url}`);
+            verified.push(url);
           } else {
-            console.log(`✗ Rejected: ${url} (${result.size} bytes)`);
+            console.log(`✗ ${url}`);
           }
         }
 
-        if (verifiedImages.length === 0) {
-          console.log(`No verified images found for "${product.title}"`);
+        if (verified.length === 0) {
+          console.log(`No images found for "${fullName}"`);
           results.push({ id: product.id, status: "no_images_found" });
           continue;
         }
 
-        // Save images to DB
-        for (let i = 0; i < verifiedImages.length; i++) {
+        for (let i = 0; i < verified.length; i++) {
           await supabase.from("product_images").insert({
             product_id: product.id,
-            image_url: verifiedImages[i],
+            image_url: verified[i],
             sort_order: i,
           });
         }
-        console.log(`Saved ${verifiedImages.length} images for "${product.title}"`);
-        results.push({ id: product.id, status: "success", images: verifiedImages.length });
+        console.log(`✓ Saved ${verified.length} images for "${fullName}"`);
+        results.push({ id: product.id, status: "success", images: verified.length });
 
         await new Promise(r => setTimeout(r, 500));
       } catch (err) {
