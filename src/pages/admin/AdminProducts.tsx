@@ -840,8 +840,8 @@ export default function AdminProducts() {
                   <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: +e.target.value })} />
                 </div>
                 <div>
-                  <Label>Original Price</Label>
-                  <Input type="number" value={form.original_price ?? ""} onChange={(e) => setForm({ ...form, original_price: e.target.value ? +e.target.value : null })} />
+                  <Label>Discounted Price</Label>
+                  <Input type="number" placeholder="Leave empty if no discount" value={form.original_price ?? ""} onChange={(e) => setForm({ ...form, original_price: e.target.value ? +e.target.value : null })} />
                 </div>
                 <div>
                   <Label>Cost (IQD) 🔒</Label>
