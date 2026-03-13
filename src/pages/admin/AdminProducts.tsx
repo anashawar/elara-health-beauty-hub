@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon, Languages, FileSpreadsheet, Sparkles, Wand2, ImagePlus } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon, Languages, FileSpreadsheet, Sparkles, Wand2, ImagePlus, CheckSquare } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatPrice, useCategories, useBrands, useSubcategories } from "@/hooks/useProducts";
 import { toast } from "sonner";
 import BulkImportDialog, { ColumnMapping } from "@/components/admin/BulkImportDialog";
@@ -69,6 +70,10 @@ export default function AdminProducts() {
   const [enrichProgress, setEnrichProgress] = useState({ done: 0, total: 0, current: "" });
   const [selectedForEnrich, setSelectedForEnrich] = useState<Set<string>>(new Set());
   const [selectMode, setSelectMode] = useState(false);
+
+  // Multi-select state for bulk actions
+  const [multiSelect, setMultiSelect] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
   // Quick-add state
   const [quickAddOpen, setQuickAddOpen] = useState(false);
@@ -571,14 +576,18 @@ export default function AdminProducts() {
   };
 
   const handleEnrichMissing = () => {
-    // Select all products missing description
-    const missing = products.filter((p: any) => !p.description || p.description.trim() === "");
+    // Select only products that are truly missing data (no description OR no brand OR no category)
+    const missing = products.filter((p: any) =>
+      (!p.description || p.description.trim() === "") ||
+      !p.brand_id ||
+      !p.category_id
+    );
     if (missing.length === 0) {
-      toast.info("All products already have descriptions");
+      toast.info("All products already have complete data");
       return;
     }
     const ids = missing.map((p: any) => p.id);
-    if (confirm(`Enrich ${ids.length} products missing descriptions with AI? This will auto-fill descriptions, benefits, pricing (+35% on cost), and more.`)) {
+    if (confirm(`Enrich ${ids.length} products with incomplete data (missing description, brand, or category)? This will auto-fill descriptions, benefits, pricing (+35% on cost), and more.`)) {
       handleEnrichProducts(ids);
     }
   };
@@ -671,7 +680,61 @@ export default function AdminProducts() {
     }
   };
 
-  // Quick-add: create products with just name + cost, then auto-enrich
+  // Multi-select helpers
+  const toggleMultiSelect = (id: string) => {
+    setSelectedProducts(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleMultiSelectAll = () => {
+    if (selectedProducts.size === filtered.length) {
+      setSelectedProducts(new Set());
+    } else {
+      setSelectedProducts(new Set(filtered.map((p: any) => p.id)));
+    }
+  };
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      // Delete images first, then products
+      for (const id of ids) {
+        await supabase.from("product_images").delete().eq("product_id", id);
+        await supabase.from("product_costs").delete().eq("product_id", id);
+        await supabase.from("product_tags").delete().eq("product_id", id);
+      }
+      const { error } = await supabase.from("products").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-products"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      setSelectedProducts(new Set());
+      setMultiSelect(false);
+      toast.success("Products deleted");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleBulkDelete = () => {
+    const count = selectedProducts.size;
+    if (count === 0) return;
+    if (confirm(`Delete ${count} selected products? This cannot be undone.`)) {
+      bulkDeleteMutation.mutate(Array.from(selectedProducts));
+    }
+  };
+
+  const handleBulkEnrichSelected = () => {
+    const ids = Array.from(selectedProducts);
+    if (ids.length === 0) { toast.error("Select products first"); return; }
+    if (confirm(`Enrich ${ids.length} selected products with AI?`)) {
+      setMultiSelect(false);
+      setSelectedProducts(new Set());
+      handleEnrichProducts(ids);
+    }
+  };
   const handleQuickAdd = async () => {
     const validItems = quickAddItems.filter(i => i.name.trim() && i.cost.trim());
     if (validItems.length === 0) { toast.error("Add at least one product with name and cost"); return; }
@@ -777,19 +840,22 @@ export default function AdminProducts() {
         <h1 className="text-2xl font-display font-bold text-foreground">Products</h1>
         <div className="flex gap-2 flex-wrap">
           {/* AI Enrichment Controls */}
-          {!selectMode ? (
-            <>
-              <Button size="sm" variant="outline" className="text-primary border-primary/30" onClick={handleEnrichMissing} disabled={enriching}>
-                <Sparkles className="h-4 w-4 mr-1.5" />AI Fill Missing
-              </Button>
-              <Button size="sm" variant="outline" className="border-primary/30" onClick={handleSearchMissingImages} disabled={enriching}>
-                <ImagePlus className="h-4 w-4 mr-1.5" />Find Images
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setSelectMode(true)} disabled={enriching}>
-                <Wand2 className="h-4 w-4 mr-1.5" />Select & Enrich
-              </Button>
-            </>
-          ) : (
+           {!selectMode ? (
+              <>
+                <Button size="sm" variant="outline" className="text-primary border-primary/30" onClick={handleEnrichMissing} disabled={enriching}>
+                  <Sparkles className="h-4 w-4 mr-1.5" />AI Fill Missing
+                </Button>
+                <Button size="sm" variant="outline" className="border-primary/30" onClick={handleSearchMissingImages} disabled={enriching}>
+                  <ImagePlus className="h-4 w-4 mr-1.5" />Find Images
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setSelectMode(true)} disabled={enriching}>
+                  <Wand2 className="h-4 w-4 mr-1.5" />Select & Enrich
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => { setMultiSelect(true); setSelectedProducts(new Set()); }} disabled={enriching || multiSelect}>
+                  <CheckSquare className="h-4 w-4 mr-1.5" />Multi-Select
+                </Button>
+              </>
+            ) : (
             <>
               <Button size="sm" variant="outline" onClick={toggleSelectAll}>
                 {selectedForEnrich.size === filtered.length ? "Deselect All" : "Select All"}
@@ -1118,6 +1184,27 @@ export default function AdminProducts() {
         </div>
       )}
 
+      {/* Multi-select action bar */}
+      {multiSelect && (
+        <div className="mb-4 p-3 rounded-xl border border-border bg-muted/50 flex items-center gap-3 flex-wrap">
+          <Checkbox
+            checked={selectedProducts.size === filtered.length && filtered.length > 0}
+            onCheckedChange={toggleMultiSelectAll}
+          />
+          <span className="text-sm font-medium text-foreground">{selectedProducts.size} selected</span>
+          <div className="flex gap-2 ml-auto">
+            <Button size="sm" variant="outline" className="text-primary border-primary/30" onClick={handleBulkEnrichSelected} disabled={selectedProducts.size === 0 || enriching}>
+              <Sparkles className="h-4 w-4 mr-1.5" />AI Enrich
+            </Button>
+            <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={selectedProducts.size === 0 || bulkDeleteMutation.isPending}>
+              {bulkDeleteMutation.isPending ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Trash2 className="h-4 w-4 mr-1.5" />}
+              Delete {selectedProducts.size > 0 ? selectedProducts.size : ""}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => { setMultiSelect(false); setSelectedProducts(new Set()); }}>Cancel</Button>
+          </div>
+        </div>
+      )}
+
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input className="pl-9" placeholder="Search products..." value={search} onChange={(e) => handleSearch(e.target.value)} />
@@ -1132,7 +1219,7 @@ export default function AdminProducts() {
           <Table>
             <TableHeader>
               <TableRow>
-                {selectMode && <TableHead className="w-10"></TableHead>}
+                {(selectMode || multiSelect) && <TableHead className="w-10"></TableHead>}
                 <TableHead>Product</TableHead>
                 <TableHead className="hidden md:table-cell">Category</TableHead>
                 <TableHead>Price</TableHead>
@@ -1147,14 +1234,22 @@ export default function AdminProducts() {
                 const cost = costMap[p.id];
                 const margin = cost !== undefined && cost > 0 ? ((p.price - cost) / cost * 100) : null;
                 return (
-                <TableRow key={p.id} className={selectMode && selectedForEnrich.has(p.id) ? "bg-primary/5" : ""}>
+                <TableRow key={p.id} className={
+                  (selectMode && selectedForEnrich.has(p.id)) || (multiSelect && selectedProducts.has(p.id)) ? "bg-primary/5" : ""
+                }>
                   {selectMode && (
                     <TableCell className="w-10">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedForEnrich.has(p.id)}
-                        onChange={() => toggleSelectProduct(p.id)}
-                        className="rounded border-border"
+                        onCheckedChange={() => toggleSelectProduct(p.id)}
+                      />
+                    </TableCell>
+                  )}
+                  {multiSelect && !selectMode && (
+                    <TableCell className="w-10">
+                      <Checkbox
+                        checked={selectedProducts.has(p.id)}
+                        onCheckedChange={() => toggleMultiSelect(p.id)}
                       />
                     </TableCell>
                   )}
@@ -1203,7 +1298,7 @@ export default function AdminProducts() {
                 </TableRow>
               );})}
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={(selectMode || multiSelect) ? 9 : 8} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
