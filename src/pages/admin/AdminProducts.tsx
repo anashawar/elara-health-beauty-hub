@@ -91,6 +91,24 @@ export default function AdminProducts() {
     },
   });
 
+  // Fetch costs for margin display
+  const { data: allCosts = [] } = useQuery({
+    queryKey: ["admin-product-costs-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("product_costs").select("product_id, cost");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const costMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    allCosts.forEach((c: any) => { map[c.product_id] = Number(c.cost); });
+    return map;
+  }, [allCosts]);
+    },
+  });
+
   const uploadImage = async (file: File, productId: string, sortOrder: number): Promise<string> => {
     const ext = file.name.split(".").pop();
     const path = `${productId}/${Date.now()}-${sortOrder}.${ext}`;
