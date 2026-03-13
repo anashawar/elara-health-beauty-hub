@@ -100,20 +100,19 @@ header[class*="sticky"] {
   padding-top: env(safe-area-inset-top, 0px) !important;
 }
 
-/* Fixed bottom elements: account for safe area */
-nav.fixed[class*="bottom-0"],
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-}
-
 /* Pages without sticky headers */
 .safe-area-top {
   padding-top: env(safe-area-inset-top, 0px) !important;
 }
 
-/* Fixed bottom buttons/inputs need safe area offset */
+/* Bottom nav: sits at the very bottom with safe area padding inside */
+.bottom-nav-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+
+/* Fixed bottom elements above bottom nav */
 .fixed-bottom-safe {
-  bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+  bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
 /* Hide scrollbar for clean mobile feel */

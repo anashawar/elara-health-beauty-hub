@@ -80,8 +80,12 @@ const ElaraChatPage = () => {
   }, [conversationId, user]);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+    if (scrollRef.current) {
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollTo({ top: scrollRef.current!.scrollHeight, behavior: "smooth" });
+      });
+    }
+  }, [messages, isLoading]);
 
   // Save message to DB
   const saveMessage = useCallback(async (convId: string, role: string, content: string) => {
@@ -384,7 +388,7 @@ const ElaraChatPage = () => {
       </header>
 
       {/* Chat Area */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 pb-36 space-y-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4" style={{ paddingBottom: 'calc(120px + env(safe-area-inset-bottom, 0px))' }}>
         {messages.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -452,7 +456,7 @@ const ElaraChatPage = () => {
       </div>
 
       {/* Input Area */}
-      <div className="fixed left-0 right-0 z-40 fixed-bottom-safe">
+      <div className="fixed left-0 right-0 z-40" style={{ bottom: `calc(60px + env(safe-area-inset-bottom, 0px))` }}>
         <div className="max-w-lg mx-auto px-3 pb-2">
           <form onSubmit={handleSubmit} className="flex items-end gap-2 bg-card/90 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg">
             <textarea
