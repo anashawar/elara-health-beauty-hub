@@ -36,6 +36,8 @@ export const en = {
     verified: "Verified",
     original: "100% Original",
     freeDelivery: "Free delivery 40K+",
+    fastDelivery: "Fast 24-Hour Delivery",
+    fastDeliverySub: "Order now & get it tomorrow!",
     version: "v1.0",
   },
   nav: {

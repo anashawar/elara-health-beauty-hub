@@ -36,6 +36,8 @@ export const ku = {
     verified: "پشتڕاستکراوە",
     original: "ئەسڵی ١٠٠٪",
     freeDelivery: "گەیاندنی بەخۆڕایی بۆ +٤٠ هەزار",
+    fastDelivery: "گەیاندنی خێرا لە ٢٤ کاتژمێردا",
+    fastDeliverySub: "ئێستا داواکاری بکە و سبەینێ دەیگات!",
     version: "v1.0",
   },
   nav: {

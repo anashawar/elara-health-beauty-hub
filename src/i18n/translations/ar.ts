@@ -36,6 +36,8 @@ export const ar = {
     verified: "موثوق",
     original: "أصلي 100%",
     freeDelivery: "توصيل مجاني فوق 40 ألف",
+    fastDelivery: "توصيل سريع خلال 24 ساعة",
+    fastDeliverySub: "اطلب هسّه ويوصلك باجر!",
     version: "v1.0",
   },
   nav: {
