@@ -275,8 +275,8 @@ const ElaraChatPage = () => {
     }
   };
 
-  const startNewChat = () => { setConversationId(null); setMessages([]); setShowHistory(false); };
-  const loadConversation = (id: string) => { setConversationId(id); setShowHistory(false); };
+  const startNewChat = () => { setConversationId(null); setMessages([]); setShowHistory(false); setIsNewConversation(false); };
+  const loadConversation = (id: string) => { setIsNewConversation(false); setConversationId(id); setShowHistory(false); };
 
   const deleteConversation = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
