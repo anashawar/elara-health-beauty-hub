@@ -96,12 +96,22 @@ export default function AdminProducts() {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["admin-products"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*, brands(name), categories(name), product_images(id, image_url, sort_order), subcategories(name)")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      // Paginate to fetch ALL products (default limit is 1000)
+      let all: any[] = [];
+      let from = 0;
+      const PAGE = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("products")
+          .select("*, brands(name), categories(name), product_images(id, image_url, sort_order), subcategories(name)")
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        all = all.concat(data || []);
+        if (!data || data.length < PAGE) break;
+        from += PAGE;
+      }
+      return all;
     },
   });
 
