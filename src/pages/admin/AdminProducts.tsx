@@ -106,8 +106,6 @@ export default function AdminProducts() {
     allCosts.forEach((c: any) => { map[c.product_id] = Number(c.cost); });
     return map;
   }, [allCosts]);
-    },
-  });
 
   const uploadImage = async (file: File, productId: string, sortOrder: number): Promise<string> => {
     const ext = file.name.split(".").pop();
