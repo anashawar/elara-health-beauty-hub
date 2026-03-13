@@ -43,7 +43,8 @@ export default function OffersBanner() {
     const channel = supabase
       .channel('offers-banner-sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, () => {
-        qc.invalidateQueries({ queryKey: ["active-offers"] });
+        qc.invalidateQueries({ queryKey: ["active-offers-gallery"] });
+        qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
