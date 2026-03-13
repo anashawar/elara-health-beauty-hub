@@ -46,7 +46,7 @@ const ProductPage = () => {
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
   const { user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails, setShowDetails] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
   const { data: allProducts = [] } = useProducts();
