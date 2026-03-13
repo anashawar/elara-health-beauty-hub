@@ -340,7 +340,7 @@ const ElaraChatPage = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ messages: allMessages, user_name: userName, user_gender: user?.user_metadata?.gender || null, user_birthdate: user?.user_metadata?.birthdate || null }),
+      body: JSON.stringify({ messages: allMessages, user_name: userName, user_gender: user?.user_metadata?.gender || null, user_birthdate: user?.user_metadata?.birthdate || null, user_city: userCity }),
     });
 
     if (!resp.ok) {
