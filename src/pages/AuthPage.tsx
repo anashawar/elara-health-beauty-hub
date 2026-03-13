@@ -203,6 +203,7 @@ const AuthPage = () => {
         street: street || null,
         building: building || null,
         floor: floor || null,
+        apartment: apartment || null,
         phone: normalizedPhone || null,
         is_default: true,
         latitude: gpsLat,
