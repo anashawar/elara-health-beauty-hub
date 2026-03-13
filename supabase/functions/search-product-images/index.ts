@@ -21,14 +21,32 @@ function isJunkImage(url: string): boolean {
     "newsletter", "subscribe", "popup", "modal", "close",
     "menu", "nav-", "/header", "/footer", "sidebar",
     ".gif", ".svg", "data:image",
+    "blog", "article", "editorial", "lifestyle", "category-",
+    "collection-", "best-", "top-", "how-to",
   ];
   return reject.some(p => lower.includes(p));
 }
 
-function scoreImage(url: string, titleWords: string[], brandSlug: string): number {
+function scoreImage(url: string, titleWords: string[], brandSlug: string, productVolume?: string): number {
   const lower = url.toLowerCase();
   if (isJunkImage(lower)) return -1;
   if (!/\.(jpg|jpeg|png|webp)/i.test(lower.split("?")[0])) return -1;
+
+  // Reject images of different sizes/variants of the same product
+  // e.g. if product is 200ml, reject URLs containing "100ml", "400ml", "50ml"
+  if (productVolume) {
+    const vol = productVolume.replace(/\s+/g, "");
+    // Find all volume mentions in URL (e.g. "100ml", "400-ml", "50ml")
+    const urlVolumes = lower.match(/(\d+)\s*-?\s*(ml|g|oz|mg)/gi) || [];
+    for (const uv of urlVolumes) {
+      const uvNorm = uv.replace(/[\s-]/g, "").toLowerCase();
+      const prodNorm = vol.toLowerCase();
+      // If the URL mentions a volume and it doesn't match, reject
+      if (uvNorm !== prodNorm && !lower.includes(prodNorm)) {
+        return -1;
+      }
+    }
+  }
 
   let score = 1; // base score for valid image
 
@@ -130,7 +148,7 @@ serve(async (req) => {
 
     const { data: products, error: pErr } = await supabase
       .from("products")
-      .select("id, title, brands(name), volume_ml, form")
+      .select("id, title, brands(name), volume_ml, volume_unit, form")
       .in("id", product_ids);
     if (pErr) throw pErr;
 
@@ -152,6 +170,7 @@ serve(async (req) => {
       const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, "");
       const titleWords = product.title.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
       const fullName = `${brandName} ${product.title}`.trim();
+      const volumeStr = (product as any).volume_ml ? `${(product as any).volume_ml}${(product as any).volume_unit || "ml"}` : undefined;
 
       // Multiple search strategies — first query targets white background product shots
       const searchQueries = [
@@ -204,7 +223,7 @@ serve(async (req) => {
 
             for (const imgUrl of pageImages) {
               if (!imgUrl.startsWith("http")) continue;
-              const score = scoreImage(imgUrl, titleWords, brandSlug);
+              const score = scoreImage(imgUrl, titleWords, brandSlug, volumeStr);
               if (score > 0) {
                 candidates.push({ url: upgradeToHighRes(imgUrl), score });
               }
