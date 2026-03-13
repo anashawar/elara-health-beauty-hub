@@ -75,6 +75,7 @@ Identify the REAL brand from the product name. Many product names contain the br
 
 Return a JSON object with these fields:
 {
+  "corrected_title": "The corrected, properly formatted product title in Sentence Case. Fix typos, remove unnecessary characters, standardize spacing, ensure brand name is capitalized correctly. Example: 'CERAVE MOISTURIZING CREAM 50ML' → 'CeraVe Moisturizing Cream 50ml'. Keep it concise but complete. Include size/volume if in original name.",
   "description": "2-3 sentence product description. Scientific yet approachable. Mention key active ingredients.",
   "benefits": ["benefit 1", "benefit 2", "benefit 3", "benefit 4", "benefit 5"],
   "usage_instructions": "Clear step-by-step how to use. Be specific about amount, frequency, application method.",
@@ -93,10 +94,11 @@ Return a JSON object with these fields:
   "application": "face, body, hair, lips, eyes, hands, etc.",
   "is_new": false,
   "is_trending": true or false based on current market popularity,
-  "slug": "url-friendly-slug-from-title"
+  "slug": "url-friendly-slug-from-corrected-title"
 }
 
 CRITICAL: 
+- ALWAYS correct the product title: fix casing (Sentence Case), fix typos, standardize brand names, remove junk characters, ensure proper formatting.
 - Extract the REAL brand from the product name intelligently.
 - If brand_id is null but brand_name is provided, a new brand will be created automatically.
 - Be factual and accurate about the product.
@@ -165,7 +167,11 @@ CRITICAL:
             }
           }
 
+          // Apply corrected title if provided
+          const correctedTitle = enriched.corrected_title?.trim() || product.title;
+
           const updatePayload: any = {
+            title: correctedTitle,
             description: enriched.description || null,
             benefits: enriched.benefits || null,
             usage_instructions: enriched.usage_instructions || null,
@@ -179,7 +185,7 @@ CRITICAL:
             application: enriched.application || null,
             is_trending: enriched.is_trending || false,
             price: sellingPrice,
-            slug: enriched.slug || product.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+            slug: enriched.slug || correctedTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
           };
 
           if (brandId) updatePayload.brand_id = brandId;
