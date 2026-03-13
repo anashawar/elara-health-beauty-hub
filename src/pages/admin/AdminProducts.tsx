@@ -378,7 +378,7 @@ export default function AdminProducts() {
       // Name + Cost format: use bulk-import edge function
       const products = rows
         .map(normalizeRow)
-        .filter((p): p is { name: string; cost: string } => p !== null && p.name.length > 0);
+        .filter((p): p is { name: string; cost: string; price?: string } => p !== null && p.name.length > 0);
 
       if (products.length === 0) {
         return { success: 0, errors: ["No valid products found. Check column headers."] };
