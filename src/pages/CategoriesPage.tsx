@@ -9,19 +9,6 @@ import SearchOverlay from "@/components/SearchOverlay";
 import { useCategories, useSubcategories } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-const categoryGradients: Record<string, string> = {
-  skincare: "from-pink-500 to-rose-600",
-  haircare: "from-amber-500 to-orange-600",
-  bodycare: "from-sky-500 to-blue-600",
-  makeup: "from-red-500 to-pink-600",
-  vitamins: "from-emerald-500 to-teal-600",
-  personalcare: "from-violet-500 to-purple-600",
-  otc: "from-teal-500 to-cyan-600",
-  wellness: "from-indigo-500 to-blue-600",
-  motherbaby: "from-yellow-500 to-amber-600",
-  devices: "from-slate-500 to-zinc-600",
-};
-
 const CategoriesPage = () => {
   const { data: categories = [] } = useCategories();
   const { data: subcategories = [] } = useSubcategories();
@@ -65,11 +52,10 @@ const CategoriesPage = () => {
         </div>
 
         {/* Category cards */}
-        <div className="px-4 md:px-6 mt-4 space-y-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0">
+        <div className="px-4 md:px-6 mt-4 space-y-2.5 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-3 md:space-y-0">
           {categories.map((cat, idx) => {
             const isExpanded = expandedSlug === cat.slug;
             const subs = subcategories.filter(s => s.category_id === cat.id);
-            const gradient = categoryGradients[cat.slug] || "from-primary to-primary/70";
 
             return (
               <motion.div
@@ -79,32 +65,34 @@ const CategoriesPage = () => {
                 transition={{ delay: idx * 0.04 }}
                 className="rounded-2xl overflow-hidden"
               >
-                {/* Category header with gradient */}
+                {/* Category header — clean card style */}
                 <button
                   onClick={() => subs.length > 0 ? toggleExpand(cat.slug) : null}
-                  className="w-full relative overflow-hidden group"
+                  className="w-full group"
                 >
-                  <div className={`bg-gradient-to-r ${gradient} px-4 py-4 flex items-center gap-3`}>
-                    <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <div className={`bg-card border border-border/60 px-4 py-3.5 flex items-center gap-3 transition-all ${isExpanded ? "rounded-t-2xl border-b-0" : "rounded-2xl"} hover:border-primary/30 hover:shadow-sm`}>
+                    <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center text-xl flex-shrink-0 group-hover:scale-105 transition-transform">
                       {cat.icon}
                     </div>
-                    <div className="flex-1 text-left rtl:text-right">
-                      <span className="text-[15px] font-bold text-white block">{getCatName(cat)}</span>
-                      <span className="text-[11px] text-white/70">{subs.length} {subs.length === 1 ? "subcategory" : "subcategories"}</span>
+                    <div className="flex-1 text-left rtl:text-right min-w-0">
+                      <span className="text-sm font-bold text-foreground block truncate">{getCatName(cat)}</span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {subs.length} {language === "ar" ? "قسم فرعي" : language === "ku" ? "بەشی لاوەکی" : subs.length === 1 ? "subcategory" : "subcategories"}
+                      </span>
                     </div>
                     {subs.length > 0 ? (
                       <motion.div
                         animate={{ rotate: isExpanded ? 90 : 0 }}
                         transition={{ duration: 0.2 }}
-                        className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center"
+                        className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0"
                       >
-                        <ChevronRight className="w-4 h-4 text-white rtl:rotate-180" />
+                        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground rtl:rotate-180" />
                       </motion.div>
                     ) : (
                       <Link
                         to={`/category/${cat.slug}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="text-xs text-white font-bold px-3.5 py-2 bg-white/20 backdrop-blur-sm rounded-xl border border-white/20"
+                        className="text-[11px] text-primary font-bold px-3 py-1.5 bg-primary/8 rounded-lg border border-primary/15 hover:bg-primary/15 transition-colors flex-shrink-0"
                       >
                         {t("categories.viewAll")}
                       </Link>
@@ -122,7 +110,7 @@ const CategoriesPage = () => {
                       transition={{ duration: 0.25 }}
                       className="overflow-hidden"
                     >
-                      <div className="bg-card border border-t-0 border-border/50 rounded-b-2xl px-3 pb-3 pt-2">
+                      <div className="bg-card border border-border/60 border-t-0 rounded-b-2xl px-3 pb-3 pt-2">
                         <Link
                           to={`/category/${cat.slug}`}
                           className="flex items-center gap-2 px-3 py-2.5 mb-2 rounded-xl bg-primary/5 hover:bg-primary/10 transition-colors"
@@ -140,7 +128,7 @@ const CategoriesPage = () => {
                               to={`/category/${cat.slug}?sub=${sub.id}`}
                               className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl bg-secondary/40 hover:bg-secondary transition-colors group"
                             >
-                              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} bg-opacity-20 flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                              <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center group-hover:scale-110 transition-transform">
                                 <span className="text-lg">{sub.icon}</span>
                               </div>
                               <span className="text-[10px] font-bold text-foreground text-center leading-tight">
