@@ -37,7 +37,14 @@ async function getProductCatalog(): Promise<string> {
   }).join("\n");
 }
 
-function buildSystemPrompt(catalog: string, userName: string | null, userGender: string | null, userAge: number | null, isKurdistan: boolean): string {
+function buildSystemPrompt(catalog: string, userName: string | null, userGender: string | null, userAge: number | null, isKurdistan: boolean, userLanguage: string): string {
+  const langMap: Record<string, string> = {
+    en: "English",
+    ar: "Arabic (Iraqi Baghdadi dialect)",
+    ku: "Kurdish Sorani",
+  };
+  const respondInLang = langMap[userLanguage] || "the same language the user writes in";
+  const langInstruction = `CRITICAL LANGUAGE RULE: You MUST ALWAYS respond in ${respondInLang}, regardless of what language the user writes in. This is the user's chosen app language. Your personality stays the same but your language of response MUST be ${respondInLang}.`;
   const nameInstruction = userName 
     ? `The user's name is "${userName}". Use their name naturally in conversation — like a friend would. Say their name occasionally (not every message).`
     : `You don't know the user's name yet. Be warm and friendly anyway.`;
