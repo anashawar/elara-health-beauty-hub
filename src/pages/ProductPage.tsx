@@ -234,15 +234,17 @@ const ProductPage = () => {
               </button>
             </div>
 
-            <div className="flex gap-2 mt-4 overflow-x-auto no-scrollbar scroll-smooth-x">
+            <div className="grid grid-cols-3 gap-2 mt-4">
               {[
-                { icon: Truck, text: t("common.freeDelivery") },
-                { icon: ShieldCheck, text: t("common.original") },
-                { icon: BadgeCheck, text: t("common.verified") },
+                { icon: Truck, text: t("common.freeDelivery"), sub: "40K+" },
+                { icon: ShieldCheck, text: t("common.original"), sub: "100%" },
+                { icon: BadgeCheck, text: t("common.verified"), sub: "✓" },
               ].map(item => (
-                <div key={item.text} className="flex items-center gap-1.5 bg-secondary/70 rounded-full px-3 py-2 flex-shrink-0">
-                  <item.icon className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-[10px] font-semibold text-foreground whitespace-nowrap">{item.text}</span>
+                <div key={item.text} className="flex flex-col items-center gap-1.5 bg-gradient-to-b from-primary/5 to-primary/10 border border-primary/15 rounded-2xl px-2 py-3 text-center">
+                  <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center">
+                    <item.icon className="w-4 h-4 text-primary" />
+                  </div>
+                  <span className="text-[10px] font-bold text-foreground leading-tight">{item.text}</span>
                 </div>
               ))}
             </div>
