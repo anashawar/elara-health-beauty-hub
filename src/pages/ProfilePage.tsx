@@ -33,10 +33,10 @@ const ProfilePage = () => {
     { icon: Heart, label: t("profile.wishlist"), path: "/wishlist" },
     { icon: MapPin, label: t("profile.addresses"), path: "/addresses" },
     { icon: Settings, label: t("profile.settings"), path: "/settings" },
-    { icon: Info, label: "About ELARA", path: "/about" },
-    { icon: HelpCircle, label: "FAQ", path: "/faq" },
-    { icon: FileText, label: "Terms & Conditions", path: "/terms" },
-    { icon: Lock, label: "Privacy Policy", path: "/privacy" },
+    { icon: Info, label: t("profile.aboutElara"), path: "/about" },
+    { icon: HelpCircle, label: t("profile.faq"), path: "/faq" },
+    { icon: FileText, label: t("profile.termsConditions"), path: "/terms" },
+    { icon: Lock, label: t("profile.privacyPolicy"), path: "/privacy" },
   ];
 
   const handleSignOut = async () => {

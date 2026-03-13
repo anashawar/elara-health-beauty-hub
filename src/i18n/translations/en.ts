@@ -176,6 +176,10 @@ export const en = {
     settings: "Settings",
     signedOut: "Signed out",
     elaraUser: "ELARA User",
+    aboutElara: "About ELARA",
+    faq: "FAQ",
+    termsConditions: "Terms & Conditions",
+    privacyPolicy: "Privacy Policy",
   },
   auth: {
     welcomeBack: "Welcome Back",
