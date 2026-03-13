@@ -223,6 +223,7 @@ export const en = {
     streetPlaceholder: "Street name or number",
     building: "Building",
     floor: "Floor",
+    apartment: "Apt",
     skipForNow: "Skip for now",
     saving: "Saving...",
     welcomeToElara: "Welcome to ELARA, {{name}}!",
