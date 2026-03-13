@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingCart, Plus, MessageCircle } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingCart, Plus, MessageCircle, Sun, CloudRain, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import BottomNav from "@/components/layout/BottomNav";
@@ -39,9 +39,82 @@ const quickQuestions: Record<string, string[]> = {
   ],
 };
 
+function getGreeting(language: string, name: string | null): { greeting: string; subtitle: string } {
+  const hour = new Date().getHours();
+  const firstName = name?.split(" ")[0] || null;
+
+  if (language === "ar") {
+    const timeGreeting = hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء النور";
+    return {
+      greeting: firstName ? `${timeGreeting} ${firstName}! 💕` : `${timeGreeting}! 💕`,
+      subtitle: "شلونك اليوم؟ أنا إيلارا، صيدلانيتك المختصة بالجمال ✨",
+    };
+  }
+  if (language === "ku") {
+    const timeGreeting = hour < 12 ? "بەیانیت باش" : hour < 18 ? "ڕۆژت باش" : "ئێوارەت باش";
+    return {
+      greeting: firstName ? `${timeGreeting} ${firstName}! 💕` : `${timeGreeting}! 💕`,
+      subtitle: "چۆنی ئەمڕۆ؟ من ئیلارام، پسپۆڕی جوانکاریت ✨",
+    };
+  }
+  const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  return {
+    greeting: firstName ? `${timeGreeting}, ${firstName}! 💕` : `${timeGreeting}! 💕`,
+    subtitle: "How are you doing today? I'm Elara, your beauty bestie ✨",
+  };
+}
+
+function getContextualTips(language: string): { icon: React.ReactNode; text: string }[] {
+  const month = new Date().getMonth();
+  const tips: { icon: React.ReactNode; text: string }[] = [];
+
+  if (language === "ar") {
+    // Summer (May-Sep) - Iraq heat
+    if (month >= 4 && month <= 8) {
+      tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "الجو حار هواية بالعراق هالأيام 🥵 لا تنسين واقي الشمس SPF 50+ كل يوم!" });
+    } else if (month >= 10 || month <= 2) {
+      tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "الجو بارد وجاف هالفترة ❄️ بشرتك تحتاج ترطيب مكثف!" });
+    }
+    // Ramadan/Eid awareness (approximate)
+    if (month === 2 || month === 3) {
+      tips.push({ icon: <Heart className="w-4 h-4 text-primary" />, text: "رمضان كريم 🌙 خليني أساعدك تحافظين على بشرتك خلال الصيام" });
+    }
+    // Newroz
+    if (month === 2) {
+      tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "نوروز مبارك! 🌷 جهزي لوكك للعيد" });
+    }
+    tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "اسأليني عن أي شي يخص بشرتك وشعرك وجمالك 💆‍♀️" });
+  } else if (language === "ku") {
+    if (month >= 4 && month <= 8) {
+      tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "کەش زۆر گەرمە ئەم ڕۆژانە 🥵 واقی خۆرت لەبیر نەچێت!" });
+    } else if (month >= 10 || month <= 2) {
+      tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "کەش ساردە ئەم ماوەیە ❄️ پێستت پێویستی بە شێداری زۆرە!" });
+    }
+    if (month === 2) {
+      tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "نەورۆز پیرۆزە! 🌷 ئامادەبە بۆ جەژنەکە" });
+    }
+    tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "هەر پرسیارێکت هەیە دەربارەی پێست و قژ و جوانکاری بپرسە 💆‍♀️" });
+  } else {
+    if (month >= 4 && month <= 8) {
+      tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "It's hot season in Iraq 🥵 Don't skip your SPF 50+ sunscreen today!" });
+    } else if (month >= 10 || month <= 2) {
+      tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "Cold & dry weather ahead ❄️ Your skin needs extra hydration!" });
+    }
+    if (month === 2 || month === 3) {
+      tips.push({ icon: <Heart className="w-4 h-4 text-primary" />, text: "Ramadan Kareem 🌙 Let me help you maintain your skin routine during fasting" });
+    }
+    if (month === 2) {
+      tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "Happy Newroz! 🌷 Get your glow ready for the celebration" });
+    }
+    tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "Ask me anything about skincare, hair care, or beauty 💆‍♀️" });
+  }
+
+  return tips.slice(0, 3);
+}
+
 const ElaraChatPage = () => {
   const { t, language } = useLanguage();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { data: products = [] } = useProducts();
   const { addToCart } = useApp();
   const queryClient = useQueryClient();
@@ -56,6 +129,10 @@ const ElaraChatPage = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const isStreamingRef = useRef(false);
+
+  const userName = profile?.full_name || user?.user_metadata?.full_name || null;
+  const greeting = useMemo(() => getGreeting(language, userName), [language, userName]);
+  const contextualTips = useMemo(() => getContextualTips(language), [language]);
 
   const { data: conversations = [] } = useQuery({
     queryKey: ["chat-conversations", user?.id],
@@ -83,7 +160,6 @@ const ElaraChatPage = () => {
     loadMessages();
   }, [conversationId, user, isNewConversation]);
 
-  // Auto-scroll: always scroll to bottom when messages change (especially during streaming)
   useEffect(() => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: isStreamingRef.current ? "instant" : "smooth" });
@@ -175,7 +251,7 @@ const ElaraChatPage = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ messages: allMessages }),
+      body: JSON.stringify({ messages: allMessages, user_name: userName }),
     });
 
     if (!resp.ok) {
@@ -295,7 +371,6 @@ const ElaraChatPage = () => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
   };
 
-  // Auto-resize textarea
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
     const el = e.target;
@@ -321,7 +396,7 @@ const ElaraChatPage = () => {
               </div>
               <div>
                 <h1 className="text-sm font-display font-bold text-foreground">ELARA AI</h1>
-                <p className="text-[10px] text-muted-foreground">Senior Pharmacist</p>
+                <p className="text-[10px] text-muted-foreground">Your Beauty Bestie 💕</p>
               </div>
             </div>
           </div>
@@ -369,7 +444,7 @@ const ElaraChatPage = () => {
               </div>
               <div>
                 <h2 className="text-sm font-display font-bold text-foreground">ELARA AI</h2>
-                <p className="text-[10px] text-muted-foreground">Senior Pharmacist</p>
+                <p className="text-[10px] text-muted-foreground">Your Beauty Bestie 💕</p>
               </div>
             </div>
             <button onClick={startNewChat} className="p-2 rounded-xl hover:bg-secondary transition-colors" title="New chat">
@@ -396,23 +471,70 @@ const ElaraChatPage = () => {
           {/* Scrollable messages */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain px-4 md:px-8 py-4 space-y-4">
             {messages.length === 0 ? (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mt-8 md:mt-16">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center mb-4">
-                  <Sparkles className="w-8 h-8 text-primary" />
-                </div>
-                <h2 className="text-xl font-display font-bold text-foreground mb-1">ELARA AI ✨</h2>
-                <p className="text-sm text-muted-foreground mb-6 max-w-[400px]">
-                  Your personal skincare & beauty pharmacist. Scientific, direct, evidence-based.
-                </p>
-                <div className="w-full max-w-md space-y-2">
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mt-6 md:mt-12">
+                {/* Avatar */}
+                <motion.div 
+                  initial={{ scale: 0.8 }} 
+                  animate={{ scale: 1 }} 
+                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                  className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 via-accent/30 to-primary/10 flex items-center justify-center mb-4 border-2 border-primary/20"
+                >
+                  <Sparkles className="w-10 h-10 text-primary" />
+                </motion.div>
+
+                {/* Personalized greeting */}
+                <motion.h2 
+                  initial={{ opacity: 0, y: 10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: 0.15 }}
+                  className="text-2xl font-display font-bold text-foreground mb-1"
+                >
+                  {greeting.greeting}
+                </motion.h2>
+                <motion.p 
+                  initial={{ opacity: 0, y: 10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: 0.25 }}
+                  className="text-sm text-muted-foreground mb-5 max-w-[360px]"
+                >
+                  {greeting.subtitle}
+                </motion.p>
+
+                {/* Contextual tips */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: 0.35 }}
+                  className="w-full max-w-md space-y-2 mb-5"
+                >
+                  {contextualTips.map((tip, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-2xl bg-card/80 border border-border/50 text-left rtl:text-right">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-secondary/80 flex items-center justify-center">
+                        {tip.icon}
+                      </div>
+                      <p className="text-xs text-muted-foreground flex-1">{tip.text}</p>
+                    </div>
+                  ))}
+                </motion.div>
+
+                {/* Quick questions */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: 0.45 }}
+                  className="w-full max-w-md space-y-2"
+                >
+                  <p className="text-xs font-medium text-muted-foreground mb-2">
+                    {language === "ar" ? "جربي تسأليني 👇" : language === "ku" ? "بپرسە لێم 👇" : "Try asking me 👇"}
+                  </p>
                   {(quickQuestions[language] || quickQuestions.en).map((q, i) => (
-                    <motion.button key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} onClick={() => sendMessage(q)}
+                    <motion.button key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.06 }} onClick={() => sendMessage(q)}
                       className="w-full text-left rtl:text-right p-3 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-sm transition-all text-sm text-foreground"
                     >
                       {q}
                     </motion.button>
                   ))}
-                </div>
+                </motion.div>
               </motion.div>
             ) : (
               <>
@@ -428,24 +550,26 @@ const ElaraChatPage = () => {
                     <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                        <span className="text-xs text-muted-foreground">Thinking...</span>
+                        <span className="text-xs text-muted-foreground">
+                          {language === "ar" ? "أفكر... 💭" : language === "ku" ? "بیر دەکەمەوە... 💭" : "Thinking... 💭"}
+                        </span>
                       </div>
                     </div>
                   </motion.div>
                 )}
               </>
             )}
-            {/* Scroll sentinel */}
             <div ref={bottomRef} className="h-1" />
           </div>
 
-          {/* Input Area — always at the bottom of flex column */}
+          {/* Input Area */}
           <div className="flex-shrink-0 z-40">
             {/* Mobile input */}
             <div className="md:hidden px-3 pb-2" style={{ paddingBottom: `calc(68px + env(safe-area-inset-bottom, 0px))` }}>
               <form onSubmit={handleSubmit} className="flex items-end gap-2 glass-heavy border border-border/30 rounded-2xl p-2 shadow-float">
                 <textarea ref={inputRef} value={input} onChange={handleTextareaChange} onKeyDown={handleKeyDown}
-                  placeholder="Ask about skincare, routines, products..." rows={1}
+                  placeholder={language === "ar" ? "اسأليني أي شي عن الجمال... 💕" : language === "ku" ? "هەر شتێکم لێ بپرسە... 💕" : "Ask me anything about beauty... 💕"}
+                  rows={1}
                   className="flex-1 bg-transparent text-foreground text-sm px-3 py-2 resize-none outline-none placeholder:text-muted-foreground max-h-24"
                   style={{ minHeight: "36px" }}
                 />
@@ -459,7 +583,8 @@ const ElaraChatPage = () => {
             <div className="hidden md:block px-8 pb-6 pt-2 border-t border-border bg-background">
               <form onSubmit={handleSubmit} className="flex items-end gap-3 bg-card border border-border rounded-2xl p-3 shadow-sm max-w-3xl mx-auto">
                 <textarea ref={inputRef} value={input} onChange={handleTextareaChange} onKeyDown={handleKeyDown}
-                  placeholder="Ask about skincare, routines, products..." rows={1}
+                  placeholder={language === "ar" ? "اسأليني أي شي عن الجمال... 💕" : language === "ku" ? "هەر شتێکم لێ بپرسە... 💕" : "Ask me anything about beauty... 💕"}
+                  rows={1}
                   className="flex-1 bg-transparent text-foreground text-sm px-3 py-2 resize-none outline-none placeholder:text-muted-foreground max-h-32"
                   style={{ minHeight: "40px" }}
                 />
