@@ -34,20 +34,29 @@ export interface ProductWithRelations {
 }
 
 async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithRelations[]> {
-  const { data: products, error } = await supabase
-    .from("products")
-    .select(`
-      *,
-      brands ( name ),
-      categories ( slug ),
-      product_images ( image_url, sort_order ),
-      product_tags ( tag )
-    `)
-    .order("created_at", { ascending: false });
+  // Paginate to fetch ALL products (default limit is 1000)
+  let allProducts: any[] = [];
+  let from = 0;
+  const PAGE = 1000;
+  while (true) {
+    const { data, error } = await supabase
+      .from("products")
+      .select(`
+        *,
+        brands ( name ),
+        categories ( slug ),
+        product_images ( image_url, sort_order ),
+        product_tags ( tag )
+      `)
+      .order("created_at", { ascending: false })
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    allProducts = allProducts.concat(data || []);
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
 
-  if (error) throw error;
-
-  return (products || []).map((p: any) => {
+  return (allProducts || []).map((p: any) => {
     const localizedTitle =
       language === "ar" ? (p.title_ar || p.title) : language === "ku" ? (p.title_ku || p.title) : p.title;
     const localizedDescription =

@@ -96,12 +96,22 @@ export default function AdminProducts() {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["admin-products"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*, brands(name), categories(name), product_images(id, image_url, sort_order), subcategories(name)")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      // Paginate to fetch ALL products (default limit is 1000)
+      let all: any[] = [];
+      let from = 0;
+      const PAGE = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("products")
+          .select("*, brands(name), categories(name), product_images(id, image_url, sort_order), subcategories(name)")
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        all = all.concat(data || []);
+        if (!data || data.length < PAGE) break;
+        from += PAGE;
+      }
+      return all;
     },
   });
 
@@ -1130,7 +1140,10 @@ export default function AdminProducts() {
                       )}
                       <div>
                         <p className="font-medium text-sm text-foreground line-clamp-1">{p.title}</p>
-                        <p className="text-xs text-muted-foreground">{p.brands?.name}</p>
+                        <p className="text-xs text-muted-foreground">{p.brands?.name || "—"}</p>
+                        {(!p.description || !p.brand_id || !p.category_id) && (
+                          <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">Needs AI</span>
+                        )}
                       </div>
                     </div>
                   </TableCell>
