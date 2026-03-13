@@ -58,7 +58,7 @@ const ResetPasswordPage = () => {
 
   if (!isRecovery && !success) {
     return (
-      <div className="min-h-screen bg-background max-w-lg mx-auto flex flex-col items-center justify-center px-5">
+      <div className="min-h-screen bg-background max-w-lg mx-auto flex flex-col items-center justify-center px-5 safe-area-top">
         <p className="text-sm text-muted-foreground text-center">
           {t("resetPassword.invalidLink")}
         </p>
