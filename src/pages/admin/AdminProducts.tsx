@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon, Languages, FileSpreadsheet, Sparkles, Wand2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon, Languages, FileSpreadsheet, Sparkles, Wand2, ImagePlus } from "lucide-react";
 import { formatPrice, useCategories, useBrands, useSubcategories } from "@/hooks/useProducts";
 import { toast } from "sonner";
 import BulkImportDialog, { ColumnMapping } from "@/components/admin/BulkImportDialog";
@@ -473,6 +473,70 @@ export default function AdminProducts() {
     }
   };
 
+  // Image search handler
+  const handleSearchImages = async (ids: string[]) => {
+    if (ids.length === 0) { toast.error("No products selected"); return; }
+    setEnriching(true);
+    setEnrichProgress({ done: 0, total: ids.length, current: "Searching for product images..." });
+
+    const BATCH_SIZE = 5;
+    let totalSuccess = 0;
+    let totalFail = 0;
+
+    for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+      const batch = ids.slice(i, i + BATCH_SIZE);
+      setEnrichProgress({ done: i, total: ids.length, current: `Finding images batch ${Math.floor(i/BATCH_SIZE)+1}...` });
+
+      try {
+        const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-product-images`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ product_ids: batch }),
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          toast.error(`Image search failed: ${err.error || resp.statusText}`);
+          totalFail += batch.length;
+          continue;
+        }
+
+        const result = await resp.json();
+        totalSuccess += result.succeeded || 0;
+        totalFail += result.failed || 0;
+      } catch (err) {
+        console.error("Image search error:", err);
+        totalFail += batch.length;
+      }
+
+      if (i + BATCH_SIZE < ids.length) {
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+
+    setEnrichProgress({ done: ids.length, total: ids.length, current: "Done!" });
+    setEnriching(false);
+    setSelectMode(false);
+    setSelectedForEnrich(new Set());
+    qc.invalidateQueries({ queryKey: ["admin-products"] });
+    toast.success(`Image search complete: ${totalSuccess} found, ${totalFail} failed`);
+  };
+
+  const handleSearchMissingImages = () => {
+    const missing = products.filter((p: any) => !p.product_images || p.product_images.length === 0);
+    if (missing.length === 0) {
+      toast.info("All products already have images");
+      return;
+    }
+    const ids = missing.map((p: any) => p.id);
+    if (confirm(`Search web for images for ${ids.length} products without images?`)) {
+      handleSearchImages(ids);
+    }
+  };
+
   const toggleSelectProduct = (id: string) => {
     setSelectedForEnrich(prev => {
       const next = new Set(prev);
@@ -499,6 +563,9 @@ export default function AdminProducts() {
             <>
               <Button size="sm" variant="outline" className="text-primary border-primary/30" onClick={handleEnrichMissing} disabled={enriching}>
                 <Sparkles className="h-4 w-4 mr-1.5" />AI Fill Missing
+              </Button>
+              <Button size="sm" variant="outline" className="border-primary/30" onClick={handleSearchMissingImages} disabled={enriching}>
+                <ImagePlus className="h-4 w-4 mr-1.5" />Find Images
               </Button>
               <Button size="sm" variant="outline" onClick={() => setSelectMode(true)} disabled={enriching}>
                 <Wand2 className="h-4 w-4 mr-1.5" />Select & Enrich
