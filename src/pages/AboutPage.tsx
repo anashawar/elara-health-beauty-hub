@@ -1,42 +1,106 @@
 import { motion } from "framer-motion";
-import { CheckCircle2, Sparkles, Globe, Users, ShieldCheck, Heart, ArrowRight } from "lucide-react";
+import { Sparkles, Globe, Users, ShieldCheck, Heart, ArrowRight } from "lucide-react";
 import PageShell from "@/components/layout/PageShell";
 import elaraBanner from "@/assets/elara-banner.webp";
+import { useLanguage } from "@/i18n/LanguageContext";
 
-const stats = [
-  { value: "100%", label: "Verified Brands" },
-  { value: "1500+", label: "Products" },
-  { value: "250+", label: "Brands" },
-];
+const content = {
+  en: {
+    pageTitle: "About ELARA",
+    heroTitle: ["Welcome to ", "ELARA", ", Iraq's first smart health & beauty platform"],
+    mission: [
+      ["We're not just an online store — we're a ", "new way to care for yourself", "."],
+      "ELARA is Iraq's first health & beauty platform built to bring you trusted products, powerful tools, and a seamless experience — all in one place.",
+      ["From skincare and cosmetics to wellness devices and supplements, we handpick everything with one promise: ", "100% authenticity, zero compromise", "."],
+      "We know what it's like to search for original products, fair prices, fast delivery, and good service in healthcare and beauty — so we built ELARA to deliver all that. Every product is verified. Every order is tracked. Every experience is made for you.",
+    ],
+    stats: [
+      { value: "100%", label: "Verified Brands" },
+      { value: "1500+", label: "Products" },
+      { value: "250+", label: "Brands" },
+    ],
+    diffTitle: "What makes ELARA different?",
+    diffs: [
+      { title: "Smart & Personal", desc: "AI consultations, smart search, and tailored routines" },
+      { title: "Multilingual & Local", desc: "Arabic, Kurdish, and English — we speak your language" },
+      { title: "Community-first", desc: "Built to connect, empower, and glow up Iraq's health & beauty culture" },
+      { title: "Only Original", desc: "Everything on ELARA is verified and original" },
+    ],
+    closing: "We're here to simplify your beauty journey — and make self-care a daily joy.",
+    chooseTitle: "Choose ELARA",
+    reasons: [
+      "Because your time matters.",
+      "Because your skin deserves the real deal.",
+      "Because your health starts with what you choose — and we make choosing easier.",
+    ],
+    contactQ: "Have questions? Reach out anytime.",
+    contactCTA: "Contact us — info@elara.iq",
+  },
+  ar: {
+    pageTitle: "عن إيلارا",
+    heroTitle: ["مرحباً بك في ", "إيلارا", "، أول منصة ذكية للصحة والجمال في العراق"],
+    mission: [
+      ["إحنا مو بس متجر إلكتروني — إحنا ", "طريقة جديدة تهتم بنفسك", "."],
+      "إيلارا هي أول منصة للصحة والجمال بالعراق، صُممت عشان توفرلك منتجات موثوقة، أدوات قوية، وتجربة سلسة — كلها بمكان واحد.",
+      ["من العناية بالبشرة ومستحضرات التجميل إلى أجهزة العافية والمكملات، نختار كل شي بوعد واحد: ", "أصالة 100%، بدون تنازل", "."],
+      "نعرف شلون تدور على منتجات أصلية، أسعار عادلة، توصيل سريع، وخدمة زينة بمجال الصحة والجمال — عشان جذي بنينا إيلارا. كل منتج موثق. كل طلب متابَع. كل تجربة مصممة إلك.",
+    ],
+    stats: [
+      { value: "100%", label: "براندات موثقة" },
+      { value: "+1500", label: "منتج" },
+      { value: "+250", label: "براند" },
+    ],
+    diffTitle: "شنو يميّز إيلارا؟",
+    diffs: [
+      { title: "ذكية وشخصية", desc: "استشارات بالذكاء الاصطناعي، بحث ذكي، وروتين مخصص إلك" },
+      { title: "متعددة اللغات ومحلية", desc: "عربي، كردي، وإنگليزي — نحچي لغتك" },
+      { title: "المجتمع أولاً", desc: "مبنية لربط وتمكين ثقافة الصحة والجمال بالعراق" },
+      { title: "أصلي فقط", desc: "كل شي على إيلارا موثق وأصلي" },
+    ],
+    closing: "إحنا هنا نسهّل رحلة جمالك — ونخلي العناية بالنفس فرحة يومية.",
+    chooseTitle: "اختار إيلارا",
+    reasons: [
+      "لأن وقتك يهم.",
+      "لأن بشرتك تستاهل الأصلي.",
+      "لأن صحتك تبدأ من اللي تختاره — وإحنا نسهّل عليك الاختيار.",
+    ],
+    contactQ: "عندك أسئلة؟ تواصل وياانا بأي وقت.",
+    contactCTA: "تواصل وياانا — info@elara.iq",
+  },
+  ku: {
+    pageTitle: "دەربارەی ئێلارا",
+    heroTitle: ["بەخێربێیت بۆ ", "ئێلارا", "، یەکەمین پلاتفۆرمی زیرەکی تەندروستی و جوانی عێراق"],
+    mission: [
+      ["ئێمە تەنها فرۆشگای ئۆنلاین نین — ئێمە ", "ڕێگایەکی نوێین بۆ گرنگیدان بە خۆت", "."],
+      "ئێلارا یەکەمین پلاتفۆرمی تەندروستی و جوانییە لە عێراق، دروستکراوە بۆ ئەوەی بەرهەمی متمانەپێکراو، ئامرازی بەهێز، و ئەزموونێکی ئاسان پێشکەشت بکات — هەمووی لە شوێنێکدا.",
+      ["لە چاودێری پێست و جوانکاری تا ئامێری تەندروستی و تەواوکەرەکان، هەمووی بە یەک بەڵێن هەڵدەبژێرین: ", "ئەسڵی 100%، بێ گوزەشت", "."],
+      "ئێمە دەزانین چۆنە بگەڕێیت بۆ بەرهەمی ئەسڵی، نرخی دادپەروەرانە، گەیاندنی خێرا، و خزمەتگوزاریی باش — بۆیە ئێلارامان دروستکرد. هەموو بەرهەمێک پشتڕاستکراوەتەوە. هەموو داواکارییەک بەدواداچووە. هەموو ئەزموونێک بۆ تۆ دروستکراوە.",
+    ],
+    stats: [
+      { value: "100%", label: "براندی پشتڕاستکراو" },
+      { value: "+1500", label: "بەرهەم" },
+      { value: "+250", label: "براند" },
+    ],
+    diffTitle: "چی ئێلارا جیاواز دەکات؟",
+    diffs: [
+      { title: "زیرەک و کەسی", desc: "ڕاوێژکاری بە زیرەکی دەستکرد، گەڕانی زیرەک، و ڕووتینی تایبەت بە تۆ" },
+      { title: "فرەزمان و خۆجێیی", desc: "عەرەبی، کوردی، و ئینگلیزی — بە زمانی تۆ قسە دەکەین" },
+      { title: "کۆمەڵگا لە پێشدا", desc: "دروستکراوە بۆ بەستنەوە، بەهێزکردن، و گەشەپێدانی کولتووری تەندروستی و جوانی عێراق" },
+      { title: "تەنها ئەسڵی", desc: "هەموو شتێک لەسەر ئێلارا پشتڕاستکراو و ئەسڵییە" },
+    ],
+    closing: "ئێمە لێرەین بۆ ئاسانکردنی گەشتی جوانیت — و ئەوەی چاودێری خۆت بکرێتە خۆشییەکی ڕۆژانە.",
+    chooseTitle: "ئێلارا هەڵبژێرە",
+    reasons: [
+      "چونکە کاتت گرنگە.",
+      "چونکە پێستت شایستەی ئەسڵییە.",
+      "چونکە تەندروستیت لە هەڵبژاردنت دەستپێدەکات — و ئێمە هەڵبژاردن ئاسانتر دەکەین.",
+    ],
+    contactQ: "پرسیارت هەیە؟ لە هەر کاتێکدا پەیوەندیمان پێوە بکە.",
+    contactCTA: "پەیوەندیمان پێوە بکە — info@elara.iq",
+  },
+};
 
-const differentiators = [
-  {
-    icon: Sparkles,
-    title: "Smart & Personal",
-    desc: "AI consultations, smart search, and tailored routines",
-  },
-  {
-    icon: Globe,
-    title: "Multilingual & Local",
-    desc: "Arabic, Kurdish, and English — we speak your language",
-  },
-  {
-    icon: Users,
-    title: "Community-first",
-    desc: "Built to connect, empower, and glow up Iraq's health & beauty culture",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Only Original",
-    desc: "Everything on ELARA is verified and original",
-  },
-];
-
-const reasons = [
-  "Because your time matters.",
-  "Because your skin deserves the real deal.",
-  "Because your health starts with what you choose — and we make choosing easier.",
-];
+const diffIcons = [Sparkles, Globe, Users, ShieldCheck];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -48,8 +112,11 @@ const fadeUp = {
 };
 
 export default function AboutPage() {
+  const { language } = useLanguage();
+  const c = content[language];
+
   return (
-    <PageShell title="About ELARA" backTo="/profile">
+    <PageShell title={c.pageTitle} backTo="/profile">
       <div className="max-w-2xl mx-auto px-4 md:px-6 pb-12">
         {/* Hero */}
         <motion.div
@@ -58,117 +125,80 @@ export default function AboutPage() {
           transition={{ duration: 0.6 }}
           className="mt-6 rounded-3xl overflow-hidden relative bg-gradient-to-br from-primary/10 via-card to-accent/10 border border-border/50"
         >
-          <img
-            src={elaraBanner}
-            alt="ELARA delivery"
-            className="w-full h-48 md:h-64 object-cover object-center"
-          />
+          <img src={elaraBanner} alt="ELARA delivery" className="w-full h-48 md:h-64 object-cover object-center" />
           <div className="p-6 md:p-8">
             <h1 className="text-xl md:text-2xl font-display font-bold text-foreground leading-snug">
-              Welcome to <span className="text-primary">ELARA</span>, Iraq's first smart health & beauty platform
+              {c.heroTitle[0]}<span className="text-primary">{c.heroTitle[1]}</span>{c.heroTitle[2]}
             </h1>
           </div>
         </motion.div>
 
-        {/* Mission text */}
+        {/* Mission */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.5 }}
           className="mt-8 space-y-4 text-sm md:text-base text-muted-foreground leading-relaxed"
         >
-          <p>
-            We're not just an online store — we're a <span className="text-foreground font-medium">new way to care for yourself</span>.
-          </p>
-          <p>
-            ELARA is Iraq's first health & beauty platform built to bring you trusted products, powerful tools, and a seamless experience — all in one place.
-          </p>
-          <p>
-            From skincare and cosmetics to wellness devices and supplements, we handpick everything with one promise:{" "}
-            <span className="text-primary font-semibold">100% authenticity, zero compromise</span>.
-          </p>
-          <p>
-            We know what it's like to search for original products, fair prices, fast delivery, and good service in healthcare and beauty — so we built ELARA to deliver all that. Every product is verified. Every order is tracked. Every experience is made for you.
-          </p>
+          {c.mission.map((para, i) =>
+            Array.isArray(para) ? (
+              <p key={i}>
+                {para[0]}<span className={i === 2 ? "text-primary font-semibold" : "text-foreground font-medium"}>{para[1]}</span>{para[2]}
+              </p>
+            ) : (
+              <p key={i}>{para}</p>
+            )
+          )}
         </motion.div>
 
         {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.5 }}
-          className="mt-10 grid grid-cols-3 gap-3"
-        >
-          {stats.map((s) => (
-            <div
-              key={s.label}
-              className="text-center py-5 rounded-2xl bg-card border border-border shadow-premium"
-            >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.5 }} className="mt-10 grid grid-cols-3 gap-3">
+          {c.stats.map((s) => (
+            <div key={s.label} className="text-center py-5 rounded-2xl bg-card border border-border shadow-premium">
               <p className="text-2xl md:text-3xl font-display font-black text-primary">{s.value}</p>
               <p className="text-[11px] md:text-xs text-muted-foreground mt-1 font-medium">{s.label}</p>
             </div>
           ))}
         </motion.div>
 
-        {/* What makes ELARA different */}
+        {/* Differentiators */}
         <div className="mt-12">
-          <motion.h2
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-lg md:text-xl font-display font-bold text-foreground mb-5"
-          >
-            What makes ELARA different?
+          <motion.h2 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-lg md:text-xl font-display font-bold text-foreground mb-5">
+            {c.diffTitle}
           </motion.h2>
           <div className="space-y-3">
-            {differentiators.map((d, i) => (
-              <motion.div
-                key={d.title}
-                custom={i}
-                initial="hidden"
-                animate="visible"
-                variants={fadeUp}
-                className="flex items-start gap-4 p-4 rounded-2xl bg-card border border-border/50 shadow-premium"
-              >
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <d.icon className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-foreground">{d.title}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{d.desc}</p>
-                </div>
-              </motion.div>
-            ))}
+            {c.diffs.map((d, i) => {
+              const Icon = diffIcons[i];
+              return (
+                <motion.div key={i} custom={i} initial="hidden" animate="visible" variants={fadeUp} className="flex items-start gap-4 p-4 rounded-2xl bg-card border border-border/50 shadow-premium">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">{d.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{d.desc}</p>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Closing statement */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-          className="mt-12 text-center"
-        >
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            We're here to simplify your beauty journey — and make self-care a daily joy.
-          </p>
+        {/* Closing */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.5 }} className="mt-12 text-center">
+          <p className="text-sm text-muted-foreground leading-relaxed">{c.closing}</p>
         </motion.div>
 
         {/* Choose ELARA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
-          className="mt-10 rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 border border-primary/20 p-6 md:p-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.5 }} className="mt-10 rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 border border-primary/20 p-6 md:p-8">
           <h2 className="text-lg md:text-xl font-display font-bold text-foreground mb-4 flex items-center gap-2">
             <Heart className="w-5 h-5 text-primary" />
-            Choose ELARA
+            {c.chooseTitle}
           </h2>
           <ul className="space-y-3">
-            {reasons.map((r, i) => (
+            {c.reasons.map((r, i) => (
               <li key={i} className="flex items-start gap-3">
-                <ArrowRight className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                <ArrowRight className="w-4 h-4 text-primary mt-0.5 flex-shrink-0 rtl:rotate-180" />
                 <span className="text-sm text-foreground leading-relaxed">{r}</span>
               </li>
             ))}
@@ -176,14 +206,9 @@ export default function AboutPage() {
         </motion.div>
 
         {/* Contact */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-          className="mt-10 text-center"
-        >
-          <p className="text-xs text-muted-foreground">Have questions? Reach out anytime.</p>
-          <p className="text-xs text-primary font-semibold mt-1">Contact us — info@elara.iq</p>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="mt-10 text-center">
+          <p className="text-xs text-muted-foreground">{c.contactQ}</p>
+          <p className="text-xs text-primary font-semibold mt-1">{c.contactCTA}</p>
         </motion.div>
       </div>
     </PageShell>
