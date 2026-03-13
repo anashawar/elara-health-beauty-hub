@@ -110,6 +110,7 @@ const AddressesPage = () => {
         street: data.street || null,
         building: data.building || null,
         floor: data.floor || null,
+        apartment: data.apartment || null,
         phone: data.phone || null,
         latitude: data.latitude,
         longitude: data.longitude,
