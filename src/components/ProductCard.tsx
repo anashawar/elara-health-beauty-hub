@@ -82,14 +82,14 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
         </div>
       </Link>
       <div className="p-3">
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{product.brand}</p>
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{product.brand}</p>
         <Link to={`/product/${product.id}`}>
-          <h3 className="text-sm font-bold text-foreground mt-1 line-clamp-2 leading-snug tracking-tight">{product.title}</h3>
+          <h3 className="text-[15px] font-bold text-foreground mt-1 line-clamp-2 leading-snug tracking-tight">{product.title}</h3>
         </Link>
         <div className="flex items-center gap-1.5 mt-2">
-          <span className="text-sm font-bold text-foreground">{formatPrice(product.price)}</span>
+          <span className="text-base font-bold text-foreground">{formatPrice(product.price)}</span>
           {product.originalPrice && (
-            <span className="text-[10px] text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
+            <span className="text-[11px] text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
           )}
         </div>
         <button

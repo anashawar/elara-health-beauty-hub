@@ -122,15 +122,15 @@ const HeroBanner = () => {
             <div className={`absolute inset-0 bg-gradient-to-r rtl:bg-gradient-to-l ${banner.overlay}`} />
 
             <div className="relative h-full flex flex-col justify-center px-6 py-5 z-10 max-w-[70%]">
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider text-white w-fit mb-2">
-                <banner.tagIcon className="w-3 h-3" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-[11px] font-bold uppercase tracking-wider text-white w-fit mb-2.5">
+                <banner.tagIcon className="w-3.5 h-3.5" />
                 {banner.tag}
               </span>
 
-              <h2 className="text-2xl font-display font-bold text-white leading-tight">
+              <h2 className="text-[26px] font-display font-bold text-white leading-tight">
                 {banner.title}
               </h2>
-              <p className="text-xs text-white/80 mt-1 leading-relaxed">
+              <p className="text-sm text-white/80 mt-1.5 leading-relaxed">
                 {banner.subtitle}
               </p>
 
