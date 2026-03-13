@@ -86,9 +86,6 @@ serve(async (req) => {
       );
     }
 
-    // Mark OTP as verified
-    await supabase.from("otp_verifications").update({ verified: true }).eq("id", otpRecord.id);
-
     const existingUsers = await listAllAuthUsers(supabase);
     const userByPhone = existingUsers.find((u: any) => isSamePhone(u.phone, normalizedPhone));
     const userByEmail = existingUsers.find((u: any) => u.email?.toLowerCase() === userEmail);
@@ -141,7 +138,24 @@ serve(async (req) => {
         password: tempPassword,
         user_metadata: { full_name: full_name || "", phone: normalizedPhone },
       });
-      if (createError) throw createError;
+
+      if (createError) {
+        if (createError.code === "phone_exists") {
+          return new Response(
+            JSON.stringify({ error: "This phone number is already linked to another account" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        if (createError.code === "email_exists") {
+          return new Response(
+            JSON.stringify({ error: "This email is already in use" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        throw createError;
+      }
 
       // Create/update profile
       const { error: profileError } = await supabase.from("profiles").upsert(
@@ -168,6 +182,9 @@ serve(async (req) => {
       if (sessionError) throw sessionError;
       session = sessionData.session;
     }
+
+    // Mark OTP as verified only after successful auth flow
+    await supabase.from("otp_verifications").update({ verified: true }).eq("id", otpRecord.id);
 
     // Clean up old OTPs
     await supabase.from("otp_verifications").delete().eq("phone", normalizedPhone);
