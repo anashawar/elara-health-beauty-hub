@@ -91,6 +91,22 @@ export default function AdminProducts() {
     },
   });
 
+  // Fetch costs for margin display
+  const { data: allCosts = [] } = useQuery({
+    queryKey: ["admin-product-costs-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("product_costs").select("product_id, cost");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const costMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    allCosts.forEach((c: any) => { map[c.product_id] = Number(c.cost); });
+    return map;
+  }, [allCosts]);
+
   const uploadImage = async (file: File, productId: string, sortOrder: number): Promise<string> => {
     const ext = file.name.split(".").pop();
     const path = `${productId}/${Date.now()}-${sortOrder}.${ext}`;
@@ -610,14 +626,18 @@ export default function AdminProducts() {
               <TableRow>
                 <TableHead>Product</TableHead>
                 <TableHead className="hidden md:table-cell">Category</TableHead>
-                <TableHead className="hidden md:table-cell">Subcategory</TableHead>
                 <TableHead>Price</TableHead>
+                <TableHead className="hidden md:table-cell">Cost</TableHead>
+                <TableHead className="hidden md:table-cell">Margin</TableHead>
                 <TableHead className="hidden md:table-cell">Flags</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((p: any) => (
+              {filtered.map((p: any) => {
+                const cost = costMap[p.id];
+                const margin = cost !== undefined ? ((p.price - cost) / p.price * 100) : null;
+                return (
                 <TableRow key={p.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -633,10 +653,18 @@ export default function AdminProducts() {
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{p.categories?.name || "—"}</TableCell>
-                  <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{p.subcategories?.name || "—"}</TableCell>
                   <TableCell className="text-sm font-medium">{formatPrice(p.price)}</TableCell>
+                  <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{cost !== undefined ? formatPrice(cost) : "—"}</TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {margin !== null ? (
+                      <span className={`text-xs font-bold ${margin >= 30 ? "text-emerald-600" : margin >= 15 ? "text-amber-600" : "text-red-600"}`}>
+                        {margin.toFixed(1)}%
+                      </span>
+                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell className="hidden md:table-cell">
                     <div className="flex gap-1">
+                      {!p.in_stock && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">OOS</span>}
                       {p.is_new && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">New</span>}
                       {p.is_trending && <span className="text-[10px] bg-rose/10 text-rose px-1.5 py-0.5 rounded-full">Trend</span>}
                       {p.is_pick && <span className="text-[10px] bg-gold/10 text-gold px-1.5 py-0.5 rounded-full">Pick</span>}
@@ -651,9 +679,9 @@ export default function AdminProducts() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              );})}
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
