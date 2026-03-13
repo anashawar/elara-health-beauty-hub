@@ -192,9 +192,7 @@ CRITICAL:
           if (enriched.category_id) updatePayload.category_id = enriched.category_id;
           if (enriched.subcategory_id) updatePayload.subcategory_id = enriched.subcategory_id;
 
-          if (cost && sellingPrice > cost) {
-            updatePayload.original_price = Math.round(sellingPrice * 1.15 / 250) * 250;
-          }
+          // Don't auto-set original_price; it's only for admin-set discounted pricing
 
           const { error: updateErr } = await supabase
             .from("products")

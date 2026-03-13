@@ -47,7 +47,6 @@ serve(async (req) => {
           title: p.name.trim(),
           slug: slug || `product-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
           price,
-          original_price: Math.round((price * 1.15) / 250) * 250,
           in_stock: true,
         };
       });
