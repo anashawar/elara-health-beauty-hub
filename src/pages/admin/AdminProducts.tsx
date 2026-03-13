@@ -151,6 +151,7 @@ export default function AdminProducts() {
         skin_type: f.skin_type || null,
         country_of_origin: f.country_of_origin || null,
         condition: f.condition || null,
+        form: f.product_form || null,
       };
 
       let productId = f.id;
