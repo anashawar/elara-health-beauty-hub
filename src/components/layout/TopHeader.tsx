@@ -81,7 +81,17 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
     enabled: !!user,
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("avatar_url").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const userCity = defaultAddress?.city || defaultAddress?.area || "";
+  const avatarUrl = (profile as any)?.avatar_url;
 
   return (
     <header className="sticky top-0 z-40 glass-heavy border-b border-border/40 md:hidden">
@@ -92,17 +102,26 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
             <img src={elaraLogo} alt="ELARA" className="h-7" />
           </Link>
 
-          <div className="flex flex-col items-end rtl:items-start">
+          <div className="flex items-center gap-2">
             {user ? (
               <>
-                <span className="text-xs font-medium text-foreground">
-                  {greeting}
-                </span>
-                <Link to="/addresses" className="flex items-center gap-1 mt-0.5">
-                  <MapPin className="w-3 h-3 text-primary" />
-                  <span className="text-[10px] text-muted-foreground font-medium">
-                    {userCity ? `${userCity}, ${t("common.iraq")}` : t("common.setLocation") || "Set location"}
+                <div className="flex flex-col items-end rtl:items-start">
+                  <span className="text-xs font-medium text-foreground">
+                    {greeting}
                   </span>
+                  <Link to="/addresses" className="flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-3 h-3 text-primary" />
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      {userCity ? `${userCity}, ${t("common.iraq")}` : t("common.setLocation") || "Set location"}
+                    </span>
+                  </Link>
+                </div>
+                <Link to="/profile" className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-sm">👤</span>
+                  )}
                 </Link>
               </>
             ) : (

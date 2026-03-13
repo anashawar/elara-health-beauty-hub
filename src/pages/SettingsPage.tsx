@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Phone, Save, LogOut, Globe, Calendar } from "lucide-react";
+import { ArrowLeft, User, Phone, Save, LogOut, Globe, Calendar, Camera, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +23,8 @@ const SettingsPage = () => {
   const [gender, setGender] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", user?.id],
@@ -56,6 +58,43 @@ const SettingsPage = () => {
   });
 
   const handleSignOut = async () => { await signOut(); toast(t("profile.signedOut")); navigate("/home"); };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith("image/")) { toast("Please select an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast("Image must be under 5MB"); return; }
+
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const filePath = `${user.id}/avatar.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true, contentType: file.type });
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      const avatarUrl = `${publicUrl}?t=${Date.now()}`;
+
+      // Update profile with avatar URL
+      if (profile) {
+        await supabase.from("profiles").update({ avatar_url: avatarUrl } as any).eq("id", profile.id);
+      } else {
+        await supabase.from("profiles").insert({ user_id: user.id, avatar_url: avatarUrl } as any);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast(t("settings.photoUpdated") || "Profile photo updated!");
+    } catch (err: any) {
+      toast(err.message);
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const languages: { code: Language; label: string; native: string }[] = [
     { code: "en", label: t("settings.english"), native: "English" },
@@ -132,6 +171,34 @@ const SettingsPage = () => {
           ) : (
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="px-4 md:px-6 mt-4 space-y-4">
               <LanguageSelector />
+
+              {/* Avatar Upload */}
+              <div className="bg-card rounded-2xl p-4 shadow-premium flex flex-col items-center gap-3">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent overflow-hidden flex items-center justify-center">
+                    {(profile as any)?.avatar_url ? (
+                      <img src={(profile as any).avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-3xl">👤</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:opacity-90 transition-opacity"
+                  >
+                    {uploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">{t("settings.changePhoto") || "Tap to change photo"}</p>
+              </div>
 
               <div className="bg-card rounded-2xl p-4 shadow-premium space-y-4">
                 <h3 className="text-sm font-bold text-foreground">{t("settings.profileInfo")}</h3>
