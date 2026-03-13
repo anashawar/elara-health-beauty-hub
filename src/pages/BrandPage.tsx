@@ -20,6 +20,18 @@ const BrandPage = () => {
   // Get unique countries from brand products
   const countries = [...new Set(brandProducts.map(p => p.country_of_origin).filter(Boolean))];
 
+  const countryFlag = (country: string): string => {
+    const map: Record<string, string> = {
+      "France": "🇫🇷", "USA": "🇺🇸", "United States": "🇺🇸", "South Korea": "🇰🇷", "Korea": "🇰🇷",
+      "Germany": "🇩🇪", "Japan": "🇯🇵", "UK": "🇬🇧", "United Kingdom": "🇬🇧", "Italy": "🇮🇹",
+      "Spain": "🇪🇸", "Canada": "🇨🇦", "Australia": "🇦🇺", "Switzerland": "🇨🇭", "Sweden": "🇸🇪",
+      "Turkey": "🇹🇷", "India": "🇮🇳", "Iraq": "🇮🇶", "Jordan": "🇯🇴", "UAE": "🇦🇪",
+      "Lebanon": "🇱🇧", "Morocco": "🇲🇦", "Egypt": "🇪🇬", "China": "🇨🇳", "Brazil": "🇧🇷",
+      "Netherlands": "🇳🇱", "Belgium": "🇧🇪", "Poland": "🇵🇱", "Ireland": "🇮🇪",
+    };
+    return map[country] || "🌍";
+  };
+
   const getBrandName = (b: any) => {
     if (language === "ar" && b.name_ar) return b.name_ar;
     if (language === "ku" && b.name_ku) return b.name_ku;
