@@ -23,7 +23,7 @@ const Index = () => {
   const newArrivals = products.filter(p => p.isNew);
 
   return (
-    <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
+    <div className="min-h-screen bg-background pb-24 app-container">
       <TopHeader onSearchClick={() => setSearchOpen(true)} />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
