@@ -372,9 +372,11 @@ export default function AdminProducts() {
 
     // Try to detect if this is a name+cost format (like user's Excel)
     const firstRow = rows[0];
-    const hasNameCostFormat = firstRow && (firstRow["اسم_المادة"] || firstRow["المذخر"] || (!firstRow["price"] && (firstRow["cost"] || firstRow["name"])));
+    const hasArabicHeaders = firstRow && (firstRow["اسم_المادة"] || firstRow["المذخر"]);
+    const hasNameButNoTitle = firstRow && !firstRow["title"] && (firstRow["name"] || firstRow["product_name"] || firstRow["cost"]);
+    const hasNameCostFormat = hasArabicHeaders || hasNameButNoTitle;
 
-    if (hasNameCostFormat || (!firstRow?.price && !firstRow?.title)) {
+    if (hasNameCostFormat) {
       // Name + Cost format: use bulk-import edge function
       const products = rows
         .map(normalizeRow)
