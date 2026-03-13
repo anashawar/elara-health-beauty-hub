@@ -105,21 +105,12 @@ const ProductPage = () => {
           </button>
           <div className="flex items-center gap-0.5 flex-shrink-0">
             <button
-              onClick={async () => {
-                const shareData = {
-                  title: product.title,
-                  text: `Check out ${product.title} by ${product.brand} on ELARA!`,
-                  url: window.location.href,
-                };
-                try {
-                  if (navigator.share) {
-                    await navigator.share(shareData);
-                  } else {
-                    await navigator.clipboard.writeText(window.location.href);
-                    toast(t("product.linkCopied"));
-                  }
-                } catch (e) {}
-              }}
+              onClick={() => handleNativeShare(
+                product.title,
+                `Check out ${product.title} by ${product.brand} on ELARA!`,
+                getShareUrl(product.id),
+                t("product.linkCopied")
+              )}
               className="p-2 rounded-xl hover:bg-secondary transition-colors"
             >
               <Share2 className="w-5 h-5 text-foreground" />
