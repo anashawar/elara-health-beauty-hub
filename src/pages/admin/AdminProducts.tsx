@@ -292,6 +292,12 @@ export default function AdminProducts() {
     p.title.toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginatedProducts = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Reset to page 1 when search changes
+  const handleSearch = (val: string) => { setSearch(val); setPage(1); };
+
   const openEdit = async (p: any) => {
     // Fetch cost from separate admin-only table
     let cost: number | null = null;
