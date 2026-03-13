@@ -37,6 +37,7 @@ interface ProductForm {
   skin_type: string;
   country_of_origin: string;
   condition: string;
+  product_form: string;
 }
 
 const emptyForm: ProductForm = {
