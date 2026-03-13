@@ -356,13 +356,36 @@ export default function AdminProducts() {
 
   /** Map Arabic/common Excel headers to our keys */
   const normalizeRow = (row: Record<string, string>): { name: string; cost: string; price?: string } | null => {
-    // Try common header names (Arabic + English)
-    const name = row["اسم_المادة"] || row["اسم_المادة"] || row["title"] || row["name"] || row["product_name"] || row["اسم"] || "";
-    const costRaw = row["المذخر"] || row["cost"] || row["السعر"] || "";
-    const priceRaw = row["price"] || row["selling_price"] || row["سعر_البيع"] || row["سعر"] || "";
+    const entries = Object.entries(row).map(([k, v]) => [String(k).trim().toLowerCase(), String(v ?? "").trim()] as const);
+
+    const pick = (exact: string[], contains: string[] = []) => {
+      const exactHit = entries.find(([k]) => exact.includes(k));
+      if (exactHit) return exactHit[1];
+
+      const containsHit = entries.find(([k]) => contains.some((token) => k.includes(token)));
+      return containsHit?.[1] ?? "";
+    };
+
+    let name = pick(["اسم_المادة", "title", "name", "product_name", "اسم"], ["title", "name", "product", "اسم", "مادة"]);
+    let costRaw = pick(["المذخر", "cost", "السعر"], ["cost", "مذخر", "wholesale", "buy", "سعر"]);
+    let priceRaw = pick(["price", "selling_price", "سعر_البيع", "سعر"], ["price", "selling", "sale", "بيع"]);
+
+    const nonEmptyValues = entries.map(([, v]) => v).filter(Boolean);
+    if (!name && nonEmptyValues.length > 0) name = nonEmptyValues[0];
+    if (!costRaw && nonEmptyValues.length > 1) costRaw = nonEmptyValues[1];
+    if (!priceRaw && nonEmptyValues.length > 2) priceRaw = nonEmptyValues[2];
+
     if (!name.trim()) return null;
-    const result: { name: string; cost: string; price?: string } = { name: name.trim(), cost: costRaw.toString().replace(/,/g, "").trim() };
-    if (priceRaw.toString().trim()) result.price = priceRaw.toString().replace(/,/g, "").trim();
+
+    const result: { name: string; cost: string; price?: string } = {
+      name: name.trim(),
+      cost: costRaw.toString().replace(/,/g, "").trim(),
+    };
+
+    if (priceRaw.toString().trim()) {
+      result.price = priceRaw.toString().replace(/,/g, "").trim();
+    }
+
     return result;
   };
 
