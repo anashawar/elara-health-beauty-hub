@@ -388,7 +388,7 @@ const ElaraChatPage = () => {
       </header>
 
       {/* Chat Area */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 pb-36 space-y-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4" style={{ paddingBottom: 'calc(120px + env(safe-area-inset-bottom, 0px))' }}>
         {messages.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
