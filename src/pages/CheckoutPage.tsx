@@ -266,6 +266,7 @@ const CheckoutPage = () => {
           {t("checkout.placeOrder")} — {formatPrice(cartTotal + deliveryFee)}
         </button>
       </form>
+      </div>
 
       <BottomNav />
     </div>
