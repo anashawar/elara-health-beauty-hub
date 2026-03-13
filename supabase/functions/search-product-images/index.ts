@@ -147,9 +147,9 @@ serve(async (req) => {
       const titleWords = product.title.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
       const fullName = `${brandName} ${product.title}`.trim();
 
-      // Multiple search strategies — from most specific to broader
+      // Multiple search strategies — first query targets white background product shots
       const searchQueries = [
-        `"${fullName}" product photo`,
+        `"${fullName}" product white background`,
         `${fullName} site:lookfantastic.com OR site:notino.com OR site:caretobeauty.com OR site:iherb.com`,
         `${fullName} site:amazon.com OR site:sephora.com OR site:beautybay.com OR site:boots.com`,
       ];
