@@ -7,6 +7,8 @@ import { formatPrice } from "@/hooks/useProducts";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/layout/BottomNav";
+import DesktopHeader from "@/components/layout/DesktopHeader";
+import SearchOverlay from "@/components/SearchOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 
@@ -19,6 +21,7 @@ const CheckoutPage = () => {
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [searchOpen, setSearchOpen] = useState(false);
   const deliveryFee = cartTotal >= 40000 ? 0 : 5000;
 
   const { data: addresses = [], isLoading: addressesLoading } = useQuery({
@@ -101,16 +104,28 @@ const CheckoutPage = () => {
     { value: "qicard", label: t("checkout.qicard"), desc: t("checkout.qicardDesc"), icon: "💳" },
   ];
 
+  // searchOpen moved to top with other useState hooks
+
   return (
-    <div className="min-h-screen bg-background pb-24 app-container">
-      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
+    <div className="min-h-screen bg-background pb-24 md:pb-8">
+      <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
+      <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border md:hidden">
         <div className="flex items-center gap-3 px-4 py-3">
           <Link to="/cart" className="p-1"><ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" /></Link>
           <h1 className="text-lg font-display font-bold text-foreground">{t("checkout.title")}</h1>
         </div>
       </header>
 
-      <form onSubmit={handleSubmit} className="px-4 mt-4 space-y-4">
+      <div className="app-container">
+        <div className="hidden md:flex items-center gap-2 px-6 pt-6 pb-2">
+          <Link to="/cart" className="text-sm text-muted-foreground hover:text-foreground">← Cart</Link>
+          <span className="text-sm text-muted-foreground">/</span>
+          <h1 className="text-lg font-display font-bold text-foreground">{t("checkout.title")}</h1>
+        </div>
+
+      <form onSubmit={handleSubmit} className="px-4 md:px-6 mt-4 space-y-4 md:max-w-2xl">
         {/* Delivery Address */}
         <div className="bg-card rounded-2xl p-4 shadow-premium">
           <div className="flex items-center justify-between mb-3">
@@ -252,6 +267,7 @@ const CheckoutPage = () => {
           {t("checkout.placeOrder")} — {formatPrice(cartTotal + deliveryFee)}
         </button>
       </form>
+      </div>
 
       <BottomNav />
     </div>
