@@ -41,7 +41,7 @@ const HeroBanner = () => {
         .from("offers")
         .select("*")
         .eq("is_active", true)
-        .eq("banner_style", "hero")
+        .eq("banner_style" as any, "hero")
         .order("sort_order");
       if (error) throw error;
       const now = new Date();
@@ -52,6 +52,17 @@ const HeroBanner = () => {
       });
     },
   });
+
+  // Realtime sync for hero offers
+  useEffect(() => {
+    const channel = supabase
+      .channel('hero-offers-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, () => {
+        qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
 
   const staticBanners: HeroBannerItem[] = [
     {

@@ -26,7 +26,7 @@ export default function OffersBanner() {
         .from("offers")
         .select("*")
         .eq("is_active", true)
-        .eq("banner_style", "gallery")
+        .eq("banner_style" as any, "gallery")
         .order("sort_order");
       if (error) throw error;
       const now = new Date();
