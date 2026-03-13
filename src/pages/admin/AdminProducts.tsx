@@ -1234,14 +1234,22 @@ export default function AdminProducts() {
                 const cost = costMap[p.id];
                 const margin = cost !== undefined && cost > 0 ? ((p.price - cost) / cost * 100) : null;
                 return (
-                <TableRow key={p.id} className={selectMode && selectedForEnrich.has(p.id) ? "bg-primary/5" : ""}>
+                <TableRow key={p.id} className={
+                  (selectMode && selectedForEnrich.has(p.id)) || (multiSelect && selectedProducts.has(p.id)) ? "bg-primary/5" : ""
+                }>
                   {selectMode && (
                     <TableCell className="w-10">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedForEnrich.has(p.id)}
-                        onChange={() => toggleSelectProduct(p.id)}
-                        className="rounded border-border"
+                        onCheckedChange={() => toggleSelectProduct(p.id)}
+                      />
+                    </TableCell>
+                  )}
+                  {multiSelect && !selectMode && (
+                    <TableCell className="w-10">
+                      <Checkbox
+                        checked={selectedProducts.has(p.id)}
+                        onCheckedChange={() => toggleMultiSelect(p.id)}
                       />
                     </TableCell>
                   )}
