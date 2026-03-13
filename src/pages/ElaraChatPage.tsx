@@ -69,7 +69,7 @@ const ElaraChatPage = () => {
   });
 
   useEffect(() => {
-    if (!conversationId || !user) return;
+    if (!conversationId || !user || isNewConversation) return;
     const loadMessages = async () => {
       const { data } = await supabase
         .from("chat_messages")
@@ -79,7 +79,7 @@ const ElaraChatPage = () => {
       if (data) setMessages(data as Msg[]);
     };
     loadMessages();
-  }, [conversationId, user]);
+  }, [conversationId, user, isNewConversation]);
 
   useEffect(() => {
     if (scrollRef.current) {
