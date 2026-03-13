@@ -103,7 +103,7 @@ export default function TodayOffersSlider() {
             className="grid grid-cols-3 gap-2.5"
           >
             {currentPair.map((offer, i) => (
-              <OfferCard key={offer.id} offer={offer} index={current * 2 + i} />
+              <OfferCard key={offer.id} offer={offer} index={current * 3 + i} />
             ))}
           </motion.div>
         </AnimatePresence>
