@@ -55,6 +55,7 @@ export const en = {
     newArrivals: "New Arrivals",
     freshAdditions: "Fresh additions to our collection",
     featuredBrands: "Featured Brands",
+    buyNow: "Buy now",
     shopByConcern: "Shop by Concern",
     dealsForYou: "Deals for you",
     dealsText: "Get 15% OFF on your first order on ELARA!",
