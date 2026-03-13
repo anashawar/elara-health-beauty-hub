@@ -7,7 +7,7 @@ import bannerOriginal from "@/assets/banner-original.jpg";
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useApp } from "@/context/AppContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface HeroBannerItem {
