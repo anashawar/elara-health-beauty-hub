@@ -81,7 +81,17 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
     enabled: !!user,
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("avatar_url").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const userCity = defaultAddress?.city || defaultAddress?.area || "";
+  const avatarUrl = (profile as any)?.avatar_url;
 
   return (
     <header className="sticky top-0 z-40 glass-heavy border-b border-border/40 md:hidden">
