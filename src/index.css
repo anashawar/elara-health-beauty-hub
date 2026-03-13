@@ -6,23 +6,23 @@
 
 @layer base {
   :root {
-    --background: 30 25% 98%;
-    --foreground: 20 10% 12%;
+    --background: 30 20% 97%;
+    --foreground: 20 10% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 20 10% 12%;
+    --card-foreground: 20 10% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 20 10% 12%;
+    --popover-foreground: 20 10% 10%;
 
     --primary: 268 84% 58%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 268 40% 96%;
-    --secondary-foreground: 268 50% 30%;
+    --secondary: 268 30% 95%;
+    --secondary-foreground: 268 50% 28%;
 
-    --muted: 268 10% 94%;
-    --muted-foreground: 20 8% 50%;
+    --muted: 268 8% 93%;
+    --muted-foreground: 20 6% 46%;
 
     --accent: 352 42% 93%;
     --accent-foreground: 352 42% 30%;
@@ -30,11 +30,11 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 268 15% 90%;
-    --input: 268 15% 90%;
+    --border: 268 12% 91%;
+    --input: 268 12% 91%;
     --ring: 268 84% 58%;
 
-    --radius: 0.75rem;
+    --radius: 0.875rem;
 
     --gold: 38 70% 55%;
     --gold-foreground: 0 0% 100%;
@@ -44,6 +44,11 @@
     --blush: 352 30% 96%;
     --sage: 150 15% 55%;
     --sage-light: 150 20% 94%;
+
+    /* iOS Glass tokens */
+    --glass: 0 0% 100% / 0.72;
+    --glass-border: 0 0% 100% / 0.5;
+    --glass-heavy: 0 0% 100% / 0.85;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -62,9 +67,12 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   h1, h2, h3 {
     font-family: 'DM Sans', sans-serif;
+    letter-spacing: -0.01em;
   }
 }
 
@@ -72,11 +80,59 @@
   .font-display {
     font-family: 'DM Sans', sans-serif;
   }
+
+  /* iOS-grade shadows */
   .shadow-premium {
-    box-shadow: 0 2px 16px -2px hsl(20 10% 12% / 0.06), 0 1px 4px -1px hsl(20 10% 12% / 0.04);
+    box-shadow: 
+      0 1px 3px hsl(20 10% 12% / 0.04),
+      0 4px 12px -2px hsl(20 10% 12% / 0.06);
   }
   .shadow-premium-lg {
-    box-shadow: 0 8px 30px -4px hsl(20 10% 12% / 0.08), 0 2px 8px -2px hsl(20 10% 12% / 0.04);
+    box-shadow: 
+      0 2px 6px hsl(20 10% 12% / 0.04),
+      0 8px 24px -4px hsl(20 10% 12% / 0.08),
+      0 16px 40px -8px hsl(268 84% 58% / 0.06);
+  }
+  .shadow-glass {
+    box-shadow: 
+      0 1px 2px hsl(20 10% 12% / 0.03),
+      0 4px 16px -2px hsl(20 10% 12% / 0.05),
+      inset 0 0.5px 0 0 hsl(0 0% 100% / 0.6);
+  }
+  .shadow-float {
+    box-shadow: 
+      0 4px 12px -1px hsl(268 84% 58% / 0.12),
+      0 12px 28px -4px hsl(20 10% 12% / 0.08);
+  }
+
+  /* Glass effects */
+  .glass {
+    background: hsl(var(--glass));
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+  }
+  .glass-heavy {
+    background: hsl(var(--glass-heavy));
+    backdrop-filter: saturate(180%) blur(24px);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+  }
+  .glass-subtle {
+    background: hsl(0 0% 100% / 0.55);
+    backdrop-filter: saturate(150%) blur(16px);
+    -webkit-backdrop-filter: saturate(150%) blur(16px);
+  }
+  .glass-dark {
+    background: hsl(20 10% 10% / 0.55);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+  }
+
+  /* Gradient mesh for hero sections */
+  .gradient-mesh {
+    background: 
+      radial-gradient(at 20% 80%, hsl(268 84% 58% / 0.15) 0%, transparent 50%),
+      radial-gradient(at 80% 20%, hsl(352 42% 55% / 0.1) 0%, transparent 50%),
+      radial-gradient(at 50% 50%, hsl(38 70% 55% / 0.08) 0%, transparent 60%);
   }
 }
 
