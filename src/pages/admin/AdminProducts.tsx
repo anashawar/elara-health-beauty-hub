@@ -185,8 +185,8 @@ export default function AdminProducts() {
         }
       }
 
-      // Auto-translate in background
-      if (productId) {
+      // Auto-translate only for NEW products (not updates)
+      if (productId && !f.id) {
         try {
           setTranslating(true);
           const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate-product`, {
@@ -573,7 +573,7 @@ export default function AdminProducts() {
     for (let i = 0; i < validItems.length; i++) {
       const item = validItems[i];
       const cost = parseFloat(item.cost);
-      const price = Math.round(cost * 1.35); // Temporary price, AI will set final
+      const price = Math.round(cost * 1.35 / 250) * 250; // Round to nearest 250 IQD
 
       setEnrichProgress({ done: i, total: validItems.length, current: `Creating: ${item.name}` });
 
@@ -1031,7 +1031,7 @@ export default function AdminProducts() {
             <TableBody>
               {filtered.map((p: any) => {
                 const cost = costMap[p.id];
-                const margin = cost !== undefined ? ((p.price - cost) / p.price * 100) : null;
+                const margin = cost !== undefined && cost > 0 ? ((p.price - cost) / cost * 100) : null;
                 return (
                 <TableRow key={p.id} className={selectMode && selectedForEnrich.has(p.id) ? "bg-primary/5" : ""}>
                   {selectMode && (

@@ -57,7 +57,9 @@ serve(async (req) => {
       const batch = products!.slice(i, i + 5);
       const promises = batch.map(async (product: any) => {
         const cost = costMap[product.id];
-        const sellingPrice = cost ? Math.round(cost * (1 + markup_percent / 100)) : product.price;
+        // Round to nearest 250 IQD
+        const rawPrice = cost ? cost * (1 + markup_percent / 100) : product.price;
+        const sellingPrice = Math.round(rawPrice / 250) * 250;
 
         const prompt = `You are a product data specialist for a health & beauty e-commerce store (ELARA) in Iraq. 
 Given this product name: "${product.title}"
@@ -185,7 +187,7 @@ CRITICAL:
           if (enriched.subcategory_id) updatePayload.subcategory_id = enriched.subcategory_id;
 
           if (cost && sellingPrice > cost) {
-            updatePayload.original_price = Math.round(sellingPrice * 1.15);
+            updatePayload.original_price = Math.round(sellingPrice * 1.15 / 250) * 250;
           }
 
           const { error: updateErr } = await supabase
