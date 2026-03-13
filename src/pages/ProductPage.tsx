@@ -15,6 +15,25 @@ import BottomNav from "@/components/layout/BottomNav";
 import ReviewSection from "@/components/product/ReviewSection";
 import { useLanguage } from "@/i18n/LanguageContext";
 
+const PUBLISHED_URL = "https://elara-health-beauty-hub.lovable.app";
+
+const getShareUrl = (productId: string) => `${PUBLISHED_URL}/product/${productId}`;
+
+const handleNativeShare = async (title: string, text: string, url: string, fallbackToast: string) => {
+  try {
+    if (Capacitor.isNativePlatform()) {
+      await Share.share({ title, text, url, dialogTitle: title });
+    } else if (navigator.share) {
+      await navigator.share({ title, text, url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast(fallbackToast);
+    }
+  } catch (e) {
+    // User cancelled share dialog – ignore
+  }
+};
+
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const { t } = useLanguage();
