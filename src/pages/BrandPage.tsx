@@ -61,8 +61,8 @@ const BrandPage = () => {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
         <div className="relative p-6 flex items-center gap-5">
           {brand?.logo_url && (
-            <div className="w-20 h-20 rounded-2xl bg-card overflow-hidden shadow-premium border border-border/50 flex-shrink-0 p-2">
-              <img src={brand.logo_url} alt={displayName} className="w-full h-full object-contain" />
+            <div className="w-24 h-24 rounded-2xl bg-card overflow-hidden shadow-premium border border-border/50 flex-shrink-0 p-3">
+              <img src={brand.logo_url} alt={displayName} className="w-full h-full object-contain drop-shadow-sm" />
             </div>
           )}
           <div className="flex-1 min-w-0">
