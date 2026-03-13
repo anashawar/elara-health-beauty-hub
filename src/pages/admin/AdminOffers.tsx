@@ -301,8 +301,42 @@ export default function AdminOffers() {
 
               {form.target_type === "product" && (
                 <div>
-                  <Label>Product Name</Label>
-                  <Input value={form.target_name} onChange={(e) => setForm({ ...form, target_name: e.target.value })} placeholder="Enter product name for reference" />
+                  <Label>Search Product</Label>
+                  <Input
+                    value={productSearch || form.target_name}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    placeholder="Type product name to search..."
+                  />
+                  {productSearch.length >= 2 && (
+                    <div className="mt-1 max-h-48 overflow-y-auto border border-border rounded-xl bg-card shadow-lg">
+                      {allProducts
+                        .filter((p: any) => p.title.toLowerCase().includes(productSearch.toLowerCase()) || p.brand?.toLowerCase().includes(productSearch.toLowerCase()))
+                        .slice(0, 10)
+                        .map((p: any) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => {
+                              setForm({ ...form, target_id: p.id, target_name: p.title });
+                              setProductSearch("");
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-secondary transition-colors text-left border-b border-border/30 last:border-0"
+                          >
+                            <img src={p.image} alt="" className="w-10 h-10 rounded-lg object-cover bg-secondary flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-xs font-medium text-foreground truncate">{p.title}</p>
+                              <p className="text-[10px] text-muted-foreground">{p.brand} · {formatPrice(p.price)}</p>
+                            </div>
+                          </button>
+                        ))}
+                      {allProducts.filter((p: any) => p.title.toLowerCase().includes(productSearch.toLowerCase())).length === 0 && (
+                        <p className="text-xs text-muted-foreground p-3 text-center">No products found</p>
+                      )}
+                    </div>
+                  )}
+                  {form.target_name && !productSearch && (
+                    <p className="text-xs text-primary mt-1 font-medium">✓ Selected: {form.target_name}</p>
+                  )}
                 </div>
               )}
 

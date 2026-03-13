@@ -209,8 +209,9 @@ const ProductPage = () => {
             </div>
             <h1 className="text-xl md:text-2xl font-display font-bold text-foreground mt-1.5 leading-tight">{product.title}</h1>
             <div className="flex items-baseline gap-2.5 mt-2">
-              <span className="text-2xl md:text-3xl font-extrabold text-primary">{formatPrice(product.price)}</span>
-              {product.originalPrice && <span className="text-sm text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>}
+              <span className="text-2xl md:text-3xl font-extrabold text-primary">{formatPrice(displayPrice)}</span>
+              {originalDisplayPrice && originalDisplayPrice > displayPrice && <span className="text-sm text-muted-foreground line-through">{formatPrice(originalDisplayPrice)}</span>}
+              {offerPricing && <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-lg">{offerPricing.offerLabel}</span>}
             </div>
 
             {/* Desktop: share/wishlist actions */}
