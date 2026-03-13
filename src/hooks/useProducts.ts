@@ -26,6 +26,7 @@ export interface ProductWithRelations {
   form: string | null;
   gender: string | null;
   volume_ml: string | null;
+  volume_unit: string | null;
   application: string | null;
   skin_type: string | null;
   condition: string | null;
