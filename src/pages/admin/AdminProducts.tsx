@@ -355,12 +355,15 @@ export default function AdminProducts() {
   ];
 
   /** Map Arabic/common Excel headers to our keys */
-  const normalizeRow = (row: Record<string, string>): { name: string; cost: string } | null => {
+  const normalizeRow = (row: Record<string, string>): { name: string; cost: string; price?: string } | null => {
     // Try common header names (Arabic + English)
     const name = row["اسم_المادة"] || row["اسم_المادة"] || row["title"] || row["name"] || row["product_name"] || row["اسم"] || "";
-    const costRaw = row["المذخر"] || row["cost"] || row["price"] || row["السعر"] || "";
+    const costRaw = row["المذخر"] || row["cost"] || row["السعر"] || "";
+    const priceRaw = row["price"] || row["selling_price"] || row["سعر_البيع"] || row["سعر"] || "";
     if (!name.trim()) return null;
-    return { name: name.trim(), cost: costRaw.toString().replace(/,/g, "").trim() };
+    const result: { name: string; cost: string; price?: string } = { name: name.trim(), cost: costRaw.toString().replace(/,/g, "").trim() };
+    if (priceRaw.toString().trim()) result.price = priceRaw.toString().replace(/,/g, "").trim();
+    return result;
   };
 
   const handleBulkImport = async (rows: Record<string, string>[]) => {
