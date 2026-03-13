@@ -67,7 +67,8 @@ export function getOfferForProduct(
 
   if (!bestOffer || bestDiscount <= 0) return null;
 
-  const discountedPrice = Math.max(0, product.price - bestDiscount);
+  const rawDiscounted = Math.max(0, product.price - bestDiscount);
+  const discountedPrice = Math.round(rawDiscounted / 250) * 250;
   const discountPercent = Math.round((bestDiscount / product.price) * 100);
 
   return {
