@@ -104,6 +104,7 @@ const ElaraChatPage = () => {
       .select("id")
       .single();
     if (data) {
+      setIsNewConversation(true);
       setConversationId(data.id);
       queryClient.invalidateQueries({ queryKey: ["chat-conversations"] });
       queryClient.invalidateQueries({ queryKey: ["chat-count"] });
