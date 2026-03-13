@@ -48,6 +48,7 @@ const AuthPage = () => {
   const [street, setStreet] = useState("");
   const [building, setBuilding] = useState("");
   const [floor, setFloor] = useState("");
+  const [apartment, setApartment] = useState("");
   const [gpsLat, setGpsLat] = useState<number | null>(null);
   const [gpsLng, setGpsLng] = useState<number | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
