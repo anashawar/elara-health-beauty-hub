@@ -61,6 +61,12 @@ export default function AdminProducts() {
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [editing, setEditing] = useState(false);
 
+  // AI Enrichment state
+  const [enriching, setEnriching] = useState(false);
+  const [enrichProgress, setEnrichProgress] = useState({ done: 0, total: 0, current: "" });
+  const [selectedForEnrich, setSelectedForEnrich] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
+
   // Image state
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
