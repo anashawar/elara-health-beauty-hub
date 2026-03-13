@@ -20,7 +20,7 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
 
   if (variant === "horizontal") {
     return (
-      <div className="flex-shrink-0 w-44 bg-card rounded-2xl shadow-premium overflow-hidden group">
+      <div className="flex-shrink-0 w-36 bg-card rounded-2xl shadow-premium overflow-hidden group">
         <Link to={`/product/${product.id}`} className="block">
           <div className="relative aspect-square overflow-hidden bg-secondary">
             <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
