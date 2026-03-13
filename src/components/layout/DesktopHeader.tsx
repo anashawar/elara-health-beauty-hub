@@ -49,7 +49,7 @@ const DesktopHeader = ({ onSearchClick }: DesktopHeaderProps) => {
 
   return (
     <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border hidden md:block">
-      <div className="app-container">
+      <div className="w-full">
         {/* Top bar */}
         <div className="flex items-center justify-between px-6 py-3">
           {/* Logo */}
