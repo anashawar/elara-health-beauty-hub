@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Percent } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { motion } from "framer-motion";
 
 const DealsBanner = () => {
   const { t } = useLanguage();
@@ -9,29 +10,29 @@ const DealsBanner = () => {
     <section className="px-4 mt-8">
       <Link
         to="/categories"
-        className="block relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary via-primary/90 to-primary/70 p-5 shadow-premium"
+        className="block relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary/85 to-primary/65 p-5 shadow-float group"
       >
-        {/* Animated background circles */}
-        <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 animate-[pulse_3s_ease-in-out_infinite]" />
-        <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full bg-white/10 animate-[pulse_3s_ease-in-out_1s_infinite]" />
-        <div className="absolute top-1/2 right-1/3 w-8 h-8 rounded-full bg-white/5 animate-[pulse_3s_ease-in-out_0.5s_infinite]" />
+        {/* Glass decoration */}
+        <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full bg-white/8 blur-xl" />
+        <div className="absolute -bottom-6 -left-6 w-20 h-20 rounded-full bg-white/8 blur-xl" />
 
         <div className="relative z-10 flex items-center gap-4">
-          {/* Icon */}
-          <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]">
+          <motion.div
+            animate={{ scale: [1, 1.08, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/10"
+          >
             <Percent className="w-6 h-6 text-white" />
-          </div>
+          </motion.div>
 
-          {/* Text */}
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/70 mb-0.5">{t("home.dealsForYou")}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-0.5">{t("home.dealsForYou")}</p>
             <p className="text-sm font-bold text-white leading-snug">
               {t("home.dealsText")}
             </p>
           </div>
 
-          {/* CTA arrow */}
-          <div className="flex-shrink-0 w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-lg">
+          <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
             <ArrowRight className="w-4 h-4 text-primary rtl:rotate-180" />
           </div>
         </div>

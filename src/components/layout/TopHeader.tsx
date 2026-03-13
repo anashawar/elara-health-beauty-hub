@@ -35,7 +35,7 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
   const userCity = defaultAddress?.city || defaultAddress?.area || "";
 
   return (
-    <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border md:hidden">
+    <header className="sticky top-0 z-40 glass-heavy border-b border-border/40 md:hidden">
       <div className="app-container px-4 py-3 space-y-2.5">
         {/* Top row: Logo + Welcome */}
         <div className="flex items-center justify-between">
@@ -65,20 +65,20 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
         </div>
 
         {/* Search bar + AI button */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={onSearchClick}
-            className="flex-1 flex items-center gap-2.5 px-4 py-2.5 bg-secondary/80 rounded-xl border border-border hover:border-primary/30 transition-all duration-200"
+            className="flex-1 flex items-center gap-2.5 px-4 py-2.5 bg-secondary/60 rounded-2xl border border-border/60 hover:border-primary/20 hover:bg-secondary/80 transition-all duration-300"
           >
-            <Search className="w-4 h-4 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">{t("common.search")}</span>
+            <Search className="w-4 h-4 text-muted-foreground/70" />
+            <span className="text-[13px] text-muted-foreground/70">{t("common.search")}</span>
           </button>
           <Link
             to="/elara-ai"
-            className="flex items-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-primary to-primary/80 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex-shrink-0"
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-br from-primary to-primary/80 rounded-2xl shadow-float hover:shadow-premium-lg transition-all duration-300 flex-shrink-0 active:scale-95"
           >
             <Sparkles className="w-4 h-4 text-primary-foreground" />
-            <span className="text-xs font-bold text-primary-foreground">AI</span>
+            <span className="text-xs font-bold text-primary-foreground tracking-wide">AI</span>
           </Link>
         </div>
       </div>
