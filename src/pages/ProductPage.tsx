@@ -8,6 +8,7 @@ import { toast } from "@/components/ui/sonner";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useProducts, formatPrice } from "@/hooks/useProducts";
+import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 import { Share } from "@capacitor/share";
 import { Capacitor } from "@capacitor/core";
 import ProductCard from "@/components/ProductCard";
@@ -49,6 +50,7 @@ const ProductPage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
   const { data: allProducts = [] } = useProducts();
+  const { data: activeOffers = [] } = useActiveOffers();
   const product = allProducts.find(p => p.id === id);
 
   if (!product) {
@@ -60,9 +62,14 @@ const ProductPage = () => {
   }
 
   const wishlisted = isInWishlist(product.id);
-  const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-    : 0;
+  const offerPricing = getOfferForProduct(product, activeOffers);
+  const displayPrice = offerPricing ? offerPricing.discountedPrice : product.price;
+  const originalDisplayPrice = offerPricing ? product.price : product.originalPrice;
+  const discount = offerPricing
+    ? offerPricing.discountPercent
+    : product.originalPrice
+      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+      : 0;
 
   const related = allProducts.filter(p => p.category_slug === product.category_slug && p.id !== product.id).slice(0, 4);
 
@@ -202,8 +209,9 @@ const ProductPage = () => {
             </div>
             <h1 className="text-xl md:text-2xl font-display font-bold text-foreground mt-1.5 leading-tight">{product.title}</h1>
             <div className="flex items-baseline gap-2.5 mt-2">
-              <span className="text-2xl md:text-3xl font-extrabold text-primary">{formatPrice(product.price)}</span>
-              {product.originalPrice && <span className="text-sm text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>}
+              <span className="text-2xl md:text-3xl font-extrabold text-primary">{formatPrice(displayPrice)}</span>
+              {originalDisplayPrice && originalDisplayPrice > displayPrice && <span className="text-sm text-muted-foreground line-through">{formatPrice(originalDisplayPrice)}</span>}
+              {offerPricing && <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-lg">{offerPricing.offerLabel}</span>}
             </div>
 
             {/* Desktop: share/wishlist actions */}
