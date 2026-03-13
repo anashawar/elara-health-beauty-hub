@@ -29,8 +29,8 @@ const ProductSection = ({ title, subtitle, products, viewAllLink, horizontal = t
             </div>
           )}
           <div>
-            <h2 className={`font-display font-bold text-foreground ${isTrending ? "text-xl" : "text-lg"}`}>{title}</h2>
-            {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+            <h2 className={`font-display font-bold text-foreground ${isTrending ? "text-[22px]" : "text-xl"}`}>{title}</h2>
+            {subtitle && <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>}
           </div>
         </div>
         {viewAllLink && (

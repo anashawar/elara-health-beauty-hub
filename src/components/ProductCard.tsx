@@ -20,7 +20,7 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
 
   if (variant === "horizontal") {
     return (
-      <div className="flex-shrink-0 w-40 bg-card rounded-2xl shadow-premium overflow-hidden group">
+      <div className="flex-shrink-0 w-44 bg-card rounded-2xl shadow-premium overflow-hidden group">
         <Link to={`/product/${product.id}`} className="block">
           <div className="relative aspect-square overflow-hidden bg-secondary">
             <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
@@ -33,20 +33,20 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
           </div>
         </Link>
         <div className="p-3">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{product.brand}</p>
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{product.brand}</p>
           <Link to={`/product/${product.id}`}>
-            <h3 className="text-xs font-bold text-foreground mt-0.5 line-clamp-2 leading-snug tracking-tight">{product.title}</h3>
+            <h3 className="text-sm font-bold text-foreground mt-0.5 line-clamp-2 leading-snug tracking-tight">{product.title}</h3>
           </Link>
           <div className="flex items-center gap-1.5 mt-2">
-            <span className="text-sm font-bold text-foreground">{formatPrice(product.price)}</span>
+            <span className="text-[15px] font-bold text-foreground">{formatPrice(product.price)}</span>
             {product.originalPrice && (
-              <span className="text-[10px] text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
+              <span className="text-[11px] text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
             )}
           </div>
           <div className="flex items-center gap-1.5 mt-2">
             <button
               onClick={() => addToCart(product)}
-              className="flex-1 flex items-center justify-center gap-1 bg-primary text-primary-foreground text-[10px] font-semibold py-2 rounded-xl hover:opacity-90 transition-opacity"
+              className="flex-1 flex items-center justify-center gap-1 bg-primary text-primary-foreground text-[11px] font-semibold py-2 rounded-xl hover:opacity-90 transition-opacity"
             >
               <Plus className="w-3 h-3" /> {t("product.add")}
             </button>
@@ -82,14 +82,14 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
         </div>
       </Link>
       <div className="p-3">
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{product.brand}</p>
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{product.brand}</p>
         <Link to={`/product/${product.id}`}>
-          <h3 className="text-sm font-bold text-foreground mt-1 line-clamp-2 leading-snug tracking-tight">{product.title}</h3>
+          <h3 className="text-[15px] font-bold text-foreground mt-1 line-clamp-2 leading-snug tracking-tight">{product.title}</h3>
         </Link>
         <div className="flex items-center gap-1.5 mt-2">
-          <span className="text-sm font-bold text-foreground">{formatPrice(product.price)}</span>
+          <span className="text-base font-bold text-foreground">{formatPrice(product.price)}</span>
           {product.originalPrice && (
-            <span className="text-[10px] text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
+            <span className="text-[11px] text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
           )}
         </div>
         <button
