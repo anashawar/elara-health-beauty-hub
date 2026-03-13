@@ -66,7 +66,10 @@ const ProductPage = () => {
 
   const related = allProducts.filter(p => p.category_slug === product.category_slug && p.id !== product.id).slice(0, 4);
 
+  const outOfStock = product ? !product.inStock : false;
+
   const handleAddToCart = () => {
+    if (outOfStock) return;
     if (!user) {
       toast(t("auth.signInRequired") || "Please sign in first");
       navigate("/");
