@@ -234,7 +234,7 @@ const ProductPage = () => {
               </button>
             </div>
 
-            <div className="flex gap-2 mt-4 overflow-x-auto no-scrollbar">
+            <div className="flex gap-2 mt-4 overflow-x-auto no-scrollbar scroll-smooth-x">
               {[
                 { icon: Truck, text: t("common.freeDelivery") },
                 { icon: ShieldCheck, text: t("common.original") },
