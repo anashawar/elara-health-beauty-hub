@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Package, MapPin, ChevronRight } from "lucide-react";
+import { ArrowLeft, Package, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useProducts, useBrands } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
