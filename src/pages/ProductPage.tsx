@@ -214,6 +214,29 @@ const ProductPage = () => {
               {offerPricing && <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-lg">{offerPricing.offerLabel}</span>}
             </div>
 
+            {/* Fast Delivery Banner */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mt-3 relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 border border-primary/20 px-4 py-3"
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/8 to-transparent"
+                animate={{ x: ["-100%", "200%"] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              />
+              <div className="relative flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+                  <Truck className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-foreground leading-tight">{t("common.fastDelivery") || "Fast 24-Hour Delivery"}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{t("common.fastDeliverySub") || "Order now & get it tomorrow!"}</p>
+                </div>
+              </div>
+            </motion.div>
+
             {/* Desktop: share/wishlist actions */}
             <div className="hidden md:flex items-center gap-2 mt-4">
               <button onClick={() => toggleWishlist(product.id)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border hover:bg-secondary transition-colors">
