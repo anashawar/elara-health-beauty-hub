@@ -48,6 +48,44 @@ const AuthPage = () => {
   const [street, setStreet] = useState("");
   const [building, setBuilding] = useState("");
   const [floor, setFloor] = useState("");
+  const [gpsLat, setGpsLat] = useState<number | null>(null);
+  const [gpsLng, setGpsLng] = useState<number | null>(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+
+  const handleGetLocation = async () => {
+    setGpsLoading(true);
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const perm = await Geolocation.requestPermissions();
+        if (perm.location !== "granted") {
+          toast(t("addresses.locationDenied") || "Location permission denied");
+          setGpsLoading(false);
+          return;
+        }
+      }
+      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
+      setGpsLat(position.coords.latitude);
+      setGpsLng(position.coords.longitude);
+      toast(t("addresses.locationCaptured") || "📍 Location captured!");
+    } catch {
+      if (!Capacitor.isNativePlatform() && "geolocation" in navigator) {
+        try {
+          const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 })
+          );
+          setGpsLat(pos.coords.latitude);
+          setGpsLng(pos.coords.longitude);
+          toast(t("addresses.locationCaptured") || "📍 Location captured!");
+        } catch {
+          toast(t("addresses.locationError") || "Could not get location. Please enable GPS.");
+        }
+      } else {
+        toast(t("addresses.locationError") || "Could not get location. Please enable GPS.");
+      }
+    } finally {
+      setGpsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && user && step === "phone") {
