@@ -71,6 +71,10 @@ export default function AdminProducts() {
   const [selectedForEnrich, setSelectedForEnrich] = useState<Set<string>>(new Set());
   const [selectMode, setSelectMode] = useState(false);
 
+  // Multi-select state for bulk actions
+  const [multiSelect, setMultiSelect] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+
   // Quick-add state
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [quickAddItems, setQuickAddItems] = useState<{ name: string; cost: string }[]>([{ name: "", cost: "" }]);
