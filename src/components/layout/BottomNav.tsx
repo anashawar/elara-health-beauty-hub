@@ -20,46 +20,46 @@ const BottomNav = () => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
       <div className="app-container">
-        <div className="bg-card/95 backdrop-blur-xl border-t border-border/60 shadow-lg bottom-nav-safe">
-          <div className="flex items-center justify-around py-2">
+        <div className="glass-heavy border-t border-border/30 shadow-glass bottom-nav-safe">
+          <div className="flex items-center justify-around py-1.5">
             {navItems.map(({ icon: Icon, label, path }) => {
               const isActive = location.pathname === path || (path === "/home" && location.pathname === "/");
               return (
                 <Link
                   key={path}
                   to={path}
-                  className="relative flex flex-col items-center gap-0.5 px-4 py-1.5"
+                  className="relative flex flex-col items-center gap-0.5 px-4 py-1.5 active:scale-90 transition-transform duration-150"
                 >
                   <div className="relative">
                     {isActive && (
                       <motion.div
                         layoutId="nav-pill"
-                        className="absolute -inset-2 bg-primary/12 rounded-xl"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        className="absolute -inset-2.5 bg-primary/10 rounded-2xl"
+                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
                       />
                     )}
                     <Icon
-                      className={`relative w-[22px] h-[22px] transition-colors duration-200 ${
+                      className={`relative w-[21px] h-[21px] transition-all duration-200 ${
                         isActive
                           ? "text-primary stroke-[2.5px]"
-                          : "text-muted-foreground stroke-[1.8px]"
+                          : "text-muted-foreground/70 stroke-[1.8px]"
                       }`}
                     />
                     {label === t("nav.cart") && cartCount > 0 && (
                       <motion.span
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center px-1"
+                        className="absolute -top-1.5 -right-2.5 min-w-[17px] h-[17px] bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center px-1 shadow-float"
                       >
                         {cartCount}
                       </motion.span>
                     )}
                   </div>
                   <span
-                    className={`text-[10px] transition-colors duration-200 ${
+                    className={`text-[10px] transition-all duration-200 ${
                       isActive
                         ? "text-primary font-bold"
-                        : "text-muted-foreground font-medium"
+                        : "text-muted-foreground/60 font-medium"
                     }`}
                   >
                     {label}
