@@ -269,6 +269,8 @@ export const en = {
     english: "English",
     arabic: "العربية",
     kurdish: "کوردی",
+    changePhoto: "Change Your Photo",
+    photoUpdated: "Profile photo updated!",
   },
   categories: {
     title: "Categories",

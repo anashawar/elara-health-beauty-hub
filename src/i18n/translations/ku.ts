@@ -269,6 +269,8 @@ export const ku = {
     english: "English",
     arabic: "العربية",
     kurdish: "کوردی",
+    changePhoto: "وێنەکەت بگۆڕە",
+    photoUpdated: "وێنەی پرۆفایل نوێ کرایەوە!",
   },
   categories: {
     title: "بەشەکان",
