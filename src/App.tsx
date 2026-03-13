@@ -51,9 +51,9 @@ const App = () => (
               <Route path="/concern/:id" element={<CategoryPage />} />
               <Route path="/product/:id" element={<ProductPage />} />
               <Route path="/brand/:id" element={<BrandPage />} />
-              <Route path="/cart" element={<CartPage />} />
+              <Route path="/cart" element={<AuthGuard><CartPage /></AuthGuard>} />
               <Route path="/wishlist" element={<WishlistPage />} />
-              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/checkout" element={<AuthGuard><CheckoutPage /></AuthGuard>} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
