@@ -55,6 +55,7 @@ export const ar = {
     newArrivals: "وصل جديد",
     freshAdditions: "منتجات جديدة ضفناها",
     featuredBrands: "ماركات مميزة",
+    buyNow: "اشتري الآن",
     shopByConcern: "تسوق حسب مشكلتك",
     dealsForYou: "عروض إلك",
     dealsText: "احصل على خصم 15% على أول طلب من إيلارا!",
