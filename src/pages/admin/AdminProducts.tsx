@@ -777,7 +777,17 @@ export default function AdminProducts() {
                 const cost = costMap[p.id];
                 const margin = cost !== undefined ? ((p.price - cost) / p.price * 100) : null;
                 return (
-                <TableRow key={p.id}>
+                <TableRow key={p.id} className={selectMode && selectedForEnrich.has(p.id) ? "bg-primary/5" : ""}>
+                  {selectMode && (
+                    <TableCell className="w-10">
+                      <input
+                        type="checkbox"
+                        checked={selectedForEnrich.has(p.id)}
+                        onChange={() => toggleSelectProduct(p.id)}
+                        className="rounded border-border"
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     <div className="flex items-center gap-3">
                       {p.product_images?.[0]?.image_url ? (
