@@ -4,6 +4,8 @@ import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingBag, ShoppingCart, 
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import BottomNav from "@/components/layout/BottomNav";
+import DesktopHeader from "@/components/layout/DesktopHeader";
+import SearchOverlay from "@/components/SearchOverlay";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "sonner";
 import { useProducts } from "@/hooks/useProducts";
@@ -48,10 +50,10 @@ const ElaraChatPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Fetch conversation list
   const { data: conversations = [] } = useQuery({
     queryKey: ["chat-conversations", user?.id],
     queryFn: async () => {
@@ -65,7 +67,6 @@ const ElaraChatPage = () => {
     enabled: !!user,
   });
 
-  // Load messages when conversation selected
   useEffect(() => {
     if (!conversationId || !user) return;
     const loadMessages = async () => {
@@ -87,17 +88,11 @@ const ElaraChatPage = () => {
     }
   }, [messages, isLoading]);
 
-  // Save message to DB
   const saveMessage = useCallback(async (convId: string, role: string, content: string) => {
     if (!user) return;
-    await supabase.from("chat_messages").insert({
-      conversation_id: convId,
-      role,
-      content,
-    });
+    await supabase.from("chat_messages").insert({ conversation_id: convId, role, content });
   }, [user]);
 
-  // Create or get conversation
   const ensureConversation = useCallback(async (firstMessage: string): Promise<string> => {
     if (conversationId) return conversationId;
     if (!user) return "";
@@ -116,7 +111,6 @@ const ElaraChatPage = () => {
     return "";
   }, [conversationId, user, queryClient]);
 
-  // Parse [PRODUCT:id:slug:title:price] markers
   const renderAssistantContent = (content: string) => {
     const productRegex = /\[PRODUCT:([^:]+):([^:]+):([^\]]+?):([^\]]+?)\]/g;
     const parts: (string | { id: string; slug: string; title: string; price: string })[] = [];
@@ -156,12 +150,8 @@ const ElaraChatPage = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (product) {
-                    addToCart(product);
-                    toast.success(`${part.title} added to cart`);
-                  } else {
-                    toast.error("Product not found");
-                  }
+                  if (product) { addToCart(product); toast.success(`${part.title} added to cart`); }
+                  else { toast.error("Product not found"); }
                 }}
                 className="flex-shrink-0 w-8 h-8 rounded-xl bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors active:scale-95"
               >
@@ -230,7 +220,6 @@ const ElaraChatPage = () => {
       }
     }
 
-    // Final flush
     if (textBuffer.trim()) {
       for (let raw of textBuffer.split("\n")) {
         if (!raw) continue;
@@ -271,12 +260,9 @@ const ElaraChatPage = () => {
     try {
       const convId = await ensureConversation(text.trim());
       if (convId) await saveMessage(convId, "user", text.trim());
-
       const assistantContent = await streamChat(updatedMessages);
-
       if (convId && assistantContent) {
         await saveMessage(convId, "assistant", assistantContent);
-        // Update conversation timestamp
         await supabase.from("chat_conversations").update({ updated_at: new Date().toISOString() }).eq("id", convId);
       }
     } catch (e: any) {
@@ -287,16 +273,8 @@ const ElaraChatPage = () => {
     }
   };
 
-  const startNewChat = () => {
-    setConversationId(null);
-    setMessages([]);
-    setShowHistory(false);
-  };
-
-  const loadConversation = (id: string) => {
-    setConversationId(id);
-    setShowHistory(false);
-  };
+  const startNewChat = () => { setConversationId(null); setMessages([]); setShowHistory(false); };
+  const loadConversation = (id: string) => { setConversationId(id); setShowHistory(false); };
 
   const deleteConversation = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -306,22 +284,18 @@ const ElaraChatPage = () => {
     if (conversationId === id) startNewChat();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    sendMessage(input);
-  };
-
+  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); sendMessage(input); };
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(input);
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col app-container">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
+    <div className="min-h-screen bg-background flex flex-col">
+      <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
+      <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+
+      {/* Mobile Header */}
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <Link to="/home" className="p-1.5 -ml-1 rounded-xl hover:bg-secondary transition-colors">
@@ -349,34 +323,17 @@ const ElaraChatPage = () => {
           </div>
         </div>
 
-        {/* Conversation History Dropdown */}
         <AnimatePresence>
           {showHistory && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden border-t border-border"
-            >
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-border">
               <div className="max-h-60 overflow-y-auto px-4 py-2 space-y-1">
                 {conversations.map(conv => (
-                  <button
-                    key={conv.id}
-                    onClick={() => loadConversation(conv.id)}
-                    className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left transition-all ${
-                      conversationId === conv.id ? "bg-primary/10 border border-primary/20" : "hover:bg-secondary"
-                    }`}
-                  >
+                  <button key={conv.id} onClick={() => loadConversation(conv.id)} className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left transition-all ${conversationId === conv.id ? "bg-primary/10 border border-primary/20" : "hover:bg-secondary"}`}>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">{conv.title}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {new Date(conv.updated_at).toLocaleDateString()}
-                      </p>
+                      <p className="text-[10px] text-muted-foreground">{new Date(conv.updated_at).toLocaleDateString()}</p>
                     </div>
-                    <button
-                      onClick={(e) => deleteConversation(conv.id, e)}
-                      className="p-1 rounded-lg hover:bg-destructive/10 transition-colors ml-2 flex-shrink-0"
-                    >
+                    <button onClick={(e) => deleteConversation(conv.id, e)} className="p-1 rounded-lg hover:bg-destructive/10 transition-colors ml-2 flex-shrink-0">
                       <Trash2 className="w-3 h-3 text-muted-foreground hover:text-destructive" />
                     </button>
                   </button>
@@ -387,96 +344,115 @@ const ElaraChatPage = () => {
         </AnimatePresence>
       </header>
 
-      {/* Chat Area */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4" style={{ paddingBottom: 'calc(120px + env(safe-area-inset-bottom, 0px))' }}>
-        {messages.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center text-center mt-8"
-          >
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center mb-4">
-              <Sparkles className="w-8 h-8 text-primary" />
+      {/* Desktop layout with sidebar */}
+      <div className="flex-1 flex app-container">
+        {/* Desktop sidebar */}
+        <div className="hidden md:flex flex-col w-72 border-r border-border bg-card/50 flex-shrink-0">
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <div>
+                <h2 className="text-sm font-display font-bold text-foreground">ELARA AI</h2>
+                <p className="text-[10px] text-muted-foreground">Senior Pharmacist</p>
+              </div>
             </div>
-            <h2 className="text-xl font-display font-bold text-foreground mb-1">ELARA AI ✨</h2>
-            <p className="text-sm text-muted-foreground mb-6 max-w-[280px]">
-              Your personal skincare & beauty pharmacist. Scientific, direct, evidence-based.
-            </p>
-            <div className="w-full space-y-2">
-              {(quickQuestions[language] || quickQuestions.en).map((q, i) => (
-                <motion.button
-                  key={i}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.08 }}
-                  onClick={() => sendMessage(q)}
-                  className="w-full text-left p-3 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-sm transition-all text-sm text-foreground"
-                >
-                  {q}
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
-        ) : (
-          <AnimatePresence>
-            {messages.map((msg, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-                    msg.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-br-md"
-                      : "bg-card border border-border rounded-bl-md"
-                  }`}
-                >
-                  {msg.role === "assistant" ? (
-                    renderAssistantContent(msg.content)
-                  ) : (
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-            {isLoading && messages[messages.length - 1]?.role === "user" && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-                <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                    <span className="text-xs text-muted-foreground">Thinking...</span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        )}
-      </div>
-
-      {/* Input Area */}
-      <div className="fixed left-0 right-0 z-40" style={{ bottom: `calc(60px + env(safe-area-inset-bottom, 0px))` }}>
-        <div className="app-container px-3 pb-2">
-          <form onSubmit={handleSubmit} className="flex items-end gap-2 bg-card/90 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about skincare, routines, products..."
-              rows={1}
-              className="flex-1 bg-transparent text-foreground text-sm px-3 py-2 resize-none outline-none placeholder:text-muted-foreground max-h-24"
-              style={{ minHeight: "36px" }}
-            />
-            <button
-              type="submit"
-              disabled={!input.trim() || isLoading}
-              className="flex-shrink-0 w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-40 transition-opacity"
-            >
-              <Send className="w-4 h-4" />
+            <button onClick={startNewChat} className="p-2 rounded-xl hover:bg-secondary transition-colors" title="New chat">
+              <Plus className="w-4 h-4 text-muted-foreground" />
             </button>
-          </form>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            {conversations.map(conv => (
+              <button key={conv.id} onClick={() => loadConversation(conv.id)} className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left transition-all ${conversationId === conv.id ? "bg-primary/10 border border-primary/20" : "hover:bg-secondary"}`}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-foreground truncate">{conv.title}</p>
+                  <p className="text-[10px] text-muted-foreground">{new Date(conv.updated_at).toLocaleDateString()}</p>
+                </div>
+                <button onClick={(e) => deleteConversation(conv.id, e)} className="p-1 rounded-lg hover:bg-destructive/10 transition-colors ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100">
+                  <Trash2 className="w-3 h-3 text-muted-foreground hover:text-destructive" />
+                </button>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Chat area */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 md:px-8 py-4 space-y-4" style={{ paddingBottom: 'calc(120px + env(safe-area-inset-bottom, 0px))' }}>
+            {messages.length === 0 ? (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mt-8 md:mt-16">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center mb-4">
+                  <Sparkles className="w-8 h-8 text-primary" />
+                </div>
+                <h2 className="text-xl font-display font-bold text-foreground mb-1">ELARA AI ✨</h2>
+                <p className="text-sm text-muted-foreground mb-6 max-w-[400px]">
+                  Your personal skincare & beauty pharmacist. Scientific, direct, evidence-based.
+                </p>
+                <div className="w-full max-w-md space-y-2">
+                  {(quickQuestions[language] || quickQuestions.en).map((q, i) => (
+                    <motion.button key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} onClick={() => sendMessage(q)}
+                      className="w-full text-left p-3 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-sm transition-all text-sm text-foreground"
+                    >
+                      {q}
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            ) : (
+              <AnimatePresence>
+                {messages.map((msg, i) => (
+                  <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[85%] md:max-w-[65%] rounded-2xl px-4 py-3 ${msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-md" : "bg-card border border-border rounded-bl-md"}`}>
+                      {msg.role === "assistant" ? renderAssistantContent(msg.content) : <p className="text-sm whitespace-pre-wrap">{msg.content}</p>}
+                    </div>
+                  </motion.div>
+                ))}
+                {isLoading && messages[messages.length - 1]?.role === "user" && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+                    <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                        <span className="text-xs text-muted-foreground">Thinking...</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            )}
+          </div>
+
+          {/* Input Area */}
+          <div className="sticky bottom-0 z-40 md:relative md:bottom-auto">
+            <div className="md:hidden fixed left-0 right-0 z-40" style={{ bottom: `calc(60px + env(safe-area-inset-bottom, 0px))` }}>
+              <div className="app-container px-3 pb-2">
+                <form onSubmit={handleSubmit} className="flex items-end gap-2 bg-card/90 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg">
+                  <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
+                    placeholder="Ask about skincare, routines, products..." rows={1}
+                    className="flex-1 bg-transparent text-foreground text-sm px-3 py-2 resize-none outline-none placeholder:text-muted-foreground max-h-24"
+                    style={{ minHeight: "36px" }}
+                  />
+                  <button type="submit" disabled={!input.trim() || isLoading} className="flex-shrink-0 w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-40 transition-opacity">
+                    <Send className="w-4 h-4" />
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* Desktop input */}
+            <div className="hidden md:block px-8 pb-6 pt-2 border-t border-border bg-background">
+              <form onSubmit={handleSubmit} className="flex items-end gap-3 bg-card border border-border rounded-2xl p-3 shadow-sm max-w-3xl mx-auto">
+                <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
+                  placeholder="Ask about skincare, routines, products..." rows={1}
+                  className="flex-1 bg-transparent text-foreground text-sm px-3 py-2 resize-none outline-none placeholder:text-muted-foreground max-h-32"
+                  style={{ minHeight: "40px" }}
+                />
+                <button type="submit" disabled={!input.trim() || isLoading} className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-40 transition-opacity hover:opacity-90">
+                  <Send className="w-4 h-4" />
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
 
