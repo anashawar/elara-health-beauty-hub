@@ -221,6 +221,10 @@ export const ar = {
     saving: "يحفظ...",
     welcomeToElara: "أهلاً بيك بإيلارا، {{name}}!",
     signInFirst: "لازم تسجّل دخول أول",
+    gender: "الجنس",
+    female: "أنثى",
+    male: "ذكر",
+    birthdate: "تاريخ الميلاد",
   },
   wishlist: {
     title: "المفضلة",
