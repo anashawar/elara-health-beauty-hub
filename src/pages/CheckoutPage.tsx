@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import fibLogo from "@/assets/fib-logo.png";
+import qiLogo from "@/assets/qi-logo.svg";
 import { ArrowLeft, Check, MapPin, ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useApp } from "@/context/AppContext";
