@@ -176,6 +176,10 @@ export const ku = {
     settings: "ڕێکخستنەکان",
     signedOut: "دەرچوویت",
     elaraUser: "بەکارهێنەری ئێلارا",
+    aboutElara: "دەربارەی ئێلارا",
+    faq: "پرسیارە باوەکان",
+    termsConditions: "مەرج و ڕێساکان",
+    privacyPolicy: "سیاسەتی تایبەتمەندی",
   },
   auth: {
     welcomeBack: "بەخێربێیتەوە",

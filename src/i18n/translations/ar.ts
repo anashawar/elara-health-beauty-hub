@@ -176,6 +176,10 @@ export const ar = {
     settings: "الإعدادات",
     signedOut: "تم تسجيل الخروج",
     elaraUser: "مستخدم إيلارا",
+    aboutElara: "عن إيلارا",
+    faq: "الأسئلة الشائعة",
+    termsConditions: "الشروط والأحكام",
+    privacyPolicy: "سياسة الخصوصية",
   },
   auth: {
     welcomeBack: "أهلاً بعودتك",
