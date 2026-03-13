@@ -1083,7 +1083,8 @@ export default function AdminProducts() {
 
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Input className="pl-9" placeholder="Search products..." value={search} onChange={(e) => handleSearch(e.target.value)} />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{filtered.length} products</span>
       </div>
 
       {isLoading ? (
