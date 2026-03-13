@@ -7,7 +7,6 @@ import ProductSection from "@/components/home/ProductSection";
 import ConcernsSection from "@/components/home/ConcernsSection";
 import BrandsSection from "@/components/home/BrandsSection";
 import AskElaraCard from "@/components/home/AskElaraCard";
-import BrandBanners from "@/components/home/BrandBanners";
 import DealsBanner from "@/components/home/DealsBanner";
 import SearchOverlay from "@/components/SearchOverlay";
 import { useProducts } from "@/hooks/useProducts";
