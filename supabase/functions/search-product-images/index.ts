@@ -21,6 +21,8 @@ function isJunkImage(url: string): boolean {
     "newsletter", "subscribe", "popup", "modal", "close",
     "menu", "nav-", "/header", "/footer", "sidebar",
     ".gif", ".svg", "data:image",
+    "blog", "article", "editorial", "lifestyle", "category-",
+    "collection-", "best-", "top-", "how-to",
   ];
   return reject.some(p => lower.includes(p));
 }
