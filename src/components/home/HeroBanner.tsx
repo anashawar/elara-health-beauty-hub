@@ -100,7 +100,7 @@ const HeroBanner = () => {
   };
 
   return (
-    <div className="relative mx-4 mt-4 rounded-2xl overflow-hidden shadow-premium h-[200px] md:h-[320px] lg:h-[380px]">
+    <div className="relative mx-4 mt-4 rounded-2xl overflow-hidden shadow-premium h-[220px] md:h-[320px] lg:h-[380px]">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
