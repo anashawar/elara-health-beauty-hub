@@ -38,6 +38,7 @@ import AdminBanners from "./pages/admin/AdminBanners";
 import AdminBrands from "./pages/admin/AdminBrands";
 import AdminCoupons from "./pages/admin/AdminCoupons";
 import AdminRevenue from "./pages/admin/AdminRevenue";
+import AdminOffers from "./pages/admin/AdminOffers";
 
 const queryClient = new QueryClient();
 
