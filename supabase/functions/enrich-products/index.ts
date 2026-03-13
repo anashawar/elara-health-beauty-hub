@@ -40,7 +40,7 @@ serve(async (req) => {
     (costs || []).forEach((c: any) => { costMap[c.product_id] = Number(c.cost); });
 
     // Fetch all brands and categories for matching
-    const { data: allBrands } = await supabase.from("brands").select("id, name");
+    const { data: allBrands } = await supabase.from("brands").select("id, name, slug");
     const { data: allCategories } = await supabase.from("categories").select("id, name");
     const { data: allSubcategories } = await supabase.from("subcategories").select("id, name, category_id");
 
@@ -48,9 +48,11 @@ serve(async (req) => {
     const categoryList = (allCategories || []).map((c: any) => `${c.name} (id:${c.id})`).join(", ");
     const subcategoryList = (allSubcategories || []).map((s: any) => `${s.name} (id:${s.id}, cat:${s.category_id})`).join(", ");
 
+    // Cache for brands created during this run
+    const createdBrands: Record<string, string> = {};
+
     const results: any[] = [];
 
-    // Process products in parallel batches of 5
     for (let i = 0; i < products!.length; i += 5) {
       const batch = products!.slice(i, i + 5);
       const promises = batch.map(async (product: any) => {
@@ -62,23 +64,26 @@ Given this product name: "${product.title}"
 Current category: ${product.categories?.name || "unknown"}
 Current brand: ${product.brands?.name || "unknown"}
 
-Available brands: ${brandList}
+Available brands in our database: ${brandList}
 Available categories: ${categoryList}
 Available subcategories: ${subcategoryList}
 
 Generate ACCURATE, SCIENTIFIC, yet MODERN and YOUTHFUL product data. Research this exact product thoroughly.
+Identify the REAL brand from the product name. Many product names contain the brand (e.g. "CeraVe Moisturizing Cream" → brand is CeraVe).
 
 Return a JSON object with these fields:
 {
   "description": "2-3 sentence product description. Scientific yet approachable. Mention key active ingredients.",
   "benefits": ["benefit 1", "benefit 2", "benefit 3", "benefit 4", "benefit 5"],
   "usage_instructions": "Clear step-by-step how to use. Be specific about amount, frequency, application method.",
-  "brand_id": "exact brand id from the list above if the product belongs to a known brand, or null",
+  "brand_name": "The REAL brand name of this product (e.g. CeraVe, The Ordinary, La Roche-Posay). Extract from product name.",
+  "brand_id": "exact brand id from the available brands list IF the brand already exists, otherwise null",
+  "brand_country": "country of origin of the brand (e.g. France, South Korea, USA)",
   "category_id": "exact category id from the list above that best fits this product",
   "subcategory_id": "exact subcategory id from the list above that best fits, or null",
   "skin_type": "one of: All, Oily, Dry, Combination, Sensitive, Normal, or null if not skincare",
-  "country_of_origin": "country where this brand/product originates (e.g. South Korea, France, USA)",
-  "condition": "comma-separated skin/hair conditions this targets (e.g. acne,hyperpigmentation,aging)",
+  "country_of_origin": "country where this brand/product originates",
+  "condition": "comma-separated conditions this targets (e.g. acne,hyperpigmentation,aging)",
   "volume_ml": "product size as number string (e.g. '50', '200')",
   "volume_unit": "ml, g, oz, pcs, capsules, tablets, sheets, etc.",
   "form": "cream, serum, gel, lotion, spray, oil, foam, mask, tablets, etc.",
@@ -89,11 +94,11 @@ Return a JSON object with these fields:
   "slug": "url-friendly-slug-from-title"
 }
 
-IMPORTANT: 
-- Be factual and accurate. If unsure about a product, use general category knowledge.
-- Match brand_id, category_id, subcategory_id from the EXACT IDs provided above.
-- Benefits should be specific and scientifically grounded.
-- Keep description modern, clean, youthful tone.`;
+CRITICAL: 
+- Extract the REAL brand from the product name intelligently.
+- If brand_id is null but brand_name is provided, a new brand will be created automatically.
+- Be factual and accurate about the product.
+- Benefits should be specific and scientifically grounded.`;
 
         try {
           const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -114,30 +119,56 @@ IMPORTANT:
           if (!aiResp.ok) {
             const errText = await aiResp.text();
             console.error(`AI error for ${product.id}:`, aiResp.status, errText);
-            if (aiResp.status === 429) {
-              return { id: product.id, status: "rate_limited", error: "Rate limited" };
-            }
-            if (aiResp.status === 402) {
-              return { id: product.id, status: "payment_required", error: "Insufficient credits" };
-            }
+            if (aiResp.status === 429) return { id: product.id, status: "rate_limited", error: "Rate limited" };
+            if (aiResp.status === 402) return { id: product.id, status: "payment_required", error: "Insufficient credits" };
             return { id: product.id, status: "error", error: errText };
           }
 
           const aiData = await aiResp.json();
           let content = aiData.choices?.[0]?.message?.content || "";
-          
-          // Clean JSON from markdown code blocks
           content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-          
           const enriched = JSON.parse(content);
 
-          // Update the product
+          // Handle brand: create if needed
+          let brandId = enriched.brand_id;
+          if (!brandId && enriched.brand_name) {
+            const brandName = enriched.brand_name.trim();
+            const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+            // Check if we already created this brand in this run
+            if (createdBrands[brandSlug]) {
+              brandId = createdBrands[brandSlug];
+            } else {
+              // Check DB again (case-insensitive)
+              const existing = (allBrands || []).find((b: any) => 
+                b.name.toLowerCase() === brandName.toLowerCase() || b.slug === brandSlug
+              );
+              if (existing) {
+                brandId = existing.id;
+              } else {
+                // Create new brand
+                const { data: newBrand, error: brandErr } = await supabase
+                  .from("brands")
+                  .insert({ name: brandName, slug: brandSlug })
+                  .select("id")
+                  .single();
+                if (!brandErr && newBrand) {
+                  brandId = newBrand.id;
+                  createdBrands[brandSlug] = newBrand.id;
+                  console.log(`Created new brand: ${brandName} (${newBrand.id})`);
+                } else {
+                  console.error(`Failed to create brand ${brandName}:`, brandErr);
+                }
+              }
+            }
+          }
+
           const updatePayload: any = {
             description: enriched.description || null,
             benefits: enriched.benefits || null,
             usage_instructions: enriched.usage_instructions || null,
             skin_type: enriched.skin_type || null,
-            country_of_origin: enriched.country_of_origin || null,
+            country_of_origin: enriched.country_of_origin || enriched.brand_country || null,
             condition: enriched.condition || null,
             volume_ml: enriched.volume_ml || null,
             volume_unit: enriched.volume_unit || "ml",
@@ -149,14 +180,11 @@ IMPORTANT:
             slug: enriched.slug || product.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
           };
 
-          // Only update brand/category/subcategory if AI found a match
-          if (enriched.brand_id) updatePayload.brand_id = enriched.brand_id;
+          if (brandId) updatePayload.brand_id = brandId;
           if (enriched.category_id) updatePayload.category_id = enriched.category_id;
           if (enriched.subcategory_id) updatePayload.subcategory_id = enriched.subcategory_id;
 
-          // Set original_price if we're marking up from cost
           if (cost && sellingPrice > cost) {
-            // Set original price slightly higher for "deal" effect
             updatePayload.original_price = Math.round(sellingPrice * 1.15);
           }
 
@@ -170,7 +198,7 @@ IMPORTANT:
             return { id: product.id, status: "error", error: updateErr.message };
           }
 
-          return { id: product.id, title: product.title, status: "success" };
+          return { id: product.id, title: product.title, status: "success", brand: enriched.brand_name || "unknown" };
         } catch (err) {
           console.error(`Error enriching ${product.id}:`, err);
           return { id: product.id, status: "error", error: String(err) };
@@ -180,7 +208,6 @@ IMPORTANT:
       const batchResults = await Promise.all(promises);
       results.push(...batchResults);
 
-      // Small delay between batches to avoid rate limiting
       if (i + 5 < products!.length) {
         await new Promise(r => setTimeout(r, 1000));
       }
@@ -191,14 +218,7 @@ IMPORTANT:
     const rateLimited = results.filter(r => r.status === "rate_limited").length;
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        processed: results.length,
-        succeeded,
-        failed,
-        rate_limited: rateLimited,
-        results 
-      }),
+      JSON.stringify({ success: true, processed: results.length, succeeded, failed, rate_limited: rateLimited, results }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {

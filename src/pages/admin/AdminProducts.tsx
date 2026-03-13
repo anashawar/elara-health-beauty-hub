@@ -67,6 +67,10 @@ export default function AdminProducts() {
   const [selectedForEnrich, setSelectedForEnrich] = useState<Set<string>>(new Set());
   const [selectMode, setSelectMode] = useState(false);
 
+  // Quick-add state
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [quickAddItems, setQuickAddItems] = useState<{ name: string; cost: string }[]>([{ name: "", cost: "" }]);
+
   // Image state
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
@@ -553,6 +557,106 @@ export default function AdminProducts() {
     }
   };
 
+  // Quick-add: create products with just name + cost, then auto-enrich
+  const handleQuickAdd = async () => {
+    const validItems = quickAddItems.filter(i => i.name.trim() && i.cost.trim());
+    if (validItems.length === 0) { toast.error("Add at least one product with name and cost"); return; }
+
+    setQuickAddOpen(false);
+    setEnriching(true);
+    setEnrichProgress({ done: 0, total: validItems.length, current: "Creating products..." });
+
+    const createdIds: string[] = [];
+
+    for (let i = 0; i < validItems.length; i++) {
+      const item = validItems[i];
+      const cost = parseFloat(item.cost);
+      const price = Math.round(cost * 1.35); // Temporary price, AI will set final
+
+      setEnrichProgress({ done: i, total: validItems.length, current: `Creating: ${item.name}` });
+
+      try {
+        const slug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+        const { data, error } = await supabase.from("products").insert({
+          title: item.name.trim(),
+          slug,
+          price,
+          in_stock: true,
+        }).select("id").single();
+
+        if (error) { toast.error(`Failed: ${item.name} - ${error.message}`); continue; }
+
+        // Save cost
+        await supabase.from("product_costs").upsert({ product_id: data.id, cost }, { onConflict: "product_id" });
+        createdIds.push(data.id);
+      } catch (err) {
+        console.error("Quick add error:", err);
+      }
+    }
+
+    if (createdIds.length === 0) {
+      setEnriching(false);
+      toast.error("No products were created");
+      return;
+    }
+
+    toast.success(`${createdIds.length} products created, now enriching with AI...`);
+
+    // Now enrich all created products
+    const BATCH_SIZE = 10;
+    let totalSuccess = 0;
+
+    for (let i = 0; i < createdIds.length; i += BATCH_SIZE) {
+      const batch = createdIds.slice(i, i + BATCH_SIZE);
+      setEnrichProgress({ done: i, total: createdIds.length, current: `AI enriching batch ${Math.floor(i/BATCH_SIZE)+1}...` });
+
+      try {
+        const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enrich-products`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ product_ids: batch, markup_percent: 35 }),
+        });
+        if (resp.ok) {
+          const result = await resp.json();
+          totalSuccess += result.succeeded || 0;
+        }
+      } catch (err) {
+        console.error("Enrich error:", err);
+      }
+
+      if (i + BATCH_SIZE < createdIds.length) await new Promise(r => setTimeout(r, 2000));
+    }
+
+    // Also search for images
+    setEnrichProgress({ done: createdIds.length, total: createdIds.length, current: "Searching for images..." });
+    try {
+      for (let i = 0; i < createdIds.length; i += 5) {
+        const batch = createdIds.slice(i, i + 5);
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-product-images`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ product_ids: batch }),
+        });
+        if (i + 5 < createdIds.length) await new Promise(r => setTimeout(r, 2000));
+      }
+    } catch (err) {
+      console.error("Image search error:", err);
+    }
+
+    setEnriching(false);
+    setQuickAddItems([{ name: "", cost: "" }]);
+    qc.invalidateQueries({ queryKey: ["admin-products"] });
+    qc.invalidateQueries({ queryKey: ["admin-product-costs-list"] });
+    qc.invalidateQueries({ queryKey: ["products"] });
+    toast.success(`Done! ${totalSuccess} products enriched with AI data + images`);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -592,9 +696,74 @@ export default function AdminProducts() {
             columns={productBulkColumns}
             onImport={handleBulkImport}
           />
+        {/* Quick Add Dialog */}
+        <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="default" className="bg-primary">
+              <Sparkles className="h-4 w-4 mr-1.5" />Quick Add + AI
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Quick Add Products
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">Just enter name & cost. AI will fill everything else: description, brand, category, benefits, pricing (+35%), and find images.</p>
+            <div className="grid gap-3 mt-2 max-h-[50vh] overflow-y-auto pr-1">
+              {quickAddItems.map((item, idx) => (
+                <div key={idx} className="flex gap-2 items-center">
+                  <Input
+                    placeholder="Product name (e.g. CeraVe Moisturizer)"
+                    value={item.name}
+                    onChange={(e) => {
+                      const updated = [...quickAddItems];
+                      updated[idx].name = e.target.value;
+                      setQuickAddItems(updated);
+                    }}
+                    className="flex-1"
+                  />
+                  <Input
+                    placeholder="Cost (IQD)"
+                    type="number"
+                    value={item.cost}
+                    onChange={(e) => {
+                      const updated = [...quickAddItems];
+                      updated[idx].cost = e.target.value;
+                      setQuickAddItems(updated);
+                    }}
+                    className="w-28"
+                  />
+                  {quickAddItems.length > 1 && (
+                    <Button size="icon" variant="ghost" className="shrink-0" onClick={() => setQuickAddItems(prev => prev.filter((_, i) => i !== idx))}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Button size="sm" variant="outline" onClick={() => setQuickAddItems(prev => [...prev, { name: "", cost: "" }])}>
+                <Plus className="h-4 w-4 mr-1" />Add Row
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => {
+                const rows = Array(10).fill(null).map(() => ({ name: "", cost: "" }));
+                setQuickAddItems(prev => [...prev, ...rows]);
+              }}>
+                +10 Rows
+              </Button>
+            </div>
+            <Button className="w-full mt-3" onClick={handleQuickAdd} disabled={enriching || quickAddItems.every(i => !i.name.trim())}>
+              <Sparkles className="h-4 w-4 mr-1.5" />
+              Create & Auto-Enrich {quickAddItems.filter(i => i.name.trim() && i.cost.trim()).length} Products
+            </Button>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); else setOpen(true); }}>
           <DialogTrigger asChild>
-            <Button size="sm"><Plus className="h-4 w-4 mr-1.5" />Add Product</Button>
+            <Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1.5" />Manual Add</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
