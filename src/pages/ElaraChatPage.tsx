@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingCart, Plus, MessageCircle, Sun, CloudRain, Heart } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingCart, Plus, MessageCircle, Sun, CloudRain, Heart, Dumbbell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import BottomNav from "@/components/layout/BottomNav";
@@ -25,72 +25,124 @@ function isKurdistanUser(city: string | null): boolean {
   return KURDISTAN_CITIES.some(k => city.toLowerCase().includes(k.toLowerCase()));
 }
 
-const quickQuestions: Record<string, Record<string, string[]>> = {
+// Gender-aware quick questions
+const quickQuestions: Record<string, Record<string, Record<string, string[]>>> = {
   iraq: {
-    en: [
-      "What's a good skincare routine for Baghdad's heat?",
-      "How to treat acne scars?",
-      "Best vitamins for hair growth?",
-      "Morning vs night skincare routine?",
-    ],
-    ar: [
-      "شنو أحسن روتين للعناية بالبشرة بحر بغداد؟",
-      "شلون أعالج آثار حب الشباب؟",
-      "شنو أحسن فيتامينات للشعر؟",
-      "روتين الصبح ولا الليل أهم؟",
-    ],
-    ku: [
-      "ڕوتینێکی باشی چاودێری پێست چییە؟",
-      "چۆن شوێنی دانەکان چارەسەر بکەم؟",
-      "باشترین ڤیتامین بۆ قژ چییە؟",
-      "ڕوتینی بەیانی یان شەو باشترە؟",
-    ],
+    male: {
+      en: [
+        "Best face wash for oily skin in Baghdad heat?",
+        "How to grow a thicker beard?",
+        "Hair loss solutions for men?",
+        "Best SPF for men's skin?",
+      ],
+      ar: [
+        "شنو أحسن غسول للبشرة الدهنية بحر بغداد؟",
+        "شلون أكثف لحيتي؟",
+        "شنو أحسن علاج لتساقط الشعر للرجال؟",
+        "شنو أحسن واقي شمس للرجال؟",
+      ],
+      ku: [
+        "باشترین شۆری دەموچاو بۆ پێستی چەور چییە؟",
+        "چۆن ڕیشم ئەستوورتر بکەم؟",
+        "چارەسەری ڕژانی قژ بۆ پیاوان چییە؟",
+        "باشترین واقی خۆر بۆ پیاوان چییە؟",
+      ],
+    },
+    female: {
+      en: [
+        "What's a good skincare routine for Baghdad's heat?",
+        "How to treat acne scars?",
+        "Best vitamins for hair growth?",
+        "Morning vs night skincare routine?",
+      ],
+      ar: [
+        "شنو أحسن روتين للعناية بالبشرة بحر بغداد؟",
+        "شلون أعالج آثار حب الشباب؟",
+        "شنو أحسن فيتامينات للشعر؟",
+        "روتين الصبح ولا الليل أهم؟",
+      ],
+      ku: [
+        "ڕوتینێکی باشی چاودێری پێست چییە؟",
+        "چۆن شوێنی دانەکان چارەسەر بکەم؟",
+        "باشترین ڤیتامین بۆ قژ چییە؟",
+        "ڕوتینی بەیانی یان شەو باشترە؟",
+      ],
+    },
   },
   kurdistan: {
-    en: [
-      "Best skincare for Kurdistan's cold winters?",
-      "How to protect skin from dry weather in Erbil?",
-      "Recommend a gentle cleanser for sensitive skin",
-      "Morning routine for glowing skin?",
-    ],
-    ar: [
-      "شنو أحسن كريم للشتاء البارد بكوردستان؟",
-      "شلون أحمي بشرتي من الجو الجاف بأربيل؟",
-      "رشحيلي غسول لطيف للبشرة الحساسة",
-      "روتين الصبح لبشرة مشرقة؟",
-    ],
-    ku: [
-      "باشترین کریم بۆ زستانی ساردی کوردستان چییە؟",
-      "چۆن پێستم بپارێزم لە کەشی وشکی هەولێر؟",
-      "پاککەرەوەیەکی نەرم بۆ پێستی هەستیار پێشنیار بکە",
-      "ڕوتینی بەیانی بۆ پێستی درەوشاوە؟",
-    ],
+    male: {
+      en: [
+        "Best moisturizer for Kurdistan's cold winters?",
+        "How to prevent dry skin in Erbil?",
+        "Beard care routine for Kurdish men?",
+        "Best cologne for daily wear?",
+      ],
+      ar: [
+        "شنو أحسن مرطب لشتاء كوردستان البارد؟",
+        "شلون أمنع جفاف البشرة بأربيل؟",
+        "روتين العناية باللحية؟",
+        "شنو أحسن عطر للاستخدام اليومي؟",
+      ],
+      ku: [
+        "باشترین شێداری بۆ زستانی ساردی کوردستان چییە؟",
+        "چۆن لە وشکبوونی پێست لە هەولێر بپارێزم؟",
+        "ڕوتینی چاودێری ڕیش بۆ پیاوانی کورد؟",
+        "باشترین عەتر بۆ بەکارهێنانی ڕۆژانە؟",
+      ],
+    },
+    female: {
+      en: [
+        "Best skincare for Kurdistan's cold winters?",
+        "How to protect skin from dry weather in Erbil?",
+        "Recommend a gentle cleanser for sensitive skin",
+        "Morning routine for glowing skin?",
+      ],
+      ar: [
+        "شنو أحسن كريم للشتاء البارد بكوردستان؟",
+        "شلون أحمي بشرتي من الجو الجاف بأربيل؟",
+        "رشحيلي غسول لطيف للبشرة الحساسة",
+        "روتين الصبح لبشرة مشرقة؟",
+      ],
+      ku: [
+        "باشترین کریم بۆ زستانی ساردی کوردستان چییە؟",
+        "چۆن پێستم بپارێزم لە کەشی وشکی هەولێر؟",
+        "پاککەرەوەیەکی نەرم بۆ پێستی هەستیار پێشنیار بکە",
+        "ڕوتینی بەیانی بۆ پێستی درەوشاوە؟",
+      ],
+    },
   },
 };
 
-function getGreeting(language: string, name: string | null, isKurdistan: boolean): { greeting: string; subtitle: string } {
+function getGreeting(language: string, name: string | null, isKurdistan: boolean, gender: string | null): { greeting: string; subtitle: string } {
   const hour = new Date().getHours();
   const firstName = name?.split(" ")[0] || null;
+  const isMale = gender === "male";
 
   if (isKurdistan) {
     if (language === "ku") {
       const timeGreeting = hour < 12 ? "بەیانیت باش" : hour < 18 ? "ڕۆژت باش" : "ئێوارەت باش";
       return {
-        greeting: firstName ? `${timeGreeting} ${firstName}! 💕` : `${timeGreeting}! 💕`,
-        subtitle: "چۆنی گیانم؟ من ئیلارام، هاوڕێی جوانکاریت لە هەولێر ✨",
+        greeting: firstName ? `${timeGreeting} ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
+        subtitle: isMale 
+          ? "چۆنی برام؟ من ئیلارام، پسپۆڕی چاودێری پێست و تەندروستیت لە هەولێر ✨"
+          : "چۆنی گیانم؟ من ئیلارام، هاوڕێی جوانکاریت لە هەولێر ✨",
       };
     }
     if (language === "ar") {
       const timeGreeting = hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء النور";
       return {
-        greeting: firstName ? `${timeGreeting} ${firstName}! 💕` : `${timeGreeting}! 💕`,
-        subtitle: "شلونك؟ أنا إيلارا، صيدلانيتك من أربيل ✨",
+        greeting: firstName ? `${timeGreeting} ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
+        subtitle: isMale
+          ? "شلونك أخي؟ أنا إيلارا، صيدلانيتك من أربيل ✨"
+          : "شلونك؟ أنا إيلارا، صيدلانيتك من أربيل ✨",
       };
     }
     const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
     return {
-      greeting: firstName ? `${timeGreeting}, ${firstName}! 💕` : `${timeGreeting}! 💕`,
-      subtitle: "How are you? I'm Elara, your beauty bestie from Erbil ✨",
+      greeting: firstName ? `${timeGreeting}, ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
+      subtitle: isMale
+        ? "What's up? I'm Elara, your grooming & skincare expert from Erbil ✨"
+        : "How are you? I'm Elara, your beauty bestie from Erbil ✨",
     };
   }
 
@@ -98,50 +150,56 @@ function getGreeting(language: string, name: string | null, isKurdistan: boolean
   if (language === "ar") {
     const timeGreeting = hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء النور";
     return {
-      greeting: firstName ? `${timeGreeting} ${firstName}! 💕` : `${timeGreeting}! 💕`,
-      subtitle: "شلونچ اليوم يا گلبي؟ أنا إيلارا، صيدلانيتچ من بغداد ✨",
+      greeting: firstName ? `${timeGreeting} ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
+      subtitle: isMale
+        ? "شلونك يا بطل؟ أنا إيلارا، صيدلانيتك من بغداد ✨"
+        : "شلونچ اليوم يا گلبي؟ أنا إيلارا، صيدلانيتچ من بغداد ✨",
     };
   }
   if (language === "ku") {
     const timeGreeting = hour < 12 ? "بەیانیت باش" : hour < 18 ? "ڕۆژت باش" : "ئێوارەت باش";
     return {
-      greeting: firstName ? `${timeGreeting} ${firstName}! 💕` : `${timeGreeting}! 💕`,
-      subtitle: "چۆنی ئەمڕۆ؟ من ئیلارام، پسپۆڕی جوانکاریت ✨",
+      greeting: firstName ? `${timeGreeting} ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
+      subtitle: isMale
+        ? "چۆنی برام؟ من ئیلارام، پسپۆڕی تەندروستی و چاودێری پێستت ✨"
+        : "چۆنی ئەمڕۆ؟ من ئیلارام، پسپۆڕی جوانکاریت ✨",
     };
   }
   const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   return {
-    greeting: firstName ? `${timeGreeting}, ${firstName}! 💕` : `${timeGreeting}! 💕`,
-    subtitle: "How are you doing today? I'm Elara, your beauty bestie from Baghdad ✨",
+    greeting: firstName ? `${timeGreeting}, ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
+    subtitle: isMale
+      ? "What's up? I'm Elara, your grooming & skincare expert from Baghdad ✨"
+      : "How are you doing today? I'm Elara, your beauty bestie from Baghdad ✨",
   };
 }
 
-function getContextualTips(language: string, isKurdistan: boolean): { icon: React.ReactNode; text: string }[] {
+function getContextualTips(language: string, isKurdistan: boolean, gender: string | null): { icon: React.ReactNode; text: string }[] {
   const month = new Date().getMonth();
   const tips: { icon: React.ReactNode; text: string }[] = [];
+  const isMale = gender === "male";
 
   if (isKurdistan) {
-    // Kurdistan-specific
     if (language === "ku") {
       if (month >= 4 && month <= 8) {
-        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "هەوا گەرمە لە هەولێر 🥵 واقی خۆرت لەبیر نەچێت SPF 50+!" });
+        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: isMale ? "هەوا گەرمە لە هەولێر 🥵 واقی خۆرت لەبیر نەچێت SPF 50+!" : "هەوا گەرمە لە هەولێر 🥵 واقی خۆرت لەبیر نەچێت SPF 50+!" });
       } else if (month >= 10 || month <= 2) {
-        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "زستانی کوردستان وشک و ساردە ❄️ پێستت پێویستی بە شێداری زۆرە!" });
+        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: isMale ? "زستانی کوردستان وشک و ساردە ❄️ پێستت پێویستی بە شێداری زۆرە!" : "زستانی کوردستان وشک و ساردە ❄️ پێستت پێویستی بە شێداری زۆرە!" });
       }
       if (month === 2) {
-        tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "نەورۆز پیرۆزبێت! 🌷🔥 ئامادەبە بۆ جەژنەکە بە پێستێکی درەوشاوە" });
+        tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "نەورۆز پیرۆزبێت! 🌷🔥" });
       }
-      tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "هەر پرسیارێکت هەیە دەربارەی جوانکاری بپرسە گیانم 💆‍♀️" });
+      tips.push({ icon: isMale ? <Dumbbell className="w-4 h-4 text-blue-500" /> : <Heart className="w-4 h-4 text-pink-400" />, text: isMale ? "هەر پرسیارێکت هەیە دەربارەی چاودێری پێست و ڕیش بپرسە برام 💪" : "هەر پرسیارێکت هەیە دەربارەی جوانکاری بپرسە گیانم 💆‍♀️" });
     } else if (language === "ar") {
       if (month >= 4 && month <= 8) {
-        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "الجو حار بأربيل 🥵 لا تنسي واقي شمس SPF 50+!" });
+        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: isMale ? "الجو حار بأربيل 🥵 لا تنسى واقي شمس SPF 50+!" : "الجو حار بأربيل 🥵 لا تنسي واقي شمس SPF 50+!" });
       } else if (month >= 10 || month <= 2) {
-        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "شتاء كوردستان بارد وجاف ❄️ بشرتك تحتاج ترطيب مكثف!" });
+        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: isMale ? "شتاء كوردستان بارد وجاف ❄️ بشرتك تحتاج ترطيب مكثف!" : "شتاء كوردستان بارد وجاف ❄️ بشرتك تحتاج ترطيب مكثف!" });
       }
       if (month === 2) {
-        tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "نوروز مبارك! 🌷🔥 جهزي لوكك للعيد" });
+        tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "نوروز مبارك! 🌷🔥" });
       }
-      tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "اسأليني عن أي شي يخص جمالك 💆‍♀️" });
+      tips.push({ icon: isMale ? <Dumbbell className="w-4 h-4 text-blue-500" /> : <Heart className="w-4 h-4 text-pink-400" />, text: isMale ? "اسألني عن العناية بالبشرة واللحية يا بطل 💪" : "اسأليني عن أي شي يخص جمالك 💆‍♀️" });
     } else {
       if (month >= 4 && month <= 8) {
         tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "Summer in Kurdistan 🥵 Don't skip SPF 50+ sunscreen!" });
@@ -149,29 +207,29 @@ function getContextualTips(language: string, isKurdistan: boolean): { icon: Reac
         tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "Kurdistan winters are cold & dry ❄️ Extra hydration is key!" });
       }
       if (month === 2) {
-        tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "Happy Newroz! 🌷🔥 Get your glow ready for the celebration" });
+        tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "Happy Newroz! 🌷🔥" });
       }
-      tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "Ask me anything about skincare and beauty 💆‍♀️" });
+      tips.push({ icon: isMale ? <Dumbbell className="w-4 h-4 text-blue-500" /> : <Heart className="w-4 h-4 text-pink-400" />, text: isMale ? "Ask me about skincare, beard care, or grooming 💪" : "Ask me anything about skincare and beauty 💆‍♀️" });
     }
   } else {
     // Iraqi Arab
     if (language === "ar") {
       if (month >= 4 && month <= 8) {
-        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "الجو حار هواية ببغداد 🥵 لا تنسين واقي الشمس SPF 50+ كل يوم!" });
+        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: isMale ? "الجو حار هواية ببغداد 🥵 لا تنسى واقي الشمس SPF 50+ كل يوم!" : "الجو حار هواية ببغداد 🥵 لا تنسين واقي الشمس SPF 50+ كل يوم!" });
       } else if (month >= 10 || month <= 2) {
-        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "الجو بارد وجاف هالفترة ❄️ بشرتچ تحتاج ترطيب مكثف!" });
+        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: isMale ? "الجو بارد وجاف هالفترة ❄️ بشرتك تحتاج ترطيب مكثف!" : "الجو بارد وجاف هالفترة ❄️ بشرتچ تحتاج ترطيب مكثف!" });
       }
       if (month === 2 || month === 3) {
-        tips.push({ icon: <Heart className="w-4 h-4 text-primary" />, text: "رمضان كريم 🌙 خليني أساعدچ تحافظين على بشرتچ خلال الصيام" });
+        tips.push({ icon: <Heart className="w-4 h-4 text-primary" />, text: isMale ? "رمضان كريم 🌙 خليني أساعدك تحافظ على بشرتك خلال الصيام" : "رمضان كريم 🌙 خليني أساعدچ تحافظين على بشرتچ خلال الصيام" });
       }
-      tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "اسأليني عن أي شي يخص بشرتچ وشعرچ وجمالچ يا گلبي 💆‍♀️" });
+      tips.push({ icon: isMale ? <Dumbbell className="w-4 h-4 text-blue-500" /> : <Heart className="w-4 h-4 text-pink-400" />, text: isMale ? "اسألني عن العناية بالبشرة واللحية والشعر يا بطل 💪" : "اسأليني عن أي شي يخص بشرتچ وشعرچ وجمالچ يا گلبي 💆‍♀️" });
     } else if (language === "ku") {
       if (month >= 4 && month <= 8) {
         tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "کەش زۆر گەرمە ئەم ڕۆژانە 🥵 واقی خۆرت لەبیر نەچێت!" });
       } else if (month >= 10 || month <= 2) {
         tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "کەش ساردە ئەم ماوەیە ❄️ پێستت پێویستی بە شێداری زۆرە!" });
       }
-      tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "هەر پرسیارێکت هەیە دەربارەی پێست و قژ بپرسە 💆‍♀️" });
+      tips.push({ icon: isMale ? <Dumbbell className="w-4 h-4 text-blue-500" /> : <Heart className="w-4 h-4 text-pink-400" />, text: isMale ? "هەر پرسیارێکت هەیە دەربارەی پێست و قژ بپرسە برام 💪" : "هەر پرسیارێکت هەیە دەربارەی پێست و قژ بپرسە 💆‍♀️" });
     } else {
       if (month >= 4 && month <= 8) {
         tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "It's scorching in Baghdad 🥵 Don't skip SPF 50+ sunscreen!" });
@@ -181,11 +239,25 @@ function getContextualTips(language: string, isKurdistan: boolean): { icon: Reac
       if (month === 2 || month === 3) {
         tips.push({ icon: <Heart className="w-4 h-4 text-primary" />, text: "Ramadan Kareem 🌙 Let me help you maintain your skin routine during fasting" });
       }
-      tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "Ask me anything about skincare, hair care, or beauty 💆‍♀️" });
+      tips.push({ icon: isMale ? <Dumbbell className="w-4 h-4 text-blue-500" /> : <Heart className="w-4 h-4 text-pink-400" />, text: isMale ? "Ask me about skincare, beard care, or grooming 💪" : "Ask me anything about skincare, hair care, or beauty 💆‍♀️" });
     }
   }
 
   return tips.slice(0, 3);
+}
+
+function getPlaceholder(language: string, gender: string | null): string {
+  const isMale = gender === "male";
+  if (language === "ar") return isMale ? "اسألني عن العناية بالبشرة واللحية... 💪" : "اسأليني أي شي عن الجمال... 💕";
+  if (language === "ku") return isMale ? "هەر شتێکم لێ بپرسە دەربارەی چاودێری پێست... 💪" : "هەر شتێکم لێ بپرسە... 💕";
+  return isMale ? "Ask me about skincare & grooming... 💪" : "Ask me anything about beauty... 💕";
+}
+
+function getTryAskingLabel(language: string, gender: string | null): string {
+  const isMale = gender === "male";
+  if (language === "ar") return isMale ? "جرب تسألني 👇" : "جربي تسأليني 👇";
+  if (language === "ku") return "بپرسە لێم 👇";
+  return "Try asking me 👇";
 }
 
 const ElaraChatPage = () => {
@@ -209,6 +281,16 @@ const ElaraChatPage = () => {
   const userFullName = user?.user_metadata?.full_name || null;
   const userName = userFullName ? userFullName.split(" ")[0] : null;
 
+  // Get user's profile for gender + other data
+  const { data: userProfile } = useQuery({
+    queryKey: ["profile-chat", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("gender, full_name, birthdate").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   // Get user's city for region detection
   const { data: defaultAddress } = useQuery({
     queryKey: ["default-address-chat", user?.id],
@@ -218,11 +300,17 @@ const ElaraChatPage = () => {
     },
     enabled: !!user,
   });
+
   const userCity = defaultAddress?.city || null;
   const isKurdistan = isKurdistanUser(userCity);
+  const userGender = userProfile?.gender || user?.user_metadata?.gender || null;
+  const displayName = userProfile?.full_name ? userProfile.full_name.split(" ")[0] : userName;
+  const userBirthdate = userProfile?.birthdate || user?.user_metadata?.birthdate || null;
 
-  const greeting = useMemo(() => getGreeting(language, userName, isKurdistan), [language, userName, isKurdistan]);
-  const contextualTips = useMemo(() => getContextualTips(language, isKurdistan), [language, isKurdistan]);
+  const greeting = useMemo(() => getGreeting(language, displayName, isKurdistan, userGender), [language, displayName, isKurdistan, userGender]);
+  const contextualTips = useMemo(() => getContextualTips(language, isKurdistan, userGender), [language, isKurdistan, userGender]);
+  const placeholder = useMemo(() => getPlaceholder(language, userGender), [language, userGender]);
+  const tryAskingLabel = useMemo(() => getTryAskingLabel(language, userGender), [language, userGender]);
 
   const { data: conversations = [] } = useQuery({
     queryKey: ["chat-conversations", user?.id],
@@ -253,7 +341,6 @@ const ElaraChatPage = () => {
   // Scroll to top on page load (landing view), scroll to bottom only during conversations
   useEffect(() => {
     if (messages.length === 0 && !isLoading) {
-      // Landing view — scroll to top
       scrollRef.current?.scrollTo({ top: 0 });
       return;
     }
@@ -312,7 +399,7 @@ const ElaraChatPage = () => {
           const product = products.find(p => p.id === part.id);
           const image = product?.image || "/placeholder.svg";
           return (
-            <div key={i} className="flex items-center gap-3 my-2 p-2.5 rounded-xl bg-secondary/70 border border-border transition-all">
+            <motion.div key={i} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 my-2 p-2.5 rounded-xl bg-secondary/70 border border-border transition-all hover:border-primary/30">
               <Link to={`/product/${part.id}`} className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="w-12 h-12 rounded-lg bg-card overflow-hidden flex-shrink-0">
                   <img src={image} alt={part.title} className="w-full h-full object-cover" />
@@ -332,7 +419,7 @@ const ElaraChatPage = () => {
               >
                 <ShoppingCart className="w-4 h-4 text-primary-foreground" />
               </button>
-            </div>
+            </motion.div>
           );
         })}
       </div>
@@ -347,7 +434,14 @@ const ElaraChatPage = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ messages: allMessages, user_name: userName, user_gender: user?.user_metadata?.gender || null, user_birthdate: user?.user_metadata?.birthdate || null, user_city: userCity, user_language: language }),
+      body: JSON.stringify({
+        messages: allMessages,
+        user_name: displayName,
+        user_gender: userGender,
+        user_birthdate: userBirthdate,
+        user_city: userCity,
+        user_language: language,
+      }),
     });
 
     if (!resp.ok) {
@@ -474,6 +568,14 @@ const ElaraChatPage = () => {
     el.style.height = Math.min(el.scrollHeight, 96) + "px";
   };
 
+  const genderKey = userGender === "male" ? "male" : "female";
+  const regionKey = isKurdistan ? "kurdistan" : "iraq";
+  const currentQuickQuestions = quickQuestions[regionKey]?.[genderKey]?.[language] || quickQuestions[regionKey]?.[genderKey]?.en || [];
+
+  const headerSubtitle = userGender === "male" 
+    ? (language === "ar" ? "خبير العناية بالبشرة 💪" : language === "ku" ? "پسپۆڕی چاودێری پێست 💪" : "Your Grooming Expert 💪")
+    : (language === "ar" ? "صديقتك بالجمال 💕" : language === "ku" ? "هاوڕێی جوانکاریت 💕" : "Your Beauty Bestie 💕");
+
   return (
     <div className="fixed inset-0 flex flex-col bg-background" style={{ height: '100dvh' }}>
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
@@ -492,7 +594,7 @@ const ElaraChatPage = () => {
               </div>
               <div>
                 <h1 className="text-sm font-display font-bold text-foreground">ELARA AI</h1>
-                <p className="text-[10px] text-muted-foreground">Your Beauty Bestie 💕</p>
+                <p className="text-[10px] text-muted-foreground">{headerSubtitle}</p>
               </div>
             </div>
           </div>
@@ -540,7 +642,7 @@ const ElaraChatPage = () => {
               </div>
               <div>
                 <h2 className="text-sm font-display font-bold text-foreground">ELARA AI</h2>
-                <p className="text-[10px] text-muted-foreground">Your Beauty Bestie 💕</p>
+                <p className="text-[10px] text-muted-foreground">{headerSubtitle}</p>
               </div>
             </div>
             <button onClick={startNewChat} className="p-2 rounded-xl hover:bg-secondary transition-colors" title="New chat">
@@ -621,9 +723,9 @@ const ElaraChatPage = () => {
                   className="w-full max-w-md space-y-2"
                 >
                   <p className="text-xs font-medium text-muted-foreground mb-2">
-                    {language === "ar" ? "جربي تسأليني 👇" : language === "ku" ? "بپرسە لێم 👇" : "Try asking me 👇"}
+                    {tryAskingLabel}
                   </p>
-                  {(quickQuestions[isKurdistan ? "kurdistan" : "iraq"][language] || quickQuestions[isKurdistan ? "kurdistan" : "iraq"].en).map((q, i) => (
+                  {currentQuickQuestions.map((q, i) => (
                     <motion.button key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.06 }} onClick={() => sendMessage(q)}
                       className="w-full text-left rtl:text-right p-3 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-sm transition-all text-sm text-foreground"
                     >
@@ -636,18 +738,30 @@ const ElaraChatPage = () => {
               <>
                 {messages.map((msg, i) => (
                   <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[88%] md:max-w-[65%] rounded-2xl px-4 py-3 overflow-hidden ${msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-md" : "bg-card border border-border rounded-bl-md"}`}>
+                    {msg.role === "assistant" && (
+                      <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center flex-shrink-0 mt-1 mr-2 rtl:mr-0 rtl:ml-2">
+                        <Sparkles className="w-3 h-3 text-primary-foreground" />
+                      </div>
+                    )}
+                    <div className={`max-w-[85%] md:max-w-[65%] rounded-2xl px-4 py-3 overflow-hidden ${msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-md" : "bg-card border border-border rounded-bl-md"}`}>
                       {msg.role === "assistant" ? renderAssistantContent(msg.content) : <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>}
                     </div>
                   </motion.div>
                 ))}
                 {isLoading && messages[messages.length - 1]?.role === "user" && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center flex-shrink-0 mt-1 mr-2 rtl:mr-0 rtl:ml-2">
+                      <Sparkles className="w-3 h-3 text-primary-foreground" />
+                    </div>
                     <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                        <div className="flex gap-1">
+                          <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </div>
                         <span className="text-xs text-muted-foreground">
-                          {language === "ar" ? "أفكر... 💭" : language === "ku" ? "بیر دەکەمەوە... 💭" : "Thinking... 💭"}
+                          {language === "ar" ? "أفكر..." : language === "ku" ? "بیر دەکەمەوە..." : "Thinking..."}
                         </span>
                       </div>
                     </div>
@@ -664,7 +778,7 @@ const ElaraChatPage = () => {
             <div className="md:hidden px-3 pb-2" style={{ paddingBottom: `calc(68px + env(safe-area-inset-bottom, 0px))` }}>
               <form onSubmit={handleSubmit} className="flex items-end gap-2 glass-heavy border border-border/30 rounded-2xl p-2 shadow-float">
                 <textarea ref={inputRef} value={input} onChange={handleTextareaChange} onKeyDown={handleKeyDown}
-                  placeholder={language === "ar" ? "اسأليني أي شي عن الجمال... 💕" : language === "ku" ? "هەر شتێکم لێ بپرسە... 💕" : "Ask me anything about beauty... 💕"}
+                  placeholder={placeholder}
                   rows={1}
                   className="flex-1 bg-transparent text-foreground text-sm px-3 py-2 resize-none outline-none placeholder:text-muted-foreground max-h-24"
                   style={{ minHeight: "36px" }}
@@ -679,7 +793,7 @@ const ElaraChatPage = () => {
             <div className="hidden md:block px-8 pb-6 pt-2 border-t border-border bg-background">
               <form onSubmit={handleSubmit} className="flex items-end gap-3 bg-card border border-border rounded-2xl p-3 shadow-sm max-w-3xl mx-auto">
                 <textarea ref={inputRef} value={input} onChange={handleTextareaChange} onKeyDown={handleKeyDown}
-                  placeholder={language === "ar" ? "اسأليني أي شي عن الجمال... 💕" : language === "ku" ? "هەر شتێکم لێ بپرسە... 💕" : "Ask me anything about beauty... 💕"}
+                  placeholder={placeholder}
                   rows={1}
                   className="flex-1 bg-transparent text-foreground text-sm px-3 py-2 resize-none outline-none placeholder:text-muted-foreground max-h-32"
                   style={{ minHeight: "40px" }}
