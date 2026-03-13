@@ -40,6 +40,11 @@ import AdminCoupons from "./pages/admin/AdminCoupons";
 
 const queryClient = new QueryClient();
 
+const SwipeBackWrapper = ({ children }: { children: React.ReactNode }) => {
+  useSwipeBack();
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -48,6 +53,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <SwipeBackWrapper>
             <Routes>
               <Route path="/" element={<AuthPage />} />
               <Route path="/home" element={<Index />} />
