@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronRight, Heart, MapPin, Settings, Package, LogOut, Sparkles, MessageCircle, Info, HelpCircle, FileText } from "lucide-react";
+import { ArrowLeft, ChevronRight, Heart, MapPin, Settings, Package, LogOut, Sparkles, MessageCircle, Info, HelpCircle, FileText, Lock } from "lucide-react";
 import BottomNav from "@/components/layout/BottomNav";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,6 +36,7 @@ const ProfilePage = () => {
     { icon: Info, label: "About ELARA", path: "/about" },
     { icon: HelpCircle, label: "FAQ", path: "/faq" },
     { icon: FileText, label: "Terms & Conditions", path: "/terms" },
+    { icon: Lock, label: "Privacy Policy", path: "/privacy" },
   ];
 
   const handleSignOut = async () => {
