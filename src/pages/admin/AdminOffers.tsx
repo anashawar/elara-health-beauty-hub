@@ -53,6 +53,8 @@ export default function AdminOffers() {
 
   const { data: brands = [] } = useBrands();
   const { data: categories = [] } = useCategories();
+  const { data: allProducts = [] } = useProducts();
+  const [productSearch, setProductSearch] = useState("");
 
   const { data: offers = [], isLoading } = useQuery({
     queryKey: ["admin-offers"],
