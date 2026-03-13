@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import fibLogo from "@/assets/fib-logo.png";
 import { ArrowLeft, Check, MapPin, ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useApp } from "@/context/AppContext";
@@ -98,9 +99,9 @@ const CheckoutPage = () => {
   }
 
   const paymentMethods = [
-    { value: "cod", label: t("checkout.cod"), desc: t("checkout.codDesc"), icon: "💵" },
-    { value: "fib", label: t("checkout.fib"), desc: t("checkout.fibDesc"), icon: "🏦" },
-    { value: "qicard", label: t("checkout.qicard"), desc: t("checkout.qicardDesc"), icon: "💳" },
+    { value: "cod", label: t("checkout.cod"), desc: t("checkout.codDesc"), icon: "💵", image: null },
+    { value: "fib", label: t("checkout.fib"), desc: t("checkout.fibDesc"), icon: null, image: fibLogo },
+    { value: "qicard", label: t("checkout.qicard"), desc: t("checkout.qicardDesc"), icon: "💳", image: null },
   ];
 
   // searchOpen moved to top with other useState hooks
@@ -225,7 +226,11 @@ const CheckoutPage = () => {
                   onChange={() => setPaymentMethod(method.value)}
                   className="accent-primary"
                 />
-                <span className="text-lg">{method.icon}</span>
+                {method.image ? (
+                  <img src={method.image} alt={method.label} className="w-8 h-8 rounded object-contain" />
+                ) : (
+                  <span className="text-lg">{method.icon}</span>
+                )}
                 <div>
                   <p className="text-sm font-medium text-foreground">{method.label}</p>
                   <p className="text-[10px] text-muted-foreground">{method.desc}</p>
