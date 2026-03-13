@@ -16,6 +16,15 @@ const ProfilePage = () => {
   const { t } = useLanguage();
   const [searchOpen, setSearchOpen] = useState(false);
 
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("*").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const { data: chatCount = 0 } = useQuery({
     queryKey: ["chat-count", user?.id],
     queryFn: async () => {
