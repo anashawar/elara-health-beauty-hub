@@ -102,7 +102,7 @@ const CheckoutPage = () => {
   const paymentMethods = [
     { value: "cod", label: t("checkout.cod"), desc: t("checkout.codDesc"), icon: "💵", image: null },
     { value: "fib", label: t("checkout.fib"), desc: t("checkout.fibDesc"), icon: null, image: fibLogo },
-    { value: "qicard", label: t("checkout.qicard"), desc: t("checkout.qicardDesc"), icon: "💳", image: null },
+    { value: "qicard", label: t("checkout.qicard"), desc: t("checkout.qicardDesc"), icon: null, image: qiLogo },
   ];
 
   // searchOpen moved to top with other useState hooks
