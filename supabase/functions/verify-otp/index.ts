@@ -87,10 +87,18 @@ serve(async (req) => {
 
     const existingUsers = await listAllAuthUsers(supabase);
     const userByPhone = existingUsers.find((u: any) => isSamePhone(u.phone, normalizedPhone));
-    const userByEmail = existingUsers.find((u: any) => u.email?.toLowerCase() === userEmail);
+    const userByEmail = userEmail ? existingUsers.find((u: any) => u.email?.toLowerCase() === userEmail) : null;
+
+    // If no email provided (sign-in mode), user must already exist by phone
+    if (!userEmail && !userByPhone) {
+      return new Response(
+        JSON.stringify({ error: "No account found with this phone number. Please sign up first." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Strict one-phone-per-account rule
-    if (userByPhone && userByPhone.email?.toLowerCase() !== userEmail) {
+    if (userEmail && userByPhone && userByPhone.email?.toLowerCase() !== userEmail) {
       return new Response(
         JSON.stringify({ error: "This phone number is already linked to another account" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -98,7 +106,7 @@ serve(async (req) => {
     }
 
     // Strict one-email-per-account rule
-    if (userByEmail && !isSamePhone(userByEmail.phone, normalizedPhone)) {
+    if (userEmail && userByEmail && !isSamePhone(userByEmail.phone, normalizedPhone)) {
       return new Response(
         JSON.stringify({ error: "This email is already linked to another phone number" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
