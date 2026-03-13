@@ -197,7 +197,7 @@ const SettingsPage = () => {
                     className="hidden"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">{t("settings.changePhoto") || "Tap to change photo"}</p>
+                <p className="text-xs text-muted-foreground">{t("settings.changePhoto")}</p>
               </div>
 
               <div className="bg-card rounded-2xl p-4 shadow-premium space-y-4">
