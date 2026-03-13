@@ -320,9 +320,10 @@ const AddressesPage = () => {
 
                   <Input value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))} placeholder={t("auth.area")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                   <Input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder={t("auth.streetPlaceholder")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-2">
                     <Input value={form.building} onChange={e => setForm(f => ({ ...f, building: e.target.value }))} placeholder={t("auth.building")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                     <Input value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} placeholder={t("auth.floor")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                    <Input value={form.apartment} onChange={e => setForm(f => ({ ...f, apartment: e.target.value }))} placeholder={t("auth.apartment") || "Apt"} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                   </div>
                   <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder={t("auth.phoneNumber")} type="tel" className="h-11 rounded-xl bg-secondary border-border text-sm" />
                   <Button onClick={handleSave} disabled={saveMutation.isPending} className="w-full h-11 rounded-xl text-sm font-semibold">
