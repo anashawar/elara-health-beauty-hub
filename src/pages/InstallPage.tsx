@@ -34,7 +34,7 @@ const InstallPage = () => {
 
   if (isInstalled) {
     return (
-      <div className="min-h-screen bg-background max-w-lg mx-auto flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-background max-w-lg mx-auto flex flex-col items-center justify-center px-6 safe-area-top">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
