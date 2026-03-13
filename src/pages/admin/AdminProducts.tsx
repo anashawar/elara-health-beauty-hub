@@ -696,9 +696,74 @@ export default function AdminProducts() {
             columns={productBulkColumns}
             onImport={handleBulkImport}
           />
+        {/* Quick Add Dialog */}
+        <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="default" className="bg-primary">
+              <Sparkles className="h-4 w-4 mr-1.5" />Quick Add + AI
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Quick Add Products
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">Just enter name & cost. AI will fill everything else: description, brand, category, benefits, pricing (+35%), and find images.</p>
+            <div className="grid gap-3 mt-2 max-h-[50vh] overflow-y-auto pr-1">
+              {quickAddItems.map((item, idx) => (
+                <div key={idx} className="flex gap-2 items-center">
+                  <Input
+                    placeholder="Product name (e.g. CeraVe Moisturizer)"
+                    value={item.name}
+                    onChange={(e) => {
+                      const updated = [...quickAddItems];
+                      updated[idx].name = e.target.value;
+                      setQuickAddItems(updated);
+                    }}
+                    className="flex-1"
+                  />
+                  <Input
+                    placeholder="Cost (IQD)"
+                    type="number"
+                    value={item.cost}
+                    onChange={(e) => {
+                      const updated = [...quickAddItems];
+                      updated[idx].cost = e.target.value;
+                      setQuickAddItems(updated);
+                    }}
+                    className="w-28"
+                  />
+                  {quickAddItems.length > 1 && (
+                    <Button size="icon" variant="ghost" className="shrink-0" onClick={() => setQuickAddItems(prev => prev.filter((_, i) => i !== idx))}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Button size="sm" variant="outline" onClick={() => setQuickAddItems(prev => [...prev, { name: "", cost: "" }])}>
+                <Plus className="h-4 w-4 mr-1" />Add Row
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => {
+                const rows = Array(10).fill(null).map(() => ({ name: "", cost: "" }));
+                setQuickAddItems(prev => [...prev, ...rows]);
+              }}>
+                +10 Rows
+              </Button>
+            </div>
+            <Button className="w-full mt-3" onClick={handleQuickAdd} disabled={enriching || quickAddItems.every(i => !i.name.trim())}>
+              <Sparkles className="h-4 w-4 mr-1.5" />
+              Create & Auto-Enrich {quickAddItems.filter(i => i.name.trim() && i.cost.trim()).length} Products
+            </Button>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); else setOpen(true); }}>
           <DialogTrigger asChild>
-            <Button size="sm"><Plus className="h-4 w-4 mr-1.5" />Add Product</Button>
+            <Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1.5" />Manual Add</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
