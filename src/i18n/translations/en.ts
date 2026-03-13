@@ -263,6 +263,13 @@ export const en = {
     defaultUpdated: "Default address updated",
     updateAddress: "Update Address",
     saveAddress: "Save Address",
+    gpsLocation: "📍 GPS Location",
+    useMyLocation: "Use my current location",
+    gettingLocation: "Getting location...",
+    locationCaptured: "📍 Location captured!",
+    locationSaved: "📍 Location saved",
+    locationDenied: "Location permission denied",
+    locationError: "Could not get location. Please enable GPS.",
   },
   settings: {
     title: "Settings",

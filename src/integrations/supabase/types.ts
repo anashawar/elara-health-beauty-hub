@@ -24,6 +24,8 @@ export type Database = {
           id: string
           is_default: boolean | null
           label: string | null
+          latitude: number | null
+          longitude: number | null
           phone: string | null
           street: string | null
           updated_at: string
@@ -38,6 +40,8 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           label?: string | null
+          latitude?: number | null
+          longitude?: number | null
           phone?: string | null
           street?: string | null
           updated_at?: string
@@ -52,6 +56,8 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           label?: string | null
+          latitude?: number | null
+          longitude?: number | null
           phone?: string | null
           street?: string | null
           updated_at?: string
