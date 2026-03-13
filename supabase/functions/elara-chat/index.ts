@@ -90,12 +90,23 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, user_name } = await req.json();
+    const { messages, user_name, user_gender, user_birthdate } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    // Calculate age from birthdate
+    let userAge: number | null = null;
+    if (user_birthdate) {
+      const birth = new Date(user_birthdate);
+      const today = new Date();
+      userAge = today.getFullYear() - birth.getFullYear();
+      if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) {
+        userAge--;
+      }
+    }
+
     const catalog = await getProductCatalog();
-    const systemPrompt = buildSystemPrompt(catalog, user_name || null);
+    const systemPrompt = buildSystemPrompt(catalog, user_name || null, user_gender || null, userAge);
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
