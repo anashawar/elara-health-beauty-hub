@@ -226,7 +226,11 @@ const CheckoutPage = () => {
                   onChange={() => setPaymentMethod(method.value)}
                   className="accent-primary"
                 />
-                <span className="text-lg">{method.icon}</span>
+                {method.image ? (
+                  <img src={method.image} alt={method.label} className="w-8 h-8 rounded object-contain" />
+                ) : (
+                  <span className="text-lg">{method.icon}</span>
+                )}
                 <div>
                   <p className="text-sm font-medium text-foreground">{method.label}</p>
                   <p className="text-[10px] text-muted-foreground">{method.desc}</p>
