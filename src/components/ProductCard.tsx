@@ -57,7 +57,6 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
             >
               {outOfStock ? (t("product.outOfStock") || "Out of Stock") : <><Plus className="w-3 h-3" /> {t("product.add")}</>}
             </button>
-            </button>
             <button
               onClick={() => toggleWishlist(product.id)}
               className="p-2 rounded-xl bg-secondary hover:bg-accent transition-colors"
