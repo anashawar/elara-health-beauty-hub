@@ -123,12 +123,6 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
                     <span className="text-sm">👤</span>
                   )}
                 </Link>
-                <Link to="/addresses" className="flex items-center gap-1 mt-0.5">
-                  <MapPin className="w-3 h-3 text-primary" />
-                  <span className="text-[10px] text-muted-foreground font-medium">
-                    {userCity ? `${userCity}, ${t("common.iraq")}` : t("common.setLocation") || "Set location"}
-                  </span>
-                </Link>
               </>
             ) : (
               <Link to="/auth" className="text-xs font-medium text-primary hover:underline">
