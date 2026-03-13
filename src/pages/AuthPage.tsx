@@ -194,7 +194,7 @@ const AuthPage = () => {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (!currentUser) { toast(t("auth.signInFirst")); return; }
 
-      const { error } = await supabase.from("addresses").insert({
+      const payload: any = {
         user_id: currentUser.id,
         label: "Home",
         city,
@@ -204,7 +204,10 @@ const AuthPage = () => {
         floor: floor || null,
         phone: normalizedPhone || null,
         is_default: true,
-      });
+        latitude: gpsLat,
+        longitude: gpsLng,
+      };
+      const { error } = await supabase.from("addresses").insert(payload);
 
       if (error) { toast(error.message); return; }
 
