@@ -57,6 +57,8 @@ function getPublicUrl(path: string) {
 export default function AdminProducts() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 50;
   const [open, setOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [form, setForm] = useState<ProductForm>(emptyForm);
@@ -289,6 +291,12 @@ export default function AdminProducts() {
   const filtered = products.filter((p: any) =>
     p.title.toLowerCase().includes(search.toLowerCase())
   );
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginatedProducts = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Reset to page 1 when search changes
+  const handleSearch = (val: string) => { setSearch(val); setPage(1); };
 
   const openEdit = async (p: any) => {
     // Fetch cost from separate admin-only table
@@ -1075,12 +1083,14 @@ export default function AdminProducts() {
 
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Input className="pl-9" placeholder="Search products..." value={search} onChange={(e) => handleSearch(e.target.value)} />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{filtered.length} products</span>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       ) : (
+        <>
         <div className="rounded-xl border border-border overflow-hidden">
           <Table>
             <TableHeader>
@@ -1096,7 +1106,7 @@ export default function AdminProducts() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((p: any) => {
+              {paginatedProducts.map((p: any) => {
                 const cost = costMap[p.id];
                 const margin = cost !== undefined && cost > 0 ? ((p.price - cost) / cost * 100) : null;
                 return (
@@ -1158,6 +1168,31 @@ export default function AdminProducts() {
             </TableBody>
           </Table>
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-sm text-muted-foreground">
+              Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+            </p>
+            <div className="flex gap-1">
+              <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(1)}>First</Button>
+              <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Prev</Button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                const pg = start + i;
+                if (pg > totalPages) return null;
+                return (
+                  <Button key={pg} size="sm" variant={pg === page ? "default" : "outline"} onClick={() => setPage(pg)}>
+                    {pg}
+                  </Button>
+                );
+              })}
+              <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next</Button>
+              <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage(totalPages)}>Last</Button>
+            </div>
+          </div>
+        )}
+        </>
       )}
     </div>
   );
