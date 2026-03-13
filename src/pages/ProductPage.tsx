@@ -21,6 +21,7 @@ const ProductPage = () => {
   }, [id]);
   const navigate = useNavigate();
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
+  const { user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
