@@ -102,8 +102,10 @@ export default function AdminOffers() {
         discount_type: f.discount_type,
         discount_value: f.discount_value,
         target_type: f.target_type,
-        target_id: f.target_id || null,
-        target_name: f.target_name || null,
+        target_id: f.target_type === "product" && f.target_id?.includes(",") ? null : (f.target_id || null),
+        target_name: f.target_type === "product" && f.target_id?.includes(",") 
+          ? `${f.target_id}||${f.target_name}` 
+          : (f.target_name || null),
         link_url: f.link_url || null,
         banner_style: f.banner_style,
         is_active: f.is_active,
