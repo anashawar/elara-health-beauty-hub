@@ -51,10 +51,12 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
           </div>
           <div className="flex items-center gap-1.5 mt-2">
             <button
-              onClick={() => addToCart(product)}
-              className="flex-1 flex items-center justify-center gap-1 bg-primary text-primary-foreground text-[11px] font-semibold py-2 rounded-xl hover:opacity-90 transition-opacity"
+              onClick={() => !outOfStock && addToCart(product)}
+              disabled={outOfStock}
+              className={`flex-1 flex items-center justify-center gap-1 text-[11px] font-semibold py-2 rounded-xl transition-opacity ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90"}`}
             >
-              <Plus className="w-3 h-3" /> {t("product.add")}
+              {outOfStock ? (t("product.outOfStock") || "Out of Stock") : <><Plus className="w-3 h-3" /> {t("product.add")}</>}
+            </button>
             </button>
             <button
               onClick={() => toggleWishlist(product.id)}
