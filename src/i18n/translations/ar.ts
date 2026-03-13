@@ -269,6 +269,8 @@ export const ar = {
     english: "English",
     arabic: "العربية",
     kurdish: "کوردی",
+    changePhoto: "غيّر صورتك",
+    photoUpdated: "تم تحديث صورة الحساب!",
   },
   categories: {
     title: "الأقسام",
