@@ -263,6 +263,13 @@ export const ku = {
     defaultUpdated: "ناونیشانی بنچینە نوێ کرایەوە",
     updateAddress: "ناونیشانەکە نوێ بکەوە",
     saveAddress: "ناونیشانەکە پاشەکەوت بکە",
+    gpsLocation: "📍 شوێنی GPS",
+    useMyLocation: "شوێنی ئێستام بەکاربهێنە",
+    gettingLocation: "شوێن دەدۆزرێتەوە...",
+    locationCaptured: "📍 شوێنەکە تۆمار کرا!",
+    locationSaved: "📍 شوێنەکە پاشەکەوت کرا",
+    locationDenied: "ڕێگەپێدانی شوێن ڕەتکرایەوە",
+    locationError: "نەتوانرا شوێنت بدۆزرێتەوە. GPS چالاک بکە.",
   },
   settings: {
     title: "ڕێکخستنەکان",

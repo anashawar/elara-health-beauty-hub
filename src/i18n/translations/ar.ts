@@ -263,6 +263,13 @@ export const ar = {
     defaultUpdated: "تم تحديث العنوان الأساسي",
     updateAddress: "حدّث العنوان",
     saveAddress: "احفظ العنوان",
+    gpsLocation: "📍 الموقع الجغرافي",
+    useMyLocation: "استخدم موقعي الحالي",
+    gettingLocation: "جاري تحديد الموقع...",
+    locationCaptured: "📍 تم تحديد الموقع!",
+    locationSaved: "📍 تم حفظ الموقع",
+    locationDenied: "تم رفض صلاحية الموقع",
+    locationError: "ما كدرنا نحدد موقعك. فعّل GPS.",
   },
   settings: {
     title: "الإعدادات",
