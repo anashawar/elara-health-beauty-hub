@@ -172,6 +172,34 @@ const SettingsPage = () => {
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="px-4 md:px-6 mt-4 space-y-4">
               <LanguageSelector />
 
+              {/* Avatar Upload */}
+              <div className="bg-card rounded-2xl p-4 shadow-premium flex flex-col items-center gap-3">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent overflow-hidden flex items-center justify-center">
+                    {(profile as any)?.avatar_url ? (
+                      <img src={(profile as any).avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-3xl">👤</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:opacity-90 transition-opacity"
+                  >
+                    {uploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">{t("settings.changePhoto") || "Tap to change photo"}</p>
+              </div>
+
               <div className="bg-card rounded-2xl p-4 shadow-premium space-y-4">
                 <h3 className="text-sm font-bold text-foreground">{t("settings.profileInfo")}</h3>
                 <div className="space-y-2">
