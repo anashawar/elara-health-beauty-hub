@@ -57,14 +57,13 @@ serve(async (req) => {
   try {
     const { phone, code, full_name, email } = await req.json();
     if (!phone || !code) throw new Error("Phone and code are required");
-    if (!email?.trim()) throw new Error("Email is required");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const normalizedPhone = normalizeIraqPhone(phone);
-    const userEmail = email.trim().toLowerCase();
+    const userEmail = email?.trim()?.toLowerCase() || null;
     const tempPassword = `phone_${normalizedPhone}_${Date.now()}`;
 
     // Find valid OTP
