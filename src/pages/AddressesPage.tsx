@@ -24,12 +24,13 @@ interface AddressForm {
   street: string;
   building: string;
   floor: string;
+  apartment: string;
   phone: string;
   latitude: number | null;
   longitude: number | null;
 }
 
-const emptyForm: AddressForm = { label: "Home", city: "", area: "", street: "", building: "", floor: "", phone: "", latitude: null, longitude: null };
+const emptyForm: AddressForm = { label: "Home", city: "", area: "", street: "", building: "", floor: "", apartment: "", phone: "", latitude: null, longitude: null };
 
 const AddressesPage = () => {
   const { user, loading: authLoading } = useAuth();
@@ -109,6 +110,7 @@ const AddressesPage = () => {
         street: data.street || null,
         building: data.building || null,
         floor: data.floor || null,
+        apartment: data.apartment || null,
         phone: data.phone || null,
         latitude: data.latitude,
         longitude: data.longitude,
@@ -163,6 +165,7 @@ const AddressesPage = () => {
       street: addr.street || "",
       building: addr.building || "",
       floor: addr.floor || "",
+      apartment: addr.apartment || "",
       phone: addr.phone || "",
       latitude: addr.latitude || null,
       longitude: addr.longitude || null,
@@ -318,9 +321,10 @@ const AddressesPage = () => {
 
                   <Input value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))} placeholder={t("auth.area")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                   <Input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder={t("auth.streetPlaceholder")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-2">
                     <Input value={form.building} onChange={e => setForm(f => ({ ...f, building: e.target.value }))} placeholder={t("auth.building")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                     <Input value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} placeholder={t("auth.floor")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                    <Input value={form.apartment} onChange={e => setForm(f => ({ ...f, apartment: e.target.value }))} placeholder={t("auth.apartment") || "Apt"} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                   </div>
                   <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder={t("auth.phoneNumber")} type="tel" className="h-11 rounded-xl bg-secondary border-border text-sm" />
                   <Button onClick={handleSave} disabled={saveMutation.isPending} className="w-full h-11 rounded-xl text-sm font-semibold">
@@ -377,7 +381,7 @@ const AddressesPage = () => {
                   </div>
                   <p className="text-sm text-foreground">{addr.city}</p>
                   <p className="text-xs text-muted-foreground">
-                    {[addr.area, addr.street, addr.building, addr.floor].filter(Boolean).join(", ")}
+                    {[addr.area, addr.street, addr.building, addr.floor, (addr as any).apartment].filter(Boolean).join(", ")}
                   </p>
                   {addr.phone && <p className="text-xs text-muted-foreground mt-1">📞 {addr.phone}</p>}
                   {!addr.is_default && (

@@ -48,6 +48,7 @@ const AuthPage = () => {
   const [street, setStreet] = useState("");
   const [building, setBuilding] = useState("");
   const [floor, setFloor] = useState("");
+  const [apartment, setApartment] = useState("");
   const [gpsLat, setGpsLat] = useState<number | null>(null);
   const [gpsLng, setGpsLng] = useState<number | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
@@ -202,6 +203,7 @@ const AuthPage = () => {
         street: street || null,
         building: building || null,
         floor: floor || null,
+        apartment: apartment || null,
         phone: normalizedPhone || null,
         is_default: true,
         latitude: gpsLat,
@@ -607,7 +609,7 @@ const AuthPage = () => {
                   <Input value={street} onChange={e => setStreet(e.target.value)} placeholder={t("auth.streetPlaceholder")} className="h-11 rounded-2xl bg-muted/40 border-border/60 text-sm focus:bg-card transition-colors" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-muted-foreground">{t("auth.building")}</label>
                     <Input value={building} onChange={e => setBuilding(e.target.value)} placeholder={t("auth.building")} className="h-11 rounded-2xl bg-muted/40 border-border/60 text-sm focus:bg-card transition-colors" />
@@ -615,6 +617,10 @@ const AuthPage = () => {
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-muted-foreground">{t("auth.floor")}</label>
                     <Input value={floor} onChange={e => setFloor(e.target.value)} placeholder={t("auth.floor")} className="h-11 rounded-2xl bg-muted/40 border-border/60 text-sm focus:bg-card transition-colors" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">{t("auth.apartment") || "Apt"}</label>
+                    <Input value={apartment} onChange={e => setApartment(e.target.value)} placeholder={t("auth.apartment") || "Apt"} className="h-11 rounded-2xl bg-muted/40 border-border/60 text-sm focus:bg-card transition-colors" />
                   </div>
                 </div>
               </div>

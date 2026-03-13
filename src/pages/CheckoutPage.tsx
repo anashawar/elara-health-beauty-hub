@@ -151,7 +151,7 @@ const CheckoutPage = () => {
               <div>
                 <p className="text-sm font-medium text-foreground">{selectedAddress.label || t("addresses.title")} — {selectedAddress.city}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {[selectedAddress.area, selectedAddress.street, selectedAddress.building, selectedAddress.floor].filter(Boolean).join(", ")}
+                  {[selectedAddress.area, selectedAddress.street, selectedAddress.building, selectedAddress.floor, (selectedAddress as any).apartment].filter(Boolean).join(", ")}
                 </p>
                 {selectedAddress.phone && (
                   <p className="text-xs text-muted-foreground mt-0.5">📞 {selectedAddress.phone}</p>

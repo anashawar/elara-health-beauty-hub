@@ -223,6 +223,7 @@ export const ar = {
     streetPlaceholder: "اسم أو رقم الشارع",
     building: "البناية",
     floor: "الطابق",
+    apartment: "الشقة",
     skipForNow: "بعدين",
     saving: "يحفظ...",
     welcomeToElara: "أهلاً بيك بإيلارا، {{name}}!",
