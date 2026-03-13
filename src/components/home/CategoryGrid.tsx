@@ -30,32 +30,41 @@ const CategoryGrid = () => {
     return cat.name;
   };
 
-  return (
-    <section className="px-4 mt-5">
-      <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
-        {displayCategories.map((cat, i) => {
-          const style = categoryStyles[cat.slug] || { bg: "from-primary/90 to-primary/60" };
-          return (
-            <motion.div
-              key={cat.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.04, duration: 0.3 }}
-              className="flex-shrink-0"
+  // Split into 2 rows
+  const row1 = displayCategories.slice(0, 4);
+  const row2 = displayCategories.slice(4);
+
+  const renderRow = (items: typeof displayCategories, offset: number) => (
+    <div className="flex gap-2.5 overflow-x-auto no-scrollbar">
+      {items.map((cat, i) => {
+        const style = categoryStyles[cat.slug] || { bg: "from-primary/90 to-primary/60" };
+        return (
+          <motion.div
+            key={cat.id}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: (offset + i) * 0.04, duration: 0.3 }}
+            className="flex-shrink-0"
+          >
+            <Link
+              to={`/category/${cat.slug}`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r ${style.bg} shadow-sm hover:shadow-premium hover:scale-105 active:scale-95 transition-all duration-300`}
             >
-              <Link
-                to={`/category/${cat.slug}`}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r ${style.bg} shadow-sm hover:shadow-premium hover:scale-105 active:scale-95 transition-all duration-300`}
-              >
-                <span className="text-lg drop-shadow-sm">{cat.icon}</span>
-                <span className="text-[12px] font-bold text-white whitespace-nowrap tracking-wide">
-                  {getCatName(cat)}
-                </span>
-              </Link>
-            </motion.div>
-          );
-        })}
-      </div>
+              <span className="text-lg drop-shadow-sm">{cat.icon}</span>
+              <span className="text-[12px] font-bold text-white whitespace-nowrap tracking-wide">
+                {getCatName(cat)}
+              </span>
+            </Link>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <section className="px-4 mt-5 flex flex-col gap-2.5">
+      {renderRow(row1, 0)}
+      {row2.length > 0 && renderRow(row2, row1.length)}
     </section>
   );
 };
