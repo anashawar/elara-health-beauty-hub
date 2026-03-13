@@ -10,6 +10,7 @@ import BrandsSection from "@/components/home/BrandsSection";
 import AskElaraCard from "@/components/home/AskElaraCard";
 import DealsBanner from "@/components/home/DealsBanner";
 import OffersBanner from "@/components/home/OffersBanner";
+import TodayOffersSlider from "@/components/home/TodayOffersSlider";
 import SearchOverlay from "@/components/SearchOverlay";
 import { useProducts } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -42,6 +43,7 @@ const Index = () => {
           <>
             <AskElaraCard />
             <ProductSection title={t("home.trendingNow")} subtitle={t("home.mostPopular")} products={trending} viewAllLink="/collection/trending" variant="trending" />
+            <TodayOffersSlider />
             <OffersBanner />
             <BrandsSection />
             <ConcernsSection />
