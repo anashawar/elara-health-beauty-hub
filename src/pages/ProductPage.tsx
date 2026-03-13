@@ -54,7 +54,7 @@ const ProductPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-36 max-w-lg mx-auto">
+    <div className="min-h-screen bg-background pb-36 app-container">
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
