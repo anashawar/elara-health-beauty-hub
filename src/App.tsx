@@ -23,6 +23,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import InstallPage from "./pages/InstallPage";
 import ElaraChatPage from "./pages/ElaraChatPage";
 import AboutPage from "./pages/AboutPage";
+import FAQPage from "./pages/FAQPage";
 import AuthGuard from "./components/AuthGuard";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
