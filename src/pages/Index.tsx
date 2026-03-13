@@ -39,9 +39,9 @@ const Index = () => {
           </div>
         ) : (
           <>
+            <AskElaraCard />
             <ProductSection title={t("home.trendingNow")} subtitle={t("home.mostPopular")} products={trending} viewAllLink="/categories" variant="trending" />
             <BrandsSection />
-            <AskElaraCard />
             <ConcernsSection />
             <DealsBanner />
             <ProductSection title={t("home.elaraPicks")} subtitle={t("home.curatedForYou")} products={picks} viewAllLink="/categories" />
