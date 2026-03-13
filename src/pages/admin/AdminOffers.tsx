@@ -387,15 +387,22 @@ export default function AdminOffers() {
               </div>
 
               {/* Toggles */}
-              <div className="flex items-center gap-6 flex-wrap">
+              <div className="space-y-3">
                 <label className="flex items-center gap-2 text-sm">
                   <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
                   <span className={form.is_active ? "text-emerald-600 font-medium" : "text-muted-foreground"}>Active</span>
                 </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <Switch checked={form.show_as_banner} onCheckedChange={(v) => setForm({ ...form, show_as_banner: v })} />
-                  <span className={form.show_as_banner ? "text-primary font-medium" : "text-muted-foreground"}>Show on Home Banner</span>
-                </label>
+                <div>
+                  <Label>Show on Home Page</Label>
+                  <Select value={form.banner_style} onValueChange={(v) => setForm({ ...form, banner_style: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Don't show on home</SelectItem>
+                      <SelectItem value="hero">Main Hero Banner (full-width, big)</SelectItem>
+                      <SelectItem value="gallery">Gallery Banner (carousel with others)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <Button onClick={() => saveMutation.mutate(form)} disabled={!form.title || saveMutation.isPending || uploading}>
