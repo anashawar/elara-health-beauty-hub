@@ -65,6 +65,12 @@ function scoreImage(url: string, titleWords: string[], brandSlug: string): numbe
   // Low-res penalty
   if (/_thumb|_xs\.|_sm\.|\/thumb\/|\/small\/|_50x|_75x|_100x|_150x/i.test(lower)) score -= 8;
 
+  // Boost: white/clean background indicators (common in e-commerce product shots)
+  if (/white|clean|studio|packshot|_1\./i.test(lower)) score += 3;
+
+  // Boost: first/main product image (usually _1 or _01)
+  if (/[_-](1|01)\.\w+$/.test(lower)) score += 4;
+
   return score;
 }
 
@@ -147,9 +153,9 @@ serve(async (req) => {
       const titleWords = product.title.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
       const fullName = `${brandName} ${product.title}`.trim();
 
-      // Multiple search strategies — from most specific to broader
+      // Multiple search strategies — first query targets white background product shots
       const searchQueries = [
-        `"${fullName}" product photo`,
+        `"${fullName}" product white background`,
         `${fullName} site:lookfantastic.com OR site:notino.com OR site:caretobeauty.com OR site:iherb.com`,
         `${fullName} site:amazon.com OR site:sephora.com OR site:beautybay.com OR site:boots.com`,
       ];
@@ -213,14 +219,33 @@ serve(async (req) => {
           continue;
         }
 
-        // Sort, deduplicate, verify
+        // Sort, deduplicate aggressively — only keep genuinely different images
         candidates.sort((a, b) => b.score - a.score);
         const seen = new Set<string>();
         const uniqueCandidates: string[] = [];
+
         for (const c of candidates) {
-          const norm = c.url.split("?")[0].toLowerCase().replace(/\/+$/, "");
-          if (seen.has(norm)) continue;
-          seen.add(norm);
+          // Extract base filename for aggressive dedup
+          const urlPath = c.url.split("?")[0].toLowerCase().replace(/\/+$/, "");
+          // Get the core filename without size/CDN params
+          const filename = urlPath.split("/").pop() || "";
+          // Strip size suffixes: _2, _1, dimensions like 1600x1600
+          const baseFile = filename
+            .replace(/\.\w+$/, "")                    // remove extension
+            .replace(/_\d+$/, "")                      // remove trailing _N
+            .replace(/[-_]\d{3,4}x\d{3,4}/g, "")     // remove dimensions
+            .replace(/[-_](large|medium|small|xl|xxl)/gi, ""); // remove size labels
+
+          // Skip if we already have an image with the same base filename
+          if (seen.has(baseFile)) {
+            console.log(`⊘ Duplicate base "${baseFile}": ${c.url}`);
+            continue;
+          }
+          // Also skip if URL path (without query) is identical
+          if (seen.has(urlPath)) continue;
+
+          seen.add(baseFile);
+          seen.add(urlPath);
           uniqueCandidates.push(c.url);
           if (uniqueCandidates.length >= 12) break;
         }
