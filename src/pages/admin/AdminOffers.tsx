@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Loader2, Search, Percent, Tag, Eye, EyeOff, Image as ImageIcon, Upload } from "lucide-react";
-import { useBrands, useCategories, formatPrice } from "@/hooks/useProducts";
+import { useBrands, useCategories, useProducts, formatPrice } from "@/hooks/useProducts";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
