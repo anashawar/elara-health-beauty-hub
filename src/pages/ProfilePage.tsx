@@ -36,6 +36,7 @@ const ProfilePage = () => {
     { icon: Info, label: "About ELARA", path: "/about" },
     { icon: HelpCircle, label: "FAQ", path: "/faq" },
     { icon: FileText, label: "Terms & Conditions", path: "/terms" },
+    { icon: Lock, label: "Privacy Policy", path: "/privacy" },
   ];
 
   const handleSignOut = async () => {
