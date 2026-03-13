@@ -43,6 +43,7 @@ const Index = () => {
           <>
             <AskElaraCard />
             <ProductSection title={t("home.trendingNow")} subtitle={t("home.mostPopular")} products={trending} viewAllLink="/collection/trending" variant="trending" />
+            <TodayOffersSlider />
             <OffersBanner />
             <BrandsSection />
             <ConcernsSection />
