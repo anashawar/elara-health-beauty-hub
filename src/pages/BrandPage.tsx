@@ -94,7 +94,7 @@ const BrandPage = () => {
       ) : (
         <>
           <div className="px-4 mt-5 mb-3" />
-          <div className="grid grid-cols-2 gap-3 px-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4">
             {brandProducts.map((product, idx) => (
               <motion.div
                 key={product.id}
