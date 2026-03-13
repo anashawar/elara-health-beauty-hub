@@ -24,12 +24,13 @@ interface AddressForm {
   street: string;
   building: string;
   floor: string;
+  apartment: string;
   phone: string;
   latitude: number | null;
   longitude: number | null;
 }
 
-const emptyForm: AddressForm = { label: "Home", city: "", area: "", street: "", building: "", floor: "", phone: "", latitude: null, longitude: null };
+const emptyForm: AddressForm = { label: "Home", city: "", area: "", street: "", building: "", floor: "", apartment: "", phone: "", latitude: null, longitude: null };
 
 const AddressesPage = () => {
   const { user, loading: authLoading } = useAuth();
