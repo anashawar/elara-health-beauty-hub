@@ -213,14 +213,33 @@ serve(async (req) => {
           continue;
         }
 
-        // Sort, deduplicate, verify
+        // Sort, deduplicate aggressively — only keep genuinely different images
         candidates.sort((a, b) => b.score - a.score);
         const seen = new Set<string>();
         const uniqueCandidates: string[] = [];
+
         for (const c of candidates) {
-          const norm = c.url.split("?")[0].toLowerCase().replace(/\/+$/, "");
-          if (seen.has(norm)) continue;
-          seen.add(norm);
+          // Extract base filename for aggressive dedup
+          const urlPath = c.url.split("?")[0].toLowerCase().replace(/\/+$/, "");
+          // Get the core filename without size/CDN params
+          const filename = urlPath.split("/").pop() || "";
+          // Strip size suffixes: _2, _1, dimensions like 1600x1600
+          const baseFile = filename
+            .replace(/\.\w+$/, "")                    // remove extension
+            .replace(/_\d+$/, "")                      // remove trailing _N
+            .replace(/[-_]\d{3,4}x\d{3,4}/g, "")     // remove dimensions
+            .replace(/[-_](large|medium|small|xl|xxl)/gi, ""); // remove size labels
+
+          // Skip if we already have an image with the same base filename
+          if (seen.has(baseFile)) {
+            console.log(`⊘ Duplicate base "${baseFile}": ${c.url}`);
+            continue;
+          }
+          // Also skip if URL path (without query) is identical
+          if (seen.has(urlPath)) continue;
+
+          seen.add(baseFile);
+          seen.add(urlPath);
           uniqueCandidates.push(c.url);
           if (uniqueCandidates.length >= 12) break;
         }
