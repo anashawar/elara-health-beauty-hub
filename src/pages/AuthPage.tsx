@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, ArrowRight, Loader2, ShieldCheck, Mail, Sparkles } from "lucide-react";
+import { User, ArrowRight, Loader2, ShieldCheck, Mail, Sparkles, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
