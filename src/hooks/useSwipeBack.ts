@@ -8,9 +8,20 @@ export function useSwipeBack() {
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0];
-      // Only trigger from the left edge (first 30px)
-      if (touch.clientX <= 30) {
+      // Only trigger from the left edge (first 24px) — tighter to avoid conflicts with horizontal scrollers
+      if (touch.clientX <= 24) {
         touchStart.current = { x: touch.clientX, y: touch.clientY };
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      // Cancel if the gesture becomes too vertical
+      if (!touchStart.current) return;
+      const touch = e.touches[0];
+      const dy = Math.abs(touch.clientY - touchStart.current.y);
+      const dx = touch.clientX - touchStart.current.x;
+      if (dy > dx * 0.6) {
+        touchStart.current = null;
       }
     };
 
