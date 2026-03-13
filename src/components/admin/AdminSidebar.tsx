@@ -7,6 +7,8 @@ import {
   Tag,
   Ticket,
   LogOut,
+  Home,
+  Sparkles,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -25,6 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import elaraLogo from "@/assets/elara-logo.png";
 
 const navItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
@@ -52,17 +55,25 @@ export default function AdminSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
         {!collapsed ? (
-          <h1 className="text-lg font-display font-bold text-sidebar-foreground tracking-tight">
-            ELARA <span className="text-xs font-sans font-normal text-muted-foreground ml-1">Admin</span>
-          </h1>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-base font-display font-bold text-sidebar-foreground tracking-tight">ELARA</h1>
+              <p className="text-[10px] text-muted-foreground font-medium -mt-0.5">Admin Console</p>
+            </div>
+          </div>
         ) : (
-          <span className="text-lg font-display font-bold text-sidebar-foreground">E</span>
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center mx-auto">
+            <Sparkles className="w-5 h-5 text-primary-foreground" />
+          </div>
         )}
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/70 font-bold">Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (
@@ -75,8 +86,8 @@ export default function AdminSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/admin"}
-                      className="hover:bg-sidebar-accent/50"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      className="hover:bg-primary/5 rounded-xl transition-all"
+                      activeClassName="bg-primary/10 text-primary font-semibold"
                     >
                       <item.icon className="h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
@@ -87,13 +98,30 @@ export default function AdminSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Quick link back to store */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/70 font-bold">Quick Links</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="View Store">
+                  <NavLink to="/home" className="hover:bg-primary/5 rounded-xl transition-all" activeClassName="">
+                    <Home className="h-4 w-4" />
+                    {!collapsed && <span>View Store</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
         <Button
           variant="ghost"
           size={collapsed ? "icon" : "default"}
-          className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive"
+          className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-xl"
           onClick={async () => {
             await signOut();
             navigate("/auth");
