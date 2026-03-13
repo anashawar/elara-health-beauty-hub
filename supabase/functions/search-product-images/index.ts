@@ -221,7 +221,7 @@ serve(async (req) => {
 
             for (const imgUrl of pageImages) {
               if (!imgUrl.startsWith("http")) continue;
-              const score = scoreImage(imgUrl, titleWords, brandSlug);
+              const score = scoreImage(imgUrl, titleWords, brandSlug, volumeStr);
               if (score > 0) {
                 candidates.push({ url: upgradeToHighRes(imgUrl), score });
               }
