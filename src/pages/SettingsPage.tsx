@@ -35,8 +35,8 @@ const SettingsPage = () => {
   });
 
   useEffect(() => {
-    if (profile) { setFullName(profile.full_name || ""); setPhone(profile.phone || ""); }
-    else if (user) { setFullName(user.user_metadata?.full_name || ""); }
+    if (profile) { setFullName(profile.full_name || ""); setPhone(profile.phone || ""); setGender((profile as any).gender || ""); setBirthdate((profile as any).birthdate || ""); }
+    else if (user) { setFullName(user.user_metadata?.full_name || ""); setGender(user.user_metadata?.gender || ""); setBirthdate(user.user_metadata?.birthdate || ""); }
   }, [profile, user]);
 
   const saveMutation = useMutation({
