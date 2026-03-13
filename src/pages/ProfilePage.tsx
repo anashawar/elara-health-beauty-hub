@@ -34,6 +34,7 @@ const ProfilePage = () => {
     { icon: MapPin, label: t("profile.addresses"), path: "/addresses" },
     { icon: Settings, label: t("profile.settings"), path: "/settings" },
     { icon: Info, label: "About ELARA", path: "/about" },
+    { icon: HelpCircle, label: "FAQ", path: "/faq" },
   ];
 
   const handleSignOut = async () => {
