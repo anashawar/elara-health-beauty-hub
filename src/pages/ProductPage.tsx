@@ -50,6 +50,7 @@ const ProductPage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
   const { data: allProducts = [] } = useProducts();
+  const { data: activeOffers = [] } = useActiveOffers();
   const product = allProducts.find(p => p.id === id);
 
   if (!product) {
@@ -61,9 +62,14 @@ const ProductPage = () => {
   }
 
   const wishlisted = isInWishlist(product.id);
-  const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-    : 0;
+  const offerPricing = getOfferForProduct(product, activeOffers);
+  const displayPrice = offerPricing ? offerPricing.discountedPrice : product.price;
+  const originalDisplayPrice = offerPricing ? product.price : product.originalPrice;
+  const discount = offerPricing
+    ? offerPricing.discountPercent
+    : product.originalPrice
+      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+      : 0;
 
   const related = allProducts.filter(p => p.category_slug === product.category_slug && p.id !== product.id).slice(0, 4);
 
