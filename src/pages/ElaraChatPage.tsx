@@ -114,7 +114,7 @@ function getContextualTips(language: string): { icon: React.ReactNode; text: str
 
 const ElaraChatPage = () => {
   const { t, language } = useLanguage();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { data: products = [] } = useProducts();
   const { addToCart } = useApp();
   const queryClient = useQueryClient();
