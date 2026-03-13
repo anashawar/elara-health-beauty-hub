@@ -104,7 +104,7 @@ const CheckoutPage = () => {
     { value: "qicard", label: t("checkout.qicard"), desc: t("checkout.qicardDesc"), icon: "💳" },
   ];
 
-  const [searchOpen, setSearchOpen] = useState(false);
+  // searchOpen moved to top with other useState hooks
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8">
