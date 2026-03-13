@@ -44,7 +44,7 @@ const emptyForm: ProductForm = {
   title: "", slug: "", price: 0, original_price: null, cost: null, description: "",
   usage_instructions: "", benefits: "",
   category_id: "", subcategory_id: "", brand_id: "", is_new: false, is_trending: false, is_pick: false, in_stock: true,
-  volume_ml: "", volume_unit: "ml", skin_type: "", country_of_origin: "", condition: "",
+  volume_ml: "", volume_unit: "ml", skin_type: "", country_of_origin: "", condition: "", product_form: "",
 };
 
 const BUCKET = "product-images";
