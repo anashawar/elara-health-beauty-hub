@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { Search, MapPin, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import elaraLogo from "@/assets/elara-logo.png";
@@ -6,15 +7,63 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+function getTimeGreeting(lang: string): string {
+  const hour = new Date().getHours();
+  const greetings: Record<string, { morning: string; afternoon: string; evening: string; night: string }> = {
+    en: { morning: "Good morning", afternoon: "Good afternoon", evening: "Good evening", night: "Good night" },
+    ar: { morning: "صباح الخير", afternoon: "مساء الخير", evening: "مساء النور", night: "تصبح على خير" },
+    ku: { morning: "بەیانیت باش", afternoon: "نیوەڕۆت باش", evening: "ئێوارەت باش", night: "شەوت باش" },
+  };
+  const g = greetings[lang] || greetings.en;
+  if (hour < 12) return g.morning;
+  if (hour < 17) return g.afternoon;
+  if (hour < 21) return g.evening;
+  return g.night;
+}
+
+function getRandomGreeting(lang: string, name: string): string {
+  const timeGreet = getTimeGreeting(lang);
+  const templates: Record<string, string[]> = {
+    en: [
+      `Hey, ${name} 👋`,
+      `Welcome back, ${name} ✨`,
+      `${timeGreet}, ${name} ☀️`,
+      `Hi there, ${name} 💕`,
+      `Great to see you, ${name} 🌸`,
+      `Hello, ${name} 😊`,
+    ],
+    ar: [
+      `هلا ${name} 👋`,
+      `أهلاً بعودتك، ${name} ✨`,
+      `${timeGreet} ${name} ☀️`,
+      `نورتنا، ${name} 💕`,
+      `يا هلا ${name} 🌸`,
+      `مرحبا ${name} 😊`,
+    ],
+    ku: [
+      `سڵاو ${name} 👋`,
+      `بەخێربێیتەوە، ${name} ✨`,
+      `${timeGreet} ${name} ☀️`,
+      `چۆنی ${name} 💕`,
+      `خۆشحاڵم بە بینینت، ${name} 🌸`,
+    ],
+  };
+  const list = templates[lang] || templates.en;
+  // Use day-of-year so it changes daily but stays consistent within a session
+  const dayIndex = Math.floor((Date.now() / 86400000)) % list.length;
+  return list[dayIndex];
+}
+
 interface TopHeaderProps {
   onSearchClick: () => void;
 }
 
 const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || t("common.guest");
+  const greeting = useMemo(() => getRandomGreeting(language, firstName), [language, firstName]);
 
   const { data: defaultAddress } = useQuery({
     queryKey: ["default-address", user?.id],
