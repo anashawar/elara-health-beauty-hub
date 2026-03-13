@@ -33,6 +33,8 @@ const AuthPage = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [gender, setGender] = useState("");
+  const [birthdate, setBirthdate] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [normalizedPhone, setNormalizedPhone] = useState("");
   const [loading, setLoading] = useState(false);
