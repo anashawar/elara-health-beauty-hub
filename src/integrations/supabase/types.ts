@@ -306,6 +306,69 @@ export type Database = {
         }
         Relationships: []
       }
+      offers: {
+        Row: {
+          created_at: string
+          description: string | null
+          discount_type: string
+          discount_value: number
+          ends_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          link_url: string | null
+          show_as_banner: boolean
+          sort_order: number | null
+          starts_at: string | null
+          subtitle: string | null
+          target_id: string | null
+          target_name: string | null
+          target_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          link_url?: string | null
+          show_as_banner?: boolean
+          sort_order?: number | null
+          starts_at?: string | null
+          subtitle?: string | null
+          target_id?: string | null
+          target_name?: string | null
+          target_type?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          link_url?: string | null
+          show_as_banner?: boolean
+          sort_order?: number | null
+          starts_at?: string | null
+          subtitle?: string | null
+          target_id?: string | null
+          target_name?: string | null
+          target_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
