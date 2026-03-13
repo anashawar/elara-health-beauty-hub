@@ -1140,7 +1140,10 @@ export default function AdminProducts() {
                       )}
                       <div>
                         <p className="font-medium text-sm text-foreground line-clamp-1">{p.title}</p>
-                        <p className="text-xs text-muted-foreground">{p.brands?.name}</p>
+                        <p className="text-xs text-muted-foreground">{p.brands?.name || "—"}</p>
+                        {(!p.description || !p.brand_id || !p.category_id) && (
+                          <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">Needs AI</span>
+                        )}
                       </div>
                     </div>
                   </TableCell>
