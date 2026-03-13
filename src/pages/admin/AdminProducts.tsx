@@ -107,9 +107,18 @@ export default function AdminProducts() {
   const { data: allCosts = [] } = useQuery({
     queryKey: ["admin-product-costs-list"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("product_costs").select("product_id, cost");
-      if (error) throw error;
-      return data || [];
+      // Fetch all costs (may exceed 1000 default limit)
+      let all: any[] = [];
+      let from = 0;
+      const PAGE = 1000;
+      while (true) {
+        const { data, error } = await supabase.from("product_costs").select("product_id, cost").range(from, from + PAGE - 1);
+        if (error) throw error;
+        all = all.concat(data || []);
+        if (!data || data.length < PAGE) break;
+        from += PAGE;
+      }
+      return all;
     },
   });
 
@@ -840,8 +849,8 @@ export default function AdminProducts() {
                   <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: +e.target.value })} />
                 </div>
                 <div>
-                  <Label>Original Price</Label>
-                  <Input type="number" value={form.original_price ?? ""} onChange={(e) => setForm({ ...form, original_price: e.target.value ? +e.target.value : null })} />
+                  <Label>Discounted Price</Label>
+                  <Input type="number" placeholder="Leave empty if no discount" value={form.original_price ?? ""} onChange={(e) => setForm({ ...form, original_price: e.target.value ? +e.target.value : null })} />
                 </div>
                 <div>
                   <Label>Cost (IQD) 🔒</Label>
