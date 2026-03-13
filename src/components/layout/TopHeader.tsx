@@ -96,7 +96,7 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
             {user ? (
               <>
                 <span className="text-xs font-medium text-foreground">
-                  {t("common.hey")}, <span className="font-bold text-primary">{firstName}</span> 👋
+                  {greeting}
                 </span>
                 <Link to="/addresses" className="flex items-center gap-1 mt-0.5">
                   <MapPin className="w-3 h-3 text-primary" />
