@@ -29,6 +29,7 @@ interface ProductForm {
   is_new: boolean;
   is_trending: boolean;
   is_pick: boolean;
+  in_stock: boolean;
   volume_ml: string;
   skin_type: string;
   country_of_origin: string; // derived from brand, kept for edit compatibility
@@ -38,7 +39,7 @@ interface ProductForm {
 const emptyForm: ProductForm = {
   title: "", slug: "", price: 0, original_price: null, description: "",
   usage_instructions: "", benefits: "",
-  category_id: "", subcategory_id: "", brand_id: "", is_new: false, is_trending: false, is_pick: false,
+  category_id: "", subcategory_id: "", brand_id: "", is_new: false, is_trending: false, is_pick: false, in_stock: true,
   volume_ml: "", skin_type: "", country_of_origin: "", condition: "",
 };
 
@@ -114,6 +115,7 @@ export default function AdminProducts() {
         is_new: f.is_new,
         is_trending: f.is_trending,
         is_pick: f.is_pick,
+        in_stock: f.in_stock,
         volume_ml: f.volume_ml || null,
         skin_type: f.skin_type || null,
         country_of_origin: f.country_of_origin || null,
@@ -250,7 +252,7 @@ export default function AdminProducts() {
       benefits: (p.benefits || []).join("\n"),
       category_id: p.category_id || "", subcategory_id: p.subcategory_id || "",
       brand_id: p.brand_id || "",
-      is_new: p.is_new || false, is_trending: p.is_trending || false, is_pick: p.is_pick || false,
+      is_new: p.is_new || false, is_trending: p.is_trending || false, is_pick: p.is_pick || false, in_stock: p.in_stock !== false,
       volume_ml: p.volume_ml || "", skin_type: p.skin_type || "", country_of_origin: p.country_of_origin || "",
       condition: (p as any).condition || "",
     });
@@ -541,7 +543,11 @@ export default function AdminProducts() {
                 <Label>Skin Type</Label>
                 <Input value={form.skin_type} onChange={(e) => setForm({ ...form, skin_type: e.target.value })} />
               </div>
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-6 flex-wrap">
+                <label className="flex items-center gap-2 text-sm">
+                  <Switch checked={form.in_stock} onCheckedChange={(v) => setForm({ ...form, in_stock: v })} />
+                  <span className={form.in_stock ? "text-sage font-medium" : "text-destructive font-medium"}>{form.in_stock ? "In Stock" : "Out of Stock"}</span>
+                </label>
                 <label className="flex items-center gap-2 text-sm">
                   <Switch checked={form.is_new} onCheckedChange={(v) => setForm({ ...form, is_new: v })} /> New
                 </label>

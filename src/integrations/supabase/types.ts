@@ -506,6 +506,7 @@ export type Database = {
           form: string | null
           gender: string | null
           id: string
+          in_stock: boolean
           is_new: boolean | null
           is_pick: boolean | null
           is_trending: boolean | null
@@ -539,6 +540,7 @@ export type Database = {
           form?: string | null
           gender?: string | null
           id?: string
+          in_stock?: boolean
           is_new?: boolean | null
           is_pick?: boolean | null
           is_trending?: boolean | null
@@ -572,6 +574,7 @@ export type Database = {
           form?: string | null
           gender?: string | null
           id?: string
+          in_stock?: boolean
           is_new?: boolean | null
           is_pick?: boolean | null
           is_trending?: boolean | null

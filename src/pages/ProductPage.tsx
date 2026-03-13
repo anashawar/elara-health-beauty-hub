@@ -66,7 +66,10 @@ const ProductPage = () => {
 
   const related = allProducts.filter(p => p.category_slug === product.category_slug && p.id !== product.id).slice(0, 4);
 
+  const outOfStock = product ? !product.inStock : false;
+
   const handleAddToCart = () => {
+    if (outOfStock) return;
     if (!user) {
       toast(t("auth.signInRequired") || "Please sign in first");
       navigate("/");
@@ -250,9 +253,9 @@ const ProductPage = () => {
 
             {/* Desktop Add to Cart */}
             <div className="hidden md:block mt-5">
-              <motion.button whileTap={{ scale: 0.97 }} onClick={handleAddToCart} className="w-full flex items-center justify-center gap-2.5 bg-primary text-primary-foreground font-bold py-4 rounded-2xl shadow-lg hover:opacity-90 transition-opacity text-sm">
+              <motion.button whileTap={{ scale: outOfStock ? 1 : 0.97 }} onClick={handleAddToCart} disabled={outOfStock} className={`w-full flex items-center justify-center gap-2.5 font-bold py-4 rounded-2xl shadow-lg transition-opacity text-sm ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
                 <ShoppingBag className="w-5 h-5" />
-                {t("product.addToCart")}
+                {outOfStock ? (t("product.outOfStock") || "Out of Stock") : t("product.addToCart")}
               </motion.button>
             </div>
 
@@ -319,9 +322,9 @@ const ProductPage = () => {
       {/* Mobile fixed Add to Cart */}
       <div className="fixed left-0 right-0 z-40 px-4 md:hidden" style={{ bottom: `calc(60px + env(safe-area-inset-bottom, 0px))` }}>
         <div className="app-container pb-2">
-          <motion.button whileTap={{ scale: 0.97 }} onClick={handleAddToCart} className="w-full flex items-center justify-center gap-2.5 bg-primary text-primary-foreground font-bold py-4 rounded-2xl shadow-lg hover:opacity-90 transition-opacity text-sm">
+          <motion.button whileTap={{ scale: outOfStock ? 1 : 0.97 }} onClick={handleAddToCart} disabled={outOfStock} className={`w-full flex items-center justify-center gap-2.5 font-bold py-4 rounded-2xl shadow-lg transition-opacity text-sm ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
             <ShoppingBag className="w-5 h-5" />
-            {t("product.addToCart")}
+            {outOfStock ? (t("product.outOfStock") || "Out of Stock") : t("product.addToCart")}
           </motion.button>
         </div>
       </div>

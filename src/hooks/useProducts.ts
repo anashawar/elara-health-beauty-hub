@@ -29,6 +29,7 @@ export interface ProductWithRelations {
   application: string | null;
   skin_type: string | null;
   condition: string | null;
+  inStock: boolean;
 }
 
 async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithRelations[]> {
@@ -96,6 +97,7 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
       application: p.application,
       skin_type: p.skin_type,
       condition: p.condition || null,
+      inStock: p.in_stock !== false,
     };
   });
 }
