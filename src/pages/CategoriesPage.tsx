@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Sparkles } from "lucide-react";
 import BottomNav from "@/components/layout/BottomNav";
+import DesktopHeader from "@/components/layout/DesktopHeader";
 import FloatingSearch from "@/components/layout/FloatingSearch";
+import SearchOverlay from "@/components/SearchOverlay";
 import { useCategories, useSubcategories } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 
@@ -12,6 +14,7 @@ const CategoriesPage = () => {
   const { data: subcategories = [] } = useSubcategories();
   const { t, language } = useLanguage();
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const toggleExpand = (slug: string) => {
     setExpandedSlug(prev => (prev === slug ? null : slug));
@@ -30,96 +33,107 @@ const CategoriesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24 app-container">
-      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
+    <div className="min-h-screen bg-background pb-24 md:pb-8">
+      <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
+      <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+
+      {/* Mobile header */}
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border md:hidden">
         <div className="flex items-center gap-3 px-4 py-3">
           <Sparkles className="w-5 h-5 text-primary" />
           <h1 className="text-lg font-display font-bold text-foreground">{t("categories.title")}</h1>
         </div>
       </header>
 
-      <div className="px-4 mt-4 space-y-3">
-        {categories.map((cat, idx) => {
-          const isExpanded = expandedSlug === cat.slug;
-          const subs = subcategories.filter(s => s.category_id === cat.id);
+      <div className="app-container">
+        {/* Desktop title */}
+        <div className="hidden md:block px-6 pt-6 pb-2">
+          <h1 className="text-2xl font-display font-bold text-foreground">{t("categories.title")}</h1>
+        </div>
 
-          return (
-            <motion.div
-              key={cat.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.04 }}
-              className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden"
-            >
-              <button
-                onClick={() => subs.length > 0 ? toggleExpand(cat.slug) : null}
-                className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-secondary/30 transition-colors"
+        <div className="px-4 md:px-6 mt-4 space-y-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0">
+          {categories.map((cat, idx) => {
+            const isExpanded = expandedSlug === cat.slug;
+            const subs = subcategories.filter(s => s.category_id === cat.id);
+
+            return (
+              <motion.div
+                key={cat.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.04 }}
+                className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden"
               >
-                <span className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-xl">
-                  {cat.icon}
-                </span>
-                <span className="flex-1 text-left rtl:text-right text-sm font-semibold text-foreground">
-                  {getCatName(cat)}
-                </span>
-                {subs.length > 0 ? (
-                  <motion.div
-                    animate={{ rotate: isExpanded ? 90 : 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <ChevronRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" />
-                  </motion.div>
-                ) : (
-                  <Link
-                    to={`/category/${cat.slug}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-xs text-primary font-medium px-3 py-1.5 bg-primary/10 rounded-lg"
-                  >
-                    {t("categories.viewAll")}
-                  </Link>
-                )}
-              </button>
+                <button
+                  onClick={() => subs.length > 0 ? toggleExpand(cat.slug) : null}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-secondary/30 transition-colors"
+                >
+                  <span className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-xl">
+                    {cat.icon}
+                  </span>
+                  <span className="flex-1 text-left rtl:text-right text-sm font-semibold text-foreground">
+                    {getCatName(cat)}
+                  </span>
+                  {subs.length > 0 ? (
+                    <motion.div
+                      animate={{ rotate: isExpanded ? 90 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" />
+                    </motion.div>
+                  ) : (
+                    <Link
+                      to={`/category/${cat.slug}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs text-primary font-medium px-3 py-1.5 bg-primary/10 rounded-lg"
+                    >
+                      {t("categories.viewAll")}
+                    </Link>
+                  )}
+                </button>
 
-              <AnimatePresence>
-                {isExpanded && subs.length > 0 && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-4 pb-3 pt-1 border-t border-border/30">
-                      <Link
-                        to={`/category/${cat.slug}`}
-                        className="flex items-center gap-2 px-3 py-2.5 mb-1 rounded-xl bg-primary/5 hover:bg-primary/10 transition-colors"
-                      >
-                        <span className="text-xs">🔍</span>
-                        <span className="text-xs font-semibold text-primary">
-                          {t("categories.viewAll")} {getCatName(cat)}
-                        </span>
-                      </Link>
+                <AnimatePresence>
+                  {isExpanded && subs.length > 0 && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-4 pb-3 pt-1 border-t border-border/30">
+                        <Link
+                          to={`/category/${cat.slug}`}
+                          className="flex items-center gap-2 px-3 py-2.5 mb-1 rounded-xl bg-primary/5 hover:bg-primary/10 transition-colors"
+                        >
+                          <span className="text-xs">🔍</span>
+                          <span className="text-xs font-semibold text-primary">
+                            {t("categories.viewAll")} {getCatName(cat)}
+                          </span>
+                        </Link>
 
-                      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 mt-2">
-                        {subs.map((sub) => (
-                          <Link
-                            key={sub.id}
-                            to={`/category/${cat.slug}?sub=${sub.id}`}
-                            className="flex flex-col items-center gap-1 py-3 px-2 rounded-xl bg-secondary/40 hover:bg-secondary transition-colors"
-                          >
-                            <span className="text-lg">{sub.icon}</span>
-                            <span className="text-[10px] font-medium text-foreground text-center leading-tight">
-                              {getSubName(sub)}
-                            </span>
-                          </Link>
-                        ))}
+                        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 mt-2">
+                          {subs.map((sub) => (
+                            <Link
+                              key={sub.id}
+                              to={`/category/${cat.slug}?sub=${sub.id}`}
+                              className="flex flex-col items-center gap-1 py-3 px-2 rounded-xl bg-secondary/40 hover:bg-secondary transition-colors"
+                            >
+                              <span className="text-lg">{sub.icon}</span>
+                              <span className="text-[10px] font-medium text-foreground text-center leading-tight">
+                                {getSubName(sub)}
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          );
-        })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
 
       <FloatingSearch />
