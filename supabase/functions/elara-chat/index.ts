@@ -156,7 +156,8 @@ serve(async (req) => {
 
     const isKurdistan = isKurdistanRegion(user_city || null);
     const catalog = await getProductCatalog();
-    const systemPrompt = buildSystemPrompt(catalog, user_name || null, user_gender || null, userAge, isKurdistan);
+    const firstName = user_name ? user_name.split(" ")[0] : null;
+    const systemPrompt = buildSystemPrompt(catalog, firstName, user_gender || null, userAge, isKurdistan);
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
