@@ -317,6 +317,70 @@ const AuthPage = () => {
                   )}
                 </AnimatePresence>
 
+                {/* Gender — only for sign up */}
+                <AnimatePresence>
+                  {isSignUp && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, delay: 0.1 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-1.5 pb-1">
+                        <label className="text-xs font-medium text-muted-foreground">{t("auth.gender") || "Gender"}</label>
+                        <div className="flex gap-2">
+                          {[
+                            { value: "female", label: t("auth.female") || "Female", emoji: "👩" },
+                            { value: "male", label: t("auth.male") || "Male", emoji: "👨" },
+                          ].map(g => (
+                            <button
+                              key={g.value}
+                              type="button"
+                              onClick={() => setGender(g.value)}
+                              className={`flex-1 py-3 px-3 rounded-2xl text-sm font-medium border transition-all flex items-center justify-center gap-2 ${
+                                gender === g.value
+                                  ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
+                                  : "bg-muted/40 text-foreground border-border/60 hover:border-primary/50"
+                              }`}
+                            >
+                              <span>{g.emoji}</span>
+                              {g.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Birthdate — only for sign up */}
+                <AnimatePresence>
+                  {isSignUp && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, delay: 0.15 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-1.5 pb-1">
+                        <label className="text-xs font-medium text-muted-foreground">{t("auth.birthdate") || "Date of Birth"}</label>
+                        <div className="relative">
+                          <Calendar className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            type="date"
+                            value={birthdate}
+                            onChange={(e) => setBirthdate(e.target.value)}
+                            max={new Date().toISOString().split("T")[0]}
+                            className="pl-10 rtl:pl-3 rtl:pr-10 h-12 rounded-2xl border-border/60 bg-muted/40 focus:bg-card transition-colors"
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 {/* Phone — always */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">{t("auth.phoneNumber")}</label>

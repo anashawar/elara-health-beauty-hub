@@ -177,6 +177,8 @@ serve(async (req) => {
           user_id: newUser.user.id,
           full_name: full_name || "",
           phone: normalizedPhone,
+          gender: gender || null,
+          birthdate: birthdate || null,
         },
         { onConflict: "user_id" }
       );

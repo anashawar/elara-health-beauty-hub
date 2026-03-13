@@ -155,6 +155,46 @@ const SettingsPage = () => {
                     <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+964 XXX XXX XXXX" type="tel" className="ps-10 h-11 rounded-xl bg-secondary border-border text-sm" />
                   </div>
                 </div>
+
+                {/* Gender */}
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">{t("auth.gender") || "Gender"}</label>
+                  <div className="flex gap-2">
+                    {[
+                      { value: "female", label: t("auth.female") || "Female", emoji: "👩" },
+                      { value: "male", label: t("auth.male") || "Male", emoji: "👨" },
+                    ].map(g => (
+                      <button
+                        key={g.value}
+                        type="button"
+                        onClick={() => setGender(g.value)}
+                        className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center gap-2 ${
+                          gender === g.value
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card text-foreground border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <span>{g.emoji}</span>
+                        {g.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Birthdate */}
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">{t("auth.birthdate") || "Date of Birth"}</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="date"
+                      value={birthdate}
+                      onChange={e => setBirthdate(e.target.value)}
+                      max={new Date().toISOString().split("T")[0]}
+                      className="ps-10 h-11 rounded-xl bg-secondary border-border text-sm"
+                    />
+                  </div>
+                </div>
                 <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full h-11 rounded-xl text-sm font-semibold gap-2">
                   <Save className="w-4 h-4" />
                   {saveMutation.isPending ? t("auth.saving") : t("settings.saveChanges")}
