@@ -9,6 +9,7 @@ import {
   LogOut,
   Home,
   Sparkles,
+  BarChart3,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -33,6 +34,7 @@ const navItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Products", url: "/admin/products", icon: Package },
   { title: "Orders", url: "/admin/orders", icon: ShoppingCart },
+  { title: "Revenue", url: "/admin/revenue", icon: BarChart3 },
   { title: "Categories", url: "/admin/categories", icon: FolderTree },
   { title: "Brands", url: "/admin/brands", icon: Tag },
   { title: "Banners", url: "/admin/banners", icon: Image },

@@ -20,6 +20,7 @@ interface ProductForm {
   slug: string;
   price: number;
   original_price: number | null;
+  cost: number | null;
   description: string;
   usage_instructions: string;
   benefits: string;
@@ -31,16 +32,17 @@ interface ProductForm {
   is_pick: boolean;
   in_stock: boolean;
   volume_ml: string;
+  volume_unit: string;
   skin_type: string;
-  country_of_origin: string; // derived from brand, kept for edit compatibility
+  country_of_origin: string;
   condition: string;
 }
 
 const emptyForm: ProductForm = {
-  title: "", slug: "", price: 0, original_price: null, description: "",
+  title: "", slug: "", price: 0, original_price: null, cost: null, description: "",
   usage_instructions: "", benefits: "",
   category_id: "", subcategory_id: "", brand_id: "", is_new: false, is_trending: false, is_pick: false, in_stock: true,
-  volume_ml: "", skin_type: "", country_of_origin: "", condition: "",
+  volume_ml: "", volume_unit: "ml", skin_type: "", country_of_origin: "", condition: "",
 };
 
 const BUCKET = "product-images";
@@ -117,6 +119,7 @@ export default function AdminProducts() {
         is_pick: f.is_pick,
         in_stock: f.in_stock,
         volume_ml: f.volume_ml || null,
+        volume_unit: f.volume_unit || "ml",
         skin_type: f.skin_type || null,
         country_of_origin: f.country_of_origin || null,
         condition: f.condition || null,
@@ -131,6 +134,11 @@ export default function AdminProducts() {
         const { data, error } = await supabase.from("products").insert(payload).select("id").single();
         if (error) throw error;
         productId = data.id;
+      }
+
+      // Save cost in separate admin-only table
+      if (productId && f.cost !== null && f.cost !== undefined) {
+        await supabase.from("product_costs").upsert({ product_id: productId, cost: f.cost }, { onConflict: "product_id" });
       }
 
       // Upload main image
@@ -244,16 +252,21 @@ export default function AdminProducts() {
     p.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  const openEdit = (p: any) => {
+  const openEdit = async (p: any) => {
+    // Fetch cost from separate admin-only table
+    let cost: number | null = null;
+    const { data: costData } = await supabase.from("product_costs").select("cost").eq("product_id", p.id).maybeSingle();
+    if (costData) cost = Number(costData.cost);
+
     setForm({
       id: p.id, title: p.title, slug: p.slug, price: p.price,
-      original_price: p.original_price, description: p.description || "",
+      original_price: p.original_price, cost, description: p.description || "",
       usage_instructions: p.usage_instructions || "",
       benefits: (p.benefits || []).join("\n"),
       category_id: p.category_id || "", subcategory_id: p.subcategory_id || "",
       brand_id: p.brand_id || "",
       is_new: p.is_new || false, is_trending: p.is_trending || false, is_pick: p.is_pick || false, in_stock: p.in_stock !== false,
-      volume_ml: p.volume_ml || "", skin_type: p.skin_type || "", country_of_origin: p.country_of_origin || "",
+      volume_ml: p.volume_ml || "", volume_unit: p.volume_unit || "ml", skin_type: p.skin_type || "", country_of_origin: p.country_of_origin || "",
       condition: (p as any).condition || "",
     });
     const sorted = [...(p.product_images || [])].sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
@@ -384,7 +397,7 @@ export default function AdminProducts() {
                 <Label>Title *</Label>
                 <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label>Price (IQD) *</Label>
                   <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: +e.target.value })} />
@@ -392,6 +405,10 @@ export default function AdminProducts() {
                 <div>
                   <Label>Original Price</Label>
                   <Input type="number" value={form.original_price ?? ""} onChange={(e) => setForm({ ...form, original_price: e.target.value ? +e.target.value : null })} />
+                </div>
+                <div>
+                  <Label>Cost (IQD) 🔒</Label>
+                  <Input type="number" placeholder="Confidential" value={form.cost ?? ""} onChange={(e) => setForm({ ...form, cost: e.target.value ? +e.target.value : null })} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -533,10 +550,21 @@ export default function AdminProducts() {
                   })}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <Label>Volume</Label>
+                  <Input value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} placeholder="e.g. 50" />
+                </div>
                 <div>
-                  <Label>Volume (ml)</Label>
-                  <Input value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} />
+                  <Label>Unit</Label>
+                  <Select value={form.volume_unit} onValueChange={(v) => setForm({ ...form, volume_unit: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["ml", "g", "oz", "fl oz", "L", "kg", "pcs", "sheets", "capsules", "tablets"].map(u => (
+                        <SelectItem key={u} value={u}>{u}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div>
