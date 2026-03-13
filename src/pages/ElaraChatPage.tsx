@@ -130,7 +130,7 @@ const ElaraChatPage = () => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const isStreamingRef = useRef(false);
 
-  const userName = profile?.full_name || user?.user_metadata?.full_name || null;
+  const userName = user?.user_metadata?.full_name || null;
   const greeting = useMemo(() => getGreeting(language, userName), [language, userName]);
   const contextualTips = useMemo(() => getContextualTips(language), [language]);
 
