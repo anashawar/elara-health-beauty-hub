@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,13 +10,22 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-const statuses = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"];
+const statuses = ["pending", "in_progress", "shipped", "on_the_way", "delivered", "cancelled"];
+
+const statusLabels: Record<string, string> = {
+  pending: "Pending",
+  in_progress: "In Progress",
+  shipped: "Shipped",
+  on_the_way: "On the Way",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+};
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800 border-amber-200",
-  confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-  processing: "bg-violet-100 text-violet-800 border-violet-200",
+  in_progress: "bg-violet-100 text-violet-800 border-violet-200",
   shipped: "bg-cyan-100 text-cyan-800 border-cyan-200",
+  on_the_way: "bg-blue-100 text-blue-800 border-blue-200",
   delivered: "bg-emerald-100 text-emerald-800 border-emerald-200",
   cancelled: "bg-red-100 text-red-800 border-red-200",
 };
@@ -39,9 +49,7 @@ export default function AdminOrders() {
           .from("profiles")
           .select("user_id, full_name, phone")
           .in("user_id", userIds);
-        if (profiles) {
-          profiles.forEach((p: any) => { profilesMap[p.user_id] = p; });
-        }
+        if (profiles) profiles.forEach((p: any) => { profilesMap[p.user_id] = p; });
       }
 
       const missingAddrIds = (data || [])
@@ -53,9 +61,7 @@ export default function AdminOrders() {
           .from("addresses")
           .select("id, city, area, street, phone")
           .in("id", missingAddrIds);
-        if (addrs) {
-          addrs.forEach((a: any) => { addressMap[a.id] = a; });
-        }
+        if (addrs) addrs.forEach((a: any) => { addressMap[a.id] = a; });
       }
 
       return (data || []).map((o: any) => ({
@@ -65,6 +71,17 @@ export default function AdminOrders() {
       }));
     },
   });
+
+  // Realtime subscription for order updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-orders-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-orders"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -97,7 +114,9 @@ export default function AdminOrders() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-bold text-foreground">#{o.id.slice(0, 8)}</span>
-                    <Badge className={`${statusColors[o.status] || ""} text-[10px] font-bold border px-2 py-0.5`}>{o.status}</Badge>
+                    <Badge className={`${statusColors[o.status] || statusColors.pending} text-[10px] font-bold border px-2 py-0.5`}>
+                      {statusLabels[o.status] || o.status}
+                    </Badge>
                   </div>
                   <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
                     <span>{o.profile?.full_name || "Guest"}</span>
@@ -112,10 +131,9 @@ export default function AdminOrders() {
                 </div>
               </div>
 
-              {/* Product thumbnails */}
               <div className="flex items-center gap-2 mt-3">
                 <div className="flex -space-x-2">
-                  {(o.order_items || []).slice(0, 4).map((item: any, i: number) => (
+                  {(o.order_items || []).slice(0, 4).map((item: any) => (
                     <div key={item.id} className="w-9 h-9 rounded-lg border-2 border-card overflow-hidden bg-secondary">
                       {item.products?.product_images?.[0]?.image_url ? (
                         <img src={item.products.product_images[0].image_url} className="w-full h-full object-cover" alt="" />
@@ -133,17 +151,14 @@ export default function AdminOrders() {
 
                 <div className="flex-1" />
 
-                <Select
-                  value={o.status}
-                  onValueChange={(v) => updateStatus.mutate({ id: o.id, status: v })}
-                >
-                  <SelectTrigger className="h-8 w-[120px] text-xs rounded-xl">
+                <Select value={o.status} onValueChange={(v) => updateStatus.mutate({ id: o.id, status: v })}>
+                  <SelectTrigger className="h-8 w-[130px] text-xs rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {statuses.map((s) => (
                       <SelectItem key={s} value={s}>
-                        <span className="capitalize text-xs">{s}</span>
+                        <span className="text-xs">{statusLabels[s]}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -183,7 +198,7 @@ export default function AdminOrders() {
                       <div className="text-sm space-y-1">
                         <p><span className="text-muted-foreground">Date:</span> {format(new Date(o.created_at), "PPP p")}</p>
                         <p><span className="text-muted-foreground">Payment:</span> {o.payment_method || "COD"}</p>
-                        <p><span className="text-muted-foreground">Status:</span> <Badge className={`${statusColors[o.status] || ""} text-xs border ml-1`}>{o.status}</Badge></p>
+                        <p><span className="text-muted-foreground">Status:</span> <Badge className={`${statusColors[o.status] || ""} text-xs border ml-1`}>{statusLabels[o.status] || o.status}</Badge></p>
                         {o.coupon_code && <p><span className="text-muted-foreground">Coupon:</span> {o.coupon_code}</p>}
                         {o.notes && <p><span className="text-muted-foreground">Notes:</span> {o.notes}</p>}
                       </div>

@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Package } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice } from "@/hooks/useProducts";
@@ -15,17 +15,18 @@ const OrdersPage = () => {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const [searchOpen, setSearchOpen] = useState(false);
+  const qc = useQueryClient();
 
   const statusConfig: Record<string, { label: string; color: string; step: number }> = {
     pending: { label: t("cart.pending"), color: "bg-amber-400", step: 0 },
-    confirmed: { label: t("cart.confirmed") || "Confirmed", color: "bg-blue-400", step: 1 },
-    processing: { label: t("cart.processing"), color: "bg-purple-400", step: 2 },
-    shipped: { label: t("cart.onTheWay"), color: "bg-primary", step: 3 },
+    in_progress: { label: t("cart.processing"), color: "bg-violet-400", step: 1 },
+    shipped: { label: t("cart.onTheWay"), color: "bg-cyan-400", step: 2 },
+    on_the_way: { label: "On the Way", color: "bg-blue-400", step: 3 },
     delivered: { label: t("cart.delivered"), color: "bg-sage", step: 4 },
     cancelled: { label: t("cart.cancelled") || "Cancelled", color: "bg-destructive", step: -1 },
   };
 
-  const steps = [t("cart.pending"), t("cart.confirmed") || "Confirmed", t("cart.processing"), t("cart.onTheWay"), t("cart.delivered")];
+  const steps = [t("cart.pending"), t("cart.processing"), "Shipped", "On the Way", t("cart.delivered")];
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["orders", user?.id],
@@ -39,6 +40,18 @@ const OrdersPage = () => {
     },
     enabled: !!user,
   });
+
+  // Realtime subscription so user sees status changes immediately
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('user-orders-realtime')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, () => {
+        qc.invalidateQueries({ queryKey: ["orders", user.id] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, qc]);
 
   if (authLoading) return null;
 

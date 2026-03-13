@@ -270,6 +270,8 @@ export type Database = {
           discount_value: number
           expires_at: string | null
           id: string
+          influencer_commission: number | null
+          influencer_name: string | null
           is_active: boolean
           max_uses: number | null
           min_order_amount: number | null
@@ -282,6 +284,8 @@ export type Database = {
           discount_value: number
           expires_at?: string | null
           id?: string
+          influencer_commission?: number | null
+          influencer_name?: string | null
           is_active?: boolean
           max_uses?: number | null
           min_order_amount?: number | null
@@ -294,6 +298,8 @@ export type Database = {
           discount_value?: number
           expires_at?: string | null
           id?: string
+          influencer_commission?: number | null
+          influencer_name?: string | null
           is_active?: boolean
           max_uses?: number | null
           min_order_amount?: number | null
