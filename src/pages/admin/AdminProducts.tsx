@@ -572,14 +572,18 @@ export default function AdminProducts() {
   };
 
   const handleEnrichMissing = () => {
-    // Select all products missing description
-    const missing = products.filter((p: any) => !p.description || p.description.trim() === "");
+    // Select only products that are truly missing data (no description OR no brand OR no category)
+    const missing = products.filter((p: any) =>
+      (!p.description || p.description.trim() === "") ||
+      !p.brand_id ||
+      !p.category_id
+    );
     if (missing.length === 0) {
-      toast.info("All products already have descriptions");
+      toast.info("All products already have complete data");
       return;
     }
     const ids = missing.map((p: any) => p.id);
-    if (confirm(`Enrich ${ids.length} products missing descriptions with AI? This will auto-fill descriptions, benefits, pricing (+35% on cost), and more.`)) {
+    if (confirm(`Enrich ${ids.length} products with incomplete data (missing description, brand, or category)? This will auto-fill descriptions, benefits, pricing (+35% on cost), and more.`)) {
       handleEnrichProducts(ids);
     }
   };
