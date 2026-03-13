@@ -1184,6 +1184,27 @@ export default function AdminProducts() {
         </div>
       )}
 
+      {/* Multi-select action bar */}
+      {multiSelect && (
+        <div className="mb-4 p-3 rounded-xl border border-border bg-muted/50 flex items-center gap-3 flex-wrap">
+          <Checkbox
+            checked={selectedProducts.size === filtered.length && filtered.length > 0}
+            onCheckedChange={toggleMultiSelectAll}
+          />
+          <span className="text-sm font-medium text-foreground">{selectedProducts.size} selected</span>
+          <div className="flex gap-2 ml-auto">
+            <Button size="sm" variant="outline" className="text-primary border-primary/30" onClick={handleBulkEnrichSelected} disabled={selectedProducts.size === 0 || enriching}>
+              <Sparkles className="h-4 w-4 mr-1.5" />AI Enrich
+            </Button>
+            <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={selectedProducts.size === 0 || bulkDeleteMutation.isPending}>
+              {bulkDeleteMutation.isPending ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Trash2 className="h-4 w-4 mr-1.5" />}
+              Delete {selectedProducts.size > 0 ? selectedProducts.size : ""}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => { setMultiSelect(false); setSelectedProducts(new Set()); }}>Cancel</Button>
+          </div>
+        </div>
+      )}
+
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input className="pl-9" placeholder="Search products..." value={search} onChange={(e) => handleSearch(e.target.value)} />
@@ -1198,7 +1219,7 @@ export default function AdminProducts() {
           <Table>
             <TableHeader>
               <TableRow>
-                {selectMode && <TableHead className="w-10"></TableHead>}
+                {(selectMode || multiSelect) && <TableHead className="w-10"></TableHead>}
                 <TableHead>Product</TableHead>
                 <TableHead className="hidden md:table-cell">Category</TableHead>
                 <TableHead>Price</TableHead>
