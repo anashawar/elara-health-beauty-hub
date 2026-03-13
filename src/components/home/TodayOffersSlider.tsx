@@ -92,6 +92,25 @@ export default function TodayOffersSlider() {
       </div>
 
       {/* Slider */}
+      {/* Navigation Arrows - above slider */}
+      {pairs.length > 1 && (
+        <div className="flex items-center justify-end gap-2 mb-3">
+          <button
+            onClick={prev}
+            className="w-7 h-7 rounded-full bg-muted/80 border border-border/50 flex items-center justify-center text-foreground hover:bg-muted transition-all"
+          >
+            <ChevronLeft className="w-3.5 h-3.5 rtl:rotate-180" />
+          </button>
+          <button
+            onClick={next}
+            className="w-7 h-7 rounded-full bg-muted/80 border border-border/50 flex items-center justify-center text-foreground hover:bg-muted transition-all"
+          >
+            <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
+          </button>
+        </div>
+      )}
+
+      {/* Slider */}
       <div className="relative">
         <AnimatePresence mode="wait">
           <motion.div
@@ -107,29 +126,11 @@ export default function TodayOffersSlider() {
             ))}
           </motion.div>
         </AnimatePresence>
-
-        {/* Navigation Arrows */}
-        {pairs.length > 1 && (
-          <>
-            <button
-              onClick={prev}
-              className="absolute -left-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-background/80 backdrop-blur-xl border border-border/50 flex items-center justify-center text-foreground hover:bg-background transition-all shadow-lg z-20"
-            >
-              <ChevronLeft className="w-3.5 h-3.5 rtl:rotate-180" />
-            </button>
-            <button
-              onClick={next}
-              className="absolute -right-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-background/80 backdrop-blur-xl border border-border/50 flex items-center justify-center text-foreground hover:bg-background transition-all shadow-lg z-20"
-            >
-              <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
-            </button>
-          </>
-        )}
       </div>
 
       {/* Dots */}
       {pairs.length > 1 && (
-        <div className="flex justify-center gap-2 mt-4">
+        <div className="flex justify-center gap-2 mt-3">
           {pairs.map((_, idx) => (
             <button
               key={idx}
