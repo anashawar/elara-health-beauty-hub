@@ -301,23 +301,31 @@ export default function AdminOffers() {
 
               {form.target_type === "product" && (
                 <div>
-                  <Label>Search Product</Label>
+                  <Label>Search & Select Products</Label>
                   <Input
-                    value={productSearch || form.target_name}
+                    value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
                     placeholder="Type product name to search..."
                   />
                   {productSearch.length >= 2 && (
                     <div className="mt-1 max-h-48 overflow-y-auto border border-border rounded-xl bg-card shadow-lg">
                       {allProducts
-                        .filter((p: any) => p.title.toLowerCase().includes(productSearch.toLowerCase()) || p.brand?.toLowerCase().includes(productSearch.toLowerCase()))
+                        .filter((p: any) => {
+                          const selectedIds = form.target_id ? form.target_id.split(",") : [];
+                          if (selectedIds.includes(p.id)) return false;
+                          return p.title.toLowerCase().includes(productSearch.toLowerCase()) || p.brand?.toLowerCase().includes(productSearch.toLowerCase());
+                        })
                         .slice(0, 10)
                         .map((p: any) => (
                           <button
                             key={p.id}
                             type="button"
                             onClick={() => {
-                              setForm({ ...form, target_id: p.id, target_name: p.title });
+                              const ids = form.target_id ? form.target_id.split(",").filter(Boolean) : [];
+                              const names = form.target_name ? form.target_name.split("||").filter(Boolean) : [];
+                              ids.push(p.id);
+                              names.push(p.title);
+                              setForm({ ...form, target_id: ids.join(","), target_name: names.join("||") });
                               setProductSearch("");
                             }}
                             className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-secondary transition-colors text-left border-b border-border/30 last:border-0"
@@ -334,8 +342,28 @@ export default function AdminOffers() {
                       )}
                     </div>
                   )}
-                  {form.target_name && !productSearch && (
-                    <p className="text-xs text-primary mt-1 font-medium">✓ Selected: {form.target_name}</p>
+                  {/* Selected products chips */}
+                  {form.target_id && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {form.target_id.split(",").filter(Boolean).map((pid, idx) => {
+                        const names = form.target_name ? form.target_name.split("||") : [];
+                        const name = names[idx] || allProducts.find((p: any) => p.id === pid)?.title || pid.slice(0, 8);
+                        return (
+                          <span key={pid} className="inline-flex items-center gap-1 text-[11px] font-medium bg-primary/10 text-primary px-2.5 py-1 rounded-lg">
+                            {name}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const ids = form.target_id.split(",").filter(Boolean).filter(id => id !== pid);
+                                const updatedNames = names.filter((_, i) => i !== idx);
+                                setForm({ ...form, target_id: ids.join(","), target_name: updatedNames.join("||") });
+                              }}
+                              className="hover:text-destructive ml-0.5"
+                            >×</button>
+                          </span>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               )}

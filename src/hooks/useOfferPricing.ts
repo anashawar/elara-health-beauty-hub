@@ -45,7 +45,10 @@ export function getOfferForProduct(
     if (offer.target_type === "all") applies = true;
     else if (offer.target_type === "brand" && offer.target_id === product.brand_id) applies = true;
     else if (offer.target_type === "category" && offer.target_id === product.category_id) applies = true;
-    else if (offer.target_type === "product" && offer.target_id === product.id) applies = true;
+    else if (offer.target_type === "product" && offer.target_id) {
+      const ids = offer.target_id.split(",");
+      applies = ids.includes(product.id);
+    }
 
     if (!applies) continue;
 
