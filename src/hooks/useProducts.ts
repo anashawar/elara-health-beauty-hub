@@ -56,7 +56,7 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
     from += PAGE;
   }
 
-  return (products || []).map((p: any) => {
+  return (allProducts || []).map((p: any) => {
     const localizedTitle =
       language === "ar" ? (p.title_ar || p.title) : language === "ku" ? (p.title_ku || p.title) : p.title;
     const localizedDescription =
