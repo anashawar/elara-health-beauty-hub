@@ -91,9 +91,14 @@ const CheckoutPage = () => {
         </motion.div>
         <h2 className="text-2xl font-display font-bold text-foreground mb-2">{t("checkout.orderPlaced")}</h2>
         <p className="text-sm text-muted-foreground text-center mb-6">{t("checkout.orderPlacedDesc")}</p>
-        <Link to="/home" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-2xl text-sm">
-          {t("common.continueShopping")}
-        </Link>
+        <div className="flex flex-col gap-3 w-full max-w-xs">
+          <Link to="/orders" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-2xl text-sm text-center">
+            {t("profile.myOrders")}
+          </Link>
+          <Link to="/home" className="px-6 py-3 bg-secondary text-foreground font-semibold rounded-2xl text-sm text-center">
+            {t("common.continueShopping")}
+          </Link>
+        </div>
         <BottomNav />
       </div>
     );
