@@ -7,7 +7,7 @@ import bannerOriginal from "@/assets/banner-original.jpg";
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useApp } from "@/context/AppContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface HeroBannerItem {
@@ -32,14 +32,15 @@ const HeroBanner = () => {
   const { t } = useLanguage();
   const { setPendingCoupon } = useApp();
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   // Fetch hero-style offers
   const { data: heroOffers = [] } = useQuery({
     queryKey: ["active-offers-hero"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from("offers")
-        .select("*")
+        .select("*") as any)
         .eq("is_active", true)
         .eq("banner_style", "hero")
         .order("sort_order");
@@ -52,6 +53,17 @@ const HeroBanner = () => {
       });
     },
   });
+
+  // Realtime sync for hero offers
+  useEffect(() => {
+    const channel = supabase
+      .channel('hero-offers-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, () => {
+        qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
 
   const staticBanners: HeroBannerItem[] = [
     {

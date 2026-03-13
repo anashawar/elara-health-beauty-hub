@@ -22,9 +22,9 @@ export default function OffersBanner() {
   const { data: offers = [] } = useQuery({
     queryKey: ["active-offers-gallery"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from("offers")
-        .select("*")
+        .select("*") as any)
         .eq("is_active", true)
         .eq("banner_style", "gallery")
         .order("sort_order");
