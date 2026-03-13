@@ -30,7 +30,7 @@ interface ProductForm {
   is_pick: boolean;
   volume_ml: string;
   skin_type: string;
-  country_of_origin: string;
+  country_of_origin: string; // derived from brand, kept for edit compatibility
   condition: string;
 }
 
@@ -433,15 +433,9 @@ export default function AdminProducts() {
                   <Input value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Skin Type</Label>
-                  <Input value={form.skin_type} onChange={(e) => setForm({ ...form, skin_type: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Origin</Label>
-                  <Input value={form.country_of_origin} onChange={(e) => setForm({ ...form, country_of_origin: e.target.value })} />
-                </div>
+              <div>
+                <Label>Skin Type</Label>
+                <Input value={form.skin_type} onChange={(e) => setForm({ ...form, skin_type: e.target.value })} />
               </div>
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 text-sm">
