@@ -1105,7 +1105,7 @@ export default function AdminProducts() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((p: any) => {
+              {paginatedProducts.map((p: any) => {
                 const cost = costMap[p.id];
                 const margin = cost !== undefined && cost > 0 ? ((p.price - cost) / cost * 100) : null;
                 return (
