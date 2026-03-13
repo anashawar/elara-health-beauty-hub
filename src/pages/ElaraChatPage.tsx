@@ -616,7 +616,7 @@ const ElaraChatPage = () => {
                   <p className="text-xs font-medium text-muted-foreground mb-2">
                     {language === "ar" ? "جربي تسأليني 👇" : language === "ku" ? "بپرسە لێم 👇" : "Try asking me 👇"}
                   </p>
-                  {(quickQuestions[language] || quickQuestions.en).map((q, i) => (
+                  {(quickQuestions[isKurdistan ? "kurdistan" : "iraq"][language] || quickQuestions[isKurdistan ? "kurdistan" : "iraq"].en).map((q, i) => (
                     <motion.button key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.06 }} onClick={() => sendMessage(q)}
                       className="w-full text-left rtl:text-right p-3 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-sm transition-all text-sm text-foreground"
                     >
