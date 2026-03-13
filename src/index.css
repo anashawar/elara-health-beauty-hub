@@ -94,14 +94,26 @@ html, body {
   min-height: -webkit-fill-available;
 }
 
-/* Global iOS safe area: all sticky headers get top inset */
-header.sticky {
-  padding-top: env(safe-area-inset-top, 0px);
+/* Global iOS safe area: all sticky/fixed headers get top inset */
+header.sticky,
+header[class*="sticky"] {
+  padding-top: env(safe-area-inset-top, 0px) !important;
 }
 
-/* Pages without sticky headers: ensure top safe area on first child */
+/* Fixed bottom elements: account for safe area */
+nav.fixed[class*="bottom-0"],
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+
+/* Pages without sticky headers */
 .safe-area-top {
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: env(safe-area-inset-top, 0px) !important;
+}
+
+/* Fixed bottom buttons/inputs need safe area offset */
+.fixed-bottom-safe {
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
 /* Hide scrollbar for clean mobile feel */

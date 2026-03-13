@@ -9,7 +9,8 @@ const FloatingSearch = () => {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-3 right-4 z-30 p-2.5 bg-card/90 backdrop-blur-md rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-all"
+        className="fixed z-30 p-2.5 bg-card/90 backdrop-blur-md rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-all"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)', right: '16px' }}
         aria-label="Search"
       >
         <Search className="w-4 h-4 text-foreground" />
