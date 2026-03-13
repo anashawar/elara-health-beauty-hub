@@ -18,36 +18,88 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elara-chat`;
 
-const quickQuestions: Record<string, string[]> = {
-  en: [
-    "What's a good skincare routine for beginners?",
-    "How to treat acne scars?",
-    "Best vitamins for hair growth?",
-    "Morning vs night skincare routine?",
-  ],
-  ar: [
-    "شنو أحسن روتين للعناية بالبشرة للمبتدئين؟",
-    "شلون أعالج آثار حب الشباب؟",
-    "شنو أحسن فيتامينات لنمو الشعر؟",
-    "شنو الفرق بين روتين الصبح والليل؟",
-  ],
-  ku: [
-    "باشترین ڕوتینی چاودێری پێست بۆ سەرەتاکان چییە؟",
-    "چۆن شوێنەکانی دانەی ڕوو چارەسەر بکەم؟",
-    "باشترین ڤیتامین بۆ گەشەی قژ چییە؟",
-    "جیاوازی ڕوتینی بەیانی و شەو چییە؟",
-  ],
+const KURDISTAN_CITIES = ["Erbil", "Sulaymaniyah", "Duhok"];
+
+function isKurdistanUser(city: string | null): boolean {
+  if (!city) return false;
+  return KURDISTAN_CITIES.some(k => city.toLowerCase().includes(k.toLowerCase()));
+}
+
+const quickQuestions: Record<string, Record<string, string[]>> = {
+  iraq: {
+    en: [
+      "What's a good skincare routine for Baghdad's heat?",
+      "How to treat acne scars?",
+      "Best vitamins for hair growth?",
+      "Morning vs night skincare routine?",
+    ],
+    ar: [
+      "شنو أحسن روتين للعناية بالبشرة بحر بغداد؟",
+      "شلون أعالج آثار حب الشباب؟",
+      "شنو أحسن فيتامينات للشعر؟",
+      "روتين الصبح ولا الليل أهم؟",
+    ],
+    ku: [
+      "ڕوتینێکی باشی چاودێری پێست چییە؟",
+      "چۆن شوێنی دانەکان چارەسەر بکەم؟",
+      "باشترین ڤیتامین بۆ قژ چییە؟",
+      "ڕوتینی بەیانی یان شەو باشترە؟",
+    ],
+  },
+  kurdistan: {
+    en: [
+      "Best skincare for Kurdistan's cold winters?",
+      "How to protect skin from dry weather in Erbil?",
+      "Recommend a gentle cleanser for sensitive skin",
+      "Morning routine for glowing skin?",
+    ],
+    ar: [
+      "شنو أحسن كريم للشتاء البارد بكوردستان؟",
+      "شلون أحمي بشرتي من الجو الجاف بأربيل؟",
+      "رشحيلي غسول لطيف للبشرة الحساسة",
+      "روتين الصبح لبشرة مشرقة؟",
+    ],
+    ku: [
+      "باشترین کریم بۆ زستانی ساردی کوردستان چییە؟",
+      "چۆن پێستم بپارێزم لە کەشی وشکی هەولێر؟",
+      "پاککەرەوەیەکی نەرم بۆ پێستی هەستیار پێشنیار بکە",
+      "ڕوتینی بەیانی بۆ پێستی درەوشاوە؟",
+    ],
+  },
 };
 
-function getGreeting(language: string, name: string | null): { greeting: string; subtitle: string } {
+function getGreeting(language: string, name: string | null, isKurdistan: boolean): { greeting: string; subtitle: string } {
   const hour = new Date().getHours();
   const firstName = name?.split(" ")[0] || null;
 
+  if (isKurdistan) {
+    if (language === "ku") {
+      const timeGreeting = hour < 12 ? "بەیانیت باش" : hour < 18 ? "ڕۆژت باش" : "ئێوارەت باش";
+      return {
+        greeting: firstName ? `${timeGreeting} ${firstName}! 💕` : `${timeGreeting}! 💕`,
+        subtitle: "چۆنی گیانم؟ من ئیلارام، هاوڕێی جوانکاریت لە هەولێر ✨",
+      };
+    }
+    if (language === "ar") {
+      const timeGreeting = hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء النور";
+      return {
+        greeting: firstName ? `${timeGreeting} ${firstName}! 💕` : `${timeGreeting}! 💕`,
+        subtitle: "شلونك؟ أنا إيلارا، صيدلانيتك من أربيل ✨",
+      };
+    }
+    const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+    return {
+      greeting: firstName ? `${timeGreeting}, ${firstName}! 💕` : `${timeGreeting}! 💕`,
+      subtitle: "How are you? I'm Elara, your beauty bestie from Erbil ✨",
+    };
+  }
+
+  // Iraqi personality
   if (language === "ar") {
     const timeGreeting = hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء النور";
     return {
       greeting: firstName ? `${timeGreeting} ${firstName}! 💕` : `${timeGreeting}! 💕`,
-      subtitle: "شلونك اليوم؟ أنا إيلارا، صيدلانيتك المختصة بالجمال ✨",
+      subtitle: "شلونچ اليوم يا گلبي؟ أنا إيلارا، صيدلانيتچ من بغداد ✨",
     };
   }
   if (language === "ku") {
@@ -60,53 +112,77 @@ function getGreeting(language: string, name: string | null): { greeting: string;
   const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   return {
     greeting: firstName ? `${timeGreeting}, ${firstName}! 💕` : `${timeGreeting}! 💕`,
-    subtitle: "How are you doing today? I'm Elara, your beauty bestie ✨",
+    subtitle: "How are you doing today? I'm Elara, your beauty bestie from Baghdad ✨",
   };
 }
 
-function getContextualTips(language: string): { icon: React.ReactNode; text: string }[] {
+function getContextualTips(language: string, isKurdistan: boolean): { icon: React.ReactNode; text: string }[] {
   const month = new Date().getMonth();
   const tips: { icon: React.ReactNode; text: string }[] = [];
 
-  if (language === "ar") {
-    // Summer (May-Sep) - Iraq heat
-    if (month >= 4 && month <= 8) {
-      tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "الجو حار هواية بالعراق هالأيام 🥵 لا تنسين واقي الشمس SPF 50+ كل يوم!" });
-    } else if (month >= 10 || month <= 2) {
-      tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "الجو بارد وجاف هالفترة ❄️ بشرتك تحتاج ترطيب مكثف!" });
+  if (isKurdistan) {
+    // Kurdistan-specific
+    if (language === "ku") {
+      if (month >= 4 && month <= 8) {
+        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "هەوا گەرمە لە هەولێر 🥵 واقی خۆرت لەبیر نەچێت SPF 50+!" });
+      } else if (month >= 10 || month <= 2) {
+        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "زستانی کوردستان وشک و ساردە ❄️ پێستت پێویستی بە شێداری زۆرە!" });
+      }
+      if (month === 2) {
+        tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "نەورۆز پیرۆزبێت! 🌷🔥 ئامادەبە بۆ جەژنەکە بە پێستێکی درەوشاوە" });
+      }
+      tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "هەر پرسیارێکت هەیە دەربارەی جوانکاری بپرسە گیانم 💆‍♀️" });
+    } else if (language === "ar") {
+      if (month >= 4 && month <= 8) {
+        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "الجو حار بأربيل 🥵 لا تنسي واقي شمس SPF 50+!" });
+      } else if (month >= 10 || month <= 2) {
+        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "شتاء كوردستان بارد وجاف ❄️ بشرتك تحتاج ترطيب مكثف!" });
+      }
+      if (month === 2) {
+        tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "نوروز مبارك! 🌷🔥 جهزي لوكك للعيد" });
+      }
+      tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "اسأليني عن أي شي يخص جمالك 💆‍♀️" });
+    } else {
+      if (month >= 4 && month <= 8) {
+        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "Summer in Kurdistan 🥵 Don't skip SPF 50+ sunscreen!" });
+      } else if (month >= 10 || month <= 2) {
+        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "Kurdistan winters are cold & dry ❄️ Extra hydration is key!" });
+      }
+      if (month === 2) {
+        tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "Happy Newroz! 🌷🔥 Get your glow ready for the celebration" });
+      }
+      tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "Ask me anything about skincare and beauty 💆‍♀️" });
     }
-    // Ramadan/Eid awareness (approximate)
-    if (month === 2 || month === 3) {
-      tips.push({ icon: <Heart className="w-4 h-4 text-primary" />, text: "رمضان كريم 🌙 خليني أساعدك تحافظين على بشرتك خلال الصيام" });
-    }
-    // Newroz
-    if (month === 2) {
-      tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "نوروز مبارك! 🌷 جهزي لوكك للعيد" });
-    }
-    tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "اسأليني عن أي شي يخص بشرتك وشعرك وجمالك 💆‍♀️" });
-  } else if (language === "ku") {
-    if (month >= 4 && month <= 8) {
-      tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "کەش زۆر گەرمە ئەم ڕۆژانە 🥵 واقی خۆرت لەبیر نەچێت!" });
-    } else if (month >= 10 || month <= 2) {
-      tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "کەش ساردە ئەم ماوەیە ❄️ پێستت پێویستی بە شێداری زۆرە!" });
-    }
-    if (month === 2) {
-      tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "نەورۆز پیرۆزە! 🌷 ئامادەبە بۆ جەژنەکە" });
-    }
-    tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "هەر پرسیارێکت هەیە دەربارەی پێست و قژ و جوانکاری بپرسە 💆‍♀️" });
   } else {
-    if (month >= 4 && month <= 8) {
-      tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "It's hot season in Iraq 🥵 Don't skip your SPF 50+ sunscreen today!" });
-    } else if (month >= 10 || month <= 2) {
-      tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "Cold & dry weather ahead ❄️ Your skin needs extra hydration!" });
+    // Iraqi Arab
+    if (language === "ar") {
+      if (month >= 4 && month <= 8) {
+        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "الجو حار هواية ببغداد 🥵 لا تنسين واقي الشمس SPF 50+ كل يوم!" });
+      } else if (month >= 10 || month <= 2) {
+        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "الجو بارد وجاف هالفترة ❄️ بشرتچ تحتاج ترطيب مكثف!" });
+      }
+      if (month === 2 || month === 3) {
+        tips.push({ icon: <Heart className="w-4 h-4 text-primary" />, text: "رمضان كريم 🌙 خليني أساعدچ تحافظين على بشرتچ خلال الصيام" });
+      }
+      tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "اسأليني عن أي شي يخص بشرتچ وشعرچ وجمالچ يا گلبي 💆‍♀️" });
+    } else if (language === "ku") {
+      if (month >= 4 && month <= 8) {
+        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "کەش زۆر گەرمە ئەم ڕۆژانە 🥵 واقی خۆرت لەبیر نەچێت!" });
+      } else if (month >= 10 || month <= 2) {
+        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "کەش ساردە ئەم ماوەیە ❄️ پێستت پێویستی بە شێداری زۆرە!" });
+      }
+      tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "هەر پرسیارێکت هەیە دەربارەی پێست و قژ بپرسە 💆‍♀️" });
+    } else {
+      if (month >= 4 && month <= 8) {
+        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "It's scorching in Baghdad 🥵 Don't skip SPF 50+ sunscreen!" });
+      } else if (month >= 10 || month <= 2) {
+        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "Cold & dry weather in Iraq ❄️ Your skin needs extra hydration!" });
+      }
+      if (month === 2 || month === 3) {
+        tips.push({ icon: <Heart className="w-4 h-4 text-primary" />, text: "Ramadan Kareem 🌙 Let me help you maintain your skin routine during fasting" });
+      }
+      tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "Ask me anything about skincare, hair care, or beauty 💆‍♀️" });
     }
-    if (month === 2 || month === 3) {
-      tips.push({ icon: <Heart className="w-4 h-4 text-primary" />, text: "Ramadan Kareem 🌙 Let me help you maintain your skin routine during fasting" });
-    }
-    if (month === 2) {
-      tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "Happy Newroz! 🌷 Get your glow ready for the celebration" });
-    }
-    tips.push({ icon: <Heart className="w-4 h-4 text-pink-400" />, text: "Ask me anything about skincare, hair care, or beauty 💆‍♀️" });
   }
 
   return tips.slice(0, 3);
@@ -131,8 +207,21 @@ const ElaraChatPage = () => {
   const isStreamingRef = useRef(false);
 
   const userName = user?.user_metadata?.full_name || null;
-  const greeting = useMemo(() => getGreeting(language, userName), [language, userName]);
-  const contextualTips = useMemo(() => getContextualTips(language), [language]);
+
+  // Get user's city for region detection
+  const { data: defaultAddress } = useQuery({
+    queryKey: ["default-address-chat", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("addresses").select("city").eq("user_id", user!.id).order("is_default", { ascending: false }).limit(1).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+  const userCity = defaultAddress?.city || null;
+  const isKurdistan = isKurdistanUser(userCity);
+
+  const greeting = useMemo(() => getGreeting(language, userName, isKurdistan), [language, userName, isKurdistan]);
+  const contextualTips = useMemo(() => getContextualTips(language, isKurdistan), [language, isKurdistan]);
 
   const { data: conversations = [] } = useQuery({
     queryKey: ["chat-conversations", user?.id],
@@ -160,7 +249,13 @@ const ElaraChatPage = () => {
     loadMessages();
   }, [conversationId, user, isNewConversation]);
 
+  // Scroll to top on page load (landing view), scroll to bottom only during conversations
   useEffect(() => {
+    if (messages.length === 0 && !isLoading) {
+      // Landing view — scroll to top
+      scrollRef.current?.scrollTo({ top: 0 });
+      return;
+    }
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: isStreamingRef.current ? "instant" : "smooth" });
     }
@@ -251,7 +346,7 @@ const ElaraChatPage = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ messages: allMessages, user_name: userName, user_gender: user?.user_metadata?.gender || null, user_birthdate: user?.user_metadata?.birthdate || null }),
+      body: JSON.stringify({ messages: allMessages, user_name: userName, user_gender: user?.user_metadata?.gender || null, user_birthdate: user?.user_metadata?.birthdate || null, user_city: userCity }),
     });
 
     if (!resp.ok) {
@@ -527,7 +622,7 @@ const ElaraChatPage = () => {
                   <p className="text-xs font-medium text-muted-foreground mb-2">
                     {language === "ar" ? "جربي تسأليني 👇" : language === "ku" ? "بپرسە لێم 👇" : "Try asking me 👇"}
                   </p>
-                  {(quickQuestions[language] || quickQuestions.en).map((q, i) => (
+                  {(quickQuestions[isKurdistan ? "kurdistan" : "iraq"][language] || quickQuestions[isKurdistan ? "kurdistan" : "iraq"].en).map((q, i) => (
                     <motion.button key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.06 }} onClick={() => sendMessage(q)}
                       className="w-full text-left rtl:text-right p-3 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-sm transition-all text-sm text-foreground"
                     >
