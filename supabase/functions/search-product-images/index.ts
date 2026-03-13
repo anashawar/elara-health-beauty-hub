@@ -146,7 +146,7 @@ serve(async (req) => {
 
     const { data: products, error: pErr } = await supabase
       .from("products")
-      .select("id, title, brands(name), volume_ml, form")
+      .select("id, title, brands(name), volume_ml, volume_unit, form")
       .in("id", product_ids);
     if (pErr) throw pErr;
 
