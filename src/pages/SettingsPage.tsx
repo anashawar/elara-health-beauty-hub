@@ -59,6 +59,43 @@ const SettingsPage = () => {
 
   const handleSignOut = async () => { await signOut(); toast(t("profile.signedOut")); navigate("/home"); };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith("image/")) { toast("Please select an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast("Image must be under 5MB"); return; }
+
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const filePath = `${user.id}/avatar.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true, contentType: file.type });
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      const avatarUrl = `${publicUrl}?t=${Date.now()}`;
+
+      // Update profile with avatar URL
+      if (profile) {
+        await supabase.from("profiles").update({ avatar_url: avatarUrl } as any).eq("id", profile.id);
+      } else {
+        await supabase.from("profiles").insert({ user_id: user.id, avatar_url: avatarUrl } as any);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast(t("settings.photoUpdated") || "Profile photo updated!");
+    } catch (err: any) {
+      toast(err.message);
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const languages: { code: Language; label: string; native: string }[] = [
     { code: "en", label: t("settings.english"), native: "English" },
     { code: "ar", label: t("settings.arabic"), native: "العربية" },
