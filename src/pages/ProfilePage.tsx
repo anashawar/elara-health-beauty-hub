@@ -33,6 +33,7 @@ const ProfilePage = () => {
     { icon: Heart, label: t("profile.wishlist"), path: "/wishlist" },
     { icon: MapPin, label: t("profile.addresses"), path: "/addresses" },
     { icon: Settings, label: t("profile.settings"), path: "/settings" },
+    { icon: Info, label: "About ELARA", path: "/about" },
   ];
 
   const handleSignOut = async () => {
