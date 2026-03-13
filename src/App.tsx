@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import InstallPage from "./pages/InstallPage";
 import ElaraChatPage from "./pages/ElaraChatPage";
+import AboutPage from "./pages/AboutPage";
 import AuthGuard from "./components/AuthGuard";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="/orders" element={<OrdersPage />} />
               <Route path="/addresses" element={<AddressesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="/install" element={<InstallPage />} />
               <Route path="/elara-ai" element={<AuthGuard><ElaraChatPage /></AuthGuard>} />
               {/* Admin Panel */}
