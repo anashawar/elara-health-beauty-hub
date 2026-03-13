@@ -102,12 +102,27 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
             <img src={elaraLogo} alt="ELARA" className="h-7" />
           </Link>
 
-          <div className="flex flex-col items-end rtl:items-start">
+          <div className="flex items-center gap-2">
             {user ? (
               <>
-                <span className="text-xs font-medium text-foreground">
-                  {greeting}
-                </span>
+                <div className="flex flex-col items-end rtl:items-start">
+                  <span className="text-xs font-medium text-foreground">
+                    {greeting}
+                  </span>
+                  <Link to="/addresses" className="flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-3 h-3 text-primary" />
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      {userCity ? `${userCity}, ${t("common.iraq")}` : t("common.setLocation") || "Set location"}
+                    </span>
+                  </Link>
+                </div>
+                <Link to="/profile" className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-sm">👤</span>
+                  )}
+                </Link>
                 <Link to="/addresses" className="flex items-center gap-1 mt-0.5">
                   <MapPin className="w-3 h-3 text-primary" />
                   <span className="text-[10px] text-muted-foreground font-medium">
