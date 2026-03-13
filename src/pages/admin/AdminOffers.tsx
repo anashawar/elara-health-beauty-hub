@@ -122,7 +122,9 @@ export default function AdminOffers() {
     onSuccess: () => {
       setUploading(false);
       qc.invalidateQueries({ queryKey: ["admin-offers"] });
-      qc.invalidateQueries({ queryKey: ["active-offers"] });
+      qc.invalidateQueries({ queryKey: ["active-offers-gallery"] });
+      qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
+      qc.invalidateQueries({ queryKey: ["active-offers-pricing"] });
       toast.success(editing ? "Offer updated" : "Offer created");
       resetForm();
     },
@@ -136,7 +138,9 @@ export default function AdminOffers() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-offers"] });
-      qc.invalidateQueries({ queryKey: ["active-offers"] });
+      qc.invalidateQueries({ queryKey: ["active-offers-gallery"] });
+      qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
+      qc.invalidateQueries({ queryKey: ["active-offers-pricing"] });
       toast.success("Offer deleted");
     },
   });
