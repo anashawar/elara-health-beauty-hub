@@ -295,7 +295,7 @@ export default function AdminProducts() {
       brand_id: p.brand_id || "",
       is_new: p.is_new || false, is_trending: p.is_trending || false, is_pick: p.is_pick || false, in_stock: p.in_stock !== false,
       volume_ml: p.volume_ml || "", volume_unit: p.volume_unit || "ml", skin_type: p.skin_type || "", country_of_origin: p.country_of_origin || "",
-      condition: (p as any).condition || "",
+      condition: (p as any).condition || "", product_form: (p as any).form || "",
     });
     const sorted = [...(p.product_images || [])].sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
     setExistingImages(sorted);
