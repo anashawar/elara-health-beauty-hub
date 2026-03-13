@@ -167,7 +167,11 @@ CRITICAL:
             }
           }
 
+          // Apply corrected title if provided
+          const correctedTitle = enriched.corrected_title?.trim() || product.title;
+
           const updatePayload: any = {
+            title: correctedTitle,
             description: enriched.description || null,
             benefits: enriched.benefits || null,
             usage_instructions: enriched.usage_instructions || null,
@@ -181,7 +185,7 @@ CRITICAL:
             application: enriched.application || null,
             is_trending: enriched.is_trending || false,
             price: sellingPrice,
-            slug: enriched.slug || product.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+            slug: enriched.slug || correctedTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
           };
 
           if (brandId) updatePayload.brand_id = brandId;
