@@ -431,6 +431,38 @@ export type Database = {
         }
         Relationships: []
       }
+      product_costs: {
+        Row: {
+          cost: number
+          created_at: string
+          id: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          cost?: number
+          created_at?: string
+          id?: string
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          id?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_costs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_images: {
         Row: {
           created_at: string
@@ -523,6 +555,7 @@ export type Database = {
           usage_instructions_ar: string | null
           usage_instructions_ku: string | null
           volume_ml: string | null
+          volume_unit: string | null
         }
         Insert: {
           application?: string | null
@@ -557,6 +590,7 @@ export type Database = {
           usage_instructions_ar?: string | null
           usage_instructions_ku?: string | null
           volume_ml?: string | null
+          volume_unit?: string | null
         }
         Update: {
           application?: string | null
@@ -591,6 +625,7 @@ export type Database = {
           usage_instructions_ar?: string | null
           usage_instructions_ku?: string | null
           volume_ml?: string | null
+          volume_unit?: string | null
         }
         Relationships: [
           {
