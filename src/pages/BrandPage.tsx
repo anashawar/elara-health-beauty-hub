@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Package, MapPin, ChevronRight } from "lucide-react";
+import { ArrowLeft, Package, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useProducts, useBrands } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
@@ -19,6 +19,18 @@ const BrandPage = () => {
 
   // Get unique countries from brand products
   const countries = [...new Set(brandProducts.map(p => p.country_of_origin).filter(Boolean))];
+
+  const countryFlag = (country: string): string => {
+    const map: Record<string, string> = {
+      "France": "🇫🇷", "USA": "🇺🇸", "United States": "🇺🇸", "South Korea": "🇰🇷", "Korea": "🇰🇷",
+      "Germany": "🇩🇪", "Japan": "🇯🇵", "UK": "🇬🇧", "United Kingdom": "🇬🇧", "Italy": "🇮🇹",
+      "Spain": "🇪🇸", "Canada": "🇨🇦", "Australia": "🇦🇺", "Switzerland": "🇨🇭", "Sweden": "🇸🇪",
+      "Turkey": "🇹🇷", "India": "🇮🇳", "Iraq": "🇮🇶", "Jordan": "🇯🇴", "UAE": "🇦🇪",
+      "Lebanon": "🇱🇧", "Morocco": "🇲🇦", "Egypt": "🇪🇬", "China": "🇨🇳", "Brazil": "🇧🇷",
+      "Netherlands": "🇳🇱", "Belgium": "🇧🇪", "Poland": "🇵🇱", "Ireland": "🇮🇪",
+    };
+    return map[country] || "🌍";
+  };
 
   const getBrandName = (b: any) => {
     if (language === "ar" && b.name_ar) return b.name_ar;
@@ -57,7 +69,7 @@ const BrandPage = () => {
             <h2 className="text-xl font-display font-bold text-foreground">{displayName}</h2>
             {countries.length > 0 && (
               <div className="flex items-center gap-1.5 mt-1.5">
-                <MapPin className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                <span className="text-base leading-none flex-shrink-0">{countryFlag(countries[0])}</span>
                 <span className="text-xs text-muted-foreground">{countries.join(", ")}</span>
               </div>
             )}
