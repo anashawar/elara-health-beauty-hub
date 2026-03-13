@@ -69,7 +69,7 @@ const BrandPage = () => {
             <h2 className="text-xl font-display font-bold text-foreground">{displayName}</h2>
             {countries.length > 0 && (
               <div className="flex items-center gap-1.5 mt-1.5">
-                <MapPin className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                <span className="text-base leading-none flex-shrink-0">{countryFlag(countries[0])}</span>
                 <span className="text-xs text-muted-foreground">{countries.join(", ")}</span>
               </div>
             )}
