@@ -9,10 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon, Languages, FileSpreadsheet } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon, Languages, FileSpreadsheet, Sparkles, Wand2 } from "lucide-react";
 import { formatPrice, useCategories, useBrands, useSubcategories } from "@/hooks/useProducts";
 import { toast } from "sonner";
 import BulkImportDialog, { ColumnMapping } from "@/components/admin/BulkImportDialog";
+import { Progress } from "@/components/ui/progress";
 
 interface ProductForm {
   id?: string;
@@ -59,6 +60,12 @@ export default function AdminProducts() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [editing, setEditing] = useState(false);
+
+  // AI Enrichment state
+  const [enriching, setEnriching] = useState(false);
+  const [enrichProgress, setEnrichProgress] = useState({ done: 0, total: 0, current: "" });
+  const [selectedForEnrich, setSelectedForEnrich] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
 
   // Image state
   const [mainImage, setMainImage] = useState<File | null>(null);
@@ -385,11 +392,129 @@ export default function AdminProducts() {
     return { success, errors };
   };
 
+  // AI Enrichment handler
+  const handleEnrichProducts = async (ids: string[]) => {
+    if (ids.length === 0) { toast.error("No products selected"); return; }
+    setEnriching(true);
+    setEnrichProgress({ done: 0, total: ids.length, current: "Starting..." });
+
+    const BATCH_SIZE = 10;
+    let totalSuccess = 0;
+    let totalFail = 0;
+
+    for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+      const batch = ids.slice(i, i + BATCH_SIZE);
+      const batchProducts = products.filter((p: any) => batch.includes(p.id));
+      setEnrichProgress({ done: i, total: ids.length, current: `Processing ${batchProducts[0]?.title || "..."}` });
+
+      try {
+        const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enrich-products`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ product_ids: batch, markup_percent: 35 }),
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          toast.error(`Batch failed: ${err.error || resp.statusText}`);
+          totalFail += batch.length;
+          continue;
+        }
+
+        const result = await resp.json();
+        totalSuccess += result.succeeded || 0;
+        totalFail += result.failed || 0;
+
+        if (result.rate_limited > 0) {
+          toast.warning(`${result.rate_limited} products rate-limited, waiting...`);
+          await new Promise(r => setTimeout(r, 5000));
+        }
+      } catch (err) {
+        console.error("Enrich batch error:", err);
+        totalFail += batch.length;
+      }
+
+      // Delay between batches
+      if (i + BATCH_SIZE < ids.length) {
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+
+    setEnrichProgress({ done: ids.length, total: ids.length, current: "Done!" });
+    setEnriching(false);
+    setSelectMode(false);
+    setSelectedForEnrich(new Set());
+    qc.invalidateQueries({ queryKey: ["admin-products"] });
+    qc.invalidateQueries({ queryKey: ["admin-product-costs-list"] });
+    toast.success(`AI Enrichment complete: ${totalSuccess} succeeded, ${totalFail} failed`);
+  };
+
+  const handleEnrichMissing = () => {
+    // Select all products missing description
+    const missing = products.filter((p: any) => !p.description || p.description.trim() === "");
+    if (missing.length === 0) {
+      toast.info("All products already have descriptions");
+      return;
+    }
+    const ids = missing.map((p: any) => p.id);
+    if (confirm(`Enrich ${ids.length} products missing descriptions with AI? This will auto-fill descriptions, benefits, pricing (+35% on cost), and more.`)) {
+      handleEnrichProducts(ids);
+    }
+  };
+
+  const handleEnrichSelected = () => {
+    const ids = Array.from(selectedForEnrich);
+    if (ids.length === 0) { toast.error("Select products first"); return; }
+    if (confirm(`Enrich ${ids.length} selected products with AI?`)) {
+      handleEnrichProducts(ids);
+    }
+  };
+
+  const toggleSelectProduct = (id: string) => {
+    setSelectedForEnrich(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedForEnrich.size === filtered.length) {
+      setSelectedForEnrich(new Set());
+    } else {
+      setSelectedForEnrich(new Set(filtered.map((p: any) => p.id)));
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h1 className="text-2xl font-display font-bold text-foreground">Products</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {/* AI Enrichment Controls */}
+          {!selectMode ? (
+            <>
+              <Button size="sm" variant="outline" className="text-primary border-primary/30" onClick={handleEnrichMissing} disabled={enriching}>
+                <Sparkles className="h-4 w-4 mr-1.5" />AI Fill Missing
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setSelectMode(true)} disabled={enriching}>
+                <Wand2 className="h-4 w-4 mr-1.5" />Select & Enrich
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button size="sm" variant="outline" onClick={toggleSelectAll}>
+                {selectedForEnrich.size === filtered.length ? "Deselect All" : "Select All"}
+              </Button>
+              <Button size="sm" className="bg-primary" onClick={handleEnrichSelected} disabled={selectedForEnrich.size === 0 || enriching}>
+                <Sparkles className="h-4 w-4 mr-1.5" />Enrich {selectedForEnrich.size} Products
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => { setSelectMode(false); setSelectedForEnrich(new Set()); }}>Cancel</Button>
+            </>
+          )}
           <Button size="sm" variant="outline" onClick={() => setBulkOpen(true)}>
             <FileSpreadsheet className="h-4 w-4 mr-1.5" />Bulk Import
           </Button>
@@ -612,6 +737,19 @@ export default function AdminProducts() {
         </div>
       </div>
 
+      {/* AI Enrichment Progress */}
+      {enriching && (
+        <div className="mb-4 p-4 rounded-xl border border-primary/20 bg-primary/5">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+            <span className="text-sm font-medium text-foreground">AI Enriching Products...</span>
+            <span className="text-xs text-muted-foreground ml-auto">{enrichProgress.done}/{enrichProgress.total}</span>
+          </div>
+          <Progress value={enrichProgress.total > 0 ? (enrichProgress.done / enrichProgress.total) * 100 : 0} className="h-2 mb-1" />
+          <p className="text-xs text-muted-foreground truncate">{enrichProgress.current}</p>
+        </div>
+      )}
+
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input className="pl-9" placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -624,6 +762,7 @@ export default function AdminProducts() {
           <Table>
             <TableHeader>
               <TableRow>
+                {selectMode && <TableHead className="w-10"></TableHead>}
                 <TableHead>Product</TableHead>
                 <TableHead className="hidden md:table-cell">Category</TableHead>
                 <TableHead>Price</TableHead>
@@ -638,7 +777,17 @@ export default function AdminProducts() {
                 const cost = costMap[p.id];
                 const margin = cost !== undefined ? ((p.price - cost) / p.price * 100) : null;
                 return (
-                <TableRow key={p.id}>
+                <TableRow key={p.id} className={selectMode && selectedForEnrich.has(p.id) ? "bg-primary/5" : ""}>
+                  {selectMode && (
+                    <TableCell className="w-10">
+                      <input
+                        type="checkbox"
+                        checked={selectedForEnrich.has(p.id)}
+                        onChange={() => toggleSelectProduct(p.id)}
+                        className="rounded border-border"
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     <div className="flex items-center gap-3">
                       {p.product_images?.[0]?.image_url ? (
