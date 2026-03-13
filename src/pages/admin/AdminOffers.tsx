@@ -449,8 +449,11 @@ export default function AdminOffers() {
                           ) : (
                             <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px]">{isExpired ? "Expired" : "Inactive"}</Badge>
                           )}
-                          {o.show_as_banner && (
-                            <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">Banner</Badge>
+                          {o.banner_style === "hero" && (
+                            <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">Hero Banner</Badge>
+                          )}
+                          {o.banner_style === "gallery" && (
+                            <Badge className="bg-accent text-accent-foreground border-border text-[10px]">Gallery Banner</Badge>
                           )}
                         </div>
                         {o.subtitle && <p className="text-xs text-muted-foreground mt-0.5">{o.subtitle}</p>}
