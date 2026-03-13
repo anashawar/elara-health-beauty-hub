@@ -65,6 +65,12 @@ function scoreImage(url: string, titleWords: string[], brandSlug: string): numbe
   // Low-res penalty
   if (/_thumb|_xs\.|_sm\.|\/thumb\/|\/small\/|_50x|_75x|_100x|_150x/i.test(lower)) score -= 8;
 
+  // Boost: white/clean background indicators (common in e-commerce product shots)
+  if (/white|clean|studio|packshot|_1\./i.test(lower)) score += 3;
+
+  // Boost: first/main product image (usually _1 or _01)
+  if (/[_-](1|01)\.\w+$/.test(lower)) score += 4;
+
   return score;
 }
 
