@@ -1,5 +1,6 @@
 import { useState } from "react";
 import TopHeader from "@/components/layout/TopHeader";
+import DesktopHeader from "@/components/layout/DesktopHeader";
 import BottomNav from "@/components/layout/BottomNav";
 import HeroBanner from "@/components/home/HeroBanner";
 import CategoryGrid from "@/components/home/CategoryGrid";
@@ -23,32 +24,36 @@ const Index = () => {
   const newArrivals = products.filter(p => p.isNew);
 
   return (
-    <div className="min-h-screen bg-background pb-24 app-container">
+    <div className="min-h-screen bg-background pb-24 md:pb-8">
+      <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <TopHeader onSearchClick={() => setSearchOpen(true)} />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
-      <HeroBanner />
-      <CategoryGrid />
+      <div className="app-container">
+        <HeroBanner />
+        <CategoryGrid />
 
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : (
-        <>
-          <ProductSection title={t("home.trendingNow")} subtitle={t("home.mostPopular")} products={trending} viewAllLink="/categories" variant="trending" />
-          <BrandsSection />
-          <AskElaraCard />
-          <ConcernsSection />
-          <DealsBanner />
-          <ProductSection title={t("home.elaraPicks")} subtitle={t("home.curatedForYou")} products={picks} viewAllLink="/categories" />
-          <ProductSection title={t("home.specialOffers")} subtitle={t("home.limitedDeals")} products={offers} viewAllLink="/categories" />
-          <ProductSection title={t("home.newArrivals")} subtitle={t("home.freshAdditions")} products={newArrivals} viewAllLink="/categories" />
-        </>
-      )}
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <>
+            <ProductSection title={t("home.trendingNow")} subtitle={t("home.mostPopular")} products={trending} viewAllLink="/categories" variant="trending" />
+            <BrandsSection />
+            <AskElaraCard />
+            <ConcernsSection />
+            <DealsBanner />
+            <ProductSection title={t("home.elaraPicks")} subtitle={t("home.curatedForYou")} products={picks} viewAllLink="/categories" />
+            <ProductSection title={t("home.specialOffers")} subtitle={t("home.limitedDeals")} products={offers} viewAllLink="/categories" />
+            <ProductSection title={t("home.newArrivals")} subtitle={t("home.freshAdditions")} products={newArrivals} viewAllLink="/categories" />
+          </>
+        )}
 
-      <div className="mt-8 mb-4 px-4 text-center">
-        <p className="text-xs text-muted-foreground">ELARA — {t("common.tagline")}</p>
+        {/* Footer */}
+        <footer className="mt-8 mb-4 px-4 text-center md:py-8 md:border-t md:border-border">
+          <p className="text-xs text-muted-foreground">ELARA — {t("common.tagline")}</p>
+        </footer>
       </div>
 
       <BottomNav />
