@@ -8,10 +8,31 @@ import { toast } from "@/components/ui/sonner";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useProducts, formatPrice } from "@/hooks/useProducts";
+import { Share } from "@capacitor/share";
+import { Capacitor } from "@capacitor/core";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
 import ReviewSection from "@/components/product/ReviewSection";
 import { useLanguage } from "@/i18n/LanguageContext";
+
+const PUBLISHED_URL = "https://elara-health-beauty-hub.lovable.app";
+
+const getShareUrl = (productId: string) => `${PUBLISHED_URL}/product/${productId}`;
+
+const handleNativeShare = async (title: string, text: string, url: string, fallbackToast: string) => {
+  try {
+    if (Capacitor.isNativePlatform()) {
+      await Share.share({ title, text, url, dialogTitle: title });
+    } else if (navigator.share) {
+      await navigator.share({ title, text, url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast(fallbackToast);
+    }
+  } catch (e) {
+    // User cancelled share dialog – ignore
+  }
+};
 
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -84,21 +105,12 @@ const ProductPage = () => {
           </button>
           <div className="flex items-center gap-0.5 flex-shrink-0">
             <button
-              onClick={async () => {
-                const shareData = {
-                  title: product.title,
-                  text: `Check out ${product.title} by ${product.brand} on ELARA!`,
-                  url: window.location.href,
-                };
-                try {
-                  if (navigator.share) {
-                    await navigator.share(shareData);
-                  } else {
-                    await navigator.clipboard.writeText(window.location.href);
-                    toast(t("product.linkCopied"));
-                  }
-                } catch (e) {}
-              }}
+              onClick={() => handleNativeShare(
+                product.title,
+                `Check out ${product.title} by ${product.brand} on ELARA!`,
+                getShareUrl(product.id),
+                t("product.linkCopied")
+              )}
               className="p-2 rounded-xl hover:bg-secondary transition-colors"
             >
               <Share2 className="w-5 h-5 text-foreground" />
@@ -198,12 +210,12 @@ const ProductPage = () => {
                 <span className="text-sm font-medium text-foreground">{wishlisted ? "Saved" : "Save"}</span>
               </button>
               <button
-                onClick={async () => {
-                  try {
-                    if (navigator.share) await navigator.share({ title: product.title, url: window.location.href });
-                    else { await navigator.clipboard.writeText(window.location.href); toast(t("product.linkCopied")); }
-                  } catch (e) {}
-                }}
+                onClick={() => handleNativeShare(
+                  product.title,
+                  `Check out ${product.title} by ${product.brand} on ELARA!`,
+                  getShareUrl(product.id),
+                  t("product.linkCopied")
+                )}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border hover:bg-secondary transition-colors"
               >
                 <Share2 className="w-4 h-4 text-muted-foreground" />
