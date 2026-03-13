@@ -136,6 +136,13 @@ serve(async (req) => {
       if (sessionError) throw sessionError;
       session = sessionData.session;
     } else {
+      // Create new user — email is required for signup
+      if (!userEmail) {
+        return new Response(
+          JSON.stringify({ error: "Email is required to create an account" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       // Create new user
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email: userEmail,
