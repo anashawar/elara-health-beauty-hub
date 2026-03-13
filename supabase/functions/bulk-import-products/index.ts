@@ -16,7 +16,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { products } = await req.json();
-    // products: Array<{ name: string, cost: number }>
+    // products: Array<{ name: string, cost: number, price?: number }>
 
     if (!products || !Array.isArray(products) || products.length === 0) {
       throw new Error("products array is required");
