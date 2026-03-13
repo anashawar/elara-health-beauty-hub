@@ -397,7 +397,7 @@ export default function AdminProducts() {
                 <Label>Title *</Label>
                 <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label>Price (IQD) *</Label>
                   <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: +e.target.value })} />
@@ -405,6 +405,10 @@ export default function AdminProducts() {
                 <div>
                   <Label>Original Price</Label>
                   <Input type="number" value={form.original_price ?? ""} onChange={(e) => setForm({ ...form, original_price: e.target.value ? +e.target.value : null })} />
+                </div>
+                <div>
+                  <Label>Cost (IQD) 🔒</Label>
+                  <Input type="number" placeholder="Confidential" value={form.cost ?? ""} onChange={(e) => setForm({ ...form, cost: e.target.value ? +e.target.value : null })} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
