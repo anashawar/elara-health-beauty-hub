@@ -4,6 +4,7 @@ import { useApp } from "@/context/AppContext";
 import type { ProductWithRelations } from "@/hooks/useProducts";
 import { formatPrice } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 
 interface ProductCardProps {
   product: ProductWithRelations;
@@ -13,11 +14,21 @@ interface ProductCardProps {
 const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
   const { t } = useLanguage();
+  const { data: activeOffers = [] } = useActiveOffers();
   const wishlisted = isInWishlist(product.id);
   const outOfStock = !product.inStock;
-  const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-    : 0;
+
+  // Check for offer-based discount
+  const offerPricing = getOfferForProduct(product, activeOffers);
+
+  // Use offer price if available, otherwise fall back to original price discount
+  const displayPrice = offerPricing ? offerPricing.discountedPrice : product.price;
+  const originalDisplayPrice = offerPricing ? product.price : product.originalPrice;
+  const discount = offerPricing
+    ? offerPricing.discountPercent
+    : product.originalPrice
+      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+      : 0;
 
   if (variant === "horizontal") {
     return (
@@ -44,11 +55,14 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
             <h3 className="text-sm font-bold text-foreground mt-0.5 line-clamp-2 leading-snug tracking-tight">{product.title}</h3>
           </Link>
           <div className="flex items-center gap-1.5 mt-2">
-            <span className="text-[15px] font-bold text-foreground">{formatPrice(product.price)}</span>
-            {product.originalPrice && (
-              <span className="text-[11px] text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
+            <span className="text-[15px] font-bold text-foreground">{formatPrice(displayPrice)}</span>
+            {originalDisplayPrice && originalDisplayPrice > displayPrice && (
+              <span className="text-[11px] text-muted-foreground line-through">{formatPrice(originalDisplayPrice)}</span>
             )}
           </div>
+          {offerPricing && (
+            <p className="text-[9px] font-semibold text-primary mt-0.5 truncate">{offerPricing.offerLabel}</p>
+          )}
           <div className="flex items-center gap-1.5 mt-2">
             <button
               onClick={() => !outOfStock && addToCart(product)}
@@ -99,11 +113,14 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
           <h3 className="text-[15px] font-bold text-foreground mt-1 line-clamp-2 leading-snug tracking-tight">{product.title}</h3>
         </Link>
         <div className="flex items-center gap-1.5 mt-2">
-          <span className="text-base font-bold text-foreground">{formatPrice(product.price)}</span>
-          {product.originalPrice && (
-            <span className="text-[11px] text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
+          <span className="text-base font-bold text-foreground">{formatPrice(displayPrice)}</span>
+          {originalDisplayPrice && originalDisplayPrice > displayPrice && (
+            <span className="text-[11px] text-muted-foreground line-through">{formatPrice(originalDisplayPrice)}</span>
           )}
         </div>
+        {offerPricing && (
+          <p className="text-[9px] font-semibold text-primary mt-0.5 truncate">{offerPricing.offerLabel}</p>
+        )}
         <button
           onClick={() => !outOfStock && addToCart(product)}
           disabled={outOfStock}
