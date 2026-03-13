@@ -564,6 +564,9 @@ export default function AdminProducts() {
               <Button size="sm" variant="outline" className="text-primary border-primary/30" onClick={handleEnrichMissing} disabled={enriching}>
                 <Sparkles className="h-4 w-4 mr-1.5" />AI Fill Missing
               </Button>
+              <Button size="sm" variant="outline" className="border-primary/30" onClick={handleSearchMissingImages} disabled={enriching}>
+                <ImagePlus className="h-4 w-4 mr-1.5" />Find Images
+              </Button>
               <Button size="sm" variant="outline" onClick={() => setSelectMode(true)} disabled={enriching}>
                 <Wand2 className="h-4 w-4 mr-1.5" />Select & Enrich
               </Button>
