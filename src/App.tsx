@@ -91,6 +91,7 @@ const App = () => (
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </SwipeBackWrapper>
           </BrowserRouter>
         </AppProvider>
       </LanguageProvider>
