@@ -7,6 +7,8 @@ import { formatPrice } from "@/hooks/useProducts";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/layout/BottomNav";
+import DesktopHeader from "@/components/layout/DesktopHeader";
+import SearchOverlay from "@/components/SearchOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 
