@@ -154,7 +154,7 @@ export default function AdminOffers() {
       target_id: o.target_id || "",
       target_name: o.target_name || "",
       link_url: o.link_url || "",
-      show_as_banner: o.show_as_banner,
+      banner_style: o.banner_style || "none",
       is_active: o.is_active,
       starts_at: o.starts_at ? o.starts_at.split("T")[0] : "",
       ends_at: o.ends_at ? o.ends_at.split("T")[0] : "",
