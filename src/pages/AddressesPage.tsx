@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Plus, MapPin, Trash2, Star, Edit2, X } from "lucide-react";
+import { ArrowLeft, Plus, MapPin, Trash2, Star, Edit2, X, Navigation, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import BottomNav from "@/components/layout/BottomNav";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import SearchOverlay from "@/components/SearchOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
-
-const cities = ["Baghdad", "Erbil", "Basra", "Sulaymaniyah", "Najaf", "Karbala", "Kirkuk", "Mosul", "Duhok"];
+import { iraqCities } from "@/data/iraqCities";
+import { Capacitor } from "@capacitor/core";
+import { Geolocation } from "@capacitor/geolocation";
 
 interface AddressForm {
   label: string;
@@ -23,9 +25,11 @@ interface AddressForm {
   building: string;
   floor: string;
   phone: string;
+  latitude: number | null;
+  longitude: number | null;
 }
 
-const emptyForm: AddressForm = { label: "Home", city: "", area: "", street: "", building: "", floor: "", phone: "" };
+const emptyForm: AddressForm = { label: "Home", city: "", area: "", street: "", building: "", floor: "", phone: "", latitude: null, longitude: null };
 
 const AddressesPage = () => {
   const { user, loading: authLoading } = useAuth();
@@ -35,6 +39,7 @@ const AddressesPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<AddressForm>(emptyForm);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
 
   const { data: addresses = [], isLoading } = useQuery({
     queryKey: ["addresses", user?.id],
@@ -50,10 +55,53 @@ const AddressesPage = () => {
     enabled: !!user,
   });
 
+  const handleGetLocation = async () => {
+    setGpsLoading(true);
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const perm = await Geolocation.requestPermissions();
+        if (perm.location !== "granted") {
+          toast(t("addresses.locationDenied") || "Location permission denied");
+          setGpsLoading(false);
+          return;
+        }
+      }
+      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
+      setForm(f => ({
+        ...f,
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      }));
+      toast(t("addresses.locationCaptured") || "📍 Location captured!");
+    } catch (e: any) {
+      console.error("GPS error:", e);
+      // Fallback for web browsers
+      if (!Capacitor.isNativePlatform() && "geolocation" in navigator) {
+        try {
+          const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 })
+          );
+          setForm(f => ({
+            ...f,
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          }));
+          toast(t("addresses.locationCaptured") || "📍 Location captured!");
+        } catch {
+          toast(t("addresses.locationError") || "Could not get location. Please enable GPS.");
+        }
+      } else {
+        toast(t("addresses.locationError") || "Could not get location. Please enable GPS.");
+      }
+    } finally {
+      setGpsLoading(false);
+    }
+  };
+
   const saveMutation = useMutation({
     mutationFn: async (data: AddressForm & { id?: string }) => {
       if (!user) throw new Error("Not authenticated");
-      const payload = {
+      const payload: any = {
         user_id: user.id,
         label: data.label,
         city: data.city,
@@ -62,6 +110,8 @@ const AddressesPage = () => {
         building: data.building || null,
         floor: data.floor || null,
         phone: data.phone || null,
+        latitude: data.latitude,
+        longitude: data.longitude,
       };
       if (data.id) {
         const { error } = await supabase.from("addresses").update(payload).eq("id", data.id);
@@ -114,6 +164,8 @@ const AddressesPage = () => {
       building: addr.building || "",
       floor: addr.floor || "",
       phone: addr.phone || "",
+      latitude: addr.latitude || null,
+      longitude: addr.longitude || null,
     });
     setEditingId(addr.id);
     setShowForm(true);
@@ -219,14 +271,51 @@ const AddressesPage = () => {
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.city")} *</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {cities.map(c => (
-                        <button key={c} onClick={() => setForm(f => ({ ...f, city: c }))}
-                          className={`py-2 px-2 text-[11px] font-medium rounded-lg border transition-all ${form.city === c ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border"}`}
-                        >{c}</button>
-                      ))}
-                    </div>
+                    <Select value={form.city} onValueChange={(v) => setForm(f => ({ ...f, city: v }))}>
+                      <SelectTrigger className="h-11 rounded-xl bg-secondary border-border text-sm">
+                        <SelectValue placeholder={t("auth.selectCity") || "Select city"} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {iraqCities.map(c => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                  {/* GPS Location */}
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                      {t("addresses.gpsLocation") || "📍 GPS Location"}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleGetLocation}
+                      disabled={gpsLoading}
+                      className={`w-full flex items-center justify-center gap-2.5 py-3 rounded-xl border-2 border-dashed transition-all text-sm font-semibold ${
+                        form.latitude
+                          ? "border-primary/40 bg-primary/5 text-primary"
+                          : "border-border bg-secondary/50 text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                      }`}
+                    >
+                      {gpsLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Navigation className="w-4 h-4" />
+                      )}
+                      {gpsLoading
+                        ? (t("addresses.gettingLocation") || "Getting location...")
+                        : form.latitude
+                          ? (t("addresses.locationSaved") || `📍 Location saved`)
+                          : (t("addresses.useMyLocation") || "Use my current location")}
+                    </button>
+                    {form.latitude && (
+                      <p className="text-[10px] text-muted-foreground mt-1 text-center">
+                        {form.latitude.toFixed(5)}, {form.longitude?.toFixed(5)}
+                      </p>
+                    )}
+                  </div>
+
                   <Input value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))} placeholder={t("auth.area")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                   <Input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder={t("auth.streetPlaceholder")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                   <div className="grid grid-cols-2 gap-3">
@@ -272,6 +361,9 @@ const AddressesPage = () => {
                       </span>
                       {addr.is_default && (
                         <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{t("addresses.default")}</span>
+                      )}
+                      {(addr as any).latitude && (
+                        <span className="text-[10px] font-bold text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">📍 GPS</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1">
