@@ -249,7 +249,13 @@ const ElaraChatPage = () => {
     loadMessages();
   }, [conversationId, user, isNewConversation]);
 
+  // Scroll to top on page load (landing view), scroll to bottom only during conversations
   useEffect(() => {
+    if (messages.length === 0 && !isLoading) {
+      // Landing view — scroll to top
+      scrollRef.current?.scrollTo({ top: 0 });
+      return;
+    }
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: isStreamingRef.current ? "instant" : "smooth" });
     }
