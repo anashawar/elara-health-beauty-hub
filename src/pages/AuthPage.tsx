@@ -69,6 +69,8 @@ const AuthPage = () => {
       if (authMode === "signup") {
         body.full_name = fullName.trim();
         body.email = email.trim();
+        body.gender = gender || undefined;
+        body.birthdate = birthdate || undefined;
       }
 
       const resp = await fetch(`${OTP_URL}/send-otp`, {
