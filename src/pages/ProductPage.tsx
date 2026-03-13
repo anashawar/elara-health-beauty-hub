@@ -204,9 +204,10 @@ const ProductPage = () => {
 
           {/* Product Info */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="px-4 md:px-0 pt-5 md:pt-0">
-            <div className="flex items-center gap-2">
-              <Link to={`/brand/${product.brand_id}`} className="text-xs font-bold uppercase tracking-widest text-primary hover:underline">{product.brand}</Link>
-            </div>
+            <Link to={`/brand/${product.brand_id}`} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-secondary/50 hover:bg-secondary/80 border border-border/30 transition-all group/brand">
+              {(() => { const b = brands.find(b => b.id === product.brand_id); return b?.logo_url ? <img src={b.logo_url} alt={product.brand} className="w-5 h-5 object-contain rounded-md" /> : null; })()}
+              <span className="text-xs font-bold uppercase tracking-widest text-primary group-hover/brand:underline">{product.brand}</span>
+            </Link>
             <h1 className="text-xl md:text-2xl font-display font-bold text-foreground mt-1.5 leading-tight">{product.title}</h1>
             <div className="flex items-baseline gap-2.5 mt-2">
               <span className="text-2xl md:text-3xl font-extrabold text-primary">{formatPrice(displayPrice)}</span>
