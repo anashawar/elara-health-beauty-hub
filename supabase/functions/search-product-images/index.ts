@@ -168,6 +168,7 @@ serve(async (req) => {
       const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, "");
       const titleWords = product.title.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
       const fullName = `${brandName} ${product.title}`.trim();
+      const volumeStr = (product as any).volume_ml ? `${(product as any).volume_ml}${(product as any).volume_unit || "ml"}` : undefined;
 
       // Multiple search strategies — first query targets white background product shots
       const searchQueries = [
