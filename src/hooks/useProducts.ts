@@ -97,6 +97,7 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
       application: p.application,
       skin_type: p.skin_type,
       condition: p.condition || null,
+      inStock: p.in_stock !== false,
     };
   });
 }

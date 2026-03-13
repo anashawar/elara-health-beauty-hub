@@ -115,6 +115,7 @@ export default function AdminProducts() {
         is_new: f.is_new,
         is_trending: f.is_trending,
         is_pick: f.is_pick,
+        in_stock: f.in_stock,
         volume_ml: f.volume_ml || null,
         skin_type: f.skin_type || null,
         country_of_origin: f.country_of_origin || null,
