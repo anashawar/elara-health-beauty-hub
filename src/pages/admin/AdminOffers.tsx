@@ -26,7 +26,7 @@ interface OfferForm {
   target_id: string;
   target_name: string;
   link_url: string;
-  show_as_banner: boolean;
+  banner_style: string;
   is_active: boolean;
   starts_at: string;
   ends_at: string;
@@ -36,7 +36,7 @@ const emptyForm: OfferForm = {
   title: "", subtitle: "", description: "", image_url: "",
   discount_type: "percentage", discount_value: 0,
   target_type: "all", target_id: "", target_name: "", link_url: "",
-  show_as_banner: false, is_active: true, starts_at: "", ends_at: "",
+  banner_style: "none", is_active: true, starts_at: "", ends_at: "",
 };
 
 const BUCKET = "product-images";
