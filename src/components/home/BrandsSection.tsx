@@ -26,22 +26,25 @@ const BrandsSection = () => {
       </div>
 
       {/* Brands scroll */}
-      <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+      <div className="flex gap-4 overflow-x-auto no-scrollbar pb-3">
         {brands.map((brand, idx) => (
           <motion.div
             key={brand.id}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: idx * 0.05 }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.04, duration: 0.35 }}
           >
             <Link
               to={`/brand/${brand.slug}`}
-              className="flex-shrink-0 w-[88px] flex flex-col items-center gap-2.5 p-3 bg-card rounded-2xl border border-border/50 shadow-sm hover:shadow-premium hover:border-primary/30 hover:scale-105 transition-all duration-200"
+              className="flex-shrink-0 w-[80px] h-[80px] flex items-center justify-center rounded-2xl bg-card border border-border/40 shadow-sm hover:shadow-premium hover:border-primary/30 hover:scale-110 transition-all duration-300 p-3"
+              title={brand.name}
             >
-              <div className="w-16 h-16 rounded-xl overflow-hidden bg-secondary/50 p-1.5">
-                <img src={brand.logo_url || "/placeholder.svg"} alt={brand.name} className="w-full h-full object-contain" loading="lazy" />
-              </div>
-              <span className="text-[11px] font-bold text-foreground text-center leading-tight line-clamp-2">{brand.name}</span>
+              <img
+                src={brand.logo_url || "/placeholder.svg"}
+                alt={brand.name}
+                className="w-full h-full object-contain drop-shadow-sm"
+                loading="lazy"
+              />
             </Link>
           </motion.div>
         ))}
