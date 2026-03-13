@@ -35,7 +35,7 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
   const userCity = defaultAddress?.city || defaultAddress?.area || "";
 
   return (
-    <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
+    <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border md:hidden">
       <div className="app-container px-4 py-3 space-y-2.5">
         {/* Top row: Logo + Welcome */}
         <div className="flex items-center justify-between">
