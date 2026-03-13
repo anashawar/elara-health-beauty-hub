@@ -67,6 +67,10 @@ export default function AdminProducts() {
   const [selectedForEnrich, setSelectedForEnrich] = useState<Set<string>>(new Set());
   const [selectMode, setSelectMode] = useState(false);
 
+  // Quick-add state
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [quickAddItems, setQuickAddItems] = useState<{ name: string; cost: string }[]>([{ name: "", cost: "" }]);
+
   // Image state
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
