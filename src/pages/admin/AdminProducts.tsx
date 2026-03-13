@@ -537,6 +537,7 @@ export default function AdminProducts() {
     }
   };
 
+  const toggleSelectProduct = (id: string) => {
     setSelectedForEnrich(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
