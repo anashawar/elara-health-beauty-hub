@@ -74,11 +74,16 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
     <div className="bg-card rounded-2xl shadow-premium overflow-hidden group">
       <Link to={`/product/${product.id}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-secondary">
-          <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
-          {discount > 0 && (
+          <img src={product.image} alt={product.title} className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${outOfStock ? "opacity-50 grayscale" : ""}`} loading="lazy" />
+          {outOfStock && (
+            <span className="absolute inset-0 flex items-center justify-center bg-background/60">
+              <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-3 py-1 rounded-lg">{t("product.outOfStock") || "Out of Stock"}</span>
+            </span>
+          )}
+          {!outOfStock && discount > 0 && (
             <span className="absolute top-2 left-2 rtl:left-auto rtl:right-2 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-lg">-{discount}%</span>
           )}
-          {product.isNew && !discount && (
+          {!outOfStock && product.isNew && !discount && (
             <span className="absolute top-2 left-2 rtl:left-auto rtl:right-2 bg-sage text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-lg">{t("common.new")}</span>
           )}
           <button
@@ -101,10 +106,11 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
           )}
         </div>
         <button
-          onClick={() => addToCart(product)}
-          className="w-full flex items-center justify-center gap-1 bg-primary text-primary-foreground text-xs font-semibold py-2.5 rounded-xl mt-3 hover:opacity-90 transition-opacity"
+          onClick={() => !outOfStock && addToCart(product)}
+          disabled={outOfStock}
+          className={`w-full flex items-center justify-center gap-1 text-xs font-semibold py-2.5 rounded-xl mt-3 transition-opacity ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90"}`}
         >
-          <Plus className="w-3.5 h-3.5" /> {t("product.addToCart")}
+          {outOfStock ? (t("product.outOfStock") || "Out of Stock") : <><Plus className="w-3.5 h-3.5" /> {t("product.addToCart")}</>}
         </button>
       </div>
     </div>
