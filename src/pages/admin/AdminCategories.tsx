@@ -7,9 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { useCategories, useSubcategories } from "@/hooks/useProducts";
+import BulkImportDialog, { ColumnMapping } from "@/components/admin/BulkImportDialog";
 
 interface CatForm { id?: string; name: string; slug: string; icon: string; color: string; sort_order: number; }
 const emptyCatForm: CatForm = { name: "", slug: "", icon: "", color: "", sort_order: 0 };
