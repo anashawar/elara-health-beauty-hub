@@ -37,13 +37,14 @@ interface ProductForm {
   skin_type: string;
   country_of_origin: string;
   condition: string;
+  product_form: string;
 }
 
 const emptyForm: ProductForm = {
   title: "", slug: "", price: 0, original_price: null, cost: null, description: "",
   usage_instructions: "", benefits: "",
   category_id: "", subcategory_id: "", brand_id: "", is_new: false, is_trending: false, is_pick: false, in_stock: true,
-  volume_ml: "", volume_unit: "ml", skin_type: "", country_of_origin: "", condition: "",
+  volume_ml: "", volume_unit: "ml", skin_type: "", country_of_origin: "", condition: "", product_form: "",
 };
 
 const BUCKET = "product-images";
@@ -150,6 +151,7 @@ export default function AdminProducts() {
         skin_type: f.skin_type || null,
         country_of_origin: f.country_of_origin || null,
         condition: f.condition || null,
+        form: f.product_form || null,
       };
 
       let productId = f.id;
@@ -294,7 +296,7 @@ export default function AdminProducts() {
       brand_id: p.brand_id || "",
       is_new: p.is_new || false, is_trending: p.is_trending || false, is_pick: p.is_pick || false, in_stock: p.in_stock !== false,
       volume_ml: p.volume_ml || "", volume_unit: p.volume_unit || "ml", skin_type: p.skin_type || "", country_of_origin: p.country_of_origin || "",
-      condition: (p as any).condition || "",
+      condition: (p as any).condition || "", product_form: (p as any).form || "",
     });
     const sorted = [...(p.product_images || [])].sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
     setExistingImages(sorted);
@@ -946,7 +948,25 @@ export default function AdminProducts() {
               </div>
               <div>
                 <Label>Skin Type</Label>
-                <Input value={form.skin_type} onChange={(e) => setForm({ ...form, skin_type: e.target.value })} />
+                <Select value={form.skin_type} onValueChange={(v) => setForm({ ...form, skin_type: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select skin type" /></SelectTrigger>
+                  <SelectContent>
+                    {["All", "Oily", "Dry", "Combination", "Sensitive", "Normal", "Acne-Prone", "Mature"].map(t => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Form</Label>
+                <Select value={form.product_form} onValueChange={(v) => setForm({ ...form, product_form: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select form" /></SelectTrigger>
+                  <SelectContent>
+                    {["Cream", "Serum", "Gel", "Lotion", "Oil", "Foam", "Spray", "Powder", "Balm", "Mask", "Cleanser", "Toner", "Shampoo", "Conditioner", "Soap", "Capsules", "Tablets", "Drops", "Stick", "Patches"].map(f => (
+                      <SelectItem key={f} value={f}>{f}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex items-center gap-6 flex-wrap">
                 <label className="flex items-center gap-2 text-sm">

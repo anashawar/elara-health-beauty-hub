@@ -26,6 +26,7 @@ export interface ProductWithRelations {
   form: string | null;
   gender: string | null;
   volume_ml: string | null;
+  volume_unit: string | null;
   application: string | null;
   skin_type: string | null;
   condition: string | null;
@@ -94,6 +95,7 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
       form: p.form,
       gender: p.gender,
       volume_ml: p.volume_ml,
+      volume_unit: p.volume_unit || "ml",
       application: p.application,
       skin_type: p.skin_type,
       condition: p.condition || null,
