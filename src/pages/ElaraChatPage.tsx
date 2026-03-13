@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingBag, ShoppingCart, Plus, MessageCircle } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingCart, Plus, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import BottomNav from "@/components/layout/BottomNav";
@@ -53,7 +53,9 @@ const ElaraChatPage = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [isNewConversation, setIsNewConversation] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const isStreamingRef = useRef(false);
 
   const { data: conversations = [] } = useQuery({
     queryKey: ["chat-conversations", user?.id],
@@ -81,11 +83,10 @@ const ElaraChatPage = () => {
     loadMessages();
   }, [conversationId, user, isNewConversation]);
 
+  // Auto-scroll: always scroll to bottom when messages change (especially during streaming)
   useEffect(() => {
-    if (scrollRef.current) {
-      requestAnimationFrame(() => {
-        scrollRef.current?.scrollTo({ top: scrollRef.current!.scrollHeight, behavior: "smooth" });
-      });
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: isStreamingRef.current ? "instant" : "smooth" });
     }
   }, [messages, isLoading]);
 
@@ -127,11 +128,11 @@ const ElaraChatPage = () => {
     if (lastIndex < content.length) parts.push(content.slice(lastIndex));
 
     return (
-      <div>
+      <div className="break-words overflow-hidden">
         {parts.map((part, i) => {
           if (typeof part === "string") {
             return (
-              <div key={i} className="prose prose-sm dark:prose-invert max-w-none text-sm [&>p]:mb-2 [&>ul]:mb-2 [&>ol]:mb-2 [&>h1]:text-base [&>h2]:text-sm [&>h3]:text-sm">
+              <div key={i} className="prose prose-sm dark:prose-invert max-w-none text-sm [&>p]:mb-2 [&>ul]:mb-2 [&>ol]:mb-2 [&>h1]:text-base [&>h2]:text-sm [&>h3]:text-sm [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_code]:break-all">
                 <ReactMarkdown>{part}</ReactMarkdown>
               </div>
             );
@@ -167,6 +168,7 @@ const ElaraChatPage = () => {
   };
 
   const streamChat = async (allMessages: Msg[]) => {
+    isStreamingRef.current = true;
     const resp = await fetch(CHAT_URL, {
       method: "POST",
       headers: {
@@ -177,10 +179,11 @@ const ElaraChatPage = () => {
     });
 
     if (!resp.ok) {
+      isStreamingRef.current = false;
       const err = await resp.json().catch(() => ({ error: "Request failed" }));
       throw new Error(err.error || `Error ${resp.status}`);
     }
-    if (!resp.body) throw new Error("No response body");
+    if (!resp.body) { isStreamingRef.current = false; throw new Error("No response body"); }
 
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
@@ -210,7 +213,7 @@ const ElaraChatPage = () => {
             setMessages(prev => {
               const last = prev[prev.length - 1];
               if (last?.role === "assistant") {
-                return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
+                return prev.map((m, idx) => (idx === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
               }
               return [...prev, { role: "assistant", content: assistantSoFar }];
             });
@@ -238,7 +241,7 @@ const ElaraChatPage = () => {
             setMessages(prev => {
               const last = prev[prev.length - 1];
               if (last?.role === "assistant") {
-                return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
+                return prev.map((m, idx) => (idx === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
               }
               return [...prev, { role: "assistant", content: assistantSoFar }];
             });
@@ -247,6 +250,7 @@ const ElaraChatPage = () => {
       }
     }
 
+    isStreamingRef.current = false;
     return assistantSoFar;
   };
 
@@ -291,13 +295,21 @@ const ElaraChatPage = () => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
   };
 
+  // Auto-resize textarea
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    const el = e.target;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 96) + "px";
+  };
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="fixed inset-0 flex flex-col bg-background" style={{ height: '100dvh' }}>
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {/* Mobile Header */}
-      <header className="sticky top-0 z-40 glass-heavy border-b border-border/30 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <header className="flex-shrink-0 z-40 glass-heavy border-b border-border/30 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <Link to="/home" className="p-1.5 -ml-1 rounded-xl hover:bg-secondary transition-colors">
@@ -347,7 +359,7 @@ const ElaraChatPage = () => {
       </header>
 
       {/* Desktop layout with sidebar */}
-      <div className="flex-1 flex app-container">
+      <div className="flex-1 flex min-h-0 app-container">
         {/* Desktop sidebar */}
         <div className="hidden md:flex flex-col w-72 border-r border-border bg-card/50 flex-shrink-0">
           <div className="flex items-center justify-between p-4 border-b border-border">
@@ -366,7 +378,7 @@ const ElaraChatPage = () => {
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {conversations.map(conv => (
-              <button key={conv.id} onClick={() => loadConversation(conv.id)} className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left transition-all ${conversationId === conv.id ? "bg-primary/10 border border-primary/20" : "hover:bg-secondary"}`}>
+              <button key={conv.id} onClick={() => loadConversation(conv.id)} className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left transition-all group ${conversationId === conv.id ? "bg-primary/10 border border-primary/20" : "hover:bg-secondary"}`}>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-foreground truncate">{conv.title}</p>
                   <p className="text-[10px] text-muted-foreground">{new Date(conv.updated_at).toLocaleDateString()}</p>
@@ -380,8 +392,9 @@ const ElaraChatPage = () => {
         </div>
 
         {/* Chat area */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 md:px-8 py-4 space-y-4" style={{ paddingBottom: 'calc(120px + env(safe-area-inset-bottom, 0px))' }}>
+        <div className="flex-1 flex flex-col min-w-0 min-h-0">
+          {/* Scrollable messages */}
+          <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain px-4 md:px-8 py-4 space-y-4">
             {messages.length === 0 ? (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mt-8 md:mt-16">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center mb-4">
@@ -394,7 +407,7 @@ const ElaraChatPage = () => {
                 <div className="w-full max-w-md space-y-2">
                   {(quickQuestions[language] || quickQuestions.en).map((q, i) => (
                     <motion.button key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} onClick={() => sendMessage(q)}
-                      className="w-full text-left p-3 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-sm transition-all text-sm text-foreground"
+                      className="w-full text-left rtl:text-right p-3 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-sm transition-all text-sm text-foreground"
                     >
                       {q}
                     </motion.button>
@@ -402,11 +415,11 @@ const ElaraChatPage = () => {
                 </div>
               </motion.div>
             ) : (
-              <AnimatePresence>
+              <>
                 {messages.map((msg, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[85%] md:max-w-[65%] rounded-2xl px-4 py-3 ${msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-md" : "bg-card border border-border rounded-bl-md"}`}>
-                      {msg.role === "assistant" ? renderAssistantContent(msg.content) : <p className="text-sm whitespace-pre-wrap">{msg.content}</p>}
+                  <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[88%] md:max-w-[65%] rounded-2xl px-4 py-3 overflow-hidden ${msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-md" : "bg-card border border-border rounded-bl-md"}`}>
+                      {msg.role === "assistant" ? renderAssistantContent(msg.content) : <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>}
                     </div>
                   </motion.div>
                 ))}
@@ -420,31 +433,32 @@ const ElaraChatPage = () => {
                     </div>
                   </motion.div>
                 )}
-              </AnimatePresence>
+              </>
             )}
+            {/* Scroll sentinel */}
+            <div ref={bottomRef} className="h-1" />
           </div>
 
-          {/* Input Area */}
-          <div className="sticky bottom-0 z-40 md:relative md:bottom-auto">
-            <div className="md:hidden fixed left-0 right-0 z-40" style={{ bottom: `calc(60px + env(safe-area-inset-bottom, 0px))` }}>
-              <div className="app-container px-3 pb-2">
-                <form onSubmit={handleSubmit} className="flex items-end gap-2 glass-heavy border border-border/30 rounded-2xl p-2 shadow-float">
-                  <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
-                    placeholder="Ask about skincare, routines, products..." rows={1}
-                    className="flex-1 bg-transparent text-foreground text-sm px-3 py-2 resize-none outline-none placeholder:text-muted-foreground max-h-24"
-                    style={{ minHeight: "36px" }}
-                  />
-                  <button type="submit" disabled={!input.trim() || isLoading} className="flex-shrink-0 w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-40 transition-opacity">
-                    <Send className="w-4 h-4" />
-                  </button>
-                </form>
-              </div>
+          {/* Input Area — always at the bottom of flex column */}
+          <div className="flex-shrink-0 z-40">
+            {/* Mobile input */}
+            <div className="md:hidden px-3 pb-2" style={{ paddingBottom: `calc(68px + env(safe-area-inset-bottom, 0px))` }}>
+              <form onSubmit={handleSubmit} className="flex items-end gap-2 glass-heavy border border-border/30 rounded-2xl p-2 shadow-float">
+                <textarea ref={inputRef} value={input} onChange={handleTextareaChange} onKeyDown={handleKeyDown}
+                  placeholder="Ask about skincare, routines, products..." rows={1}
+                  className="flex-1 bg-transparent text-foreground text-sm px-3 py-2 resize-none outline-none placeholder:text-muted-foreground max-h-24"
+                  style={{ minHeight: "36px" }}
+                />
+                <button type="submit" disabled={!input.trim() || isLoading} className="flex-shrink-0 w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-40 transition-opacity active:scale-95">
+                  <Send className="w-4 h-4" />
+                </button>
+              </form>
             </div>
 
             {/* Desktop input */}
             <div className="hidden md:block px-8 pb-6 pt-2 border-t border-border bg-background">
               <form onSubmit={handleSubmit} className="flex items-end gap-3 bg-card border border-border rounded-2xl p-3 shadow-sm max-w-3xl mx-auto">
-                <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
+                <textarea ref={inputRef} value={input} onChange={handleTextareaChange} onKeyDown={handleKeyDown}
                   placeholder="Ask about skincare, routines, products..." rows={1}
                   className="flex-1 bg-transparent text-foreground text-sm px-3 py-2 resize-none outline-none placeholder:text-muted-foreground max-h-32"
                   style={{ minHeight: "40px" }}
