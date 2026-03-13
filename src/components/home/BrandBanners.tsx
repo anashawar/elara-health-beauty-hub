@@ -6,7 +6,7 @@ const brandBanners = [
   {
     name: "Bioderma",
     slug: "bioderma",
-    tagline: "Dermatologist Recommended",
+    tagline: "Top Recommended",
     subtitle: "Gentle Care",
     bg: "from-sky-100 to-blue-200",
     accent: "bg-blue-500",
