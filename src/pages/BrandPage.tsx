@@ -81,9 +81,7 @@ const BrandPage = () => {
         </div>
       ) : (
         <>
-          <div className="px-4 mt-5 mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-foreground">{t("common.allProducts") || "All Products"}</h3>
-          </div>
+          <div className="px-4 mt-5 mb-3" />
           <div className="grid grid-cols-2 gap-3 px-4">
             {brandProducts.map((product, idx) => (
               <motion.div
