@@ -452,7 +452,7 @@ const ElaraChatPage = () => {
       </div>
 
       {/* Input Area */}
-      <div className="fixed left-0 right-0 z-40 fixed-bottom-safe" style={{ bottom: undefined }}>
+      <div className="fixed left-0 right-0 z-40 fixed-bottom-safe">
         <div className="max-w-lg mx-auto px-3 pb-2">
           <form onSubmit={handleSubmit} className="flex items-end gap-2 bg-card/90 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg">
             <textarea

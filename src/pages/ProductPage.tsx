@@ -245,7 +245,7 @@ const ProductPage = () => {
         )}
       </motion.div>
 
-      <div className="fixed left-0 right-0 z-40 px-4 pb-2 fixed-bottom-safe" style={{ bottom: undefined }}>
+      <div className="fixed left-0 right-0 z-40 px-4 pb-2 fixed-bottom-safe">
         <div className="max-w-lg mx-auto">
           <motion.button whileTap={{ scale: 0.97 }} onClick={handleAddToCart} className="w-full flex items-center justify-center gap-2.5 bg-primary text-primary-foreground font-bold py-4 rounded-2xl shadow-lg hover:opacity-90 transition-opacity text-sm">
             <ShoppingBag className="w-5 h-5" />
