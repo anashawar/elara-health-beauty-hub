@@ -309,7 +309,8 @@ export default function AdminProducts() {
 
   const productBulkColumns: ColumnMapping[] = [
     { key: "title", label: "title", required: true, example: "Vitamin C Serum" },
-    { key: "price", label: "price", required: true, example: "25000" },
+    { key: "price", label: "price", example: "25000" },
+    { key: "cost", label: "cost", example: "15000" },
     { key: "original_price", label: "original_price", example: "30000" },
     { key: "description", label: "description", example: "A brightening serum..." },
     { key: "category", label: "category", example: "Skincare" },
@@ -326,27 +327,76 @@ export default function AdminProducts() {
     { key: "is_pick", label: "is_pick", example: "false" },
   ];
 
+  /** Map Arabic/common Excel headers to our keys */
+  const normalizeRow = (row: Record<string, string>): { name: string; cost: string } | null => {
+    // Try common header names (Arabic + English)
+    const name = row["اسم_المادة"] || row["اسم_المادة"] || row["title"] || row["name"] || row["product_name"] || row["اسم"] || "";
+    const costRaw = row["المذخر"] || row["cost"] || row["price"] || row["السعر"] || "";
+    if (!name.trim()) return null;
+    return { name: name.trim(), cost: costRaw.toString().replace(/,/g, "").trim() };
+  };
+
   const handleBulkImport = async (rows: Record<string, string>[]) => {
     let success = 0;
     const errors: string[] = [];
 
+    // Try to detect if this is a name+cost format (like user's Excel)
+    const firstRow = rows[0];
+    const hasNameCostFormat = firstRow && (firstRow["اسم_المادة"] || firstRow["المذخر"] || (!firstRow["price"] && (firstRow["cost"] || firstRow["name"])));
+
+    if (hasNameCostFormat || (!firstRow?.price && !firstRow?.title)) {
+      // Name + Cost format: use bulk-import edge function
+      const products = rows
+        .map(normalizeRow)
+        .filter((p): p is { name: string; cost: string } => p !== null && p.name.length > 0);
+
+      if (products.length === 0) {
+        return { success: 0, errors: ["No valid products found. Check column headers."] };
+      }
+
+      // Send in batches of 500 to the edge function
+      const BATCH = 500;
+      for (let i = 0; i < products.length; i += BATCH) {
+        const batch = products.slice(i, i + BATCH);
+        try {
+          const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bulk-import-products`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({ products: batch }),
+          });
+          const data = await resp.json();
+          if (data.inserted) success += data.inserted;
+          if (data.errors > 0) errors.push(`Batch ${Math.floor(i / BATCH) + 1}: ${data.errors} failures`);
+          if (data.error_details) errors.push(...data.error_details);
+        } catch (err: any) {
+          errors.push(`Batch ${Math.floor(i / BATCH) + 1}: ${err.message}`);
+        }
+      }
+
+      qc.invalidateQueries({ queryKey: ["admin-products"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      return { success, errors };
+    }
+
+    // Standard format with full column mapping
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      const rowNum = i + 2; // header is row 1
+      const rowNum = i + 2;
       try {
         if (!row.title || !row.price) {
           errors.push(`Row ${rowNum}: Missing title or price`);
           continue;
         }
 
-        // Resolve category by name
         let category_id: string | null = null;
         if (row.category) {
           const cat = categories.find((c: any) => c.name.toLowerCase() === row.category.toLowerCase());
           if (cat) category_id = cat.id;
         }
 
-        // Resolve subcategory by name
         let subcategory_id: string | null = null;
         if (row.subcategory && category_id) {
           const sub = allSubcategories.find(
@@ -355,7 +405,6 @@ export default function AdminProducts() {
           if (sub) subcategory_id = sub.id;
         }
 
-        // Resolve brand by name
         let brand_id: string | null = null;
         if (row.brand) {
           const br = brands.find((b: any) => b.name.toLowerCase() === row.brand.toLowerCase());
@@ -365,10 +414,13 @@ export default function AdminProducts() {
         const benefitsArray = row.benefits ? row.benefits.split("|").map((b) => b.trim()).filter(Boolean) : null;
         const toBool = (v: string) => v?.toLowerCase() === "true" || v === "1";
 
+        const cost = row.cost ? parseFloat(row.cost.replace(/,/g, "")) : null;
+        const price = row.price ? parseFloat(row.price.replace(/,/g, "")) : (cost ? Math.round((cost * 1.35) / 250) * 250 : 0);
+
         const payload = {
           title: row.title,
           slug: row.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
-          price: parseFloat(row.price),
+          price,
           original_price: row.original_price ? parseFloat(row.original_price) : null,
           description: row.description || null,
           usage_instructions: row.usage_instructions || null,
@@ -385,8 +437,14 @@ export default function AdminProducts() {
           is_pick: toBool(row.is_pick),
         };
 
-        const { error } = await supabase.from("products").insert(payload);
+        const { data: inserted, error } = await supabase.from("products").insert(payload).select("id").single();
         if (error) throw error;
+
+        // Save cost
+        if (cost && cost > 0 && inserted) {
+          await supabase.from("product_costs").upsert({ product_id: inserted.id, cost }, { onConflict: "product_id" });
+        }
+
         success++;
       } catch (err: any) {
         errors.push(`Row ${rowNum} (${row.title || "?"}): ${err.message}`);
