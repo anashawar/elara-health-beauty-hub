@@ -370,11 +370,10 @@ export default function AdminProducts() {
     let success = 0;
     const errors: string[] = [];
 
-    // Try to detect if this is a name+cost format (like user's Excel)
+    // Detect format: if no "title" column exists, use the edge function (name+cost format)
     const firstRow = rows[0];
-    const hasArabicHeaders = firstRow && (firstRow["اسم_المادة"] || firstRow["المذخر"]);
-    const hasNameButNoTitle = firstRow && !firstRow["title"] && (firstRow["name"] || firstRow["product_name"] || firstRow["cost"]);
-    const hasNameCostFormat = hasArabicHeaders || hasNameButNoTitle;
+    const firstKeys = Object.keys(firstRow || {});
+    const hasNameCostFormat = !firstKeys.includes("title");
 
     if (hasNameCostFormat) {
       // Name + Cost format: use bulk-import edge function
