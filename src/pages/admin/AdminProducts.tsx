@@ -1031,7 +1031,7 @@ export default function AdminProducts() {
             <TableBody>
               {filtered.map((p: any) => {
                 const cost = costMap[p.id];
-                const margin = cost !== undefined ? ((p.price - cost) / p.price * 100) : null;
+                const margin = cost !== undefined && cost > 0 ? ((p.price - cost) / cost * 100) : null;
                 return (
                 <TableRow key={p.id} className={selectMode && selectedForEnrich.has(p.id) ? "bg-primary/5" : ""}>
                   {selectMode && (
