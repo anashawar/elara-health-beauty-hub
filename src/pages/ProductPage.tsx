@@ -101,7 +101,7 @@ const ProductPage = () => {
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {/* Mobile header */}
-      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border md:hidden">
+      <header className="sticky top-0 z-40 glass-heavy border-b border-border/30 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="flex items-center gap-2 px-4 py-3">
           <button onClick={() => navigate(-1)} className="p-2 -ms-1 rounded-xl hover:bg-secondary transition-colors flex-shrink-0">
             <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
