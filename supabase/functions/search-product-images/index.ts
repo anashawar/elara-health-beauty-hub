@@ -23,7 +23,7 @@ serve(async (req) => {
       throw new Error("product_ids array is required");
     }
 
-    // Fetch products
+    // Fetch products with brand info
     const { data: products, error: pErr } = await supabase
       .from("products")
       .select("id, title, brands(name)")
@@ -46,120 +46,107 @@ serve(async (req) => {
       }
 
       const brandName = (product as any).brands?.name || "";
-      const searchQuery = `${product.title} ${brandName} product image beauty cosmetic`;
+      // Build multiple search queries for better coverage
+      const queries = [
+        `${product.title} ${brandName} product photo`,
+        `${product.title} skincare beauty product`,
+      ];
 
       try {
-        // Use Firecrawl search to find product images
-        const searchResp = await fetch("https://api.firecrawl.dev/v1/search", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query: searchQuery,
-            limit: 3,
-            scrapeOptions: {
-              formats: ["links"],
+        const allImageUrls: string[] = [];
+
+        for (const query of queries) {
+          if (allImageUrls.length >= 5) break;
+
+          // Use Firecrawl search with scrapeOptions to get page content
+          const searchResp = await fetch("https://api.firecrawl.dev/v1/search", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
             },
-          }),
-        });
+            body: JSON.stringify({
+              query,
+              limit: 5,
+              scrapeOptions: {
+                formats: ["markdown", "links"],
+                onlyMainContent: true,
+              },
+            }),
+          });
 
-        if (!searchResp.ok) {
-          const errText = await searchResp.text();
-          console.error(`Firecrawl search error for ${product.id}:`, searchResp.status, errText);
-          if (searchResp.status === 402) {
-            results.push({ id: product.id, status: "payment_required", error: "Insufficient Firecrawl credits" });
-            continue;
-          }
-          results.push({ id: product.id, status: "error", error: errText });
-          continue;
-        }
-
-        const searchData = await searchResp.json();
-        const searchResults = searchData.data || [];
-
-        if (searchResults.length === 0) {
-          results.push({ id: product.id, status: "no_results" });
-          continue;
-        }
-
-        // Try to scrape the first result page for product images
-        const targetUrl = searchResults[0].url;
-        
-        const scrapeResp = await fetch("https://api.firecrawl.dev/v1/scrape", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            url: targetUrl,
-            formats: ["links"],
-            onlyMainContent: true,
-          }),
-        });
-
-        if (!scrapeResp.ok) {
-          const errText = await scrapeResp.text();
-          console.error(`Firecrawl scrape error:`, scrapeResp.status, errText);
-          results.push({ id: product.id, status: "error", error: "Scrape failed" });
-          continue;
-        }
-
-        const scrapeData = await scrapeResp.json();
-        const links = scrapeData.data?.links || scrapeData.links || [];
-        
-        // Filter for image URLs
-        const imageExtensions = [".jpg", ".jpeg", ".png", ".webp"];
-        const imageUrls = links
-          .filter((link: string) => {
-            const lower = link.toLowerCase();
-            return imageExtensions.some(ext => lower.includes(ext)) && 
-                   !lower.includes("logo") && 
-                   !lower.includes("icon") && 
-                   !lower.includes("banner") &&
-                   !lower.includes("sprite") &&
-                   (lower.includes("product") || lower.includes("image") || lower.includes("media") || lower.includes("cdn"));
-          })
-          .slice(0, 3);
-
-        if (imageUrls.length === 0) {
-          // Fallback: use any large image URLs found
-          const fallbackImages = links
-            .filter((link: string) => {
-              const lower = link.toLowerCase();
-              return imageExtensions.some(ext => lower.endsWith(ext)) && !lower.includes("logo") && !lower.includes("icon");
-            })
-            .slice(0, 2);
-
-          if (fallbackImages.length === 0) {
-            results.push({ id: product.id, status: "no_images_found" });
+          if (!searchResp.ok) {
+            const errText = await searchResp.text();
+            console.error(`Firecrawl search error for "${query}":`, searchResp.status, errText);
+            if (searchResp.status === 402) {
+              results.push({ id: product.id, status: "payment_required", error: "Insufficient Firecrawl credits" });
+              break;
+            }
             continue;
           }
 
-          // Save fallback images
-          for (let i = 0; i < fallbackImages.length; i++) {
-            await supabase.from("product_images").insert({
-              product_id: product.id,
-              image_url: fallbackImages[i],
-              sort_order: i,
-            });
+          const searchData = await searchResp.json();
+          const searchResults = searchData.data || [];
+
+          // Extract image URLs from search results markdown and links
+          for (const result of searchResults) {
+            if (allImageUrls.length >= 5) break;
+
+            // Extract from markdown content (![alt](url) patterns)
+            const markdown = result.markdown || "";
+            const mdImageRegex = /!\[.*?\]\((https?:\/\/[^\s)]+\.(?:jpg|jpeg|png|webp)[^\s)]*)\)/gi;
+            let match;
+            while ((match = mdImageRegex.exec(markdown)) !== null) {
+              const url = match[1];
+              if (isValidProductImage(url, product.title)) {
+                allImageUrls.push(url);
+              }
+            }
+
+            // Extract from HTML img src patterns in markdown
+            const imgSrcRegex = /src=["'](https?:\/\/[^\s"']+\.(?:jpg|jpeg|png|webp)[^\s"']*)/gi;
+            while ((match = imgSrcRegex.exec(markdown)) !== null) {
+              const url = match[1];
+              if (isValidProductImage(url, product.title)) {
+                allImageUrls.push(url);
+              }
+            }
+
+            // Extract from links array
+            const links = result.links || [];
+            for (const link of links) {
+              if (allImageUrls.length >= 5) break;
+              if (typeof link === "string" && isValidProductImage(link, product.title)) {
+                allImageUrls.push(link);
+              }
+            }
           }
-          results.push({ id: product.id, status: "success", images: fallbackImages.length });
-        } else {
-          // Save found images
-          for (let i = 0; i < imageUrls.length; i++) {
-            await supabase.from("product_images").insert({
-              product_id: product.id,
-              image_url: imageUrls[i],
-              sort_order: i,
-            });
-          }
-          results.push({ id: product.id, status: "success", images: imageUrls.length });
+
+          // Small delay between queries
+          await new Promise(r => setTimeout(r, 300));
         }
 
-        // Small delay between products to avoid rate limiting
+        // Deduplicate
+        const uniqueImages = [...new Set(allImageUrls)].slice(0, 5);
+
+        if (uniqueImages.length === 0) {
+          console.log(`No images found for "${product.title}"`);
+          results.push({ id: product.id, status: "no_images_found" });
+          continue;
+        }
+
+        // Save images
+        for (let i = 0; i < uniqueImages.length; i++) {
+          await supabase.from("product_images").insert({
+            product_id: product.id,
+            image_url: uniqueImages[i],
+            sort_order: i,
+          });
+        }
+        console.log(`Found ${uniqueImages.length} images for "${product.title}"`);
+        results.push({ id: product.id, status: "success", images: uniqueImages.length });
+
+        // Delay between products
         await new Promise(r => setTimeout(r, 500));
       } catch (err) {
         console.error(`Error finding images for ${product.id}:`, err);
@@ -183,3 +170,33 @@ serve(async (req) => {
     );
   }
 });
+
+function isValidProductImage(url: string, productTitle: string): boolean {
+  const lower = url.toLowerCase();
+  const imageExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+  const hasImageExt = imageExtensions.some(ext => lower.includes(ext));
+  if (!hasImageExt) return false;
+  
+  // Exclude common non-product images
+  const excludePatterns = [
+    "logo", "icon", "favicon", "banner", "sprite", "avatar",
+    "placeholder", "loading", "pixel", "tracking", "badge",
+    "flag", "arrow", "button", "social", "facebook", "twitter",
+    "instagram", "youtube", "pinterest", "tiktok", "linkedin",
+    "1x1", "spacer", "blank", "transparent", "ad-", "ads/",
+    "widget", "thumb-small", "16x16", "32x32", "48x48",
+  ];
+  if (excludePatterns.some(p => lower.includes(p))) return false;
+  
+  // Prefer URLs that suggest product images
+  const preferPatterns = [
+    "product", "image", "media", "cdn", "photo", "upload",
+    "static", "assets", "img", "gallery", "picture",
+  ];
+  const hasPreferred = preferPatterns.some(p => lower.includes(p));
+  
+  // Must be from a reasonable domain (not tiny images)
+  const hasSizeIndicator = /\d{3,4}x\d{3,4}/.test(lower) || /w[_=]\d{3,4}/.test(lower) || /width[=:]\d{3,4}/.test(lower);
+  
+  return hasPreferred || hasSizeIndicator || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp");
+}
