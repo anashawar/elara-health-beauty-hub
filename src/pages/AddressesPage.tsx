@@ -380,7 +380,7 @@ const AddressesPage = () => {
                   </div>
                   <p className="text-sm text-foreground">{addr.city}</p>
                   <p className="text-xs text-muted-foreground">
-                    {[addr.area, addr.street, addr.building, addr.floor].filter(Boolean).join(", ")}
+                    {[addr.area, addr.street, addr.building, addr.floor, (addr as any).apartment].filter(Boolean).join(", ")}
                   </p>
                   {addr.phone && <p className="text-xs text-muted-foreground mt-1">📞 {addr.phone}</p>}
                   {!addr.is_default && (

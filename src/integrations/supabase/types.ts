@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       addresses: {
         Row: {
+          apartment: string | null
           area: string | null
           building: string | null
           city: string
@@ -32,6 +33,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          apartment?: string | null
           area?: string | null
           building?: string | null
           city: string
@@ -48,6 +50,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          apartment?: string | null
           area?: string | null
           building?: string | null
           city?: string

@@ -1,0 +1,1 @@
+ALTER TABLE public.addresses ADD COLUMN IF NOT EXISTS apartment text DEFAULT NULL;
