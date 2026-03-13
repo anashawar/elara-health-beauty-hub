@@ -80,8 +80,12 @@ const ElaraChatPage = () => {
   }, [conversationId, user]);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+    if (scrollRef.current) {
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollTo({ top: scrollRef.current!.scrollHeight, behavior: "smooth" });
+      });
+    }
+  }, [messages, isLoading]);
 
   // Save message to DB
   const saveMessage = useCallback(async (convId: string, role: string, content: string) => {
