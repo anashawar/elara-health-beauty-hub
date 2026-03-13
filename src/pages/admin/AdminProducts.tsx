@@ -136,6 +136,11 @@ export default function AdminProducts() {
         productId = data.id;
       }
 
+      // Save cost in separate admin-only table
+      if (productId && f.cost !== null && f.cost !== undefined) {
+        await supabase.from("product_costs").upsert({ product_id: productId, cost: f.cost }, { onConflict: "product_id" });
+      }
+
       // Upload main image
       if (mainImage && productId) {
         const url = await uploadImage(mainImage, productId, 0);
