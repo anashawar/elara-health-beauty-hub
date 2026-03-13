@@ -37,7 +37,6 @@ const Index = () => {
       ) : (
         <>
           <ProductSection title={t("home.trendingNow")} subtitle={t("home.mostPopular")} products={trending} viewAllLink="/categories" variant="trending" />
-          <BrandBanners />
           <BrandsSection />
           <AskElaraCard />
           <ConcernsSection />
