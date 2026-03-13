@@ -308,7 +308,7 @@ export default function AdminProducts() {
   };
 
   const productBulkColumns: ColumnMapping[] = [
-    { key: "title", label: "title", required: true, example: "Vitamin C Serum" },
+    { key: "title", label: "title", required: false, example: "Vitamin C Serum" },
     { key: "price", label: "price", example: "25000" },
     { key: "cost", label: "cost", example: "15000" },
     { key: "original_price", label: "original_price", example: "30000" },
