@@ -14,6 +14,7 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
   const { t } = useLanguage();
   const wishlisted = isInWishlist(product.id);
+  const outOfStock = !product.inStock;
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;

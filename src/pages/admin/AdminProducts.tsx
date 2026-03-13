@@ -543,7 +543,11 @@ export default function AdminProducts() {
                 <Label>Skin Type</Label>
                 <Input value={form.skin_type} onChange={(e) => setForm({ ...form, skin_type: e.target.value })} />
               </div>
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-6 flex-wrap">
+                <label className="flex items-center gap-2 text-sm">
+                  <Switch checked={form.in_stock} onCheckedChange={(v) => setForm({ ...form, in_stock: v })} />
+                  <span className={form.in_stock ? "text-sage font-medium" : "text-destructive font-medium"}>{form.in_stock ? "In Stock" : "Out of Stock"}</span>
+                </label>
                 <label className="flex items-center gap-2 text-sm">
                   <Switch checked={form.is_new} onCheckedChange={(v) => setForm({ ...form, is_new: v })} /> New
                 </label>
