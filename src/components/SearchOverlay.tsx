@@ -72,12 +72,12 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background">
-      <div className="max-w-lg mx-auto flex flex-col h-full">
-        <div className="border-b border-border">
+    <div className="fixed inset-0 z-50 bg-background" style={{ height: '100%', minHeight: '-webkit-fill-available' }}>
+      <div className="max-w-lg mx-auto flex flex-col h-full" style={{ height: '100%', minHeight: '-webkit-fill-available' }}>
+        <div className="border-b border-border flex-shrink-0 sticky top-0 z-10 bg-background" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div className="flex items-center gap-3 px-4 py-3">
             <Search className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-            <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} placeholder={t("common.searchFull")} className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none text-sm" />
+            <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} placeholder={t("common.searchFull")} className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none text-base" style={{ fontSize: '16px' }} />
             {(query || activeFilter || priceFilter) && (<button onClick={() => { setQuery(""); setActiveFilter(null); setPriceFilter(null); }} className="p-1"><X className="w-4 h-4 text-muted-foreground" /></button>)}
             <button onClick={onClose} className="text-xs text-primary font-semibold">{t("common.cancel")}</button>
           </div>
