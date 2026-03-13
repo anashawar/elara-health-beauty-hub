@@ -24,7 +24,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
           <Lock className="w-8 h-8 text-primary" />
         </div>
         <p className="text-sm text-muted-foreground text-center mb-6">
-          {t("auth.signInRequiredDesc") || "Please Register/Sign In to ELARA to use this feature"}
+          Please Register/Sign In to ELARA to use this feature
         </p>
         <Button onClick={() => navigate("/")} className="rounded-2xl px-8 h-11">
           {t("common.signIn") || "Sign In"}
