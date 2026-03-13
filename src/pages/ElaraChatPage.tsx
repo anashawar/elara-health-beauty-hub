@@ -207,8 +207,21 @@ const ElaraChatPage = () => {
   const isStreamingRef = useRef(false);
 
   const userName = user?.user_metadata?.full_name || null;
-  const greeting = useMemo(() => getGreeting(language, userName), [language, userName]);
-  const contextualTips = useMemo(() => getContextualTips(language), [language]);
+
+  // Get user's city for region detection
+  const { data: defaultAddress } = useQuery({
+    queryKey: ["default-address-chat", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("addresses").select("city").eq("user_id", user!.id).order("is_default", { ascending: false }).limit(1).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+  const userCity = defaultAddress?.city || null;
+  const isKurdistan = isKurdistanUser(userCity);
+
+  const greeting = useMemo(() => getGreeting(language, userName, isKurdistan), [language, userName, isKurdistan]);
+  const contextualTips = useMemo(() => getContextualTips(language, isKurdistan), [language, isKurdistan]);
 
   const { data: conversations = [] } = useQuery({
     queryKey: ["chat-conversations", user?.id],
