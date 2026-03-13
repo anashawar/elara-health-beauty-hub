@@ -295,7 +295,7 @@ const ElaraChatPage = () => {
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {/* Mobile Header */}
-      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border md:hidden">
+      <header className="sticky top-0 z-40 glass-heavy border-b border-border/30 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <Link to="/home" className="p-1.5 -ml-1 rounded-xl hover:bg-secondary transition-colors">
@@ -426,7 +426,7 @@ const ElaraChatPage = () => {
           <div className="sticky bottom-0 z-40 md:relative md:bottom-auto">
             <div className="md:hidden fixed left-0 right-0 z-40" style={{ bottom: `calc(60px + env(safe-area-inset-bottom, 0px))` }}>
               <div className="app-container px-3 pb-2">
-                <form onSubmit={handleSubmit} className="flex items-end gap-2 bg-card/90 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg">
+                <form onSubmit={handleSubmit} className="flex items-end gap-2 glass-heavy border border-border/30 rounded-2xl p-2 shadow-float">
                   <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
                     placeholder="Ask about skincare, routines, products..." rows={1}
                     className="flex-1 bg-transparent text-foreground text-sm px-3 py-2 resize-none outline-none placeholder:text-muted-foreground max-h-24"

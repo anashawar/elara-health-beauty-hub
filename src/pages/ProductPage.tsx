@@ -101,7 +101,7 @@ const ProductPage = () => {
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {/* Mobile header */}
-      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border md:hidden">
+      <header className="sticky top-0 z-40 glass-heavy border-b border-border/30 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="flex items-center gap-2 px-4 py-3">
           <button onClick={() => navigate(-1)} className="p-2 -ms-1 rounded-xl hover:bg-secondary transition-colors flex-shrink-0">
             <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
@@ -234,7 +234,7 @@ const ProductPage = () => {
               </button>
             </div>
 
-            <div className="flex gap-2 mt-4 overflow-x-auto no-scrollbar">
+            <div className="flex gap-2 mt-4 overflow-x-auto no-scrollbar scroll-smooth-x">
               {[
                 { icon: Truck, text: t("common.freeDelivery") },
                 { icon: ShieldCheck, text: t("common.original") },
@@ -318,7 +318,7 @@ const ProductPage = () => {
             {related.length > 0 && (
               <div className="mt-8">
                 <h3 className="text-base font-display font-bold text-foreground mb-3">{t("product.youMayAlsoLike")}</h3>
-                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 md:grid md:grid-cols-2 lg:grid-cols-4 md:overflow-visible">
+                <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth-x pb-2 md:grid md:grid-cols-2 lg:grid-cols-4 md:overflow-visible">
                   {related.map(p => <ProductCard key={p.id} product={p} variant="horizontal" />)}
                 </div>
               </div>
@@ -330,10 +330,12 @@ const ProductPage = () => {
       {/* Mobile fixed Add to Cart */}
       <div className="fixed left-0 right-0 z-40 px-4 md:hidden" style={{ bottom: `calc(60px + env(safe-area-inset-bottom, 0px))` }}>
         <div className="app-container pb-2">
-          <motion.button whileTap={{ scale: outOfStock ? 1 : 0.97 }} onClick={handleAddToCart} disabled={outOfStock} className={`w-full flex items-center justify-center gap-2.5 font-bold py-4 rounded-2xl shadow-lg transition-opacity text-sm ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
-            <ShoppingBag className="w-5 h-5" />
-            {outOfStock ? (t("product.outOfStock") || "Out of Stock") : t("product.addToCart")}
-          </motion.button>
+          <div className="glass-heavy rounded-2xl border border-border/30 p-2">
+            <motion.button whileTap={{ scale: outOfStock ? 1 : 0.97 }} onClick={handleAddToCart} disabled={outOfStock} className={`w-full flex items-center justify-center gap-2.5 font-bold py-3.5 rounded-xl shadow-sm transition-opacity text-sm ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
+              <ShoppingBag className="w-5 h-5" />
+              {outOfStock ? (t("product.outOfStock") || "Out of Stock") : t("product.addToCart")}
+            </motion.button>
+          </div>
         </div>
       </div>
 
