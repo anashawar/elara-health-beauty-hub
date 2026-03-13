@@ -246,16 +246,21 @@ export default function AdminProducts() {
     p.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  const openEdit = (p: any) => {
+  const openEdit = async (p: any) => {
+    // Fetch cost from separate admin-only table
+    let cost: number | null = null;
+    const { data: costData } = await supabase.from("product_costs").select("cost").eq("product_id", p.id).maybeSingle();
+    if (costData) cost = Number(costData.cost);
+
     setForm({
       id: p.id, title: p.title, slug: p.slug, price: p.price,
-      original_price: p.original_price, description: p.description || "",
+      original_price: p.original_price, cost, description: p.description || "",
       usage_instructions: p.usage_instructions || "",
       benefits: (p.benefits || []).join("\n"),
       category_id: p.category_id || "", subcategory_id: p.subcategory_id || "",
       brand_id: p.brand_id || "",
       is_new: p.is_new || false, is_trending: p.is_trending || false, is_pick: p.is_pick || false, in_stock: p.in_stock !== false,
-      volume_ml: p.volume_ml || "", skin_type: p.skin_type || "", country_of_origin: p.country_of_origin || "",
+      volume_ml: p.volume_ml || "", volume_unit: p.volume_unit || "ml", skin_type: p.skin_type || "", country_of_origin: p.country_of_origin || "",
       condition: (p as any).condition || "",
     });
     const sorted = [...(p.product_images || [])].sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
