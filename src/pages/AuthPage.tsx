@@ -23,7 +23,12 @@ const AuthPage = () => {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
 
-  const [authMode, setAuthMode] = useState<AuthMode>("signin");
+  const hasVisited = localStorage.getItem("elara_has_visited");
+  const [authMode, setAuthMode] = useState<AuthMode>(hasVisited ? "signin" : "signup");
+
+  useEffect(() => {
+    localStorage.setItem("elara_has_visited", "true");
+  }, []);
   const [step, setStep] = useState<Step>("phone");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -245,11 +250,11 @@ const AuthPage = () => {
                     ? (t("auth.createAccount") || "Create Account")
                     : (t("auth.welcomeBack") || "Welcome Back")}
                 </h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {isSignUp
-                    ? (t("auth.joinElara") || "Enter your details to get started")
-                    : (t("auth.signInDesc") || "Sign in with your phone number")}
-                </p>
+                {isSignUp && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {t("auth.joinElara") || "Enter your details to get started"}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-3">
