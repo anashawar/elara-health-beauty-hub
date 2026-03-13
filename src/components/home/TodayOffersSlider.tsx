@@ -47,8 +47,8 @@ export default function TodayOffersSlider() {
 
   // Group offers into pairs
   const pairs: Offer[][] = [];
-  for (let i = 0; i < offers.length; i += 2) {
-    pairs.push(offers.slice(i, i + 2));
+  for (let i = 0; i < offers.length; i += 3) {
+    pairs.push(offers.slice(i, i + 3));
   }
 
   const [current, setCurrent] = useState(0);
