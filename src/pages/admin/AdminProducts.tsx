@@ -559,6 +559,7 @@ export default function AdminProducts() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="relative mb-4">
