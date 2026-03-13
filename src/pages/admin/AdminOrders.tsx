@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Eye, User, Phone, MapPin, Package } from "lucide-react";
+import { Loader2, Eye, User, Phone, MapPin, Package, Filter } from "lucide-react";
 import { formatPrice } from "@/hooks/useProducts";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ const statusColors: Record<string, string> = {
 
 export default function AdminOrders() {
   const qc = useQueryClient();
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["admin-orders"],
@@ -72,7 +73,6 @@ export default function AdminOrders() {
     },
   });
 
-  // Realtime subscription for order updates
   useEffect(() => {
     const channel = supabase
       .channel('admin-orders-realtime')
@@ -95,20 +95,43 @@ export default function AdminOrders() {
     onError: (e) => toast.error(e.message),
   });
 
+  const filteredOrders = statusFilter === "all" ? orders : orders.filter((o: any) => o.status === statusFilter);
+
+  // Count per status
+  const statusCounts: Record<string, number> = { all: orders.length };
+  statuses.forEach(s => { statusCounts[s] = orders.filter((o: any) => o.status === s).length; });
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Orders</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{orders.length} total orders</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{filteredOrders.length} of {orders.length} orders</p>
         </div>
+      </div>
+
+      {/* Status filter tabs */}
+      <div className="flex gap-1.5 overflow-x-auto pb-3 mb-4 scrollbar-hide">
+        {[{ key: "all", label: "All" }, ...statuses.map(s => ({ key: s, label: statusLabels[s] }))].map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setStatusFilter(key)}
+            className={`flex-shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              statusFilter === key
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-secondary text-muted-foreground hover:bg-accent"
+            }`}
+          >
+            {label} <span className="ml-1 opacity-70">({statusCounts[key] || 0})</span>
+          </button>
+        ))}
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       ) : (
         <div className="space-y-3">
-          {orders.map((o: any) => (
+          {filteredOrders.map((o: any) => (
             <div key={o.id} className="bg-card rounded-2xl border border-border/50 p-4 hover:shadow-premium transition-shadow">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -230,10 +253,10 @@ export default function AdminOrders() {
               </div>
             </div>
           ))}
-          {orders.length === 0 && (
+          {filteredOrders.length === 0 && (
             <div className="text-center py-12 bg-card rounded-2xl border border-border/50">
               <Package className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">No orders yet</p>
+              <p className="text-sm text-muted-foreground">{statusFilter === "all" ? "No orders yet" : `No ${statusLabels[statusFilter]?.toLowerCase()} orders`}</p>
             </div>
           )}
         </div>
