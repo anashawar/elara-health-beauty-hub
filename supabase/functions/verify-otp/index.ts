@@ -150,7 +150,7 @@ serve(async (req) => {
         email_confirm: true,
         phone_confirm: true,
         password: tempPassword,
-        user_metadata: { full_name: full_name || "", phone: normalizedPhone },
+        user_metadata: { full_name: full_name || "", phone: normalizedPhone, gender: gender || null, birthdate: birthdate || null },
       });
 
       if (createError) {
