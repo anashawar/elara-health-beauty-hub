@@ -680,7 +680,61 @@ export default function AdminProducts() {
     }
   };
 
-  // Quick-add: create products with just name + cost, then auto-enrich
+  // Multi-select helpers
+  const toggleMultiSelect = (id: string) => {
+    setSelectedProducts(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleMultiSelectAll = () => {
+    if (selectedProducts.size === filtered.length) {
+      setSelectedProducts(new Set());
+    } else {
+      setSelectedProducts(new Set(filtered.map((p: any) => p.id)));
+    }
+  };
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      // Delete images first, then products
+      for (const id of ids) {
+        await supabase.from("product_images").delete().eq("product_id", id);
+        await supabase.from("product_costs").delete().eq("product_id", id);
+        await supabase.from("product_tags").delete().eq("product_id", id);
+      }
+      const { error } = await supabase.from("products").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-products"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      setSelectedProducts(new Set());
+      setMultiSelect(false);
+      toast.success("Products deleted");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleBulkDelete = () => {
+    const count = selectedProducts.size;
+    if (count === 0) return;
+    if (confirm(`Delete ${count} selected products? This cannot be undone.`)) {
+      bulkDeleteMutation.mutate(Array.from(selectedProducts));
+    }
+  };
+
+  const handleBulkEnrichSelected = () => {
+    const ids = Array.from(selectedProducts);
+    if (ids.length === 0) { toast.error("Select products first"); return; }
+    if (confirm(`Enrich ${ids.length} selected products with AI?`)) {
+      setMultiSelect(false);
+      setSelectedProducts(new Set());
+      handleEnrichProducts(ids);
+    }
+  };
   const handleQuickAdd = async () => {
     const validItems = quickAddItems.filter(i => i.name.trim() && i.cost.trim());
     if (validItems.length === 0) { toast.error("Add at least one product with name and cost"); return; }
