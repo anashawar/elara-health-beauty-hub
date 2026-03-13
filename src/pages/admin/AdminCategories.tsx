@@ -7,9 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { useCategories, useSubcategories } from "@/hooks/useProducts";
+import BulkImportDialog, { ColumnMapping } from "@/components/admin/BulkImportDialog";
 
 interface CatForm { id?: string; name: string; slug: string; icon: string; color: string; sort_order: number; }
 const emptyCatForm: CatForm = { name: "", slug: "", icon: "", color: "", sort_order: 0 };
@@ -28,9 +29,79 @@ export default function AdminCategories() {
   const [subEditing, setSubEditing] = useState(false);
 
   const [expandedCatId, setExpandedCatId] = useState<string | null>(null);
+  const [bulkCatOpen, setBulkCatOpen] = useState(false);
+  const [bulkSubOpen, setBulkSubOpen] = useState(false);
 
   const { data: categories = [], isLoading } = useCategories();
   const { data: subcategories = [] } = useSubcategories();
+
+  const catBulkColumns: ColumnMapping[] = [
+    { key: "name", label: "name", required: true, example: "Skincare" },
+    { key: "slug", label: "slug", example: "skincare" },
+    { key: "icon", label: "icon", example: "✨" },
+    { key: "color", label: "color", example: "#f5e6d3" },
+    { key: "sort_order", label: "sort_order", example: "1" },
+  ];
+
+  const subBulkColumns: ColumnMapping[] = [
+    { key: "name", label: "name", required: true, example: "Serums" },
+    { key: "category", label: "category", required: true, example: "Skincare" },
+    { key: "slug", label: "slug", example: "serums" },
+    { key: "icon", label: "icon", example: "💧" },
+    { key: "sort_order", label: "sort_order", example: "1" },
+  ];
+
+  const handleBulkCatImport = async (rows: Record<string, string>[]) => {
+    let success = 0;
+    const errors: string[] = [];
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      try {
+        if (!row.name) { errors.push(`Row ${i + 2}: Missing name`); continue; }
+        const { error } = await supabase.from("categories").insert({
+          name: row.name,
+          slug: row.slug || row.name.toLowerCase().replace(/\s+/g, "-"),
+          icon: row.icon || null,
+          color: row.color || null,
+          sort_order: row.sort_order ? parseInt(row.sort_order) : 0,
+        });
+        if (error) throw error;
+        success++;
+      } catch (err: any) {
+        errors.push(`Row ${i + 2} (${row.name || "?"}): ${err.message}`);
+      }
+    }
+    qc.invalidateQueries({ queryKey: ["categories"] });
+    return { success, errors };
+  };
+
+  const handleBulkSubImport = async (rows: Record<string, string>[]) => {
+    // Refetch categories to get latest
+    const { data: latestCats } = await supabase.from("categories").select("id, name");
+    let success = 0;
+    const errors: string[] = [];
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      try {
+        if (!row.name || !row.category) { errors.push(`Row ${i + 2}: Missing name or category`); continue; }
+        const cat = (latestCats || []).find((c: any) => c.name.toLowerCase() === row.category.toLowerCase());
+        if (!cat) { errors.push(`Row ${i + 2}: Category "${row.category}" not found`); continue; }
+        const { error } = await supabase.from("subcategories").insert({
+          name: row.name,
+          category_id: cat.id,
+          slug: row.slug || row.name.toLowerCase().replace(/\s+/g, "-"),
+          icon: row.icon || null,
+          sort_order: row.sort_order ? parseInt(row.sort_order) : 0,
+        });
+        if (error) throw error;
+        success++;
+      } catch (err: any) {
+        errors.push(`Row ${i + 2} (${row.name || "?"}): ${err.message}`);
+      }
+    }
+    qc.invalidateQueries({ queryKey: ["subcategories"] });
+    return { success, errors };
+  };
 
   const saveCat = useMutation({
     mutationFn: async (f: CatForm) => {
@@ -98,7 +169,15 @@ export default function AdminCategories() {
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h1 className="text-2xl font-display font-bold text-foreground">Categories & Subcategories</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button size="sm" variant="outline" onClick={() => setBulkCatOpen(true)}>
+            <FileSpreadsheet className="h-4 w-4 mr-1.5" />Import Categories
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setBulkSubOpen(true)}>
+            <FileSpreadsheet className="h-4 w-4 mr-1.5" />Import Subcategories
+          </Button>
+          <BulkImportDialog open={bulkCatOpen} onOpenChange={setBulkCatOpen} title="Categories" columns={catBulkColumns} onImport={handleBulkCatImport} />
+          <BulkImportDialog open={bulkSubOpen} onOpenChange={setBulkSubOpen} title="Subcategories" columns={subBulkColumns} onImport={handleBulkSubImport} />
           {/* Add Subcategory */}
           <Dialog open={subOpen} onOpenChange={(v) => { setSubOpen(v); if (!v) { setSubForm(emptySubForm); setSubEditing(false); } }}>
             <DialogTrigger asChild><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1.5" />Subcategory</Button></DialogTrigger>

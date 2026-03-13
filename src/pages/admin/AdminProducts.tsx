@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon, Languages } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon, Languages, FileSpreadsheet } from "lucide-react";
 import { formatPrice, useCategories, useBrands, useSubcategories } from "@/hooks/useProducts";
 import { toast } from "sonner";
+import BulkImportDialog, { ColumnMapping } from "@/components/admin/BulkImportDialog";
 
 interface ProductForm {
   id?: string;
@@ -52,6 +53,7 @@ export default function AdminProducts() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [editing, setEditing] = useState(false);
 
@@ -261,10 +263,112 @@ export default function AdminProducts() {
     setOpen(true);
   };
 
+  const productBulkColumns: ColumnMapping[] = [
+    { key: "title", label: "title", required: true, example: "Vitamin C Serum" },
+    { key: "price", label: "price", required: true, example: "25000" },
+    { key: "original_price", label: "original_price", example: "30000" },
+    { key: "description", label: "description", example: "A brightening serum..." },
+    { key: "category", label: "category", example: "Skincare" },
+    { key: "subcategory", label: "subcategory", example: "Serums" },
+    { key: "brand", label: "brand", example: "CeraVe" },
+    { key: "volume_ml", label: "volume_ml", example: "30" },
+    { key: "skin_type", label: "skin_type", example: "All" },
+    { key: "country_of_origin", label: "country_of_origin", example: "France" },
+    { key: "condition", label: "condition", example: "acne,dryskin" },
+    { key: "benefits", label: "benefits", example: "Hydrates skin|Brightens complexion" },
+    { key: "usage_instructions", label: "usage_instructions", example: "Apply morning and evening" },
+    { key: "is_new", label: "is_new", example: "true" },
+    { key: "is_trending", label: "is_trending", example: "false" },
+    { key: "is_pick", label: "is_pick", example: "false" },
+  ];
+
+  const handleBulkImport = async (rows: Record<string, string>[]) => {
+    let success = 0;
+    const errors: string[] = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rowNum = i + 2; // header is row 1
+      try {
+        if (!row.title || !row.price) {
+          errors.push(`Row ${rowNum}: Missing title or price`);
+          continue;
+        }
+
+        // Resolve category by name
+        let category_id: string | null = null;
+        if (row.category) {
+          const cat = categories.find((c: any) => c.name.toLowerCase() === row.category.toLowerCase());
+          if (cat) category_id = cat.id;
+        }
+
+        // Resolve subcategory by name
+        let subcategory_id: string | null = null;
+        if (row.subcategory && category_id) {
+          const sub = allSubcategories.find(
+            (s: any) => s.name.toLowerCase() === row.subcategory.toLowerCase() && s.category_id === category_id
+          );
+          if (sub) subcategory_id = sub.id;
+        }
+
+        // Resolve brand by name
+        let brand_id: string | null = null;
+        if (row.brand) {
+          const br = brands.find((b: any) => b.name.toLowerCase() === row.brand.toLowerCase());
+          if (br) brand_id = br.id;
+        }
+
+        const benefitsArray = row.benefits ? row.benefits.split("|").map((b) => b.trim()).filter(Boolean) : null;
+        const toBool = (v: string) => v?.toLowerCase() === "true" || v === "1";
+
+        const payload = {
+          title: row.title,
+          slug: row.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+          price: parseFloat(row.price),
+          original_price: row.original_price ? parseFloat(row.original_price) : null,
+          description: row.description || null,
+          usage_instructions: row.usage_instructions || null,
+          benefits: benefitsArray,
+          category_id,
+          subcategory_id,
+          brand_id,
+          volume_ml: row.volume_ml || null,
+          skin_type: row.skin_type || null,
+          country_of_origin: row.country_of_origin || null,
+          condition: row.condition || null,
+          is_new: toBool(row.is_new),
+          is_trending: toBool(row.is_trending),
+          is_pick: toBool(row.is_pick),
+        };
+
+        const { error } = await supabase.from("products").insert(payload);
+        if (error) throw error;
+        success++;
+      } catch (err: any) {
+        errors.push(`Row ${rowNum} (${row.title || "?"}): ${err.message}`);
+      }
+    }
+
+    qc.invalidateQueries({ queryKey: ["admin-products"] });
+    qc.invalidateQueries({ queryKey: ["products"] });
+    return { success, errors };
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h1 className="text-2xl font-display font-bold text-foreground">Products</h1>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setBulkOpen(true)}>
+            <FileSpreadsheet className="h-4 w-4 mr-1.5" />Bulk Import
+          </Button>
+          <BulkImportDialog
+            open={bulkOpen}
+            onOpenChange={setBulkOpen}
+            title="Products"
+            columns={productBulkColumns}
+            onImport={handleBulkImport}
+          />
         <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); else setOpen(true); }}>
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="h-4 w-4 mr-1.5" />Add Product</Button>
@@ -455,6 +559,7 @@ export default function AdminProducts() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="relative mb-4">
