@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, ArrowRight, Phone, MapPin, Loader2, ShieldCheck, Mail } from "lucide-react";
+import { User, ArrowRight, Loader2, ShieldCheck, Mail, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
@@ -9,10 +9,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import elaraLogo from "@/assets/elara-logo.png";
 
 const cities = ["Baghdad", "Erbil", "Basra", "Sulaymaniyah", "Najaf", "Karbala", "Kirkuk", "Mosul", "Duhok"];
 
 type Step = "phone" | "otp" | "address";
+type AuthMode = "signup" | "signin";
 
 const OTP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
@@ -21,6 +23,7 @@ const AuthPage = () => {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
 
+  const [authMode, setAuthMode] = useState<AuthMode>("signin");
   const [step, setStep] = useState<Step>("phone");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -42,7 +45,6 @@ const AuthPage = () => {
     }
   }, [user, authLoading, navigate, step]);
 
-  // Countdown timer for resend
   useEffect(() => {
     if (countdown <= 0) return;
     const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
@@ -51,17 +53,24 @@ const AuthPage = () => {
 
   const handleSendOTP = async () => {
     if (!phone.trim()) { toast(t("auth.enterPhone")); return; }
-    if (!email.trim()) { toast(t("auth.enterEmail") || "Please enter your email"); return; }
+    if (authMode === "signup" && !email.trim()) { toast(t("auth.enterEmail") || "Please enter your email"); return; }
+    if (authMode === "signup" && !fullName.trim()) { toast(t("auth.enterFullName") || "Please enter your name"); return; }
 
     setLoading(true);
     try {
+      const body: any = { phone: phone.trim() };
+      if (authMode === "signup") {
+        body.full_name = fullName.trim();
+        body.email = email.trim();
+      }
+
       const resp = await fetch(`${OTP_URL}/send-otp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ phone: phone.trim(), full_name: fullName.trim(), email: email.trim() }),
+        body: JSON.stringify(body),
       });
 
       const data = await resp.json();
@@ -83,13 +92,19 @@ const AuthPage = () => {
 
     setLoading(true);
     try {
+      const body: any = { phone: normalizedPhone, code: otpCode };
+      if (authMode === "signup") {
+        body.full_name = fullName.trim();
+        body.email = email.trim();
+      }
+
       const resp = await fetch(`${OTP_URL}/verify-otp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ phone: normalizedPhone, code: otpCode, full_name: fullName.trim(), email: email.trim() }),
+        body: JSON.stringify(body),
       });
 
       const data = await resp.json();
@@ -102,7 +117,6 @@ const AuthPage = () => {
         toast(t("auth.welcomeBackToast") || "Welcome back!");
       }
 
-      // Set session AFTER updating step to avoid redirect race condition
       if (data.session) {
         await supabase.auth.setSession({
           access_token: data.session.access_token,
@@ -150,15 +164,39 @@ const AuthPage = () => {
   };
 
   const slideVariants = {
-    enter: { x: 80, opacity: 0 },
-    center: { x: 0, opacity: 1 },
-    exit: { x: -80, opacity: 0 },
+    enter: { y: 20, opacity: 0 },
+    center: { y: 0, opacity: 1 },
+    exit: { y: -20, opacity: 0 },
   };
+
+  const isSignUp = authMode === "signup";
 
   return (
     <div className="min-h-screen bg-background max-w-lg mx-auto flex flex-col">
+      {/* Logo + top spacing */}
+      <div className="safe-area-top" />
+      <div className="flex flex-col items-center pt-10 pb-2 px-5">
+        <motion.img
+          src={elaraLogo}
+          alt="ELARA"
+          className="h-10 object-contain mb-2"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+        />
+        <motion.div
+          className="flex items-center gap-1.5 text-xs text-muted-foreground"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Sparkles className="w-3 h-3 text-primary" />
+          <span>{t("common.tagline")}</span>
+        </motion.div>
+      </div>
+
       {/* Progress bar */}
-      <div className="px-5 pt-6 pb-2 flex gap-2 safe-area-top">
+      <div className="px-5 pt-4 pb-2 flex gap-2">
         <div className="h-1 flex-1 rounded-full transition-colors duration-300 bg-primary" />
         <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === "otp" || step === "address" ? "bg-primary" : "bg-muted"}`} />
         <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === "address" ? "bg-primary" : "bg-muted"}`} />
@@ -166,7 +204,7 @@ const AuthPage = () => {
 
       <div className="flex-1 px-5 overflow-hidden">
         <AnimatePresence mode="wait">
-          {/* Step 1: Phone + Name + Email */}
+          {/* Step 1: Phone (+ Name/Email for signup) */}
           {step === "phone" && (
             <motion.div
               key="phone"
@@ -175,55 +213,113 @@ const AuthPage = () => {
               animate="center"
               exit="exit"
               transition={{ duration: 0.25 }}
-              className="space-y-5"
+              className="space-y-5 pt-2"
             >
+              {/* Auth mode toggle */}
+              <div className="flex bg-muted rounded-2xl p-1 gap-1">
+                <button
+                  onClick={() => setAuthMode("signin")}
+                  className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                    !isSignUp
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t("common.signIn") || "Sign In"}
+                </button>
+                <button
+                  onClick={() => setAuthMode("signup")}
+                  className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                    isSignUp
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t("common.signUp") || "Sign Up"}
+                </button>
+              </div>
+
               <div>
                 <h1 className="text-2xl font-display font-bold text-foreground">
-                  {t("auth.createAccount") || "Create Account"}
+                  {isSignUp
+                    ? (t("auth.createAccount") || "Create Account")
+                    : (t("auth.welcomeBack") || "Welcome Back")}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {t("auth.joinElara") || "Enter your details to get started"}
+                  {isSignUp
+                    ? (t("auth.joinElara") || "Enter your details to get started")
+                    : (t("auth.signInDesc") || "Sign in with your phone number")}
                 </p>
               </div>
 
               <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">{t("auth.fullName")}</label>
-                  <div className="relative">
-                    <User className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder={t("auth.enterFullName")}
-                      className="pl-10 rtl:pl-3 rtl:pr-10 h-12 rounded-xl border-border bg-card"
-                    />
-                  </div>
-                </div>
+                {/* Name — only for sign up */}
+                <AnimatePresence>
+                  {isSignUp && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-1.5 pb-1">
+                        <label className="text-xs font-medium text-muted-foreground">{t("auth.fullName")}</label>
+                        <div className="relative">
+                          <User className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            placeholder={t("auth.enterFullName")}
+                            className="pl-10 rtl:pl-3 rtl:pr-10 h-12 rounded-2xl border-border/60 bg-muted/40 focus:bg-card transition-colors"
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">{t("auth.email") || "Email"}</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder={t("auth.enterEmail") || "your@email.com"}
-                      type="email"
-                      className="pl-10 rtl:pl-3 rtl:pr-10 h-12 rounded-xl border-border bg-card"
-                    />
-                  </div>
-                </div>
+                {/* Email — only for sign up */}
+                <AnimatePresence>
+                  {isSignUp && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, delay: 0.05 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-1.5 pb-1">
+                        <label className="text-xs font-medium text-muted-foreground">{t("auth.email") || "Email"}</label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder={t("auth.enterEmail") || "your@email.com"}
+                            type="email"
+                            className="pl-10 rtl:pl-3 rtl:pr-10 h-12 rounded-2xl border-border/60 bg-muted/40 focus:bg-card transition-colors"
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
+                {/* Phone — always */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">{t("auth.phoneNumber")}</label>
                   <div className="relative">
-                    <div className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">+964</div>
+                    <div className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                      <span className="text-base leading-none">🇮🇶</span>
+                      <span className="text-xs font-semibold text-foreground">+964</span>
+                    </div>
                     <Input
                       value={phone}
                       onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ""))}
                       placeholder="7XX XXX XXXX"
                       type="tel"
-                      className="pl-14 rtl:pl-3 rtl:pr-14 h-12 rounded-xl border-border bg-card"
+                      className="pl-[4.5rem] rtl:pl-3 rtl:pr-[4.5rem] h-12 rounded-2xl border-border/60 bg-muted/40 focus:bg-card transition-colors"
                       maxLength={11}
                     />
                   </div>
@@ -233,8 +329,16 @@ const AuthPage = () => {
                 </div>
               </div>
 
-              <Button onClick={handleSendOTP} disabled={loading} className="w-full h-12 rounded-xl text-sm font-semibold gap-2">
-                {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("auth.sending") || "Sending..."}</> : <>{t("auth.sendCode") || "Send Verification Code"} <ArrowRight className="w-4 h-4 rtl:rotate-180" /></>}
+              <Button
+                onClick={handleSendOTP}
+                disabled={loading}
+                className="w-full h-12 rounded-2xl text-sm font-semibold gap-2 shadow-md shadow-primary/20"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> {t("auth.sending") || "Sending..."}</>
+                ) : (
+                  <>{t("auth.sendCode") || "Send Verification Code"} <ArrowRight className="w-4 h-4 rtl:rotate-180" /></>
+                )}
               </Button>
 
               <button
@@ -246,7 +350,7 @@ const AuthPage = () => {
             </motion.div>
           )}
 
-          {/* Step 2: OTP Verification */}
+          {/* Step 2: OTP */}
           {step === "otp" && (
             <motion.div
               key="otp"
@@ -255,7 +359,7 @@ const AuthPage = () => {
               animate="center"
               exit="exit"
               transition={{ duration: 0.25 }}
-              className="space-y-6"
+              className="space-y-6 pt-4"
             >
               <div className="text-center">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/40 flex items-center justify-center mx-auto mb-4">
@@ -265,25 +369,31 @@ const AuthPage = () => {
                   {t("auth.verifyPhone") || "Verify Phone"}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {t("auth.whatsappCodeSentTo") || "Enter the code sent via WhatsApp to"} <span className="font-semibold text-foreground">{normalizedPhone}</span>
+                  {t("auth.whatsappCodeSentTo") || "Enter the code sent via WhatsApp to"}{" "}
+                  <span className="font-semibold text-foreground">{normalizedPhone}</span>
                 </p>
               </div>
 
               <div className="flex justify-center">
                 <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
                   <InputOTPGroup>
-                    <InputOTPSlot index={0} className="w-12 h-14 text-lg rounded-xl" />
-                    <InputOTPSlot index={1} className="w-12 h-14 text-lg rounded-xl" />
-                    <InputOTPSlot index={2} className="w-12 h-14 text-lg rounded-xl" />
-                    <InputOTPSlot index={3} className="w-12 h-14 text-lg rounded-xl" />
-                    <InputOTPSlot index={4} className="w-12 h-14 text-lg rounded-xl" />
-                    <InputOTPSlot index={5} className="w-12 h-14 text-lg rounded-xl" />
+                    {[0, 1, 2, 3, 4, 5].map(i => (
+                      <InputOTPSlot key={i} index={i} className="w-12 h-14 text-lg rounded-xl border-border/60" />
+                    ))}
                   </InputOTPGroup>
                 </InputOTP>
               </div>
 
-              <Button onClick={handleVerifyOTP} disabled={loading || otpCode.length !== 6} className="w-full h-12 rounded-xl text-sm font-semibold gap-2">
-                {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("auth.verifying") || "Verifying..."}</> : <>{t("auth.verify") || "Verify"} <ArrowRight className="w-4 h-4 rtl:rotate-180" /></>}
+              <Button
+                onClick={handleVerifyOTP}
+                disabled={loading || otpCode.length !== 6}
+                className="w-full h-12 rounded-2xl text-sm font-semibold gap-2 shadow-md shadow-primary/20"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> {t("auth.verifying") || "Verifying..."}</>
+                ) : (
+                  <>{t("auth.verify") || "Verify"} <ArrowRight className="w-4 h-4 rtl:rotate-180" /></>
+                )}
               </Button>
 
               <div className="text-center space-y-2">
@@ -313,7 +423,7 @@ const AuthPage = () => {
               animate="center"
               exit="exit"
               transition={{ duration: 0.25 }}
-              className="space-y-5"
+              className="space-y-5 pt-2"
             >
               <div>
                 <h1 className="text-2xl font-display font-bold text-foreground">{t("auth.deliveryAddress")}</h1>
@@ -330,8 +440,8 @@ const AuthPage = () => {
                         onClick={() => setCity(c)}
                         className={`py-2.5 px-2 text-xs font-medium rounded-xl border transition-all ${
                           city === c
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-card text-foreground border-border hover:border-primary/50"
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
+                            : "bg-muted/40 text-foreground border-border/60 hover:border-primary/50"
                         }`}
                       >
                         {c}
@@ -342,27 +452,27 @@ const AuthPage = () => {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">{t("auth.area")}</label>
-                  <Input value={area} onChange={e => setArea(e.target.value)} placeholder={t("auth.areaPlaceholder")} className="h-11 rounded-xl bg-card border-border text-sm" />
+                  <Input value={area} onChange={e => setArea(e.target.value)} placeholder={t("auth.areaPlaceholder")} className="h-11 rounded-2xl bg-muted/40 border-border/60 text-sm focus:bg-card transition-colors" />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">{t("auth.street")}</label>
-                  <Input value={street} onChange={e => setStreet(e.target.value)} placeholder={t("auth.streetPlaceholder")} className="h-11 rounded-xl bg-card border-border text-sm" />
+                  <Input value={street} onChange={e => setStreet(e.target.value)} placeholder={t("auth.streetPlaceholder")} className="h-11 rounded-2xl bg-muted/40 border-border/60 text-sm focus:bg-card transition-colors" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-muted-foreground">{t("auth.building")}</label>
-                    <Input value={building} onChange={e => setBuilding(e.target.value)} placeholder={t("auth.building")} className="h-11 rounded-xl bg-card border-border text-sm" />
+                    <Input value={building} onChange={e => setBuilding(e.target.value)} placeholder={t("auth.building")} className="h-11 rounded-2xl bg-muted/40 border-border/60 text-sm focus:bg-card transition-colors" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-muted-foreground">{t("auth.floor")}</label>
-                    <Input value={floor} onChange={e => setFloor(e.target.value)} placeholder={t("auth.floor")} className="h-11 rounded-xl bg-card border-border text-sm" />
+                    <Input value={floor} onChange={e => setFloor(e.target.value)} placeholder={t("auth.floor")} className="h-11 rounded-2xl bg-muted/40 border-border/60 text-sm focus:bg-card transition-colors" />
                   </div>
                 </div>
               </div>
 
-              <Button onClick={handleSaveAddress} disabled={loading} className="w-full h-12 rounded-xl text-sm font-semibold gap-2">
+              <Button onClick={handleSaveAddress} disabled={loading} className="w-full h-12 rounded-2xl text-sm font-semibold gap-2 shadow-md shadow-primary/20">
                 {loading ? t("auth.saving") : t("common.startShopping")}
                 {!loading && <ArrowRight className="w-4 h-4 rtl:rotate-180" />}
               </Button>
