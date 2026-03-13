@@ -5,6 +5,7 @@ import SearchOverlay from "@/components/SearchOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/components/ui/sonner";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useProducts, formatPrice } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
@@ -20,6 +21,7 @@ const ProductPage = () => {
   }, [id]);
   const navigate = useNavigate();
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
+  const { user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -43,6 +45,11 @@ const ProductPage = () => {
   const related = allProducts.filter(p => p.category_slug === product.category_slug && p.id !== product.id).slice(0, 4);
 
   const handleAddToCart = () => {
+    if (!user) {
+      toast(t("auth.signInRequired") || "Please sign in first");
+      navigate("/");
+      return;
+    }
     addToCart(product);
   };
 

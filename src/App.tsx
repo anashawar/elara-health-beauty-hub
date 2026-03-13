@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import InstallPage from "./pages/InstallPage";
 import ElaraChatPage from "./pages/ElaraChatPage";
+import AuthGuard from "./components/AuthGuard";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -50,9 +51,9 @@ const App = () => (
               <Route path="/concern/:id" element={<CategoryPage />} />
               <Route path="/product/:id" element={<ProductPage />} />
               <Route path="/brand/:id" element={<BrandPage />} />
-              <Route path="/cart" element={<CartPage />} />
+              <Route path="/cart" element={<AuthGuard><CartPage /></AuthGuard>} />
               <Route path="/wishlist" element={<WishlistPage />} />
-              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/checkout" element={<AuthGuard><CheckoutPage /></AuthGuard>} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -60,7 +61,7 @@ const App = () => (
               <Route path="/addresses" element={<AddressesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/install" element={<InstallPage />} />
-              <Route path="/elara-ai" element={<ElaraChatPage />} />
+              <Route path="/elara-ai" element={<AuthGuard><ElaraChatPage /></AuthGuard>} />
               {/* Admin Panel */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
