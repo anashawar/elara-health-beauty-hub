@@ -187,7 +187,7 @@ CRITICAL:
           if (enriched.subcategory_id) updatePayload.subcategory_id = enriched.subcategory_id;
 
           if (cost && sellingPrice > cost) {
-            updatePayload.original_price = Math.round(sellingPrice * 1.15);
+            updatePayload.original_price = Math.round(sellingPrice * 1.15 / 250) * 250;
           }
 
           const { error: updateErr } = await supabase

@@ -573,7 +573,7 @@ export default function AdminProducts() {
     for (let i = 0; i < validItems.length; i++) {
       const item = validItems[i];
       const cost = parseFloat(item.cost);
-      const price = Math.round(cost * 1.35); // Temporary price, AI will set final
+      const price = Math.round(cost * 1.35 / 250) * 250; // Round to nearest 250 IQD
 
       setEnrichProgress({ done: i, total: validItems.length, current: `Creating: ${item.name}` });
 
