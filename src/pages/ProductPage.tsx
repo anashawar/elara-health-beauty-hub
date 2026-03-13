@@ -51,6 +51,7 @@ const ProductPage = () => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const { data: allProducts = [] } = useProducts();
   const { data: activeOffers = [] } = useActiveOffers();
+  const { data: brands = [] } = useBrands();
   const product = allProducts.find(p => p.id === id);
 
   if (!product) {
