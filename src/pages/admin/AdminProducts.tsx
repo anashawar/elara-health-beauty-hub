@@ -737,6 +737,19 @@ export default function AdminProducts() {
         </div>
       </div>
 
+      {/* AI Enrichment Progress */}
+      {enriching && (
+        <div className="mb-4 p-4 rounded-xl border border-primary/20 bg-primary/5">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+            <span className="text-sm font-medium text-foreground">AI Enriching Products...</span>
+            <span className="text-xs text-muted-foreground ml-auto">{enrichProgress.done}/{enrichProgress.total}</span>
+          </div>
+          <Progress value={enrichProgress.total > 0 ? (enrichProgress.done / enrichProgress.total) * 100 : 0} className="h-2 mb-1" />
+          <p className="text-xs text-muted-foreground truncate">{enrichProgress.current}</p>
+        </div>
+      )}
+
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input className="pl-9" placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -749,6 +762,7 @@ export default function AdminProducts() {
           <Table>
             <TableHeader>
               <TableRow>
+                {selectMode && <TableHead className="w-10"></TableHead>}
                 <TableHead>Product</TableHead>
                 <TableHead className="hidden md:table-cell">Category</TableHead>
                 <TableHead>Price</TableHead>
