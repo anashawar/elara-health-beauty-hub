@@ -77,8 +77,12 @@ const ProfilePage = () => {
           {/* User Card */}
           <div className="mx-4 md:mx-6 mt-4 bg-card rounded-2xl p-5 shadow-premium">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center">
-                <span className="text-2xl">👤</span>
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center overflow-hidden">
+                {(profile as any)?.avatar_url ? (
+                  <img src={(profile as any).avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-2xl">👤</span>
+                )}
               </div>
               <div>
                 {user ? (
