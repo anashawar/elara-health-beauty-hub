@@ -1298,7 +1298,7 @@ export default function AdminProducts() {
                 </TableRow>
               );})}
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={(selectMode || multiSelect) ? 9 : 8} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
