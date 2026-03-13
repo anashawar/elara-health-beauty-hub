@@ -164,6 +164,7 @@ const AddressesPage = () => {
       street: addr.street || "",
       building: addr.building || "",
       floor: addr.floor || "",
+      apartment: addr.apartment || "",
       phone: addr.phone || "",
       latitude: addr.latitude || null,
       longitude: addr.longitude || null,
