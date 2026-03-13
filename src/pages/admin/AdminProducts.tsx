@@ -13,7 +13,6 @@ import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon, Languages,
 import { formatPrice, useCategories, useBrands, useSubcategories } from "@/hooks/useProducts";
 import { toast } from "sonner";
 import BulkImportDialog, { ColumnMapping } from "@/components/admin/BulkImportDialog";
-import { supabase } from "@/integrations/supabase/client";
 
 interface ProductForm {
   id?: string;
