@@ -94,6 +94,16 @@ html, body {
   min-height: -webkit-fill-available;
 }
 
+/* Global iOS safe area: all sticky headers get top inset */
+header.sticky {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Pages without sticky headers: ensure top safe area on first child */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 /* Hide scrollbar for clean mobile feel */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

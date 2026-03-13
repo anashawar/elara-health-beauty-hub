@@ -158,7 +158,7 @@ const AuthPage = () => {
   return (
     <div className="min-h-screen bg-background max-w-lg mx-auto flex flex-col">
       {/* Progress bar */}
-      <div className="px-5 pt-6 pb-2 flex gap-2">
+      <div className="px-5 pt-6 pb-2 flex gap-2 safe-area-top">
         <div className="h-1 flex-1 rounded-full transition-colors duration-300 bg-primary" />
         <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === "otp" || step === "address" ? "bg-primary" : "bg-muted"}`} />
         <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === "address" ? "bg-primary" : "bg-muted"}`} />
