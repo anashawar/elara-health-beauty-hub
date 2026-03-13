@@ -95,6 +95,7 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
       form: p.form,
       gender: p.gender,
       volume_ml: p.volume_ml,
+      volume_unit: p.volume_unit || "ml",
       application: p.application,
       skin_type: p.skin_type,
       condition: p.condition || null,

@@ -299,8 +299,12 @@ const ProductPage = () => {
                       <div className="rounded-xl overflow-hidden border border-border/50">
                         {[
                           { label: t("product.brand"), value: product.brand },
-                          { label: t("product.skinType"), value: product.tags.length > 0 ? product.tags.join(", ") : t("product.all") },
-                        ].map((row, i) => (
+                          ...(product.skin_type ? [{ label: t("product.skinType"), value: product.skin_type }] : []),
+                          ...(product.country_of_origin ? [{ label: t("product.countryOfOrigin") || "Country of Origin", value: product.country_of_origin }] : []),
+                          ...(product.condition ? [{ label: t("product.concerns") || "Concern(s)", value: product.condition.split(",").map((c: string) => c.trim()).filter(Boolean).join(", ") }] : []),
+                          ...(product.volume_ml ? [{ label: t("product.size") || "Size", value: `${product.volume_ml} ${product.volume_unit || "ml"}` }] : []),
+                          ...(product.form ? [{ label: t("product.form") || "Form", value: product.form }] : []),
+                        ].filter(row => row.value).map((row, i) => (
                           <div key={row.label} className={`flex text-sm ${i % 2 === 0 ? "bg-secondary/30" : "bg-card"}`}>
                             <span className="w-2/5 px-3 py-2.5 font-medium text-muted-foreground">{row.label}</span>
                             <span className="w-3/5 px-3 py-2.5 text-foreground">{row.value}</span>
