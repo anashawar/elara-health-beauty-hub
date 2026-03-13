@@ -54,7 +54,7 @@ const InstallPage = () => {
 
   return (
     <div className="min-h-screen bg-background max-w-lg mx-auto flex flex-col">
-      <header className="px-4 py-3 border-b border-border">
+      <header className="px-4 py-3 border-b border-border safe-area-top">
         <Link to="/home" className="p-1">
           <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
         </Link>
