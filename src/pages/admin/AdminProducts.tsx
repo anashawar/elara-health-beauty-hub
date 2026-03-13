@@ -948,7 +948,26 @@ export default function AdminProducts() {
               </div>
               <div>
                 <Label>Skin Type</Label>
-                <Input value={form.skin_type} onChange={(e) => setForm({ ...form, skin_type: e.target.value })} />
+                <Select value={form.skin_type} onValueChange={(v) => setForm({ ...form, skin_type: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select skin type" /></SelectTrigger>
+                  <SelectContent>
+                    {["All", "Oily", "Dry", "Combination", "Sensitive", "Normal", "Acne-Prone", "Mature"].map(t => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Form</Label>
+                <Select value={form.product_form} onValueChange={(v) => setForm({ ...form, product_form: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select form" /></SelectTrigger>
+                  <SelectContent>
+                    {["Cream", "Serum", "Gel", "Lotion", "Oil", "Foam", "Spray", "Powder", "Balm", "Mask", "Cleanser", "Toner", "Shampoo", "Conditioner", "Soap", "Capsules", "Tablets", "Drops", "Stick", "Patches"].map(f => (
+                      <SelectItem key={f} value={f}>{f}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               </div>
               <div className="flex items-center gap-6 flex-wrap">
                 <label className="flex items-center gap-2 text-sm">
