@@ -24,7 +24,7 @@ export function useActiveOffers() {
       // We can't filter dates server-side easily, so filter client-side
       return data || [];
     },
-    staleTime: 60_000,
+    staleTime: 5_000,
   });
 }
 
