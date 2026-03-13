@@ -308,6 +308,7 @@ export type Database = {
       }
       offers: {
         Row: {
+          banner_style: string
           created_at: string
           description: string | null
           discount_type: string
@@ -328,6 +329,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          banner_style?: string
           created_at?: string
           description?: string | null
           discount_type?: string
@@ -348,6 +350,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          banner_style?: string
           created_at?: string
           description?: string | null
           discount_type?: string

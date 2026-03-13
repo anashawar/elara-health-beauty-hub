@@ -26,7 +26,7 @@ interface OfferForm {
   target_id: string;
   target_name: string;
   link_url: string;
-  show_as_banner: boolean;
+  banner_style: string;
   is_active: boolean;
   starts_at: string;
   ends_at: string;
@@ -36,7 +36,7 @@ const emptyForm: OfferForm = {
   title: "", subtitle: "", description: "", image_url: "",
   discount_type: "percentage", discount_value: 0,
   target_type: "all", target_id: "", target_name: "", link_url: "",
-  show_as_banner: false, is_active: true, starts_at: "", ends_at: "",
+  banner_style: "none", is_active: true, starts_at: "", ends_at: "",
 };
 
 const BUCKET = "product-images";
@@ -105,7 +105,7 @@ export default function AdminOffers() {
         target_id: f.target_id || null,
         target_name: f.target_name || null,
         link_url: f.link_url || null,
-        show_as_banner: f.show_as_banner,
+        banner_style: f.banner_style,
         is_active: f.is_active,
         starts_at: f.starts_at || null,
         ends_at: f.ends_at || null,
@@ -122,7 +122,9 @@ export default function AdminOffers() {
     onSuccess: () => {
       setUploading(false);
       qc.invalidateQueries({ queryKey: ["admin-offers"] });
-      qc.invalidateQueries({ queryKey: ["active-offers"] });
+      qc.invalidateQueries({ queryKey: ["active-offers-gallery"] });
+      qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
+      qc.invalidateQueries({ queryKey: ["active-offers-pricing"] });
       toast.success(editing ? "Offer updated" : "Offer created");
       resetForm();
     },
@@ -136,7 +138,9 @@ export default function AdminOffers() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-offers"] });
-      qc.invalidateQueries({ queryKey: ["active-offers"] });
+      qc.invalidateQueries({ queryKey: ["active-offers-gallery"] });
+      qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
+      qc.invalidateQueries({ queryKey: ["active-offers-pricing"] });
       toast.success("Offer deleted");
     },
   });
@@ -154,7 +158,7 @@ export default function AdminOffers() {
       target_id: o.target_id || "",
       target_name: o.target_name || "",
       link_url: o.link_url || "",
-      show_as_banner: o.show_as_banner,
+      banner_style: o.banner_style || "none",
       is_active: o.is_active,
       starts_at: o.starts_at ? o.starts_at.split("T")[0] : "",
       ends_at: o.ends_at ? o.ends_at.split("T")[0] : "",
@@ -387,15 +391,22 @@ export default function AdminOffers() {
               </div>
 
               {/* Toggles */}
-              <div className="flex items-center gap-6 flex-wrap">
+              <div className="space-y-3">
                 <label className="flex items-center gap-2 text-sm">
                   <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
                   <span className={form.is_active ? "text-emerald-600 font-medium" : "text-muted-foreground"}>Active</span>
                 </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <Switch checked={form.show_as_banner} onCheckedChange={(v) => setForm({ ...form, show_as_banner: v })} />
-                  <span className={form.show_as_banner ? "text-primary font-medium" : "text-muted-foreground"}>Show on Home Banner</span>
-                </label>
+                <div>
+                  <Label>Show on Home Page</Label>
+                  <Select value={form.banner_style} onValueChange={(v) => setForm({ ...form, banner_style: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Don't show on home</SelectItem>
+                      <SelectItem value="hero">Main Hero Banner (full-width, big)</SelectItem>
+                      <SelectItem value="gallery">Gallery Banner (carousel with others)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <Button onClick={() => saveMutation.mutate(form)} disabled={!form.title || saveMutation.isPending || uploading}>
@@ -442,8 +453,11 @@ export default function AdminOffers() {
                           ) : (
                             <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px]">{isExpired ? "Expired" : "Inactive"}</Badge>
                           )}
-                          {o.show_as_banner && (
-                            <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">Banner</Badge>
+                          {o.banner_style === "hero" && (
+                            <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">Hero Banner</Badge>
+                          )}
+                          {o.banner_style === "gallery" && (
+                            <Badge className="bg-accent text-accent-foreground border-border text-[10px]">Gallery Banner</Badge>
                           )}
                         </div>
                         {o.subtitle && <p className="text-xs text-muted-foreground mt-0.5">{o.subtitle}</p>}

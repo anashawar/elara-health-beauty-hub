@@ -1,12 +1,29 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Gift, Truck, ShieldCheck, ArrowRight, Copy } from "lucide-react";
+import { Gift, Truck, ShieldCheck, ArrowRight, Copy, Sparkles } from "lucide-react";
 import bannerDiscount from "@/assets/banner-discount.jpg";
 import bannerDelivery from "@/assets/banner-delivery.jpg";
 import bannerOriginal from "@/assets/banner-original.jpg";
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useApp } from "@/context/AppContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+interface HeroBannerItem {
+  id: string;
+  tag: string;
+  tagIcon?: any;
+  title: string;
+  subtitle: string;
+  coupon?: string;
+  cta: string;
+  ctaLink: string;
+  image: string;
+  overlay: string;
+  isOffer?: boolean;
+  discountLabel?: string;
+}
 
 const HeroBanner = () => {
   const [current, setCurrent] = useState(0);
@@ -16,7 +33,27 @@ const HeroBanner = () => {
   const { setPendingCoupon } = useApp();
   const navigate = useNavigate();
 
-  const banners = [
+  // Fetch hero-style offers
+  const { data: heroOffers = [] } = useQuery({
+    queryKey: ["active-offers-hero"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("offers")
+        .select("*")
+        .eq("is_active", true)
+        .eq("banner_style", "hero")
+        .order("sort_order");
+      if (error) throw error;
+      const now = new Date();
+      return (data || []).filter((o: any) => {
+        if (o.ends_at && new Date(o.ends_at) < now) return false;
+        if (o.starts_at && new Date(o.starts_at) > now) return false;
+        return true;
+      });
+    },
+  });
+
+  const staticBanners: HeroBannerItem[] = [
     {
       id: "1",
       tag: t("banner.newUserOffer"),
@@ -53,6 +90,30 @@ const HeroBanner = () => {
     },
   ];
 
+  // Convert hero offers to banner items
+  const offerBanners: HeroBannerItem[] = heroOffers.map((o: any) => {
+    const discountLabel = o.discount_type === "percentage"
+      ? `${o.discount_value}% OFF`
+      : o.discount_type === "fixed"
+        ? `${o.discount_value.toLocaleString()} IQD OFF`
+        : o.discount_type === "bogo" ? "BUY 1 GET 1" : "BUNDLE DEAL";
+    return {
+      id: `offer-${o.id}`,
+      tag: discountLabel,
+      title: o.title,
+      subtitle: o.subtitle || "",
+      cta: "Shop Now",
+      ctaLink: o.link_url || "/collection/offers",
+      image: o.image_url || "",
+      overlay: "from-black/70 via-black/40 to-transparent",
+      isOffer: true,
+      discountLabel,
+    };
+  });
+
+  // Hero offers first, then static banners
+  const banners = [...offerBanners, ...staticBanners];
+
   const handleScroll = useCallback(() => {
     if (scrollRef.current) {
       const idx = Math.round(scrollRef.current.scrollLeft / scrollRef.current.offsetWidth);
@@ -60,7 +121,6 @@ const HeroBanner = () => {
     }
   }, []);
 
-  // Auto-play
   useEffect(() => {
     const startAutoPlay = () => {
       autoPlayRef.current = setInterval(() => {
@@ -74,7 +134,6 @@ const HeroBanner = () => {
     return () => clearInterval(autoPlayRef.current);
   }, [banners.length]);
 
-  // Reset auto-play on manual swipe
   const handleTouchStart = () => {
     clearInterval(autoPlayRef.current);
   };
@@ -114,16 +173,20 @@ const HeroBanner = () => {
             key={banner.id}
             className="w-full flex-shrink-0 snap-center relative h-full"
           >
-            <img
-              src={banner.image}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+            {banner.image ? (
+              <img
+                src={banner.image}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-primary/60" />
+            )}
             <div className={`absolute inset-0 bg-gradient-to-r rtl:bg-gradient-to-l ${banner.overlay}`} />
 
             <div className="relative h-full flex flex-col justify-center px-6 py-5 z-10 max-w-[70%]">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-[11px] font-bold uppercase tracking-wider text-white w-fit mb-2.5">
-                <banner.tagIcon className="w-3.5 h-3.5" />
+                {banner.isOffer ? <Sparkles className="w-3.5 h-3.5" /> : banner.tagIcon && <banner.tagIcon className="w-3.5 h-3.5" />}
                 {banner.tag}
               </span>
 

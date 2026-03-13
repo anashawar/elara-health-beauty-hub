@@ -20,16 +20,15 @@ export default function OffersBanner() {
   const qc = useQueryClient();
 
   const { data: offers = [] } = useQuery({
-    queryKey: ["active-offers"],
+    queryKey: ["active-offers-gallery"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("offers")
         .select("*")
         .eq("is_active", true)
-        .eq("show_as_banner", true)
+        .eq("banner_style", "gallery")
         .order("sort_order");
       if (error) throw error;
-      // Filter out expired
       const now = new Date();
       return (data || []).filter((o: any) => {
         if (o.ends_at && new Date(o.ends_at) < now) return false;
@@ -44,7 +43,8 @@ export default function OffersBanner() {
     const channel = supabase
       .channel('offers-banner-sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, () => {
-        qc.invalidateQueries({ queryKey: ["active-offers"] });
+        qc.invalidateQueries({ queryKey: ["active-offers-gallery"] });
+        qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
