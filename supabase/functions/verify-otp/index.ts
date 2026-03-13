@@ -57,14 +57,13 @@ serve(async (req) => {
   try {
     const { phone, code, full_name, email } = await req.json();
     if (!phone || !code) throw new Error("Phone and code are required");
-    if (!email?.trim()) throw new Error("Email is required");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const normalizedPhone = normalizeIraqPhone(phone);
-    const userEmail = email.trim().toLowerCase();
+    const userEmail = email?.trim()?.toLowerCase() || null;
     const tempPassword = `phone_${normalizedPhone}_${Date.now()}`;
 
     // Find valid OTP
@@ -88,10 +87,18 @@ serve(async (req) => {
 
     const existingUsers = await listAllAuthUsers(supabase);
     const userByPhone = existingUsers.find((u: any) => isSamePhone(u.phone, normalizedPhone));
-    const userByEmail = existingUsers.find((u: any) => u.email?.toLowerCase() === userEmail);
+    const userByEmail = userEmail ? existingUsers.find((u: any) => u.email?.toLowerCase() === userEmail) : null;
+
+    // If no email provided (sign-in mode), user must already exist by phone
+    if (!userEmail && !userByPhone) {
+      return new Response(
+        JSON.stringify({ error: "No account found with this phone number. Please sign up first." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Strict one-phone-per-account rule
-    if (userByPhone && userByPhone.email?.toLowerCase() !== userEmail) {
+    if (userEmail && userByPhone && userByPhone.email?.toLowerCase() !== userEmail) {
       return new Response(
         JSON.stringify({ error: "This phone number is already linked to another account" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -99,7 +106,7 @@ serve(async (req) => {
     }
 
     // Strict one-email-per-account rule
-    if (userByEmail && !isSamePhone(userByEmail.phone, normalizedPhone)) {
+    if (userEmail && userByEmail && !isSamePhone(userByEmail.phone, normalizedPhone)) {
       return new Response(
         JSON.stringify({ error: "This email is already linked to another phone number" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -129,6 +136,13 @@ serve(async (req) => {
       if (sessionError) throw sessionError;
       session = sessionData.session;
     } else {
+      // Create new user — email is required for signup
+      if (!userEmail) {
+        return new Response(
+          JSON.stringify({ error: "Email is required to create an account" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       // Create new user
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email: userEmail,
