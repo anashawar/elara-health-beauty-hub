@@ -51,6 +51,7 @@ const ElaraChatPage = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [isNewConversation, setIsNewConversation] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
