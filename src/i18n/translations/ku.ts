@@ -221,6 +221,10 @@ export const ku = {
     saving: "پاشەکەوت دەکرێت...",
     welcomeToElara: "بەخێربێیت بۆ ئێلارا، {{name}}!",
     signInFirst: "تکایە سەرەتا بچۆ ژوورەوە",
+    gender: "ڕەگەز",
+    female: "مێ",
+    male: "نێر",
+    birthdate: "بەرواری لەدایکبوون",
   },
   wishlist: {
     title: "دڵخوازەکان",

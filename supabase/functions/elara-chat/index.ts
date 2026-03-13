@@ -30,10 +30,18 @@ async function getProductCatalog(): Promise<string> {
   }).join("\n");
 }
 
-function buildSystemPrompt(catalog: string, userName: string | null): string {
+function buildSystemPrompt(catalog: string, userName: string | null, userGender: string | null, userAge: number | null): string {
   const nameInstruction = userName 
     ? `The user's name is "${userName}". Use their name naturally in conversation — like a friend would. Say their name occasionally (not every message) to make it personal. For example: "Great question, ${userName}!" or "I'd recommend this for you, ${userName}" or "هلا ${userName}!" in Arabic.`
     : `You don't know the user's name yet. Be warm and friendly anyway.`;
+
+  const genderInstruction = userGender
+    ? `The user's gender is ${userGender}. Tailor your product recommendations and skincare advice accordingly (e.g., men's skincare concerns like beard care, or women's skincare like makeup removal). Use appropriate gendered language in Arabic/Kurdish when applicable.`
+    : "";
+
+  const ageInstruction = userAge
+    ? `The user is ${userAge} years old. Tailor your recommendations based on their age group — for example, younger users may need acne/oil-control products, while mature users may benefit from anti-aging, hydration, and collagen-boosting products. Be sensitive and positive about age-related skin changes.`
+    : "";
 
   return `You are ELARA — a warm, caring, and knowledgeable beauty consultant and pharmacist who works at the ELARA health & beauty store in Iraq. You're like a trusted friend who happens to be a skincare expert.
 
@@ -48,6 +56,8 @@ PERSONALITY & TONE:
 - Start conversations warmly. If it's a first message, greet them like an old friend.
 
 ${nameInstruction}
+${genderInstruction}
+${ageInstruction}
 
 LANGUAGES:
 - You are FULLY fluent in English, Iraqi Arabic (العربية العراقية), and Kurdish Sorani (کوردی سۆرانی).
@@ -80,12 +90,23 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, user_name } = await req.json();
+    const { messages, user_name, user_gender, user_birthdate } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    // Calculate age from birthdate
+    let userAge: number | null = null;
+    if (user_birthdate) {
+      const birth = new Date(user_birthdate);
+      const today = new Date();
+      userAge = today.getFullYear() - birth.getFullYear();
+      if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) {
+        userAge--;
+      }
+    }
+
     const catalog = await getProductCatalog();
-    const systemPrompt = buildSystemPrompt(catalog, user_name || null);
+    const systemPrompt = buildSystemPrompt(catalog, user_name || null, user_gender || null, userAge);
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",

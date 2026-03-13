@@ -55,7 +55,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { phone, code, full_name, email } = await req.json();
+    const { phone, code, full_name, email, gender, birthdate } = await req.json();
     if (!phone || !code) throw new Error("Phone and code are required");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -150,7 +150,7 @@ serve(async (req) => {
         email_confirm: true,
         phone_confirm: true,
         password: tempPassword,
-        user_metadata: { full_name: full_name || "", phone: normalizedPhone },
+        user_metadata: { full_name: full_name || "", phone: normalizedPhone, gender: gender || null, birthdate: birthdate || null },
       });
 
       if (createError) {
@@ -177,6 +177,8 @@ serve(async (req) => {
           user_id: newUser.user.id,
           full_name: full_name || "",
           phone: normalizedPhone,
+          gender: gender || null,
+          birthdate: birthdate || null,
         },
         { onConflict: "user_id" }
       );
