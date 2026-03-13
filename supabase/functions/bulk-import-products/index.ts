@@ -16,7 +16,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { products } = await req.json();
-    // products: Array<{ name: string, cost: number }>
+    // products: Array<{ name: string, cost: number, price?: number }>
 
     if (!products || !Array.isArray(products) || products.length === 0) {
       throw new Error("products array is required");
@@ -34,7 +34,12 @@ serve(async (req) => {
         const cost = typeof p.cost === "string"
           ? parseFloat(p.cost.replace(/,/g, ""))
           : Number(p.cost);
-        const price = Math.round((cost * 1.35) / 250) * 250;
+        const providedPrice = p.price != null && p.price !== "" && p.price !== 0
+          ? (typeof p.price === "string" ? parseFloat(p.price.replace(/,/g, "")) : Number(p.price))
+          : null;
+        const price = providedPrice != null && providedPrice > 0
+          ? Math.round(providedPrice / 250) * 250
+          : Math.round((cost * 1.35) / 250) * 250;
         const slug = p.name
           .toLowerCase()
           .replace(/[^a-z0-9\s-]/g, "")
