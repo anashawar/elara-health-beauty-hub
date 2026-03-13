@@ -169,7 +169,15 @@ export default function AdminCategories() {
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h1 className="text-2xl font-display font-bold text-foreground">Categories & Subcategories</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button size="sm" variant="outline" onClick={() => setBulkCatOpen(true)}>
+            <FileSpreadsheet className="h-4 w-4 mr-1.5" />Import Categories
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setBulkSubOpen(true)}>
+            <FileSpreadsheet className="h-4 w-4 mr-1.5" />Import Subcategories
+          </Button>
+          <BulkImportDialog open={bulkCatOpen} onOpenChange={setBulkCatOpen} title="Categories" columns={catBulkColumns} onImport={handleBulkCatImport} />
+          <BulkImportDialog open={bulkSubOpen} onOpenChange={setBulkSubOpen} title="Subcategories" columns={subBulkColumns} onImport={handleBulkSubImport} />
           {/* Add Subcategory */}
           <Dialog open={subOpen} onOpenChange={(v) => { setSubOpen(v); if (!v) { setSubForm(emptySubForm); setSubEditing(false); } }}>
             <DialogTrigger asChild><Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1.5" />Subcategory</Button></DialogTrigger>
