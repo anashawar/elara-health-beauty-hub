@@ -134,7 +134,7 @@ const CategoryPage = () => {
   const activeSubName = activeSubId ? categorySubs.find(s => s.id === activeSubId) : null;
 
   return (
-    <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
+    <div className="min-h-screen bg-background pb-24 app-container">
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
           <Link to={isConcernRoute ? "/home" : activeSubId ? `/category/${id}` : "/categories"} className="p-1" onClick={(e) => {
