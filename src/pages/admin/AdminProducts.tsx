@@ -557,6 +557,106 @@ export default function AdminProducts() {
     }
   };
 
+  // Quick-add: create products with just name + cost, then auto-enrich
+  const handleQuickAdd = async () => {
+    const validItems = quickAddItems.filter(i => i.name.trim() && i.cost.trim());
+    if (validItems.length === 0) { toast.error("Add at least one product with name and cost"); return; }
+
+    setQuickAddOpen(false);
+    setEnriching(true);
+    setEnrichProgress({ done: 0, total: validItems.length, current: "Creating products..." });
+
+    const createdIds: string[] = [];
+
+    for (let i = 0; i < validItems.length; i++) {
+      const item = validItems[i];
+      const cost = parseFloat(item.cost);
+      const price = Math.round(cost * 1.35); // Temporary price, AI will set final
+
+      setEnrichProgress({ done: i, total: validItems.length, current: `Creating: ${item.name}` });
+
+      try {
+        const slug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+        const { data, error } = await supabase.from("products").insert({
+          title: item.name.trim(),
+          slug,
+          price,
+          in_stock: true,
+        }).select("id").single();
+
+        if (error) { toast.error(`Failed: ${item.name} - ${error.message}`); continue; }
+
+        // Save cost
+        await supabase.from("product_costs").upsert({ product_id: data.id, cost }, { onConflict: "product_id" });
+        createdIds.push(data.id);
+      } catch (err) {
+        console.error("Quick add error:", err);
+      }
+    }
+
+    if (createdIds.length === 0) {
+      setEnriching(false);
+      toast.error("No products were created");
+      return;
+    }
+
+    toast.success(`${createdIds.length} products created, now enriching with AI...`);
+
+    // Now enrich all created products
+    const BATCH_SIZE = 10;
+    let totalSuccess = 0;
+
+    for (let i = 0; i < createdIds.length; i += BATCH_SIZE) {
+      const batch = createdIds.slice(i, i + BATCH_SIZE);
+      setEnrichProgress({ done: i, total: createdIds.length, current: `AI enriching batch ${Math.floor(i/BATCH_SIZE)+1}...` });
+
+      try {
+        const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enrich-products`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ product_ids: batch, markup_percent: 35 }),
+        });
+        if (resp.ok) {
+          const result = await resp.json();
+          totalSuccess += result.succeeded || 0;
+        }
+      } catch (err) {
+        console.error("Enrich error:", err);
+      }
+
+      if (i + BATCH_SIZE < createdIds.length) await new Promise(r => setTimeout(r, 2000));
+    }
+
+    // Also search for images
+    setEnrichProgress({ done: createdIds.length, total: createdIds.length, current: "Searching for images..." });
+    try {
+      for (let i = 0; i < createdIds.length; i += 5) {
+        const batch = createdIds.slice(i, i + 5);
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-product-images`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ product_ids: batch }),
+        });
+        if (i + 5 < createdIds.length) await new Promise(r => setTimeout(r, 2000));
+      }
+    } catch (err) {
+      console.error("Image search error:", err);
+    }
+
+    setEnriching(false);
+    setQuickAddItems([{ name: "", cost: "" }]);
+    qc.invalidateQueries({ queryKey: ["admin-products"] });
+    qc.invalidateQueries({ queryKey: ["admin-product-costs-list"] });
+    qc.invalidateQueries({ queryKey: ["products"] });
+    toast.success(`Done! ${totalSuccess} products enriched with AI data + images`);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
