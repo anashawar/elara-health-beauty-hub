@@ -42,7 +42,7 @@ const SettingsPage = () => {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
-      const payload = { user_id: user.id, full_name: fullName || null, phone: phone || null };
+      const payload = { user_id: user.id, full_name: fullName || null, phone: phone || null, gender: gender || null, birthdate: birthdate || null } as any;
       if (profile) {
         const { error } = await supabase.from("profiles").update(payload).eq("id", profile.id);
         if (error) throw error;
