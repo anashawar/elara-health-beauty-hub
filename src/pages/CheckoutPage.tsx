@@ -100,7 +100,6 @@ const CheckoutPage = () => {
   const paymentMethods = [
     { value: "cod", label: t("checkout.cod"), desc: t("checkout.codDesc"), icon: "💵" },
     { value: "fib", label: t("checkout.fib"), desc: t("checkout.fibDesc"), icon: "🏦" },
-    { value: "zaincash", label: t("checkout.zaincash"), desc: t("checkout.zaincashDesc"), icon: "📱" },
     { value: "qicard", label: t("checkout.qicard"), desc: t("checkout.qicardDesc"), icon: "💳" },
   ];
 
