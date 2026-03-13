@@ -23,7 +23,7 @@ const CategoryGrid = () => {
 
   return (
     <section className="px-4 mt-6">
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 md:gap-3">
         {displayCategories.map(cat => {
           const colorClass = categoryColors[cat.slug] || "bg-gradient-to-br from-primary/20 to-primary/10";
           return (

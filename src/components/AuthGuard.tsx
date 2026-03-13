@@ -19,7 +19,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background px-6 max-w-lg mx-auto">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background px-6 app-container">
         <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
           <Lock className="w-8 h-8 text-primary" />
         </div>

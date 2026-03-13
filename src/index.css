@@ -115,6 +115,11 @@ header[class*="sticky"] {
   bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
+/* Responsive app container */
+.app-container {
+  @apply max-w-lg md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto;
+}
+
 /* Hide scrollbar for clean mobile feel */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

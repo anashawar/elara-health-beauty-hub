@@ -319,7 +319,7 @@ const ElaraChatPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col max-w-lg mx-auto">
+    <div className="min-h-screen bg-background flex flex-col app-container">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center justify-between px-4 py-3">
@@ -457,7 +457,7 @@ const ElaraChatPage = () => {
 
       {/* Input Area */}
       <div className="fixed left-0 right-0 z-40" style={{ bottom: `calc(60px + env(safe-area-inset-bottom, 0px))` }}>
-        <div className="max-w-lg mx-auto px-3 pb-2">
+        <div className="app-container px-3 pb-2">
           <form onSubmit={handleSubmit} className="flex items-end gap-2 bg-card/90 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-lg">
             <textarea
               ref={inputRef}

@@ -41,7 +41,7 @@ const BrandPage = () => {
   const displayName = brand ? getBrandName(brand) : t("product.brand");
 
   return (
-    <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
+    <div className="min-h-screen bg-background pb-24 app-container">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
@@ -94,7 +94,7 @@ const BrandPage = () => {
       ) : (
         <>
           <div className="px-4 mt-5 mb-3" />
-          <div className="grid grid-cols-2 gap-3 px-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4">
             {brandProducts.map((product, idx) => (
               <motion.div
                 key={product.id}

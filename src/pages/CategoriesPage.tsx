@@ -30,7 +30,7 @@ const CategoriesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto">
+    <div className="min-h-screen bg-background pb-24 app-container">
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">
           <Sparkles className="w-5 h-5 text-primary" />
@@ -99,7 +99,7 @@ const CategoriesPage = () => {
                         </span>
                       </Link>
 
-                      <div className="grid grid-cols-3 gap-2 mt-2">
+                      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 mt-2">
                         {subs.map((sub) => (
                           <Link
                             key={sub.id}
