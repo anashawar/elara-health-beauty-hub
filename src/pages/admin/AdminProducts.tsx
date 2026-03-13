@@ -119,6 +119,7 @@ export default function AdminProducts() {
         is_pick: f.is_pick,
         in_stock: f.in_stock,
         volume_ml: f.volume_ml || null,
+        volume_unit: f.volume_unit || "ml",
         skin_type: f.skin_type || null,
         country_of_origin: f.country_of_origin || null,
         condition: f.condition || null,
