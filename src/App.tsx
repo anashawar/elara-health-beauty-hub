@@ -24,6 +24,7 @@ import InstallPage from "./pages/InstallPage";
 import ElaraChatPage from "./pages/ElaraChatPage";
 import AboutPage from "./pages/AboutPage";
 import FAQPage from "./pages/FAQPage";
+import TermsPage from "./pages/TermsPage";
 import AuthGuard from "./components/AuthGuard";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -64,6 +65,7 @@ const App = () => (
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/faq" element={<FAQPage />} />
+              <Route path="/terms" element={<TermsPage />} />
               <Route path="/install" element={<InstallPage />} />
               <Route path="/elara-ai" element={<AuthGuard><ElaraChatPage /></AuthGuard>} />
               {/* Admin Panel */}
