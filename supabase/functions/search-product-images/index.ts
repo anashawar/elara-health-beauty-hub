@@ -25,10 +25,26 @@ function isJunkImage(url: string): boolean {
   return reject.some(p => lower.includes(p));
 }
 
-function scoreImage(url: string, titleWords: string[], brandSlug: string): number {
+function scoreImage(url: string, titleWords: string[], brandSlug: string, productVolume?: string): number {
   const lower = url.toLowerCase();
   if (isJunkImage(lower)) return -1;
   if (!/\.(jpg|jpeg|png|webp)/i.test(lower.split("?")[0])) return -1;
+
+  // Reject images of different sizes/variants of the same product
+  // e.g. if product is 200ml, reject URLs containing "100ml", "400ml", "50ml"
+  if (productVolume) {
+    const vol = productVolume.replace(/\s+/g, "");
+    // Find all volume mentions in URL (e.g. "100ml", "400-ml", "50ml")
+    const urlVolumes = lower.match(/(\d+)\s*-?\s*(ml|g|oz|mg)/gi) || [];
+    for (const uv of urlVolumes) {
+      const uvNorm = uv.replace(/[\s-]/g, "").toLowerCase();
+      const prodNorm = vol.toLowerCase();
+      // If the URL mentions a volume and it doesn't match, reject
+      if (uvNorm !== prodNorm && !lower.includes(prodNorm)) {
+        return -1;
+      }
+    }
+  }
 
   let score = 1; // base score for valid image
 
