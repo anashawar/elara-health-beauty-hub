@@ -30,7 +30,7 @@ interface ProductForm {
   is_pick: boolean;
   volume_ml: string;
   skin_type: string;
-  country_of_origin: string;
+  country_of_origin: string; // derived from brand, kept for edit compatibility
   condition: string;
 }
 
