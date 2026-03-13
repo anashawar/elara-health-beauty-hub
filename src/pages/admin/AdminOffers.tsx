@@ -125,6 +125,7 @@ export default function AdminOffers() {
       qc.invalidateQueries({ queryKey: ["active-offers-gallery"] });
       qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
       qc.invalidateQueries({ queryKey: ["active-offers-pricing"] });
+      qc.invalidateQueries({ queryKey: ["today-offers-slider"] });
       toast.success(editing ? "Offer updated" : "Offer created");
       resetForm();
     },
