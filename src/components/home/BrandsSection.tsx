@@ -15,8 +15,8 @@ const BrandsSection = () => {
       {/* Bold header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-gold to-amber-500 flex items-center justify-center shadow-md">
-            <Crown className="w-4.5 h-4.5 text-white" />
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md">
+            <Crown className="w-4.5 h-4.5 text-primary-foreground" />
           </div>
           <div>
             <h2 className="text-xl font-display font-bold text-foreground">{t("home.featuredBrands")}</h2>
