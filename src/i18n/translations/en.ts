@@ -221,6 +221,10 @@ export const en = {
     saving: "Saving...",
     welcomeToElara: "Welcome to ELARA, {{name}}!",
     signInFirst: "Please sign in first",
+    gender: "Gender",
+    female: "Female",
+    male: "Male",
+    birthdate: "Date of Birth",
   },
   wishlist: {
     title: "Wishlist",
