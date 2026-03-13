@@ -185,8 +185,8 @@ export default function AdminProducts() {
         }
       }
 
-      // Auto-translate in background
-      if (productId) {
+      // Auto-translate only for NEW products (not updates)
+      if (productId && !f.id) {
         try {
           setTranslating(true);
           const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate-product`, {
