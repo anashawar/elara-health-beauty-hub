@@ -8,6 +8,7 @@ import { toast } from "@/components/ui/sonner";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useProducts, formatPrice } from "@/hooks/useProducts";
+import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 import { Share } from "@capacitor/share";
 import { Capacitor } from "@capacitor/core";
 import ProductCard from "@/components/ProductCard";
