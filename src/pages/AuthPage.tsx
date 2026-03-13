@@ -250,11 +250,11 @@ const AuthPage = () => {
                     ? (t("auth.createAccount") || "Create Account")
                     : (t("auth.welcomeBack") || "Welcome Back")}
                 </h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {isSignUp
-                    ? (t("auth.joinElara") || "Enter your details to get started")
-                    : (t("auth.signInDesc") || "Sign in with your phone number")}
-                </p>
+                {isSignUp && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {t("auth.joinElara") || "Enter your details to get started"}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-3">
