@@ -23,7 +23,12 @@ const AuthPage = () => {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
 
-  const [authMode, setAuthMode] = useState<AuthMode>("signin");
+  const hasVisited = localStorage.getItem("elara_has_visited");
+  const [authMode, setAuthMode] = useState<AuthMode>(hasVisited ? "signin" : "signup");
+
+  useEffect(() => {
+    localStorage.setItem("elara_has_visited", "true");
+  }, []);
   const [step, setStep] = useState<Step>("phone");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
