@@ -105,7 +105,7 @@ export default function AdminOffers() {
         target_id: f.target_id || null,
         target_name: f.target_name || null,
         link_url: f.link_url || null,
-        show_as_banner: f.show_as_banner,
+        banner_style: f.banner_style,
         is_active: f.is_active,
         starts_at: f.starts_at || null,
         ends_at: f.ends_at || null,
