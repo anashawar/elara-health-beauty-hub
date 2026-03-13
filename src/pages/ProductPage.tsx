@@ -210,12 +210,12 @@ const ProductPage = () => {
                 <span className="text-sm font-medium text-foreground">{wishlisted ? "Saved" : "Save"}</span>
               </button>
               <button
-                onClick={async () => {
-                  try {
-                    if (navigator.share) await navigator.share({ title: product.title, url: window.location.href });
-                    else { await navigator.clipboard.writeText(window.location.href); toast(t("product.linkCopied")); }
-                  } catch (e) {}
-                }}
+                onClick={() => handleNativeShare(
+                  product.title,
+                  `Check out ${product.title} by ${product.brand} on ELARA!`,
+                  getShareUrl(product.id),
+                  t("product.linkCopied")
+                )}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border hover:bg-secondary transition-colors"
               >
                 <Share2 className="w-4 h-4 text-muted-foreground" />
