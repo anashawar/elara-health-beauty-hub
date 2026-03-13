@@ -206,7 +206,8 @@ const ElaraChatPage = () => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const isStreamingRef = useRef(false);
 
-  const userName = user?.user_metadata?.full_name || null;
+  const userFullName = user?.user_metadata?.full_name || null;
+  const userName = userFullName ? userFullName.split(" ")[0] : null;
 
   // Get user's city for region detection
   const { data: defaultAddress } = useQuery({
