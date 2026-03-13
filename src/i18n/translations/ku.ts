@@ -223,6 +223,7 @@ export const ku = {
     streetPlaceholder: "ناو یان ژمارەی شەقام",
     building: "بینا",
     floor: "نهۆم",
+    apartment: "شووقە",
     skipForNow: "ئێستا تێپەڕێنە",
     saving: "پاشەکەوت دەکرێت...",
     welcomeToElara: "بەخێربێیت بۆ ئێلارا، {{name}}!",
