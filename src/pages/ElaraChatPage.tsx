@@ -51,6 +51,7 @@ const ElaraChatPage = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [isNewConversation, setIsNewConversation] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -68,7 +69,7 @@ const ElaraChatPage = () => {
   });
 
   useEffect(() => {
-    if (!conversationId || !user) return;
+    if (!conversationId || !user || isNewConversation) return;
     const loadMessages = async () => {
       const { data } = await supabase
         .from("chat_messages")
@@ -78,7 +79,7 @@ const ElaraChatPage = () => {
       if (data) setMessages(data as Msg[]);
     };
     loadMessages();
-  }, [conversationId, user]);
+  }, [conversationId, user, isNewConversation]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -103,6 +104,7 @@ const ElaraChatPage = () => {
       .select("id")
       .single();
     if (data) {
+      setIsNewConversation(true);
       setConversationId(data.id);
       queryClient.invalidateQueries({ queryKey: ["chat-conversations"] });
       queryClient.invalidateQueries({ queryKey: ["chat-count"] });
@@ -273,8 +275,8 @@ const ElaraChatPage = () => {
     }
   };
 
-  const startNewChat = () => { setConversationId(null); setMessages([]); setShowHistory(false); };
-  const loadConversation = (id: string) => { setConversationId(id); setShowHistory(false); };
+  const startNewChat = () => { setConversationId(null); setMessages([]); setShowHistory(false); setIsNewConversation(false); };
+  const loadConversation = (id: string) => { setIsNewConversation(false); setConversationId(id); setShowHistory(false); };
 
   const deleteConversation = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
