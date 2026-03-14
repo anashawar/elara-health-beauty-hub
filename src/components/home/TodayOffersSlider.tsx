@@ -150,7 +150,7 @@ export default function TodayOffersSlider() {
   );
 }
 
-function OfferCard({ offer, index }: { offer: Offer; index: number }) {
+function OfferCard({ offer, index }: { offer: Offer; index: number; t: (key: string) => string }) {
   const gradient = GRADIENTS[index % GRADIENTS.length];
   const Icon = ICONS[index % ICONS.length];
   const linkTo = offer.link_url || "/collection/offers";
