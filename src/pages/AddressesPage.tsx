@@ -352,6 +352,14 @@ const AddressesPage = () => {
       </div>
 
       <BottomNav />
+
+      <MapPicker
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
+        onConfirm={handleMapConfirm}
+        initialLat={form.latitude}
+        initialLng={form.longitude}
+      />
     </div>
   );
 };
