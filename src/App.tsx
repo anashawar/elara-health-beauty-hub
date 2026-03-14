@@ -48,6 +48,13 @@ const SwipeBackWrapper = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Component to initialize push notifications
+const PushNotificationInit = () => {
+  const { usePushNotifications: usePush } = require("@/hooks/usePushNotifications");
+  usePush();
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
