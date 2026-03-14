@@ -56,47 +56,9 @@ const AddressesPage = () => {
     enabled: !!user,
   });
 
-  const handleGetLocation = async () => {
-    setGpsLoading(true);
-    try {
-      if (Capacitor.isNativePlatform()) {
-        const perm = await Geolocation.requestPermissions();
-        if (perm.location !== "granted") {
-          toast(t("addresses.locationDenied") || "Location permission denied");
-          setGpsLoading(false);
-          return;
-        }
-      }
-      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
-      setForm(f => ({
-        ...f,
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      }));
-      toast(t("addresses.locationCaptured") || "📍 Location captured!");
-    } catch (e: any) {
-      console.error("GPS error:", e);
-      // Fallback for web browsers
-      if (!Capacitor.isNativePlatform() && "geolocation" in navigator) {
-        try {
-          const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-            navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 })
-          );
-          setForm(f => ({
-            ...f,
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-          }));
-          toast(t("addresses.locationCaptured") || "📍 Location captured!");
-        } catch {
-          toast(t("addresses.locationError") || "Could not get location. Please enable GPS.");
-        }
-      } else {
-        toast(t("addresses.locationError") || "Could not get location. Please enable GPS.");
-      }
-    } finally {
-      setGpsLoading(false);
-    }
+  const handleMapConfirm = (lat: number, lng: number) => {
+    setForm(f => ({ ...f, latitude: lat, longitude: lng }));
+    toast(t("addresses.locationCaptured") || "📍 Location saved!");
   };
 
   const saveMutation = useMutation({
