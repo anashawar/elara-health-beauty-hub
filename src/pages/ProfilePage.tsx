@@ -119,11 +119,11 @@ const ProfilePage = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-display font-bold text-foreground">ELARA AI</h3>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Your personal skincare expert</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("profile.yourPersonalExpert")}</p>
                   {user && chatCount > 0 && (
                     <div className="flex items-center gap-1 mt-1">
                       <MessageCircle className="w-3 h-3 text-primary" />
-                      <span className="text-[10px] text-primary font-medium">{chatCount} conversation{chatCount !== 1 ? "s" : ""}</span>
+                      <span className="text-[10px] text-primary font-medium">{chatCount} {chatCount !== 1 ? t("profile.conversations") : t("profile.conversation")}</span>
                     </div>
                   )}
                 </div>
