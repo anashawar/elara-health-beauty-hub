@@ -472,9 +472,9 @@ const AuthPage = () => {
                   </label>
                   <div className="flex gap-2">
                     {([
-                      { code: "en" as const, label: "English", flag: "🇬🇧" },
-                      { code: "ar" as const, label: "العربية", flag: "🇮🇶" },
-                      { code: "ku" as const, label: "کوردی", flag: "🇮🇶" },
+                      { code: "en" as const, label: "English" },
+                      { code: "ar" as const, label: "العربية" },
+                      { code: "ku" as const, label: "کوردی" },
                     ]).map(lang => (
                       <button
                         key={lang.code}
@@ -486,7 +486,6 @@ const AuthPage = () => {
                             : "bg-muted/40 text-foreground border-border/60 hover:border-primary/50"
                         }`}
                       >
-                        <span>{lang.flag}</span>
                         {lang.label}
                       </button>
                     ))}
