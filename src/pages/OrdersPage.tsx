@@ -26,7 +26,7 @@ const OrdersPage = () => {
     cancelled: { label: t("cart.cancelled"), color: "bg-destructive", step: -1 },
   };
 
-  const steps = [t("cart.pending"), t("cart.processing"), "Shipped", "On the Way", t("cart.delivered")];
+  const steps = [t("cart.pending"), t("cart.processing"), t("cart.shipped"), t("cart.onTheWay"), t("cart.delivered")];
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["orders", user?.id],
