@@ -115,6 +115,7 @@ export type Database = {
       }
       brands: {
         Row: {
+          country_of_origin: string | null
           created_at: string
           id: string
           logo_url: string | null
@@ -124,6 +125,7 @@ export type Database = {
           slug: string
         }
         Insert: {
+          country_of_origin?: string | null
           created_at?: string
           id?: string
           logo_url?: string | null
@@ -133,6 +135,7 @@ export type Database = {
           slug: string
         }
         Update: {
+          country_of_origin?: string | null
           created_at?: string
           id?: string
           logo_url?: string | null

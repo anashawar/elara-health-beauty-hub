@@ -1,0 +1,1 @@
+ALTER TABLE public.brands ADD COLUMN country_of_origin text;
