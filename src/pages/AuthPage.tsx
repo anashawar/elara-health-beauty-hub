@@ -24,7 +24,7 @@ const OTP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 const AuthPage = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
 
   const hasVisited = localStorage.getItem("elara_has_visited");
   const [authMode, setAuthMode] = useState<AuthMode>(hasVisited ? "signin" : "signup");
