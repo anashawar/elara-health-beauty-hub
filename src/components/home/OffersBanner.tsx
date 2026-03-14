@@ -104,7 +104,7 @@ export default function OffersBanner() {
                   )}
 
                   <div className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-white/90 backdrop-blur-sm text-foreground text-xs font-bold rounded-xl w-fit group-hover:bg-white transition-all shadow-lg">
-                    Shop Now
+                    {t("common.shopNow")}
                     <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>
