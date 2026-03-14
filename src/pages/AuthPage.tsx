@@ -472,9 +472,9 @@ const AuthPage = () => {
                   </label>
                   <div className="flex gap-2">
                     {([
-                      { code: "en" as const, label: "English", flag: "🇬🇧" },
-                      { code: "ar" as const, label: "العربية", flag: "🇮🇶" },
-                      { code: "ku" as const, label: "کوردی", flag: "🇮🇶" },
+                      { code: "en" as const, label: "English" },
+                      { code: "ar" as const, label: "العربية" },
+                      { code: "ku" as const, label: "کوردی" },
                     ]).map(lang => (
                       <button
                         key={lang.code}
@@ -486,7 +486,6 @@ const AuthPage = () => {
                             : "bg-muted/40 text-foreground border-border/60 hover:border-primary/50"
                         }`}
                       >
-                        <span>{lang.flag}</span>
                         {lang.label}
                       </button>
                     ))}
@@ -696,9 +695,9 @@ const AuthPage = () => {
 
               <div className="space-y-3">
                 {([
-                  { code: "en" as const, label: "English", native: "English", flag: "🇬🇧", desc: "Browse in English" },
-                  { code: "ar" as const, label: "العربية", native: "Arabic", flag: "🇮🇶", desc: "تصفح بالعربية" },
-                  { code: "ku" as const, label: "کوردی", native: "Kurdish", flag: "🇮🇶", desc: "بە کوردی بگەڕێ" },
+                  { code: "en" as const, label: "English", desc: "Browse in English" },
+                  { code: "ar" as const, label: "العربية", desc: "تصفح بالعربية" },
+                  { code: "ku" as const, label: "کوردی", desc: "بە کوردی بگەڕێ" },
                 ]).map(lang => (
                   <button
                     key={lang.code}
@@ -710,7 +709,6 @@ const AuthPage = () => {
                         : "border-border/60 bg-muted/30 hover:border-primary/40"
                     }`}
                   >
-                    <span className="text-2xl">{lang.flag}</span>
                     <div className="flex-1 text-start">
                       <p className="text-sm font-semibold text-foreground">{lang.label}</p>
                       <p className="text-xs text-muted-foreground">{lang.desc}</p>
