@@ -118,7 +118,7 @@ const ProductPage = () => {
             <button
               onClick={() => handleNativeShare(
                 product.title,
-                `Check out ${product.title} by ${product.brand} on ELARA!`,
+                t("product.shareText", { title: product.title, brand: product.brand }),
                 getShareUrl(product.id),
                 t("product.linkCopied")
               )}
@@ -136,7 +136,7 @@ const ProductPage = () => {
       <div className="app-container">
         {/* Desktop breadcrumb */}
         <div className="hidden md:flex items-center gap-2 px-6 pt-4 pb-2 text-sm">
-          <Link to="/home" className="text-muted-foreground hover:text-foreground transition-colors">Home</Link>
+          <Link to="/home" className="text-muted-foreground hover:text-foreground transition-colors">{t("nav.home")}</Link>
           <span className="text-muted-foreground">/</span>
           {product.category_slug && (
             <>
@@ -243,19 +243,19 @@ const ProductPage = () => {
             <div className="hidden md:flex items-center gap-2 mt-4">
               <button onClick={() => toggleWishlist(product.id)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border hover:bg-secondary transition-colors">
                 <Heart className={`w-4 h-4 transition-all ${wishlisted ? "fill-primary text-primary" : "text-muted-foreground"}`} />
-                <span className="text-sm font-medium text-foreground">{wishlisted ? "Saved" : "Save"}</span>
+                <span className="text-sm font-medium text-foreground">{wishlisted ? t("common.saved") : t("common.save")}</span>
               </button>
               <button
                 onClick={() => handleNativeShare(
                   product.title,
-                  `Check out ${product.title} by ${product.brand} on ELARA!`,
+                  t("product.shareText", { title: product.title, brand: product.brand }),
                   getShareUrl(product.id),
                   t("product.linkCopied")
                 )}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border hover:bg-secondary transition-colors"
               >
                 <Share2 className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-foreground">Share</span>
+                <span className="text-sm font-medium text-foreground">{t("common.share")}</span>
               </button>
             </div>
 

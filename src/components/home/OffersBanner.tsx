@@ -4,6 +4,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface Offer {
   id: string;
@@ -16,6 +17,7 @@ interface Offer {
 }
 
 export default function OffersBanner() {
+  const { t } = useLanguage();
   const qc = useQueryClient();
 
   const { data: offers = [] } = useQuery({
@@ -63,12 +65,12 @@ export default function OffersBanner() {
 
   const offer = offers[current];
   const discountLabel = offer.discount_type === "percentage"
-    ? `${offer.discount_value}% OFF`
+    ? `${offer.discount_value}% ${t("common.off")}`
     : offer.discount_type === "fixed"
-      ? `${offer.discount_value.toLocaleString()} IQD OFF`
+      ? `${offer.discount_value.toLocaleString()} ${t("common.iqd")} ${t("common.off")}`
       : offer.discount_type === "bogo"
-        ? "BUY 1 GET 1"
-        : "BUNDLE DEAL";
+        ? t("common.buyOneGetOne")
+        : t("common.bundleDeal");
 
   const linkTo = offer.link_url || "/collection/offers";
 
@@ -102,7 +104,7 @@ export default function OffersBanner() {
                   )}
 
                   <div className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-white/90 backdrop-blur-sm text-foreground text-xs font-bold rounded-xl w-fit group-hover:bg-white transition-all shadow-lg">
-                    Shop Now
+                    {t("common.shopNow")}
                     <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>
@@ -126,7 +128,7 @@ export default function OffersBanner() {
                   )}
 
                   <div className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-white/90 backdrop-blur-sm text-foreground text-xs font-bold rounded-xl w-fit group-hover:bg-white transition-all shadow-lg">
-                    Shop Now
+                    {t("common.shopNow")}
                     <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
                   </div>
                 </div>

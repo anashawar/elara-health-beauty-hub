@@ -21,12 +21,12 @@ const OrdersPage = () => {
     pending: { label: t("cart.pending"), color: "bg-amber-400", step: 0 },
     in_progress: { label: t("cart.processing"), color: "bg-violet-400", step: 1 },
     shipped: { label: t("cart.onTheWay"), color: "bg-cyan-400", step: 2 },
-    on_the_way: { label: "On the Way", color: "bg-blue-400", step: 3 },
+    on_the_way: { label: t("cart.onTheWay"), color: "bg-blue-400", step: 3 },
     delivered: { label: t("cart.delivered"), color: "bg-sage", step: 4 },
-    cancelled: { label: t("cart.cancelled") || "Cancelled", color: "bg-destructive", step: -1 },
+    cancelled: { label: t("cart.cancelled"), color: "bg-destructive", step: -1 },
   };
 
-  const steps = [t("cart.pending"), t("cart.processing"), "Shipped", "On the Way", t("cart.delivered")];
+  const steps = [t("cart.pending"), t("cart.processing"), t("cart.shipped"), t("cart.onTheWay"), t("cart.delivered")];
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["orders", user?.id],
@@ -169,7 +169,7 @@ const OrdersPage = () => {
 
       <div className="app-container">
         <div className="hidden md:flex items-center gap-2 px-6 pt-6 pb-2">
-          <Link to="/profile" className="text-sm text-muted-foreground hover:text-foreground">← Profile</Link>
+          <Link to="/profile" className="text-sm text-muted-foreground hover:text-foreground">← {t("profile.title")}</Link>
           <span className="text-sm text-muted-foreground">/</span>
           <h1 className="text-lg font-display font-bold text-foreground">{t("orders.title")}</h1>
         </div>

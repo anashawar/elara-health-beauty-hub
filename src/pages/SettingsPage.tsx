@@ -63,8 +63,8 @@ const SettingsPage = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (!file.type.startsWith("image/")) { toast("Please select an image file"); return; }
-    if (file.size > 5 * 1024 * 1024) { toast("Image must be under 5MB"); return; }
+    if (!file.type.startsWith("image/")) { toast(t("settings.selectImageFile")); return; }
+    if (file.size > 5 * 1024 * 1024) { toast(t("settings.imageTooLarge")); return; }
 
     setUploadingAvatar(true);
     try {
@@ -158,7 +158,7 @@ const SettingsPage = () => {
 
       <div className="app-container">
         <div className="hidden md:flex items-center gap-2 px-6 pt-6 pb-2">
-          <Link to="/profile" className="text-sm text-muted-foreground hover:text-foreground">← Profile</Link>
+          <Link to="/profile" className="text-sm text-muted-foreground hover:text-foreground">← {t("profile.title")}</Link>
           <span className="text-sm text-muted-foreground">/</span>
           <h1 className="text-lg font-display font-bold text-foreground">{t("settings.title")}</h1>
         </div>

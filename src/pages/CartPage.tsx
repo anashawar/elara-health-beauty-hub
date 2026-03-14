@@ -63,10 +63,10 @@ const CartPage = () => {
   const statusConfig: Record<string, { label: string; color: string; icon: string }> = {
     pending: { label: t("cart.pending"), color: "bg-amber-100 text-amber-700", icon: "⏳" },
     in_progress: { label: t("cart.processing"), color: "bg-violet-100 text-violet-700", icon: "⚙️" },
-    shipped: { label: "Shipped", color: "bg-cyan-100 text-cyan-700", icon: "📦" },
+    shipped: { label: t("cart.shipped"), color: "bg-cyan-100 text-cyan-700", icon: "📦" },
     on_the_way: { label: t("cart.onTheWay"), color: "bg-blue-100 text-blue-700", icon: "🚚" },
     delivered: { label: t("cart.delivered"), color: "bg-green-100 text-green-700", icon: "✅" },
-    cancelled: { label: t("cart.cancelled") || "Cancelled", color: "bg-red-100 text-red-700", icon: "❌" },
+    cancelled: { label: t("cart.cancelled"), color: "bg-red-100 text-red-700", icon: "❌" },
   };
 
   const { data: activeOrders } = useQuery({

@@ -4,6 +4,7 @@ import { ArrowRight, Flame, Gift, Tag, Percent, ChevronLeft, ChevronRight } from
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface Offer {
   id: string;
@@ -27,6 +28,7 @@ const GRADIENTS = [
 const ICONS = [Flame, Gift, Tag, Percent];
 
 export default function TodayOffersSlider() {
+  const { t } = useLanguage();
   const { data: offers = [] } = useQuery<Offer[]>({
     queryKey: ["today-offers-slider"],
     queryFn: async () => {
@@ -83,10 +85,10 @@ export default function TodayOffersSlider() {
         </div>
         <div>
           <h2 className="text-lg font-display font-bold text-foreground tracking-tight leading-tight">
-            Today's Offers
+            {t("home.todayOffers")}
           </h2>
           <p className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase">
-            Curated deals just for you
+            {t("home.curatedDeals")}
           </p>
         </div>
       </div>
@@ -149,6 +151,7 @@ export default function TodayOffersSlider() {
 }
 
 function OfferCard({ offer, index }: { offer: Offer; index: number }) {
+  const { t } = useLanguage();
   const gradient = GRADIENTS[index % GRADIENTS.length];
   const Icon = ICONS[index % ICONS.length];
   const linkTo = offer.link_url || "/collection/offers";
@@ -160,7 +163,7 @@ function OfferCard({ offer, index }: { offer: Offer; index: number }) {
         ? `${offer.discount_value.toLocaleString()}`
         : offer.discount_type === "bogo"
           ? "B1G1"
-          : "DEAL";
+          : t("common.bundleDeal");
 
   return (
     <Link to={linkTo} className="block group">
@@ -201,7 +204,7 @@ function OfferCard({ offer, index }: { offer: Offer; index: number }) {
               </p>
             )}
             <div className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white text-foreground text-[11px] font-bold rounded-xl group-hover:shadow-lg group-hover:scale-[1.02] transition-all duration-300 shadow-md">
-              Shop
+              {t("common.shop")}
               <ArrowRight className="w-3 h-3 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
