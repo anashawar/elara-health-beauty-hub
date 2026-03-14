@@ -658,16 +658,79 @@ const AuthPage = () => {
               </div>
 
               <Button onClick={handleSaveAddress} disabled={loading} className="w-full h-12 rounded-2xl text-sm font-semibold gap-2 shadow-md shadow-primary/20">
-                {loading ? t("auth.saving") : t("common.startShopping")}
+                {loading ? t("auth.saving") : t("common.next")}
                 {!loading && <ArrowRight className="w-4 h-4 rtl:rotate-180" />}
               </Button>
 
               <button
-                onClick={() => navigate("/home")}
+                onClick={() => setStep("language")}
                 className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
               >
                 {t("auth.skipForNow")}
               </button>
+            </motion.div>
+          )}
+
+          {/* Step 4: Language Selection */}
+          {step === "language" && (
+            <motion.div
+              key="language"
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.25 }}
+              className="space-y-6 pt-4"
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/40 flex items-center justify-center mx-auto mb-4">
+                  <Globe className="w-8 h-8 text-primary" />
+                </div>
+                <h1 className="text-2xl font-display font-bold text-foreground">
+                  {t("auth.chooseLanguage") || "Choose Your Language"}
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t("auth.chooseLanguageDesc") || "Select your preferred app language"}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {([
+                  { code: "en" as const, label: "English", native: "English", flag: "🇬🇧", desc: "Browse in English" },
+                  { code: "ar" as const, label: "العربية", native: "Arabic", flag: "🇮🇶", desc: "تصفح بالعربية" },
+                  { code: "ku" as const, label: "کوردی", native: "Kurdish", flag: "🇮🇶", desc: "بە کوردی بگەڕێ" },
+                ]).map(lang => (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => setLanguage(lang.code)}
+                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${
+                      language === lang.code
+                        ? "border-primary bg-primary/5 shadow-sm shadow-primary/10"
+                        : "border-border/60 bg-muted/30 hover:border-primary/40"
+                    }`}
+                  >
+                    <span className="text-2xl">{lang.flag}</span>
+                    <div className="flex-1 text-start">
+                      <p className="text-sm font-semibold text-foreground">{lang.label}</p>
+                      <p className="text-xs text-muted-foreground">{lang.desc}</p>
+                    </div>
+                    {language === lang.code && (
+                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="w-3.5 h-3.5 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              <Button
+                onClick={() => navigate("/home")}
+                className="w-full h-12 rounded-2xl text-sm font-semibold gap-2 shadow-md shadow-primary/20"
+              >
+                {t("common.startShopping") || "Start Shopping"}
+                <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+              </Button>
             </motion.div>
           )}
         </AnimatePresence>
