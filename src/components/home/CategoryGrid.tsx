@@ -3,19 +3,6 @@ import { useCategories } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { motion } from "framer-motion";
 
-const categoryStyles: Record<string, { bg: string }> = {
-  skincare: { bg: "from-pink-400/90 to-rose-500/90" },
-  haircare: { bg: "from-amber-400/90 to-orange-500/90" },
-  bodycare: { bg: "from-sky-400/90 to-blue-500/90" },
-  makeup: { bg: "from-red-400/90 to-pink-500/90" },
-  vitamins: { bg: "from-emerald-400/90 to-teal-500/90" },
-  personalcare: { bg: "from-violet-400/90 to-purple-500/90" },
-  otc: { bg: "from-teal-400/90 to-cyan-500/90" },
-  wellness: { bg: "from-indigo-400/90 to-blue-500/90" },
-  motherbaby: { bg: "from-yellow-400/90 to-amber-500/90" },
-  devices: { bg: "from-slate-400/90 to-zinc-500/90" },
-};
-
 const CategoryGrid = () => {
   const { data: categories = [] } = useCategories();
   const { language } = useLanguage();
@@ -30,41 +17,28 @@ const CategoryGrid = () => {
     return cat.name;
   };
 
-  // Split into 2 rows
-  const row1 = displayCategories.slice(0, 4);
-  const row2 = displayCategories.slice(4);
-
-  const renderRow = (items: typeof displayCategories, offset: number) => (
-    <div className="flex gap-2.5 overflow-x-auto no-scrollbar">
-      {items.map((cat, i) => {
-        const style = categoryStyles[cat.slug] || { bg: "from-primary/90 to-primary/60" };
-        return (
+  return (
+    <section className="px-4 mt-5">
+      <div className="grid grid-cols-4 gap-2.5">
+        {displayCategories.map((cat, i) => (
           <motion.div
             key={cat.id}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: (offset + i) * 0.04, duration: 0.3 }}
-            className="flex-shrink-0"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.04, duration: 0.3 }}
           >
             <Link
               to={`/category/${cat.slug}`}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r ${style.bg} shadow-sm hover:shadow-premium hover:scale-105 active:scale-95 transition-all duration-300`}
+              className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-card border border-border/40 shadow-glass hover:shadow-premium active:scale-95 transition-all duration-200"
             >
-              <span className="text-lg drop-shadow-sm">{cat.icon}</span>
-              <span className="text-[12px] font-bold text-white whitespace-nowrap tracking-wide">
+              <span className="text-[26px] leading-none">{cat.icon}</span>
+              <span className="text-[10px] font-semibold text-foreground text-center leading-tight line-clamp-1 px-1">
                 {getCatName(cat)}
               </span>
             </Link>
           </motion.div>
-        );
-      })}
-    </div>
-  );
-
-  return (
-    <section className="px-4 mt-5 flex flex-col gap-2.5">
-      {renderRow(row1, 0)}
-      {row2.length > 0 && renderRow(row2, row1.length)}
+        ))}
+      </div>
     </section>
   );
 };
