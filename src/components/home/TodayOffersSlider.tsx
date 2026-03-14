@@ -85,10 +85,10 @@ export default function TodayOffersSlider() {
         </div>
         <div>
           <h2 className="text-lg font-display font-bold text-foreground tracking-tight leading-tight">
-            Today's Offers
+            {t("home.todayOffers")}
           </h2>
           <p className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase">
-            Curated deals just for you
+            {t("home.curatedDeals")}
           </p>
         </div>
       </div>
