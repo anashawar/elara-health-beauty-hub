@@ -62,6 +62,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <PushInit />
             <SwipeBackWrapper>
             <Routes>
               <Route path="/" element={<AuthPage />} />
