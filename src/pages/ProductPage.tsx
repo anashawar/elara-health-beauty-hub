@@ -243,7 +243,7 @@ const ProductPage = () => {
             <div className="hidden md:flex items-center gap-2 mt-4">
               <button onClick={() => toggleWishlist(product.id)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border hover:bg-secondary transition-colors">
                 <Heart className={`w-4 h-4 transition-all ${wishlisted ? "fill-primary text-primary" : "text-muted-foreground"}`} />
-                <span className="text-sm font-medium text-foreground">{wishlisted ? "Saved" : "Save"}</span>
+                <span className="text-sm font-medium text-foreground">{wishlisted ? t("common.saved") : t("common.save")}</span>
               </button>
               <button
                 onClick={() => handleNativeShare(
