@@ -163,7 +163,7 @@ function OfferCard({ offer, index }: { offer: Offer; index: number }) {
         ? `${offer.discount_value.toLocaleString()}`
         : offer.discount_type === "bogo"
           ? "B1G1"
-          : "DEAL";
+          : t("common.bundleDeal");
 
   return (
     <Link to={linkTo} className="block group">
