@@ -34,7 +34,6 @@ const HeroBanner = () => {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  // Fetch hero-style offers
   const { data: heroOffers = [] } = useQuery({
     queryKey: ["active-offers-hero"],
     queryFn: async () => {
@@ -54,7 +53,6 @@ const HeroBanner = () => {
     },
   });
 
-  // Realtime sync for hero offers
   useEffect(() => {
     const channel = supabase
       .channel('hero-offers-sync')
@@ -76,7 +74,7 @@ const HeroBanner = () => {
       cta: t("banner.shopNow"),
       ctaLink: "/categories",
       image: bannerDiscount,
-      overlay: "from-violet-950/80 via-violet-900/60 to-transparent",
+      overlay: "from-black/80 via-black/50 to-black/20",
     },
     {
       id: "2",
@@ -87,7 +85,7 @@ const HeroBanner = () => {
       cta: t("banner.startShopping"),
       ctaLink: "/categories",
       image: bannerDelivery,
-      overlay: "from-amber-950/80 via-amber-900/50 to-transparent",
+      overlay: "from-black/80 via-black/50 to-black/20",
     },
     {
       id: "3",
@@ -98,11 +96,10 @@ const HeroBanner = () => {
       cta: t("banner.exploreBrands"),
       ctaLink: "/categories",
       image: bannerOriginal,
-      overlay: "from-purple-950/80 via-purple-900/50 to-transparent",
+      overlay: "from-black/80 via-black/50 to-black/20",
     },
   ];
 
-  // Convert hero offers to banner items
   const offerBanners: HeroBannerItem[] = heroOffers.map((o: any) => {
     const discountLabel = o.discount_type === "percentage"
       ? `${o.discount_value}% OFF`
@@ -117,13 +114,12 @@ const HeroBanner = () => {
       cta: "Shop Now",
       ctaLink: o.link_url || "/collection/offers",
       image: o.image_url || "",
-      overlay: "from-black/70 via-black/40 to-transparent",
+      overlay: "from-black/80 via-black/50 to-black/20",
       isOffer: true,
       discountLabel,
     };
   });
 
-  // Hero offers first, then static banners
   const banners = [...offerBanners, ...staticBanners];
 
   const handleScroll = useCallback(() => {
@@ -171,7 +167,7 @@ const HeroBanner = () => {
   };
 
   return (
-    <div className="relative mx-4 mt-4 rounded-2xl overflow-hidden shadow-premium h-[220px] md:h-[320px] lg:h-[380px]">
+    <div className="relative w-full overflow-hidden h-[280px] md:h-[380px] lg:h-[440px]">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
@@ -189,69 +185,72 @@ const HeroBanner = () => {
               <img
                 src={banner.image}
                 alt=""
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover scale-105"
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-primary/60" />
             )}
-            <div className={`absolute inset-0 bg-gradient-to-r rtl:bg-gradient-to-l ${banner.overlay}`} />
+            <div className={`absolute inset-0 bg-gradient-to-t rtl:bg-gradient-to-t ${banner.overlay}`} />
 
-            <div className="relative h-full flex flex-col justify-center px-6 py-5 z-10 max-w-[70%]">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-[11px] font-bold uppercase tracking-wider text-white w-fit mb-2.5">
+            <div className="relative h-full flex flex-col justify-end px-5 pb-8 pt-16 z-10 max-w-[85%] md:max-w-[60%] md:px-10 md:pb-12">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md text-[11px] font-bold uppercase tracking-widest text-white w-fit mb-3 border border-white/10">
                 {banner.isOffer ? <Sparkles className="w-3.5 h-3.5" /> : banner.tagIcon && <banner.tagIcon className="w-3.5 h-3.5" />}
                 {banner.tag}
               </span>
 
-              <h2 className="text-[26px] font-display font-bold text-white leading-tight">
+              <h2 className="text-[28px] md:text-[36px] font-display font-bold text-white leading-[1.15] tracking-tight">
                 {banner.title}
               </h2>
-              <p className="text-sm text-white/80 mt-1.5 leading-relaxed">
+              <p className="text-[13px] md:text-[15px] text-white/75 mt-2 leading-relaxed max-w-[320px]">
                 {banner.subtitle}
               </p>
 
               {banner.coupon && (
                 <button
                   onClick={() => copyCoupon(banner.coupon!)}
-                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 text-white text-xs font-mono font-bold w-fit hover:bg-white/30 transition-colors"
+                  className="mt-3 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-mono font-bold w-fit hover:bg-white/20 active:scale-95 transition-all"
                 >
-                  <Copy className="w-3 h-3" />
+                  <Copy className="w-3 h-3 opacity-70" />
                   {banner.coupon}
                 </button>
               )}
 
-              {banner.coupon ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPendingCoupon(banner.coupon!);
-                    navigate(banner.ctaLink);
-                  }}
-                  className="mt-3 inline-flex items-center gap-1.5 px-5 py-2 bg-white text-foreground text-xs font-semibold rounded-xl w-fit hover:bg-white/90 transition-all shadow-lg"
-                >
-                  {banner.cta}
-                  <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
-                </button>
-              ) : (
-                <Link
-                  to={banner.ctaLink}
-                  className="mt-3 inline-flex items-center gap-1.5 px-5 py-2 bg-white text-foreground text-xs font-semibold rounded-xl w-fit hover:bg-white/90 transition-all shadow-lg"
-                >
-                  {banner.cta}
-                  <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
-                </Link>
-              )}
+              <div className="mt-4">
+                {banner.coupon ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPendingCoupon(banner.coupon!);
+                      navigate(banner.ctaLink);
+                    }}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-foreground text-[13px] font-semibold rounded-full w-fit hover:bg-white/90 active:scale-95 transition-all shadow-lg"
+                  >
+                    {banner.cta}
+                    <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+                  </button>
+                ) : (
+                  <Link
+                    to={banner.ctaLink}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-foreground text-[13px] font-semibold rounded-full w-fit hover:bg-white/90 active:scale-95 transition-all shadow-lg"
+                  >
+                    {banner.cta}
+                    <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="absolute bottom-3 right-4 rtl:right-auto rtl:left-4 flex gap-1.5 z-20">
+      {/* Dots */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
         {banners.map((_, idx) => (
           <button
             key={idx}
             onClick={() => goTo(idx)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              idx === current ? "w-6 bg-white" : "w-1.5 bg-white/40"
+            className={`rounded-full transition-all duration-300 ${
+              idx === current ? "w-6 h-2 bg-white" : "w-2 h-2 bg-white/40"
             }`}
           />
         ))}
