@@ -78,6 +78,7 @@ export const ku = {
     askElaraQ3: "کرێمی خۆرپاراستن بۆ تەڵەکان؟",
     todayOffers: "ئۆفەرەکانی ئەمڕۆ",
     curatedDeals: "ئۆفەری هەڵبژێردراو تایبەت بۆ تۆ",
+    findWhatYouNeed: "ئەوە بدۆزەرەوە کە پێستت پێویستی پێیە",
   },
   banner: {
     newUserOffer: "ئۆفەری بەکارهێنەری نوێ",

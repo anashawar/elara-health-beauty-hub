@@ -78,6 +78,7 @@ export const ar = {
     askElaraQ3: "واقي شمس زين للتصبغات؟",
     todayOffers: "عروض اليوم",
     curatedDeals: "عروض مختارة خصيصاً إلك",
+    findWhatYouNeed: "اعثر على ما تحتاجه بشرتك",
   },
   banner: {
     newUserOffer: "عرض المستخدم الجديد",

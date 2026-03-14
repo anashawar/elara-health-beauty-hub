@@ -10,6 +10,32 @@ import ProductCard from "@/components/ProductCard";
 import { useProducts, useCategories, useSubcategories, concerns } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 
+const concernKeywords: Record<string, string[]> = {
+  acne: ["acne", "blemish", "pimple", "breakout", "zit"],
+  dryskin: ["dry skin", "dry", "hydrat", "moistur", "dehydrat"],
+  hyperpigmentation: ["hyperpigmentation", "pigment", "dark spot", "brighten", "whiten", "melasma", "uneven tone"],
+  hairloss: ["hair loss", "hairloss", "hair fall", "thinning hair", "hair growth", "alopecia"],
+  dandruff: ["dandruff", "flak", "scalp", "seborrh"],
+  sensitive: ["sensitive", "redness", "irritat", "calm", "sooth", "rosacea", "gentle"],
+  immunity: ["immun", "vitamin c", "vitamin d", "zinc", "defense", "multivitamin"],
+  weightloss: ["weight loss", "weight", "slim", "fat burn", "metabolism", "diet"],
+};
+
+function matchesConcern(p: { condition?: string | null; tags: string[]; description: string; title: string; benefits: string[] }, concernId: string): boolean {
+  if (p.condition) {
+    const conditions = p.condition.split(",").map(s => s.trim().toLowerCase());
+    if (conditions.includes(concernId)) return true;
+  }
+  const idNormalized = concernId.replace("dryskin", "dry skin").replace("hairloss", "hair loss").replace("weightloss", "weight loss");
+  if (p.tags.some(t => t.toLowerCase().includes(idNormalized))) return true;
+  const keywords = concernKeywords[concernId];
+  if (keywords) {
+    const text = [p.title, p.description, ...p.benefits, ...p.tags].join(" ").toLowerCase();
+    if (keywords.some(kw => text.includes(kw))) return true;
+  }
+  return false;
+}
+
 const CategoryPage = () => {
   const { id } = useParams<{ id: string }>();
   const routerLocation = useRouterLocation();
@@ -64,7 +90,7 @@ const CategoryPage = () => {
   const filteredProducts = useMemo(() => {
     let result: typeof allProducts;
     if (isConcernRoute && id) {
-      result = allProducts.filter(p => p.condition === id || (p.condition && p.condition.split(",").map(s => s.trim()).includes(id)) || p.tags.includes(id));
+      result = allProducts.filter(p => matchesConcern(p, id));
     } else if (id) {
       result = allProducts.filter(p => p.category_slug === id);
     } else {
