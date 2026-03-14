@@ -11,6 +11,7 @@ import {
   Sparkles,
   BarChart3,
   Percent,
+  Bell,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
