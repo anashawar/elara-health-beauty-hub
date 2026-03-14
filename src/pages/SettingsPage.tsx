@@ -63,17 +63,36 @@ const SettingsPage = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (!file.type.startsWith("image/")) { toast(t("settings.selectImageFile")); return; }
+    // On iOS, HEIC files may have empty type — allow them
+    const isImage = file.type.startsWith("image/") || /\.(jpe?g|png|gif|webp|heic|heif)$/i.test(file.name);
+    if (!isImage) { toast(t("settings.selectImageFile")); return; }
     if (file.size > 5 * 1024 * 1024) { toast(t("settings.imageTooLarge")); return; }
 
     setUploadingAvatar(true);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const filePath = `${user.id}/avatar.${ext}`;
+      // Convert to JPEG blob for consistent format (handles HEIC on iOS)
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement("canvas");
+      const maxSize = 512;
+      const scale = Math.min(maxSize / bitmap.width, maxSize / bitmap.height, 1);
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error("Failed to process image")), "image/jpeg", 0.85);
+      });
+
+      const filePath = `${user.id}/avatar.jpg`;
+
+      // Delete old file first to avoid stale cache issues
+      await supabase.storage.from("avatars").remove([filePath]);
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file, { upsert: true, contentType: file.type });
+        .upload(filePath, blob, { upsert: true, contentType: "image/jpeg" });
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
@@ -89,10 +108,16 @@ const SettingsPage = () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       toast(t("settings.photoUpdated") || "Profile photo updated!");
     } catch (err: any) {
-      toast(err.message);
+      console.error("Avatar upload error:", err);
+      toast(err.message || "Failed to upload photo");
     } finally {
       setUploadingAvatar(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      // Reset file input so same file can be re-selected
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+        fileInputRef.current.type = "text";
+        fileInputRef.current.type = "file";
+      }
     }
   };
 
