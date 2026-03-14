@@ -160,8 +160,10 @@ export const ar = {
     activeOrders: "طلباتك الحالية",
     pending: "بالانتظار",
     processing: "قيد التجهيز",
+    shipped: "تم الشحن",
     onTheWay: "بالطريق",
     delivered: "تم التوصيل",
+    cancelled: "ملغي",
   },
   checkout: {
     title: "الدفع",
