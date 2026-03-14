@@ -1,25 +1,26 @@
 import { useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { requestFCMToken, onForegroundMessage } from "@/lib/firebase";
+import { requestFCMToken, onForegroundMessage, getFirebaseConfig } from "@/lib/firebase";
 import { toast } from "sonner";
 
 export function usePushNotifications() {
   const { user } = useAuth();
   const initialized = useRef(false);
 
-  // Send Firebase config to service worker
   const initServiceWorker = useCallback(async () => {
     if (!("serviceWorker" in navigator)) return;
     try {
+      const config = await getFirebaseConfig();
+      if (!config) return;
       const reg = await navigator.serviceWorker.ready;
       reg.active?.postMessage({
         type: "FIREBASE_CONFIG",
         config: {
-          apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-          projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-          messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-          appId: import.meta.env.VITE_FIREBASE_APP_ID,
+          apiKey: config.apiKey,
+          projectId: config.projectId,
+          messagingSenderId: config.messagingSenderId,
+          appId: config.appId,
         },
       });
     } catch (e) {
@@ -29,11 +30,9 @@ export function usePushNotifications() {
 
   const subscribe = useCallback(async () => {
     if (!user) return;
-
     const token = await requestFCMToken();
     if (!token) return;
 
-    // Save/update token in push_subscriptions
     const { data: existing } = await supabase
       .from("push_subscriptions")
       .select("id, endpoint")
@@ -59,7 +58,6 @@ export function usePushNotifications() {
     initServiceWorker();
     subscribe();
 
-    // Foreground message handling
     const unsubscribe = onForegroundMessage((payload: any) => {
       const { title, body } = payload.notification || payload.data || {};
       if (title) {
