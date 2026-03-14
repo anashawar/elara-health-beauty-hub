@@ -248,7 +248,7 @@ const ProductPage = () => {
               <button
                 onClick={() => handleNativeShare(
                   product.title,
-                  `Check out ${product.title} by ${product.brand} on ELARA!`,
+                  t("product.shareText", { title: product.title, brand: product.brand }),
                   getShareUrl(product.id),
                   t("product.linkCopied")
                 )}
