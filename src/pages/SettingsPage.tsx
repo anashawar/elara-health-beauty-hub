@@ -63,8 +63,8 @@ const SettingsPage = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (!file.type.startsWith("image/")) { toast("Please select an image file"); return; }
-    if (file.size > 5 * 1024 * 1024) { toast("Image must be under 5MB"); return; }
+    if (!file.type.startsWith("image/")) { toast(t("settings.selectImageFile")); return; }
+    if (file.size > 5 * 1024 * 1024) { toast(t("settings.imageTooLarge")); return; }
 
     setUploadingAvatar(true);
     try {
