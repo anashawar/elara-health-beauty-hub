@@ -255,8 +255,9 @@ const AuthPage = () => {
       {/* Progress bar */}
       <div className="px-5 pt-4 pb-2 flex gap-2">
         <div className="h-1 flex-1 rounded-full transition-colors duration-300 bg-primary" />
-        <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === "otp" || step === "address" ? "bg-primary" : "bg-muted"}`} />
-        <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === "address" ? "bg-primary" : "bg-muted"}`} />
+        <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${["otp","address","language"].includes(step) ? "bg-primary" : "bg-muted"}`} />
+        <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${["address","language"].includes(step) ? "bg-primary" : "bg-muted"}`} />
+        {isSignUp && <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === "language" ? "bg-primary" : "bg-muted"}`} />}
       </div>
 
       <div className="flex-1 px-5 overflow-hidden">
