@@ -65,6 +65,7 @@ export const en = {
     newArrivals: "New Arrivals",
     freshAdditions: "Fresh additions to our collection",
     featuredBrands: "Featured Brands",
+    trustedByThousands: "Trusted by thousands",
     buyNow: "Buy now",
     shopByConcern: "Shop by Concern",
     dealsForYou: "Deals for you",
