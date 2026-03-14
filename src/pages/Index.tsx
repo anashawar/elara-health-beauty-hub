@@ -31,8 +31,8 @@ const Index = () => {
       <TopHeader onSearchClick={() => setSearchOpen(true)} />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
+      <HeroBanner />
       <div className="app-container">
-        <HeroBanner />
         <CategoryGrid />
 
         {isLoading ? (
