@@ -65,12 +65,12 @@ export default function OffersBanner() {
 
   const offer = offers[current];
   const discountLabel = offer.discount_type === "percentage"
-    ? `${offer.discount_value}% OFF`
+    ? `${offer.discount_value}% ${t("common.off")}`
     : offer.discount_type === "fixed"
-      ? `${offer.discount_value.toLocaleString()} IQD OFF`
+      ? `${offer.discount_value.toLocaleString()} ${t("common.iqd")} ${t("common.off")}`
       : offer.discount_type === "bogo"
-        ? "BUY 1 GET 1"
-        : "BUNDLE DEAL";
+        ? t("common.buyOneGetOne")
+        : t("common.bundleDeal");
 
   const linkTo = offer.link_url || "/collection/offers";
 
