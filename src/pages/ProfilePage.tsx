@@ -138,13 +138,15 @@ const ProfilePage = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center justify-between px-4 py-4 hover:bg-secondary/50 transition-colors ${idx < menuItems.length - 1 ? "border-b border-border/50" : ""}`}
+                className={`flex items-center justify-between px-4 py-4 transition-colors touch-item ${idx < menuItems.length - 1 ? "border-b border-border/50" : ""}`}
               >
                 <div className="flex items-center gap-3">
-                  <item.icon className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0">
+                    <item.icon className="w-4.5 h-4.5 text-muted-foreground" />
+                  </div>
                   <span className="text-sm font-medium text-foreground">{item.label}</span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground/50 rtl:rotate-180" />
               </Link>
             ))}
           </div>

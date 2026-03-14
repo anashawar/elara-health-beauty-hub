@@ -22,10 +22,10 @@ const PageShell = ({ title, backTo = "/home", children, rightAction, hideDesktop
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {/* Mobile header */}
-      <header className="sticky top-0 z-40 glass-heavy border-b border-border/30 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/30 md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <Link to={backTo} className="p-1 -ml-1 rounded-xl hover:bg-secondary transition-colors">
+            <Link to={backTo} className="p-2 -ml-2 rounded-xl hover:bg-secondary active:bg-secondary active:scale-90 transition-all">
               <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
             </Link>
             <h1 className="text-lg font-display font-bold text-foreground">{title}</h1>

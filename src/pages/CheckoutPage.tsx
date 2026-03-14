@@ -269,13 +269,16 @@ const CheckoutPage = () => {
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={!selectedAddress && !!user}
-          className="w-full bg-primary text-primary-foreground font-semibold py-4 rounded-2xl hover:opacity-90 transition-opacity text-sm disabled:opacity-50"
-        >
-          {t("checkout.placeOrder")} — {formatPrice(cartTotal + deliveryFee)}
-        </button>
+        <div className="px-4 pb-8">
+          <motion.button
+            type="submit"
+            whileTap={{ scale: 0.97 }}
+            disabled={!selectedAddress && !!user}
+            className="w-full bg-primary text-primary-foreground font-semibold py-4 rounded-2xl hover:opacity-90 transition-opacity text-sm disabled:opacity-50 shadow-float"
+          >
+            {t("checkout.placeOrder")} — {formatPrice(cartTotal + deliveryFee)}
+          </motion.button>
+        </div>
       </form>
       </div>
 

@@ -20,15 +20,15 @@ const BottomNav = () => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
       <div className="app-container">
-        <div className="glass-heavy border-t border-border/30 shadow-glass bottom-nav-safe">
-          <div className="flex items-center justify-around py-1.5">
+        <div className="bg-card/95 backdrop-blur-xl border-t border-border/40 shadow-[0_-1px_3px_hsl(20_10%_12%/0.04)] bottom-nav-safe">
+          <div className="flex items-center justify-around py-1">
             {navItems.map(({ icon: Icon, label, path }) => {
               const isActive = location.pathname === path || (path === "/home" && location.pathname === "/");
               return (
                 <Link
                   key={path}
                   to={path}
-                  className="relative flex flex-col items-center gap-0.5 px-4 py-1.5 active:scale-90 transition-transform duration-150"
+                  className="relative flex flex-col items-center gap-0.5 px-4 py-2 active:scale-90 transition-transform duration-150"
                 >
                   <div className="relative">
                     {isActive && (
@@ -39,7 +39,7 @@ const BottomNav = () => {
                       />
                     )}
                     <Icon
-                      className={`relative w-[21px] h-[21px] transition-all duration-200 ${
+                      className={`relative w-[22px] h-[22px] transition-all duration-200 ${
                         isActive
                           ? "text-primary stroke-[2.5px]"
                           : "text-muted-foreground/70 stroke-[1.8px]"
@@ -56,7 +56,7 @@ const BottomNav = () => {
                     )}
                   </div>
                   <span
-                    className={`text-[10px] transition-all duration-200 ${
+                    className={`text-[10px] leading-tight transition-all duration-200 ${
                       isActive
                         ? "text-primary font-bold"
                         : "text-muted-foreground/60 font-medium"

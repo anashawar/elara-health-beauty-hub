@@ -100,7 +100,7 @@ const OrdersPage = () => {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-              className="bg-card rounded-2xl p-4 shadow-premium"
+              className="bg-card rounded-2xl p-4 shadow-premium active:scale-[0.99] transition-transform"
             >
               <div className="flex items-center justify-between mb-3">
                 <div>

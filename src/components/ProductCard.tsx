@@ -1,10 +1,12 @@
 import { Heart, Plus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/hooks/useAuth";
 import type { ProductWithRelations } from "@/hooks/useProducts";
 import { formatPrice } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
+import { toast } from "@/components/ui/sonner";
 
 interface ProductCardProps {
   product: ProductWithRelations;
@@ -13,6 +15,8 @@ interface ProductCardProps {
 
 const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const { t } = useLanguage();
   const { data: activeOffers = [] } = useActiveOffers();
   const wishlisted = isInWishlist(product.id);
@@ -26,6 +30,18 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
     : product.originalPrice
       ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
       : 0;
+
+  const handleAddToCart = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    if (outOfStock) return;
+    if (!user) {
+      toast(t("auth.signInRequired") || "Please sign in first");
+      navigate("/auth");
+      return;
+    }
+    addToCart(product);
+  };
 
   if (variant === "horizontal") {
     return (
@@ -62,14 +78,14 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
           )}
           <div className="flex items-center gap-1.5 mt-2.5">
             <button
-              onClick={() => !outOfStock && addToCart(product)}
+              onClick={(e) => handleAddToCart(e)}
               disabled={outOfStock}
               className={`flex-1 flex items-center justify-center gap-1 text-[11px] font-semibold py-2 rounded-xl transition-all duration-200 active:scale-95 ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90 shadow-sm"}`}
             >
               {outOfStock ? (t("product.outOfStock") || "Out of Stock") : <><Plus className="w-3 h-3" /> {t("product.add")}</>}
             </button>
             <button
-              onClick={() => toggleWishlist(product.id)}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(product.id); }}
               className="p-2 rounded-xl bg-secondary/60 hover:bg-secondary transition-colors active:scale-90"
             >
               <Heart className={`w-3.5 h-3.5 transition-all ${wishlisted ? "fill-primary text-primary" : "text-muted-foreground/50"}`} />
@@ -97,7 +113,7 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
             <span className="absolute top-2.5 left-2.5 rtl:left-auto rtl:right-2.5 bg-foreground/80 backdrop-blur-sm text-background text-[10px] font-bold px-2.5 py-1 rounded-xl">{t("common.new")}</span>
           )}
           <button
-            onClick={(e) => { e.preventDefault(); toggleWishlist(product.id); }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(product.id); }}
             className="absolute top-2.5 right-2.5 rtl:right-auto rtl:left-2.5 p-2 rounded-full glass shadow-sm hover:bg-card transition-all active:scale-90"
           >
             <Heart className={`w-4 h-4 transition-all ${wishlisted ? "fill-primary text-primary" : "text-muted-foreground/60"}`} />
@@ -119,7 +135,7 @@ const ProductCard = ({ product, variant = "vertical" }: ProductCardProps) => {
           <p className="text-[9px] font-semibold text-primary mt-0.5 truncate">{offerPricing.offerLabel}</p>
         )}
         <button
-          onClick={() => !outOfStock && addToCart(product)}
+          onClick={(e) => handleAddToCart(e)}
           disabled={outOfStock}
           className={`w-full flex items-center justify-center gap-1 text-xs font-semibold py-2.5 rounded-2xl mt-3 transition-all duration-200 active:scale-[0.97] ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90 shadow-sm"}`}
         >

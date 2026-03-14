@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Minus, Plus, Trash2, Tag, ShoppingBag, Sparkles, Truck, X, CheckCircle2, Loader2, Package, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,7 +9,6 @@ import BottomNav from "@/components/layout/BottomNav";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import FloatingSearch from "@/components/layout/FloatingSearch";
 import SearchOverlay from "@/components/SearchOverlay";
-import { useState as useStateImport, useEffect, useRef } from "react";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -158,7 +157,7 @@ const CartPage = () => {
             )}
           </div>
           {cart.length > 0 && (
-            <button onClick={clearCart} className="text-xs text-destructive font-medium px-3 py-1.5 bg-destructive/10 rounded-lg">
+            <button onClick={clearCart} className="text-xs text-destructive font-medium px-3 py-1.5 bg-destructive/10 rounded-lg active:scale-95 transition-transform">
               {t("cart.clearAll")}
             </button>
           )}
@@ -255,10 +254,10 @@ const CartPage = () => {
                         </div>
                         <div className="flex items-center justify-between">
                           <p className="text-base font-extrabold text-foreground">{formatPrice(item.product.price * item.quantity)}</p>
-                          <div className="flex items-center bg-secondary rounded-xl overflow-hidden">
+                          <div className="flex items-center bg-secondary rounded-xl overflow-hidden border border-border/30">
                             <button
                               onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                              className="p-2 hover:bg-muted transition-colors"
+                              className="p-2.5 hover:bg-muted transition-colors active:bg-muted active:scale-90"
                             >
                               {item.quantity === 1 ? (
                                 <Trash2 className="w-3.5 h-3.5 text-destructive" />
@@ -266,10 +265,10 @@ const CartPage = () => {
                                 <Minus className="w-3.5 h-3.5 text-foreground" />
                               )}
                             </button>
-                            <span className="text-sm font-bold text-foreground w-7 text-center">{item.quantity}</span>
+                            <span className="text-sm font-bold text-foreground w-8 text-center tabular-nums">{item.quantity}</span>
                             <button
                               onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                              className="p-2 hover:bg-muted transition-colors"
+                              className="p-2.5 hover:bg-muted transition-colors active:bg-muted active:scale-90"
                             >
                               <Plus className="w-3.5 h-3.5 text-foreground" />
                             </button>
