@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Search, MapPin, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
+import NotificationCenter from "@/components/notifications/NotificationCenter";
 import elaraLogo from "@/assets/elara-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
