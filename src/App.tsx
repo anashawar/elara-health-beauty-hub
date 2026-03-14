@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/context/AppContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import Index from "./pages/Index";
 import CollectionPage from "./pages/CollectionPage";
 import CategoryPage from "./pages/CategoryPage";
@@ -48,6 +49,11 @@ const SwipeBackWrapper = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const PushInit = () => {
+  usePushNotifications();
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -56,6 +62,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <PushInit />
             <SwipeBackWrapper>
             <Routes>
               <Route path="/" element={<AuthPage />} />
