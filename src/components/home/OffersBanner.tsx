@@ -17,6 +17,7 @@ interface Offer {
 }
 
 export default function OffersBanner() {
+  const { t } = useLanguage();
   const qc = useQueryClient();
 
   const { data: offers = [] } = useQuery({
