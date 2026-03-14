@@ -17,8 +17,10 @@ const BrandPage = () => {
   const brand = brands.find((b) => b.slug === id) || brands.find((b) => b.id === id);
   const brandProducts = products.filter((p) => p.brand_id === brand?.id);
 
-  // Get unique countries from brand products
-  const countries = [...new Set(brandProducts.map(p => p.country_of_origin).filter(Boolean))];
+  // Get country from brand itself, fallback to product countries
+  const brandCountry = brand?.country_of_origin;
+  const productCountries = [...new Set(brandProducts.map(p => p.country_of_origin).filter(Boolean))];
+  const countries = brandCountry ? [brandCountry] : productCountries;
 
   const countryFlag = (country: string): string => {
     const map: Record<string, string> = {
