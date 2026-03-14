@@ -163,6 +163,22 @@ export default function AdminNotifications() {
         if (error) throw error;
       }
 
+      // Trigger push notifications via edge function
+      try {
+        await supabase.functions.invoke("send-push", {
+          body: {
+            title: c.title,
+            body: c.body,
+            icon: c.icon,
+            image_url: c.image_url,
+            link_url: c.link_url,
+            user_ids: userIds,
+          },
+        });
+      } catch (pushErr) {
+        console.warn("Push notification failed (in-app still sent):", pushErr);
+      }
+
       // Update campaign status
       await supabase.from("notification_campaigns").update({
         status: "sent",
