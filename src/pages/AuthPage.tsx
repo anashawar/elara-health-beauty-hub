@@ -16,7 +16,7 @@ import elaraLogo from "@/assets/elara-logo.png";
 
 import { iraqCities } from "@/data/iraqCities";
 
-type Step = "phone" | "otp" | "address";
+type Step = "phone" | "otp" | "address" | "language";
 type AuthMode = "signup" | "signin";
 
 const OTP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
