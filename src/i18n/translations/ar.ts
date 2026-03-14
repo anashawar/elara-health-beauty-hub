@@ -304,6 +304,8 @@ export const ar = {
     kurdish: "کوردی",
     changePhoto: "غيّر صورتك",
     photoUpdated: "تم تحديث صورة الحساب!",
+    selectImageFile: "يرجى اختيار ملف صورة",
+    imageTooLarge: "الصورة لازم تكون أقل من 5 ميغابايت",
   },
   categories: {
     title: "الأقسام",

@@ -304,6 +304,8 @@ export const ku = {
     kurdish: "کوردی",
     changePhoto: "وێنەکەت بگۆڕە",
     photoUpdated: "وێنەی پرۆفایل نوێ کرایەوە!",
+    selectImageFile: "تکایە فایلی وێنە هەڵبژێرە",
+    imageTooLarge: "وێنەکە دەبێت لە ٥ مێگابایت کەمتر بێت",
   },
   categories: {
     title: "بەشەکان",
