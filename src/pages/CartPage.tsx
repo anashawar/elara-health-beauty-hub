@@ -254,10 +254,10 @@ const CartPage = () => {
                         </div>
                         <div className="flex items-center justify-between">
                           <p className="text-base font-extrabold text-foreground">{formatPrice(item.product.price * item.quantity)}</p>
-                          <div className="flex items-center bg-secondary rounded-xl overflow-hidden">
+                          <div className="flex items-center bg-secondary rounded-xl overflow-hidden border border-border/30">
                             <button
                               onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                              className="p-2 hover:bg-muted transition-colors"
+                              className="p-2.5 hover:bg-muted transition-colors active:bg-muted active:scale-90"
                             >
                               {item.quantity === 1 ? (
                                 <Trash2 className="w-3.5 h-3.5 text-destructive" />
@@ -265,10 +265,10 @@ const CartPage = () => {
                                 <Minus className="w-3.5 h-3.5 text-foreground" />
                               )}
                             </button>
-                            <span className="text-sm font-bold text-foreground w-7 text-center">{item.quantity}</span>
+                            <span className="text-sm font-bold text-foreground w-8 text-center tabular-nums">{item.quantity}</span>
                             <button
                               onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                              className="p-2 hover:bg-muted transition-colors"
+                              className="p-2.5 hover:bg-muted transition-colors active:bg-muted active:scale-90"
                             >
                               <Plus className="w-3.5 h-3.5 text-foreground" />
                             </button>
