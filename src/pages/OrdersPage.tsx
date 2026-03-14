@@ -23,7 +23,7 @@ const OrdersPage = () => {
     shipped: { label: t("cart.onTheWay"), color: "bg-cyan-400", step: 2 },
     on_the_way: { label: t("cart.onTheWay"), color: "bg-blue-400", step: 3 },
     delivered: { label: t("cart.delivered"), color: "bg-sage", step: 4 },
-    cancelled: { label: t("cart.cancelled") || "Cancelled", color: "bg-destructive", step: -1 },
+    cancelled: { label: t("cart.cancelled"), color: "bg-destructive", step: -1 },
   };
 
   const steps = [t("cart.pending"), t("cart.processing"), "Shipped", "On the Way", t("cart.delivered")];
