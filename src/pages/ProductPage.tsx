@@ -85,8 +85,6 @@ const ProductPage = () => {
     }
     addToCart(product);
   };
-    addToCart(product);
-  };
 
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
   const total = images.length;
