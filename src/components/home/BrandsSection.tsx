@@ -20,7 +20,7 @@ const BrandsSection = () => {
           </div>
           <div>
             <h2 className="text-xl font-display font-bold text-foreground">{t("home.featuredBrands")}</h2>
-            <p className="text-[11px] text-muted-foreground">Trusted by thousands</p>
+            <p className="text-[11px] text-muted-foreground">{t("home.trustedByThousands")}</p>
           </div>
         </div>
       </div>
