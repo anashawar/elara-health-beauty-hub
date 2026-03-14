@@ -159,8 +159,10 @@ export const en = {
     activeOrders: "Your Active Orders",
     pending: "Pending",
     processing: "Processing",
+    shipped: "Shipped",
     onTheWay: "On the Way",
     delivered: "Delivered",
+    cancelled: "Cancelled",
   },
   checkout: {
     title: "Checkout",
