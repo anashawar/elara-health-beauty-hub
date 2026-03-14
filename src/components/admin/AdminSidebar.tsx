@@ -11,6 +11,7 @@ import {
   Sparkles,
   BarChart3,
   Percent,
+  Bell,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -41,6 +42,7 @@ const navItems = [
   { title: "Brands", url: "/admin/brands", icon: Tag },
   { title: "Banners", url: "/admin/banners", icon: Image },
   { title: "Coupons", url: "/admin/coupons", icon: Ticket },
+  { title: "Notifications", url: "/admin/notifications", icon: Bell },
 ];
 
 export default function AdminSidebar() {

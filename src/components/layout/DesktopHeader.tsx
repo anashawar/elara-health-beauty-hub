@@ -1,5 +1,6 @@
 import { Search, Heart, ShoppingBag, UserRound, Sparkles, MapPin, LayoutGrid, ChevronDown } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import NotificationCenter from "@/components/notifications/NotificationCenter";
 import elaraLogo from "@/assets/elara-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useApp } from "@/context/AppContext";
@@ -82,6 +83,8 @@ const DesktopHeader = ({ onSearchClick }: DesktopHeaderProps) => {
               <Sparkles className="w-4 h-4 text-primary-foreground" />
               <span className="text-xs font-bold text-primary-foreground">AI</span>
             </Link>
+
+            <NotificationCenter />
 
             <Link to="/wishlist" className="relative p-2.5 rounded-xl hover:bg-secondary transition-colors">
               <Heart className="w-5 h-5 text-muted-foreground" />

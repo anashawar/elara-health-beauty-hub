@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Search, MapPin, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
+import NotificationCenter from "@/components/notifications/NotificationCenter";
 import elaraLogo from "@/assets/elara-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -102,9 +103,10 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
             <img src={elaraLogo} alt="ELARA" className="h-7" />
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {user ? (
               <>
+                <NotificationCenter />
                 <div className="flex flex-col items-end rtl:items-start">
                   <span className="text-xs font-medium text-foreground">
                     {greeting}

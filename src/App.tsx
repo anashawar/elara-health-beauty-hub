@@ -39,6 +39,7 @@ import AdminBrands from "./pages/admin/AdminBrands";
 import AdminCoupons from "./pages/admin/AdminCoupons";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminOffers from "./pages/admin/AdminOffers";
+import AdminNotifications from "./pages/admin/AdminNotifications";
 
 const queryClient = new QueryClient();
 
@@ -92,6 +93,7 @@ const App = () => (
                 <Route path="brands" element={<AdminBrands />} />
                 <Route path="coupons" element={<AdminCoupons />} />
                 <Route path="offers" element={<AdminOffers />} />
+                <Route path="notifications" element={<AdminNotifications />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
