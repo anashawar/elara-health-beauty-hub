@@ -104,7 +104,7 @@ const ProductPage = () => {
       {/* Mobile header */}
       <header className="sticky top-0 z-40 glass-heavy border-b border-border/30 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="flex items-center gap-2 px-4 py-3">
-          <button onClick={() => navigate(-1)} className="p-2 -ms-1 rounded-xl hover:bg-secondary transition-colors flex-shrink-0">
+          <button onClick={() => navigate(-1)} className="p-2 -ms-1 rounded-xl hover:bg-secondary active:bg-secondary active:scale-90 transition-all flex-shrink-0">
             <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
           </button>
           <button
