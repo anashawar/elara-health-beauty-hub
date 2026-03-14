@@ -160,8 +160,10 @@ export const ku = {
     activeOrders: "داواکارییە چالاکەکانت",
     pending: "چاوەڕوانە",
     processing: "ئامادە دەکرێت",
+    shipped: "نێردرا",
     onTheWay: "لە ڕێگایە",
     delivered: "گەیشتووە",
+    cancelled: "هەڵوەشێنرایەوە",
   },
   checkout: {
     title: "پارەدان",
