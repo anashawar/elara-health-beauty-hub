@@ -463,6 +463,37 @@ const AuthPage = () => {
                 )}
               </Button>
 
+              {/* Language selector for sign-in */}
+              {!isSignUp && (
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5" />
+                    {t("auth.appLanguage") || "App Language"}
+                  </label>
+                  <div className="flex gap-2">
+                    {([
+                      { code: "en" as const, label: "English", flag: "🇬🇧" },
+                      { code: "ar" as const, label: "العربية", flag: "🇮🇶" },
+                      { code: "ku" as const, label: "کوردی", flag: "🇮🇶" },
+                    ]).map(lang => (
+                      <button
+                        key={lang.code}
+                        type="button"
+                        onClick={() => setLanguage(lang.code)}
+                        className={`flex-1 py-2.5 px-2 rounded-2xl text-xs font-medium border transition-all flex items-center justify-center gap-1.5 ${
+                          language === lang.code
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
+                            : "bg-muted/40 text-foreground border-border/60 hover:border-primary/50"
+                        }`}
+                      >
+                        <span>{lang.flag}</span>
+                        {lang.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={() => navigate("/home")}
                 className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
