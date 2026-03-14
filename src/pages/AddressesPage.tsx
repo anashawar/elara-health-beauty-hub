@@ -14,8 +14,7 @@ import SearchOverlay from "@/components/SearchOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { iraqCities } from "@/data/iraqCities";
-import { Capacitor } from "@capacitor/core";
-import { Geolocation } from "@capacitor/geolocation";
+import MapPicker from "@/components/MapPicker";
 
 interface AddressForm {
   label: string;
