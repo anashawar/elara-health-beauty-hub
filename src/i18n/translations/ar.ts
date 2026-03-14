@@ -65,6 +65,7 @@ export const ar = {
     newArrivals: "وصل جديد",
     freshAdditions: "منتجات جديدة ضفناها",
     featuredBrands: "ماركات مميزة",
+    trustedByThousands: "يثق بيها الآلاف",
     buyNow: "اشتري الآن",
     shopByConcern: "تسوق حسب مشكلتك",
     dealsForYou: "عروض إلك",
