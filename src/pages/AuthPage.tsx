@@ -567,31 +567,24 @@ const AuthPage = () => {
                   </Select>
                 </div>
 
-                {/* GPS Location */}
+                {/* Location on Map */}
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                    {t("addresses.gpsLocation") || "📍 GPS Location"}
+                    {t("addresses.gpsLocation") || "📍 Location"}
                   </label>
                   <button
                     type="button"
-                    onClick={handleGetLocation}
-                    disabled={gpsLoading}
+                    onClick={() => setMapOpen(true)}
                     className={`w-full flex items-center justify-center gap-2.5 py-3 rounded-2xl border-2 border-dashed transition-all text-sm font-semibold ${
                       gpsLat
                         ? "border-primary/40 bg-primary/5 text-primary"
                         : "border-border/60 bg-muted/40 text-muted-foreground hover:border-primary/30 hover:text-foreground"
                     }`}
                   >
-                    {gpsLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Navigation className="w-4 h-4" />
-                    )}
-                    {gpsLoading
-                      ? (t("addresses.gettingLocation") || "Getting location...")
-                      : gpsLat
-                        ? (t("addresses.locationSaved") || "📍 Location saved")
-                        : (t("addresses.useMyLocation") || "Use my current location")}
+                    <MapPin className="w-4 h-4" />
+                    {gpsLat
+                      ? (t("addresses.locationSaved") || "📍 Location saved — tap to change")
+                      : (t("addresses.selectOnMap") || "Select location on map")}
                   </button>
                   {gpsLat && (
                     <p className="text-[10px] text-muted-foreground mt-1 text-center">
