@@ -78,6 +78,7 @@ export const en = {
     askElaraQ3: "SPF for pigmentation?",
     todayOffers: "Today's Offers",
     curatedDeals: "Curated deals just for you",
+    findWhatYouNeed: "Find what your skin needs",
   },
   banner: {
     newUserOffer: "NEW USER OFFER",
