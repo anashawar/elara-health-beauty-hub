@@ -122,7 +122,7 @@ const ProductPage = () => {
                 getShareUrl(product.id),
                 t("product.linkCopied")
               )}
-              className="p-2 rounded-xl hover:bg-secondary transition-colors"
+              className="p-2 rounded-xl hover:bg-secondary active:scale-90 transition-all"
             >
               <Share2 className="w-5 h-5 text-foreground" />
             </button>
