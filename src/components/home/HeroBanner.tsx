@@ -167,25 +167,27 @@ const HeroBanner = () => {
   };
 
   return (
-    <div className="relative w-full overflow-hidden h-[220px] md:h-[320px] lg:h-[380px] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none">
+    <div className="relative w-full overflow-hidden h-[220px] md:h-[320px] lg:h-[380px] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none touch-pan-x">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className="flex snap-x snap-mandatory overflow-x-auto no-scrollbar h-full"
-        style={{ scrollbarWidth: "none" }}
+        className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden no-scrollbar h-full touch-pan-x"
+        style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch", overscrollBehaviorY: "none" }}
       >
         {banners.map((banner) => (
           <div
             key={banner.id}
             className="w-full flex-shrink-0 snap-center relative h-full"
+            style={{ minWidth: "100%" }}
           >
             {banner.image ? (
               <img
                 src={banner.image}
                 alt=""
-                className="absolute inset-0 w-full h-full object-cover scale-105"
+                className="absolute inset-0 w-full h-full object-cover"
+                draggable={false}
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-primary/60" />
