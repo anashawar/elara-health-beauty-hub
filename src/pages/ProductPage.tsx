@@ -80,9 +80,11 @@ const ProductPage = () => {
     if (outOfStock) return;
     if (!user) {
       toast(t("auth.signInRequired") || "Please sign in first");
-      navigate("/");
+      navigate("/auth");
       return;
     }
+    addToCart(product);
+  };
     addToCart(product);
   };
 
