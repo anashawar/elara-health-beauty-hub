@@ -167,10 +167,11 @@ export default function AdminBrands() {
                 )}
               </div>
               <p className="text-sm font-bold text-foreground text-center">{b.name}</p>
+              {b.country_of_origin && <p className="text-[10px] text-muted-foreground">{b.country_of_origin}</p>}
               <p className="text-[10px] text-muted-foreground">{b.slug}</p>
               <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg" onClick={() => {
-                  setForm({ id: b.id, name: b.name, slug: b.slug, logo_url: b.logo_url || "" });
+                  setForm({ id: b.id, name: b.name, slug: b.slug, logo_url: b.logo_url || "", country_of_origin: b.country_of_origin || "" });
                   setEditing(true); setOpen(true);
                 }}><Pencil className="h-3 w-3" /></Button>
                 <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg text-destructive" onClick={() => {
