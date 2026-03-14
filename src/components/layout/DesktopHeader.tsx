@@ -84,6 +84,8 @@ const DesktopHeader = ({ onSearchClick }: DesktopHeaderProps) => {
               <span className="text-xs font-bold text-primary-foreground">AI</span>
             </Link>
 
+            <NotificationCenter />
+
             <Link to="/wishlist" className="relative p-2.5 rounded-xl hover:bg-secondary transition-colors">
               <Heart className="w-5 h-5 text-muted-foreground" />
             </Link>

@@ -42,6 +42,7 @@ const navItems = [
   { title: "Brands", url: "/admin/brands", icon: Tag },
   { title: "Banners", url: "/admin/banners", icon: Image },
   { title: "Coupons", url: "/admin/coupons", icon: Ticket },
+  { title: "Notifications", url: "/admin/notifications", icon: Bell },
 ];
 
 export default function AdminSidebar() {

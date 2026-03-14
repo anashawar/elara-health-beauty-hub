@@ -103,9 +103,10 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
             <img src={elaraLogo} alt="ELARA" className="h-7" />
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {user ? (
               <>
+                <NotificationCenter />
                 <div className="flex flex-col items-end rtl:items-start">
                   <span className="text-xs font-medium text-foreground">
                     {greeting}
