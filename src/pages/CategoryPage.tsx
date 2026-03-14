@@ -90,7 +90,7 @@ const CategoryPage = () => {
   const filteredProducts = useMemo(() => {
     let result: typeof allProducts;
     if (isConcernRoute && id) {
-      result = allProducts.filter(p => p.condition === id || (p.condition && p.condition.split(",").map(s => s.trim()).includes(id)) || p.tags.includes(id));
+      result = allProducts.filter(p => matchesConcern(p, id));
     } else if (id) {
       result = allProducts.filter(p => p.category_slug === id);
     } else {
