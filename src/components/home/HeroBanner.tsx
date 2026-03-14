@@ -167,7 +167,7 @@ const HeroBanner = () => {
   };
 
   return (
-    <div className="relative w-full overflow-hidden h-[200px] md:h-[300px] lg:h-[360px]">
+    <div className="relative w-full overflow-hidden h-[220px] md:h-[320px] lg:h-[380px] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
@@ -198,10 +198,10 @@ const HeroBanner = () => {
                 {banner.tag}
               </span>
 
-              <h2 className="text-[28px] md:text-[36px] font-display font-bold text-white leading-[1.15] tracking-tight">
+              <h2 className="text-[22px] md:text-[34px] font-display font-bold text-white leading-[1.15] tracking-tight">
                 {banner.title}
               </h2>
-              <p className="text-[13px] md:text-[15px] text-white/75 mt-2 leading-relaxed max-w-[320px]">
+              <p className="text-[11px] md:text-[14px] text-white/75 mt-1.5 leading-relaxed max-w-[280px] md:max-w-[320px] line-clamp-2">
                 {banner.subtitle}
               </p>
 
