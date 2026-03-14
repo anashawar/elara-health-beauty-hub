@@ -14,8 +14,7 @@ import SearchOverlay from "@/components/SearchOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { iraqCities } from "@/data/iraqCities";
-import { Capacitor } from "@capacitor/core";
-import { Geolocation } from "@capacitor/geolocation";
+import MapPicker from "@/components/MapPicker";
 
 interface AddressForm {
   label: string;
@@ -41,6 +40,7 @@ const AddressesPage = () => {
   const [form, setForm] = useState<AddressForm>(emptyForm);
   const [searchOpen, setSearchOpen] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
 
   const { data: addresses = [], isLoading } = useQuery({
     queryKey: ["addresses", user?.id],
@@ -56,47 +56,9 @@ const AddressesPage = () => {
     enabled: !!user,
   });
 
-  const handleGetLocation = async () => {
-    setGpsLoading(true);
-    try {
-      if (Capacitor.isNativePlatform()) {
-        const perm = await Geolocation.requestPermissions();
-        if (perm.location !== "granted") {
-          toast(t("addresses.locationDenied") || "Location permission denied");
-          setGpsLoading(false);
-          return;
-        }
-      }
-      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
-      setForm(f => ({
-        ...f,
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      }));
-      toast(t("addresses.locationCaptured") || "📍 Location captured!");
-    } catch (e: any) {
-      console.error("GPS error:", e);
-      // Fallback for web browsers
-      if (!Capacitor.isNativePlatform() && "geolocation" in navigator) {
-        try {
-          const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-            navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 })
-          );
-          setForm(f => ({
-            ...f,
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-          }));
-          toast(t("addresses.locationCaptured") || "📍 Location captured!");
-        } catch {
-          toast(t("addresses.locationError") || "Could not get location. Please enable GPS.");
-        }
-      } else {
-        toast(t("addresses.locationError") || "Could not get location. Please enable GPS.");
-      }
-    } finally {
-      setGpsLoading(false);
-    }
+  const handleMapConfirm = (lat: number, lng: number) => {
+    setForm(f => ({ ...f, latitude: lat, longitude: lng }));
+    toast(t("addresses.locationCaptured") || "📍 Location saved!");
   };
 
   const saveMutation = useMutation({
@@ -286,31 +248,24 @@ const AddressesPage = () => {
                     </Select>
                   </div>
 
-                  {/* GPS Location */}
+                  {/* Location on Map */}
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                      {t("addresses.gpsLocation") || "📍 GPS Location"}
+                      {t("addresses.gpsLocation") || "📍 Location"}
                     </label>
                     <button
                       type="button"
-                      onClick={handleGetLocation}
-                      disabled={gpsLoading}
+                      onClick={() => setMapOpen(true)}
                       className={`w-full flex items-center justify-center gap-2.5 py-3 rounded-xl border-2 border-dashed transition-all text-sm font-semibold ${
                         form.latitude
                           ? "border-primary/40 bg-primary/5 text-primary"
                           : "border-border bg-secondary/50 text-muted-foreground hover:border-primary/30 hover:text-foreground"
                       }`}
                     >
-                      {gpsLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Navigation className="w-4 h-4" />
-                      )}
-                      {gpsLoading
-                        ? (t("addresses.gettingLocation") || "Getting location...")
-                        : form.latitude
-                          ? (t("addresses.locationSaved") || `📍 Location saved`)
-                          : (t("addresses.useMyLocation") || "Use my current location")}
+                      <MapPin className="w-4 h-4" />
+                      {form.latitude
+                        ? (t("addresses.locationSaved") || "📍 Location saved — tap to change")
+                        : (t("addresses.selectOnMap") || "Select location on map")}
                     </button>
                     {form.latitude && (
                       <p className="text-[10px] text-muted-foreground mt-1 text-center">
@@ -397,6 +352,14 @@ const AddressesPage = () => {
       </div>
 
       <BottomNav />
+
+      <MapPicker
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
+        onConfirm={handleMapConfirm}
+        initialLat={form.latitude}
+        initialLng={form.longitude}
+      />
     </div>
   );
 };

@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, ArrowRight, Loader2, ShieldCheck, Mail, Sparkles, Calendar, Navigation, Globe, Check } from "lucide-react";
+import { User, ArrowRight, Loader2, ShieldCheck, Mail, Sparkles, Calendar, MapPin, Globe, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Capacitor } from "@capacitor/core";
-import { Geolocation } from "@capacitor/geolocation";
+import MapPicker from "@/components/MapPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
@@ -51,41 +50,12 @@ const AuthPage = () => {
   const [apartment, setApartment] = useState("");
   const [gpsLat, setGpsLat] = useState<number | null>(null);
   const [gpsLng, setGpsLng] = useState<number | null>(null);
-  const [gpsLoading, setGpsLoading] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
 
-  const handleGetLocation = async () => {
-    setGpsLoading(true);
-    try {
-      if (Capacitor.isNativePlatform()) {
-        const perm = await Geolocation.requestPermissions();
-        if (perm.location !== "granted") {
-          toast(t("addresses.locationDenied") || "Location permission denied");
-          setGpsLoading(false);
-          return;
-        }
-      }
-      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
-      setGpsLat(position.coords.latitude);
-      setGpsLng(position.coords.longitude);
-      toast(t("addresses.locationCaptured") || "📍 Location captured!");
-    } catch {
-      if (!Capacitor.isNativePlatform() && "geolocation" in navigator) {
-        try {
-          const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-            navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 })
-          );
-          setGpsLat(pos.coords.latitude);
-          setGpsLng(pos.coords.longitude);
-          toast(t("addresses.locationCaptured") || "📍 Location captured!");
-        } catch {
-          toast(t("addresses.locationError") || "Could not get location. Please enable GPS.");
-        }
-      } else {
-        toast(t("addresses.locationError") || "Could not get location. Please enable GPS.");
-      }
-    } finally {
-      setGpsLoading(false);
-    }
+  const handleMapConfirm = (lat: number, lng: number) => {
+    setGpsLat(lat);
+    setGpsLng(lng);
+    toast(t("addresses.locationCaptured") || "📍 Location saved!");
   };
 
   useEffect(() => {
@@ -597,31 +567,24 @@ const AuthPage = () => {
                   </Select>
                 </div>
 
-                {/* GPS Location */}
+                {/* Location on Map */}
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                    {t("addresses.gpsLocation") || "📍 GPS Location"}
+                    {t("addresses.gpsLocation") || "📍 Location"}
                   </label>
                   <button
                     type="button"
-                    onClick={handleGetLocation}
-                    disabled={gpsLoading}
+                    onClick={() => setMapOpen(true)}
                     className={`w-full flex items-center justify-center gap-2.5 py-3 rounded-2xl border-2 border-dashed transition-all text-sm font-semibold ${
                       gpsLat
                         ? "border-primary/40 bg-primary/5 text-primary"
                         : "border-border/60 bg-muted/40 text-muted-foreground hover:border-primary/30 hover:text-foreground"
                     }`}
                   >
-                    {gpsLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Navigation className="w-4 h-4" />
-                    )}
-                    {gpsLoading
-                      ? (t("addresses.gettingLocation") || "Getting location...")
-                      : gpsLat
-                        ? (t("addresses.locationSaved") || "📍 Location saved")
-                        : (t("addresses.useMyLocation") || "Use my current location")}
+                    <MapPin className="w-4 h-4" />
+                    {gpsLat
+                      ? (t("addresses.locationSaved") || "📍 Location saved — tap to change")
+                      : (t("addresses.selectOnMap") || "Select location on map")}
                   </button>
                   {gpsLat && (
                     <p className="text-[10px] text-muted-foreground mt-1 text-center">
@@ -737,6 +700,13 @@ const AuthPage = () => {
       <div className="px-5 py-4 text-center">
         <p className="text-[10px] text-muted-foreground">ELARA — {t("common.tagline")}</p>
       </div>
+      <MapPicker
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
+        onConfirm={handleMapConfirm}
+        initialLat={gpsLat}
+        initialLng={gpsLng}
+      />
     </div>
   );
 };
