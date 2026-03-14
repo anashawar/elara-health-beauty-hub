@@ -111,7 +111,7 @@ const HeroBanner = () => {
       tag: discountLabel,
       title: o.title,
       subtitle: o.subtitle || "",
-      cta: "Shop Now",
+      cta: t("common.shopNow"),
       ctaLink: o.link_url || "/collection/offers",
       image: o.image_url || "",
       overlay: "from-black/80 via-black/50 to-black/20",

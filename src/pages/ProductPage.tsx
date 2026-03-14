@@ -255,7 +255,7 @@ const ProductPage = () => {
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border hover:bg-secondary transition-colors"
               >
                 <Share2 className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-foreground">Share</span>
+                <span className="text-sm font-medium text-foreground">{t("common.share")}</span>
               </button>
             </div>
 
