@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/context/AppContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import Index from "./pages/Index";
 import CollectionPage from "./pages/CollectionPage";
 import CategoryPage from "./pages/CategoryPage";
@@ -48,10 +49,8 @@ const SwipeBackWrapper = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Component to initialize push notifications
-const PushNotificationInit = () => {
-  const { usePushNotifications: usePush } = require("@/hooks/usePushNotifications");
-  usePush();
+const PushInit = () => {
+  usePushNotifications();
   return null;
 };
 
