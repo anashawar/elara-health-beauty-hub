@@ -304,6 +304,8 @@ export const en = {
     kurdish: "کوردی",
     changePhoto: "Change Your Photo",
     photoUpdated: "Profile photo updated!",
+    selectImageFile: "Please select an image file",
+    imageTooLarge: "Image must be under 5MB",
   },
   categories: {
     title: "Categories",
