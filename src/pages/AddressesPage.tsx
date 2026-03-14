@@ -38,8 +38,8 @@ const AddressesPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<AddressForm>(emptyForm);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
 
   const { data: addresses = [], isLoading } = useQuery({
     queryKey: ["addresses", user?.id],
