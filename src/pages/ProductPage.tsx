@@ -136,7 +136,7 @@ const ProductPage = () => {
       <div className="app-container">
         {/* Desktop breadcrumb */}
         <div className="hidden md:flex items-center gap-2 px-6 pt-4 pb-2 text-sm">
-          <Link to="/home" className="text-muted-foreground hover:text-foreground transition-colors">Home</Link>
+          <Link to="/home" className="text-muted-foreground hover:text-foreground transition-colors">{t("nav.home")}</Link>
           <span className="text-muted-foreground">/</span>
           {product.category_slug && (
             <>
