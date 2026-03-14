@@ -157,7 +157,7 @@ const CartPage = () => {
             )}
           </div>
           {cart.length > 0 && (
-            <button onClick={clearCart} className="text-xs text-destructive font-medium px-3 py-1.5 bg-destructive/10 rounded-lg">
+            <button onClick={clearCart} className="text-xs text-destructive font-medium px-3 py-1.5 bg-destructive/10 rounded-lg active:scale-95 transition-transform">
               {t("cart.clearAll")}
             </button>
           )}

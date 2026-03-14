@@ -126,7 +126,7 @@ const ProductPage = () => {
             >
               <Share2 className="w-5 h-5 text-foreground" />
             </button>
-            <button onClick={() => toggleWishlist(product.id)} className="p-2 rounded-xl hover:bg-secondary transition-colors">
+            <button onClick={() => toggleWishlist(product.id)} className="p-2 rounded-xl hover:bg-secondary active:scale-90 transition-all">
               <Heart className={`w-5 h-5 transition-all ${wishlisted ? "fill-primary text-primary scale-110" : "text-foreground"}`} />
             </button>
           </div>
