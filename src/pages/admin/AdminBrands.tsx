@@ -129,6 +129,7 @@ export default function AdminBrands() {
                 <div><Label>Name *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
                 <div><Label>Slug</Label><Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="auto-generated" /></div>
                 <div><Label>Logo URL</Label><Input value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} /></div>
+                <div><Label>Country of Origin</Label><Input value={form.country_of_origin} onChange={(e) => setForm({ ...form, country_of_origin: e.target.value })} placeholder="e.g. France, South Korea" /></div>
                 <Button className="rounded-xl" onClick={() => save.mutate(form)} disabled={!form.name || save.isPending}>
                   {save.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}{editing ? "Update" : "Create"}
                 </Button>
