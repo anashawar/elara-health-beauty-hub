@@ -102,10 +102,10 @@ const HeroBanner = () => {
 
   const offerBanners: HeroBannerItem[] = heroOffers.map((o: any) => {
     const discountLabel = o.discount_type === "percentage"
-      ? `${o.discount_value}% OFF`
+      ? `${o.discount_value}% ${t("common.off")}`
       : o.discount_type === "fixed"
-        ? `${o.discount_value.toLocaleString()} IQD OFF`
-        : o.discount_type === "bogo" ? "BUY 1 GET 1" : "BUNDLE DEAL";
+        ? `${o.discount_value.toLocaleString()} ${t("common.iqd")} ${t("common.off")}`
+        : o.discount_type === "bogo" ? t("common.buyOneGetOne") : t("common.bundleDeal");
     return {
       id: `offer-${o.id}`,
       tag: discountLabel,
