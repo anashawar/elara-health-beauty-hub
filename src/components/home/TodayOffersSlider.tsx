@@ -204,7 +204,7 @@ function OfferCard({ offer, index }: { offer: Offer; index: number }) {
               </p>
             )}
             <div className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white text-foreground text-[11px] font-bold rounded-xl group-hover:shadow-lg group-hover:scale-[1.02] transition-all duration-300 shadow-md">
-              Shop
+              {t("common.shop")}
               <ArrowRight className="w-3 h-3 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
