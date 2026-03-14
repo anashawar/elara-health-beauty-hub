@@ -183,8 +183,11 @@ export function useSubcategories() {
 export interface BrandRow {
   id: string;
   name: string;
+  name_ar?: string | null;
+  name_ku?: string | null;
   slug: string;
   logo_url: string | null;
+  country_of_origin?: string | null;
 }
 
 export function useBrands() {
