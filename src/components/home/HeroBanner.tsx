@@ -167,7 +167,7 @@ const HeroBanner = () => {
   };
 
   return (
-    <div className="relative w-full overflow-hidden h-[200px] md:h-[300px] lg:h-[360px]">
+    <div className="relative w-full overflow-hidden h-[220px] md:h-[320px] lg:h-[380px] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
