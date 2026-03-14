@@ -214,7 +214,7 @@ const AuthPage = () => {
       if (error) { toast(error.message); return; }
 
       toast(t("auth.welcomeToElara", { name: fullName.split(" ")[0] }) || "Welcome to ELARA!");
-      navigate("/home");
+      setStep("language");
     } finally {
       setLoading(false);
     }
