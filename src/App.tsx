@@ -42,7 +42,16 @@ import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminOffers from "./pages/admin/AdminOffers";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes — data stays fresh, no refetch
+      gcTime: 1000 * 60 * 30,   // 30 minutes — cache persists in memory
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const SwipeBackWrapper = ({ children }: { children: React.ReactNode }) => {
   useSwipeBack();

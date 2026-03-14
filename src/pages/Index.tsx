@@ -1,19 +1,22 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import TopHeader from "@/components/layout/TopHeader";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import BottomNav from "@/components/layout/BottomNav";
 import HeroBanner from "@/components/home/HeroBanner";
 import CategoryGrid from "@/components/home/CategoryGrid";
-import ProductSection from "@/components/home/ProductSection";
-import ConcernsSection from "@/components/home/ConcernsSection";
-import BrandsSection from "@/components/home/BrandsSection";
 import AskElaraCard from "@/components/home/AskElaraCard";
-import DealsBanner from "@/components/home/DealsBanner";
-import OffersBanner from "@/components/home/OffersBanner";
-import TodayOffersSlider from "@/components/home/TodayOffersSlider";
+import ProductSectionSkeleton from "@/components/home/ProductSectionSkeleton";
 import SearchOverlay from "@/components/SearchOverlay";
 import { useProducts } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
+
+// Lazy load below-fold heavy sections
+const ProductSection = lazy(() => import("@/components/home/ProductSection"));
+const TodayOffersSlider = lazy(() => import("@/components/home/TodayOffersSlider"));
+const OffersBanner = lazy(() => import("@/components/home/OffersBanner"));
+const BrandsSection = lazy(() => import("@/components/home/BrandsSection"));
+const ConcernsSection = lazy(() => import("@/components/home/ConcernsSection"));
+const DealsBanner = lazy(() => import("@/components/home/DealsBanner"));
 
 const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -25,6 +28,8 @@ const Index = () => {
   const offers = products.filter(p => p.originalPrice);
   const newArrivals = products.filter(p => p.isNew);
 
+  const SectionFallback = <ProductSectionSkeleton />;
+
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8 scroll-bounce" style={{ minHeight: '-webkit-fill-available' }}>
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
@@ -35,23 +40,47 @@ const Index = () => {
       <div className="app-container">
         <CategoryGrid />
 
+        <AskElaraCard />
+
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : (
           <>
-            <AskElaraCard />
-            <ProductSection title={t("home.trendingNow")} subtitle={t("home.mostPopular")} products={trending} viewAllLink="/collection/trending" variant="trending" />
-            <TodayOffersSlider />
-            <OffersBanner />
-            <BrandsSection />
-            <ConcernsSection />
-            <DealsBanner />
-            <ProductSection title={t("home.elaraPicks")} subtitle={t("home.curatedForYou")} products={picks} viewAllLink="/collection/picks" />
-            <ProductSection title={t("home.specialOffers")} subtitle={t("home.limitedDeals")} products={offers} viewAllLink="/collection/offers" />
-            <ProductSection title={t("home.newArrivals")} subtitle={t("home.freshAdditions")} products={newArrivals} viewAllLink="/collection/new" />
+            <ProductSectionSkeleton />
+            <ProductSectionSkeleton />
           </>
+        ) : (
+          <Suspense fallback={SectionFallback}>
+            <ProductSection title={t("home.trendingNow")} subtitle={t("home.mostPopular")} products={trending} viewAllLink="/collection/trending" variant="trending" />
+          </Suspense>
+        )}
+
+        <Suspense fallback={null}>
+          <TodayOffersSlider />
+        </Suspense>
+
+        <Suspense fallback={null}>
+          <OffersBanner />
+        </Suspense>
+
+        <Suspense fallback={null}>
+          <BrandsSection />
+        </Suspense>
+
+        <Suspense fallback={null}>
+          <ConcernsSection />
+        </Suspense>
+
+        <Suspense fallback={null}>
+          <DealsBanner />
+        </Suspense>
+
+        {!isLoading && (
+          <Suspense fallback={SectionFallback}>
+            <>
+              <ProductSection title={t("home.elaraPicks")} subtitle={t("home.curatedForYou")} products={picks} viewAllLink="/collection/picks" />
+              <ProductSection title={t("home.specialOffers")} subtitle={t("home.limitedDeals")} products={offers} viewAllLink="/collection/offers" />
+              <ProductSection title={t("home.newArrivals")} subtitle={t("home.freshAdditions")} products={newArrivals} viewAllLink="/collection/new" />
+            </>
+          </Suspense>
         )}
 
         {/* Footer */}
