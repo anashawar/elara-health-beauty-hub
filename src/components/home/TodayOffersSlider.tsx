@@ -28,6 +28,7 @@ const GRADIENTS = [
 const ICONS = [Flame, Gift, Tag, Percent];
 
 export default function TodayOffersSlider() {
+  const { t } = useLanguage();
   const { data: offers = [] } = useQuery<Offer[]>({
     queryKey: ["today-offers-slider"],
     queryFn: async () => {
