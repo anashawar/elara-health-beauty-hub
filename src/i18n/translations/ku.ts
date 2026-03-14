@@ -65,6 +65,7 @@ export const ku = {
     newArrivals: "تازە گەیشتووە",
     freshAdditions: "بەرهەمی تازە زیادکراو",
     featuredBrands: "براندە ناسراوەکان",
+    trustedByThousands: "هەزاران کەس متمانەیان پێیە",
     buyNow: "ئێستا بکڕە",
     shopByConcern: "بەپێی کێشەکەت بکڕە",
     dealsForYou: "ئۆفەر بۆ تۆ",
