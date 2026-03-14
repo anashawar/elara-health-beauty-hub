@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, ArrowRight, Loader2, ShieldCheck, Mail, Sparkles, Calendar, Navigation } from "lucide-react";
+import { User, ArrowRight, Loader2, ShieldCheck, Mail, Sparkles, Calendar, Navigation, Globe, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
@@ -16,7 +16,7 @@ import elaraLogo from "@/assets/elara-logo.png";
 
 import { iraqCities } from "@/data/iraqCities";
 
-type Step = "phone" | "otp" | "address";
+type Step = "phone" | "otp" | "address" | "language";
 type AuthMode = "signup" | "signin";
 
 const OTP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
@@ -24,7 +24,7 @@ const OTP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 const AuthPage = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
 
   const hasVisited = localStorage.getItem("elara_has_visited");
   const [authMode, setAuthMode] = useState<AuthMode>(hasVisited ? "signin" : "signup");
@@ -214,7 +214,7 @@ const AuthPage = () => {
       if (error) { toast(error.message); return; }
 
       toast(t("auth.welcomeToElara", { name: fullName.split(" ")[0] }) || "Welcome to ELARA!");
-      navigate("/home");
+      setStep("language");
     } finally {
       setLoading(false);
     }
@@ -255,8 +255,9 @@ const AuthPage = () => {
       {/* Progress bar */}
       <div className="px-5 pt-4 pb-2 flex gap-2">
         <div className="h-1 flex-1 rounded-full transition-colors duration-300 bg-primary" />
-        <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === "otp" || step === "address" ? "bg-primary" : "bg-muted"}`} />
-        <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === "address" ? "bg-primary" : "bg-muted"}`} />
+        <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${["otp","address","language"].includes(step) ? "bg-primary" : "bg-muted"}`} />
+        <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${["address","language"].includes(step) ? "bg-primary" : "bg-muted"}`} />
+        {isSignUp && <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === "language" ? "bg-primary" : "bg-muted"}`} />}
       </div>
 
       <div className="flex-1 px-5 overflow-hidden">
@@ -462,6 +463,37 @@ const AuthPage = () => {
                 )}
               </Button>
 
+              {/* Language selector for sign-in */}
+              {!isSignUp && (
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5" />
+                    {t("auth.appLanguage") || "App Language"}
+                  </label>
+                  <div className="flex gap-2">
+                    {([
+                      { code: "en" as const, label: "English", flag: "🇬🇧" },
+                      { code: "ar" as const, label: "العربية", flag: "🇮🇶" },
+                      { code: "ku" as const, label: "کوردی", flag: "🇮🇶" },
+                    ]).map(lang => (
+                      <button
+                        key={lang.code}
+                        type="button"
+                        onClick={() => setLanguage(lang.code)}
+                        className={`flex-1 py-2.5 px-2 rounded-2xl text-xs font-medium border transition-all flex items-center justify-center gap-1.5 ${
+                          language === lang.code
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
+                            : "bg-muted/40 text-foreground border-border/60 hover:border-primary/50"
+                        }`}
+                      >
+                        <span>{lang.flag}</span>
+                        {lang.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={() => navigate("/home")}
                 className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
@@ -626,16 +658,79 @@ const AuthPage = () => {
               </div>
 
               <Button onClick={handleSaveAddress} disabled={loading} className="w-full h-12 rounded-2xl text-sm font-semibold gap-2 shadow-md shadow-primary/20">
-                {loading ? t("auth.saving") : t("common.startShopping")}
+                {loading ? t("auth.saving") : t("common.next")}
                 {!loading && <ArrowRight className="w-4 h-4 rtl:rotate-180" />}
               </Button>
 
               <button
-                onClick={() => navigate("/home")}
+                onClick={() => setStep("language")}
                 className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
               >
                 {t("auth.skipForNow")}
               </button>
+            </motion.div>
+          )}
+
+          {/* Step 4: Language Selection */}
+          {step === "language" && (
+            <motion.div
+              key="language"
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.25 }}
+              className="space-y-6 pt-4"
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/40 flex items-center justify-center mx-auto mb-4">
+                  <Globe className="w-8 h-8 text-primary" />
+                </div>
+                <h1 className="text-2xl font-display font-bold text-foreground">
+                  {t("auth.chooseLanguage") || "Choose Your Language"}
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t("auth.chooseLanguageDesc") || "Select your preferred app language"}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {([
+                  { code: "en" as const, label: "English", native: "English", flag: "🇬🇧", desc: "Browse in English" },
+                  { code: "ar" as const, label: "العربية", native: "Arabic", flag: "🇮🇶", desc: "تصفح بالعربية" },
+                  { code: "ku" as const, label: "کوردی", native: "Kurdish", flag: "🇮🇶", desc: "بە کوردی بگەڕێ" },
+                ]).map(lang => (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => setLanguage(lang.code)}
+                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${
+                      language === lang.code
+                        ? "border-primary bg-primary/5 shadow-sm shadow-primary/10"
+                        : "border-border/60 bg-muted/30 hover:border-primary/40"
+                    }`}
+                  >
+                    <span className="text-2xl">{lang.flag}</span>
+                    <div className="flex-1 text-start">
+                      <p className="text-sm font-semibold text-foreground">{lang.label}</p>
+                      <p className="text-xs text-muted-foreground">{lang.desc}</p>
+                    </div>
+                    {language === lang.code && (
+                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="w-3.5 h-3.5 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              <Button
+                onClick={() => navigate("/home")}
+                className="w-full h-12 rounded-2xl text-sm font-semibold gap-2 shadow-md shadow-primary/20"
+              >
+                {t("common.startShopping") || "Start Shopping"}
+                <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+              </Button>
             </motion.div>
           )}
         </AnimatePresence>
