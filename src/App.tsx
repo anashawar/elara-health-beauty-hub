@@ -39,6 +39,7 @@ import AdminBrands from "./pages/admin/AdminBrands";
 import AdminCoupons from "./pages/admin/AdminCoupons";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminOffers from "./pages/admin/AdminOffers";
+import AdminNotifications from "./pages/admin/AdminNotifications";
 
 const queryClient = new QueryClient();
 
