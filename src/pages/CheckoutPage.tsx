@@ -149,7 +149,28 @@ const CheckoutPage = () => {
           <Check className="w-10 h-10 text-sage" />
         </motion.div>
         <h2 className="text-2xl font-display font-bold text-foreground mb-2">{t("checkout.orderPlaced")}</h2>
-        <p className="text-sm text-muted-foreground text-center mb-6">{t("checkout.orderPlacedDesc")}</p>
+        <p className="text-sm text-muted-foreground text-center mb-4">{t("checkout.orderPlacedDesc")}</p>
+
+        {/* Points earned celebration */}
+        {earnedPoints > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="w-full max-w-xs bg-gradient-to-r from-amber-500/10 to-primary/10 rounded-2xl p-4 border border-amber-500/20 mb-6 text-center"
+          >
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+              <span className="text-sm font-display font-bold text-foreground">{t("rewards.youEarned")}</span>
+            </div>
+            <p className="text-3xl font-display font-black text-primary">{earnedPoints}</p>
+            <p className="text-xs text-muted-foreground">{t("rewards.pointsEarned")}</p>
+            <Link to="/rewards" className="inline-block mt-2 text-xs font-semibold text-primary hover:underline">
+              {t("rewards.title")} →
+            </Link>
+          </motion.div>
+        )}
+
         <div className="flex flex-col gap-3 w-full max-w-xs">
           <Link to="/orders" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-2xl text-sm text-center">
             {t("profile.myOrders")}
