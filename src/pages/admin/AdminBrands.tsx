@@ -130,6 +130,10 @@ export default function AdminBrands() {
                 <div><Label>Slug</Label><Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="auto-generated" /></div>
                 <div><Label>Logo URL</Label><Input value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} /></div>
                 <div><Label>Country of Origin</Label><Input value={form.country_of_origin} onChange={(e) => setForm({ ...form, country_of_origin: e.target.value })} placeholder="e.g. France, South Korea" /></div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="featured" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} className="h-4 w-4 rounded border-border accent-primary" />
+                  <Label htmlFor="featured">Featured on Homepage</Label>
+                </div>
                 <Button className="rounded-xl" onClick={() => save.mutate(form)} disabled={!form.name || save.isPending}>
                   {save.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}{editing ? "Update" : "Create"}
                 </Button>
