@@ -657,7 +657,7 @@ export default function AdminProducts() {
         totalFail += batch.length;
       }
 
-      if (i + BATCH_SIZE < ids.length) {
+      if (i + BATCH_SIZE < idsWithoutImages.length) {
         await new Promise(r => setTimeout(r, 2000));
       }
     }
