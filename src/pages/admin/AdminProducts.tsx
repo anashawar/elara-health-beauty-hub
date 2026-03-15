@@ -603,8 +603,26 @@ export default function AdminProducts() {
   // Image search handler
   const handleSearchImages = async (ids: string[]) => {
     if (ids.length === 0) { toast.error("No products selected"); return; }
+    
+    // Filter out products that already have images
+    const productsWithImages = new Set(
+      (allProducts || [])
+        .filter((p: any) => p.product_images && p.product_images.length > 0)
+        .map((p: any) => p.id)
+    );
+    const idsWithoutImages = ids.filter(id => !productsWithImages.has(id));
+    
+    if (idsWithoutImages.length === 0) {
+      toast.info("All selected products already have images");
+      return;
+    }
+    
+    if (idsWithoutImages.length < ids.length) {
+      toast.info(`Skipping ${ids.length - idsWithoutImages.length} products that already have images`);
+    }
+    
     setEnriching(true);
-    setEnrichProgress({ done: 0, total: ids.length, current: "Searching for product images..." });
+    setEnrichProgress({ done: 0, total: idsWithoutImages.length, current: "Searching for product images..." });
 
     const BATCH_SIZE = 5;
     let totalSuccess = 0;
