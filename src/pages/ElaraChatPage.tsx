@@ -602,47 +602,45 @@ const ElaraChatPage = () => {
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
-      {/* Mobile Header */}
-      <header className="flex-shrink-0 z-40 glass-heavy border-b border-border/30 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Link to="/home" className="p-1.5 -ml-1 rounded-xl hover:bg-secondary transition-colors">
+      {/* Mobile Header — compact, native-feeling */}
+      <header className="flex-shrink-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/30 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        <div className="flex items-center justify-between px-4 h-12">
+          <div className="flex items-center gap-2.5">
+            <Link to="/home" className="p-1 -ml-1 rounded-lg active:bg-secondary/80 transition-colors">
               <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
             </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-sm font-display font-bold text-foreground">ELARA AI</h1>
-                <p className="text-[10px] text-muted-foreground">{headerSubtitle}</p>
-              </div>
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-white" />
+            </div>
+            <div className="leading-none">
+              <h1 className="text-[13px] font-bold text-foreground">ELARA AI</h1>
+              <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{headerSubtitle}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             {user && conversations.length > 0 && (
-              <button onClick={() => setShowHistory(!showHistory)} className="p-2 rounded-xl hover:bg-secondary transition-colors">
-                <MessageCircle className="w-4 h-4 text-muted-foreground" />
+              <button onClick={() => setShowHistory(!showHistory)} className="p-2 rounded-lg active:bg-secondary/80 transition-colors">
+                <MessageCircle className="w-[18px] h-[18px] text-muted-foreground" />
               </button>
             )}
-            <button onClick={startNewChat} className="p-2 rounded-xl hover:bg-secondary transition-colors">
-              <Plus className="w-4 h-4 text-muted-foreground" />
+            <button onClick={startNewChat} className="p-2 rounded-lg active:bg-secondary/80 transition-colors">
+              <Plus className="w-[18px] h-[18px] text-muted-foreground" />
             </button>
           </div>
         </div>
 
         <AnimatePresence>
           {showHistory && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-border">
-              <div className="max-h-60 overflow-y-auto px-4 py-2 space-y-1">
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden border-t border-border/30">
+              <div className="max-h-52 overflow-y-auto px-3 py-2 space-y-0.5">
                 {conversations.map(conv => (
-                  <button key={conv.id} onClick={() => loadConversation(conv.id)} className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left transition-all ${conversationId === conv.id ? "bg-primary/10 border border-primary/20" : "hover:bg-secondary"}`}>
+                  <button key={conv.id} onClick={() => loadConversation(conv.id)} className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left transition-colors ${conversationId === conv.id ? "bg-primary/10" : "active:bg-secondary/80"}`}>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">{conv.title}</p>
                       <p className="text-[10px] text-muted-foreground">{new Date(conv.updated_at).toLocaleDateString()}</p>
                     </div>
-                    <button onClick={(e) => deleteConversation(conv.id, e)} className="p-1 rounded-lg hover:bg-destructive/10 transition-colors ml-2 flex-shrink-0">
-                      <Trash2 className="w-3 h-3 text-muted-foreground hover:text-destructive" />
+                    <button onClick={(e) => deleteConversation(conv.id, e)} className="p-1.5 rounded-lg active:bg-destructive/10 transition-colors ml-2 flex-shrink-0">
+                      <Trash2 className="w-3 h-3 text-muted-foreground" />
                     </button>
                   </button>
                 ))}
@@ -653,7 +651,7 @@ const ElaraChatPage = () => {
       </header>
 
       {/* Desktop layout with sidebar */}
-      <div className="flex-1 flex min-h-0 app-container">
+      <div className="flex-1 flex min-h-0">
         {/* Desktop sidebar */}
         <div className="hidden md:flex flex-col w-72 border-r border-border bg-card/50 flex-shrink-0">
           <div className="flex items-center justify-between p-4 border-b border-border">
@@ -688,147 +686,153 @@ const ElaraChatPage = () => {
         {/* Chat area */}
         <div className="flex-1 flex flex-col min-w-0 min-h-0">
           {/* Scrollable messages */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain px-4 md:px-8 py-4 space-y-4">
-            {messages.length === 0 ? (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mt-6 md:mt-12">
-                {/* Avatar */}
-                <motion.div 
-                  initial={{ scale: 0.8 }} 
-                  animate={{ scale: 1 }} 
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 via-accent/30 to-primary/10 flex items-center justify-center mb-4 border-2 border-primary/20"
-                >
-                  <Sparkles className="w-10 h-10 text-primary" />
-                </motion.div>
-
-                {/* Personalized greeting */}
-                <motion.h2 
-                  initial={{ opacity: 0, y: 10 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  transition={{ delay: 0.15 }}
-                  className="text-2xl font-display font-bold text-foreground mb-1"
-                >
-                  {greeting.greeting}
-                </motion.h2>
-                <motion.p 
-                  initial={{ opacity: 0, y: 10 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  transition={{ delay: 0.25 }}
-                  className="text-sm text-muted-foreground mb-5 max-w-[360px]"
-                >
-                  {greeting.subtitle}
-                </motion.p>
-
-                {/* Contextual tips */}
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  transition={{ delay: 0.35 }}
-                  className="w-full max-w-md space-y-2 mb-5"
-                >
-                  {contextualTips.map((tip, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-2xl bg-card/80 border border-border/50 text-left rtl:text-right">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-secondary/80 flex items-center justify-center">
-                        {tip.icon}
-                      </div>
-                      <p className="text-xs text-muted-foreground flex-1">{tip.text}</p>
-                    </div>
-                  ))}
-                </motion.div>
-
-                {/* Quick questions */}
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  transition={{ delay: 0.45 }}
-                  className="w-full max-w-md space-y-2"
-                >
-                  <p className="text-xs font-medium text-muted-foreground mb-2">
-                    {tryAskingLabel}
-                  </p>
-                  {currentQuickQuestions.map((q, i) => (
-                    <motion.button key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.06 }} onClick={() => sendMessage(q)}
-                      className="w-full text-left rtl:text-right p-3 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-sm transition-all text-sm text-foreground"
-                    >
-                      {q}
-                    </motion.button>
-                  ))}
-                </motion.div>
-              </motion.div>
-            ) : (
-              <>
-                {messages.map((msg, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    {msg.role === "assistant" && (
-                      <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center flex-shrink-0 mt-1 mr-2 rtl:mr-0 rtl:ml-2">
-                        <Sparkles className="w-3 h-3 text-primary-foreground" />
-                      </div>
-                    )}
-                    <div className={`max-w-[85%] md:max-w-[65%] rounded-2xl px-4 py-3 overflow-hidden ${msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-md" : "bg-card border border-border rounded-bl-md"}`}>
-                      {msg.role === "assistant" ? renderAssistantContent(msg.content) : <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>}
-                    </div>
+          <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain scroll-bounce">
+            <div className="px-4 md:px-8 py-4 space-y-3">
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center text-center pt-4 md:pt-10 pb-4">
+                  {/* Avatar */}
+                  <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }} 
+                    animate={{ scale: 1, opacity: 1 }} 
+                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                    className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-primary/20 via-accent/30 to-primary/10 flex items-center justify-center mb-3 border-2 border-primary/20"
+                  >
+                    <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-primary" />
                   </motion.div>
-                ))}
-                {isLoading && messages[messages.length - 1]?.role === "user" && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center flex-shrink-0 mt-1 mr-2 rtl:mr-0 rtl:ml-2">
-                      <Sparkles className="w-3 h-3 text-primary-foreground" />
-                    </div>
-                    <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="flex gap-1">
-                          <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "0ms" }} />
-                          <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "150ms" }} />
-                          <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+
+                  {/* Greeting */}
+                  <motion.h2 
+                    initial={{ opacity: 0, y: 8 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    transition={{ delay: 0.1 }}
+                    className="text-xl md:text-2xl font-display font-bold text-foreground mb-0.5"
+                  >
+                    {greeting.greeting}
+                  </motion.h2>
+                  <motion.p 
+                    initial={{ opacity: 0, y: 8 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    transition={{ delay: 0.2 }}
+                    className="text-[13px] text-muted-foreground mb-4 max-w-[320px] leading-relaxed"
+                  >
+                    {greeting.subtitle}
+                  </motion.p>
+
+                  {/* Contextual tips — compact cards */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 8 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    transition={{ delay: 0.3 }}
+                    className="w-full max-w-sm space-y-1.5 mb-4"
+                  >
+                    {contextualTips.map((tip, i) => (
+                      <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-card border border-border/40 text-left rtl:text-right">
+                        <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-secondary/70 flex items-center justify-center">
+                          {tip.icon}
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          {language === "ar" ? "أفكر..." : language === "ku" ? "بیر دەکەمەوە..." : "Thinking..."}
-                        </span>
+                        <p className="text-[11px] text-muted-foreground flex-1 leading-snug">{tip.text}</p>
                       </div>
+                    ))}
+                  </motion.div>
+
+                  {/* Quick questions — pill-style */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 8 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    transition={{ delay: 0.4 }}
+                    className="w-full max-w-sm"
+                  >
+                    <p className="text-[11px] font-semibold text-muted-foreground/70 mb-2 uppercase tracking-wider">
+                      {tryAskingLabel}
+                    </p>
+                    <div className="space-y-1.5">
+                      {currentQuickQuestions.map((q, i) => (
+                        <button key={i} onClick={() => sendMessage(q)}
+                          className="w-full text-left rtl:text-right px-3.5 py-2.5 rounded-xl bg-card border border-border/50 active:bg-primary/5 active:border-primary/30 transition-colors text-[13px] text-foreground leading-snug"
+                        >
+                          {q}
+                        </button>
+                      ))}
                     </div>
                   </motion.div>
-                )}
-              </>
-            )}
-            <div ref={bottomRef} className="h-1" />
+                </div>
+              ) : (
+                <>
+                  {messages.map((msg, i) => (
+                    <div key={i} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                      {msg.role === "assistant" && (
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center flex-shrink-0 mt-1">
+                          <Sparkles className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                      <div className={`max-w-[80%] md:max-w-[60%] rounded-2xl px-3.5 py-2.5 overflow-hidden ${
+                        msg.role === "user" 
+                          ? "bg-primary text-primary-foreground rounded-tr-sm" 
+                          : "bg-card border border-border/50 rounded-tl-sm"
+                      }`}>
+                        {msg.role === "assistant" ? renderAssistantContent(msg.content) : <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>}
+                      </div>
+                    </div>
+                  ))}
+                  {isLoading && messages[messages.length - 1]?.role === "user" && (
+                    <div className="flex gap-2 justify-start">
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center flex-shrink-0 mt-1">
+                        <Sparkles className="w-3 h-3 text-white" />
+                      </div>
+                      <div className="bg-card border border-border/50 rounded-2xl rounded-tl-sm px-3.5 py-2.5">
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "150ms" }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+                          </div>
+                          <span className="text-[11px] text-muted-foreground">
+                            {language === "ar" ? "أفكر..." : language === "ku" ? "بیر دەکەمەوە..." : "Thinking..."}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+              <div ref={bottomRef} className="h-px" />
+            </div>
           </div>
 
-          {/* Input Area */}
-          <div className="flex-shrink-0 z-40">
+          {/* Input Area — fixed at bottom, no BottomNav overlap on mobile */}
+          <div className="flex-shrink-0 border-t border-border/30 bg-card/95 backdrop-blur-xl">
             {/* Mobile input */}
-            <div className="md:hidden px-3 pb-2" style={{ paddingBottom: `calc(68px + env(safe-area-inset-bottom, 0px))` }}>
-              <form onSubmit={handleSubmit} className="flex items-end gap-2 glass-heavy border border-border/30 rounded-2xl p-2 shadow-float">
+            <div className="md:hidden px-3 py-2" style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom, 8px))' }}>
+              <form onSubmit={handleSubmit} className="flex items-end gap-2 bg-secondary/50 rounded-2xl px-3 py-1.5">
                 <textarea ref={inputRef} value={input} onChange={handleTextareaChange} onKeyDown={handleKeyDown}
                   placeholder={placeholder}
                   rows={1}
-                  className="flex-1 bg-transparent text-foreground text-sm px-3 py-2 resize-none outline-none placeholder:text-muted-foreground max-h-24"
+                  className="flex-1 bg-transparent text-foreground text-[14px] py-2 resize-none outline-none placeholder:text-muted-foreground/60 max-h-24 leading-snug"
                   style={{ minHeight: "36px" }}
                 />
-                <button type="submit" disabled={!input.trim() || isLoading} className="flex-shrink-0 w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-40 transition-opacity active:scale-95">
-                  <Send className="w-4 h-4" />
+                <button type="submit" disabled={!input.trim() || isLoading} className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-30 transition-all active:scale-90 mb-0.5">
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                 </button>
               </form>
             </div>
 
             {/* Desktop input */}
-            <div className="hidden md:block px-8 pb-6 pt-2 border-t border-border bg-background">
-              <form onSubmit={handleSubmit} className="flex items-end gap-3 bg-card border border-border rounded-2xl p-3 shadow-sm max-w-3xl mx-auto">
+            <div className="hidden md:block px-8 py-4">
+              <form onSubmit={handleSubmit} className="flex items-end gap-3 bg-secondary/40 border border-border/50 rounded-2xl px-4 py-2 max-w-3xl mx-auto">
                 <textarea ref={inputRef} value={input} onChange={handleTextareaChange} onKeyDown={handleKeyDown}
                   placeholder={placeholder}
                   rows={1}
-                  className="flex-1 bg-transparent text-foreground text-sm px-3 py-2 resize-none outline-none placeholder:text-muted-foreground max-h-32"
+                  className="flex-1 bg-transparent text-foreground text-sm py-2 resize-none outline-none placeholder:text-muted-foreground/60 max-h-32"
                   style={{ minHeight: "40px" }}
                 />
-                <button type="submit" disabled={!input.trim() || isLoading} className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-40 transition-opacity hover:opacity-90">
-                  <Send className="w-4 h-4" />
+                <button type="submit" disabled={!input.trim() || isLoading} className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-30 transition-opacity hover:opacity-90">
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
               </form>
             </div>
           </div>
         </div>
       </div>
-
-      <BottomNav />
     </div>
   );
 };
