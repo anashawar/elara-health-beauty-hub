@@ -221,15 +221,23 @@ input, textarea, select {
   scroll-snap-align: start;
 }
 
-/* Prevent text selection on interactive elements */
-button, a, nav, [role="button"] {
+/* Prevent text selection on interactive elements & eliminate 300ms tap delay */
+button, a, nav, [role="button"], input, textarea, select, label {
   -webkit-user-select: none;
   user-select: none;
+  touch-action: manipulation;
+}
+
+/* Allow text selection in text inputs */
+input[type="text"], input[type="email"], input[type="tel"], input[type="password"],
+input[type="search"], input[type="url"], input[type="number"], textarea {
+  -webkit-user-select: auto;
+  user-select: auto;
 }
 
 /* iOS-style active press — universal for all interactive elements */
 .press-scale {
-  transition: transform 120ms ease-out;
+  transition: transform 80ms ease-out;
 }
 .press-scale:active {
   transform: scale(0.97);
@@ -245,11 +253,10 @@ button, a, nav, [role="button"] {
 
 /* Native-feel touch feedback for list items */
 .touch-item {
-  transition: background-color 80ms ease-out, transform 120ms ease-out;
+  transition: background-color 60ms ease-out;
 }
 .touch-item:active {
   background-color: hsl(var(--secondary));
-  transform: scale(0.985);
 }
 
 /* Smooth page transitions */

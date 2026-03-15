@@ -28,7 +28,7 @@ const BottomNav = () => {
                 <Link
                   key={path}
                   to={path}
-                  className="relative flex flex-col items-center gap-0.5 px-4 py-2 active:scale-90 transition-transform duration-150"
+                  className="relative flex flex-col items-center gap-0.5 px-4 py-2 active:opacity-70 transition-opacity duration-100"
                 >
                   <div className="relative">
                     {isActive && (
