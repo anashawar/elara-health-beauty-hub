@@ -1,14 +1,21 @@
 import { useBrands } from "@/hooks/useProducts";
-import { Crown } from "lucide-react";
+import { Crown, ChevronDown, ChevronUp } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useState } from "react";
+
+const DESKTOP_INITIAL = 10;
 
 const BrandsSection = () => {
   const { data: brands = [] } = useBrands();
   const { t } = useLanguage();
+  const [showAll, setShowAll] = useState(false);
 
   if (brands.length === 0) return null;
+
+  const desktopBrands = showAll ? brands : brands.slice(0, DESKTOP_INITIAL);
+  const hasMore = brands.length > DESKTOP_INITIAL;
 
   return (
     <section className="px-4 mt-8">
@@ -24,7 +31,7 @@ const BrandsSection = () => {
         </div>
       </div>
 
-      {/* Mobile: horizontal scroll, Desktop: grid */}
+      {/* Mobile: horizontal scroll */}
       <div className="flex gap-4 overflow-x-auto no-scrollbar pb-3 md:hidden">
         {brands.map((brand, idx) => (
           <motion.div
@@ -44,8 +51,9 @@ const BrandsSection = () => {
         ))}
       </div>
 
+      {/* Desktop: paginated grid */}
       <div className="hidden md:grid md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-4">
-        {brands.map((brand, idx) => (
+        {desktopBrands.map((brand, idx) => (
           <motion.div
             key={brand.id}
             initial={{ opacity: 0, y: 12 }}
@@ -62,6 +70,22 @@ const BrandsSection = () => {
           </motion.div>
         ))}
       </div>
+
+      {/* Show more / less toggle — desktop only */}
+      {hasMore && (
+        <div className="hidden md:flex justify-center mt-4">
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold text-primary bg-primary/8 rounded-xl hover:bg-primary/15 transition-colors"
+          >
+            {showAll ? (
+              <>Show Less <ChevronUp className="w-4 h-4" /></>
+            ) : (
+              <>View All Brands ({brands.length}) <ChevronDown className="w-4 h-4" /></>
+            )}
+          </button>
+        </div>
+      )}
     </section>
   );
 };
