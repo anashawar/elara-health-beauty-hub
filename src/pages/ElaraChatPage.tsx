@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingCart, Plus, MessageCircle, Sun, CloudRain, Heart, Dumbbell } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingCart, Plus, MessageCircle, Sun, CloudRain, Heart, Dumbbell, Cloud, Droplets, Calendar, Lightbulb } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import BottomNav from "@/components/layout/BottomNav";
@@ -313,6 +313,23 @@ const ElaraChatPage = () => {
   const contextualTips = useMemo(() => getContextualTips(language, isKurdistan, userGender), [language, isKurdistan, userGender]);
   const placeholder = useMemo(() => getPlaceholder(language, userGender), [language, userGender]);
   const tryAskingLabel = useMemo(() => getTryAskingLabel(language, userGender), [language, userGender]);
+
+  // Fetch daily brief (weather, events, tips)
+  const BRIEF_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/daily-brief`;
+  const { data: dailyBrief } = useQuery({
+    queryKey: ["daily-brief", userCity, language, userGender, isKurdistan],
+    queryFn: async () => {
+      const resp = await fetch(BRIEF_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ city: userCity, language, gender: userGender, is_kurdistan: isKurdistan }),
+      });
+      if (!resp.ok) return null;
+      return resp.json();
+    },
+    staleTime: 30 * 60 * 1000, // 30 min
+    refetchOnWindowFocus: false,
+  });
 
   const { data: conversations = [] } = useQuery({
     queryKey: ["chat-conversations", user?.id],
@@ -717,6 +734,67 @@ const ElaraChatPage = () => {
                   >
                     {greeting.subtitle}
                   </motion.p>
+
+                  {/* Daily Brief — weather, events, tip */}
+                  {dailyBrief && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25 }}
+                      className="w-full max-w-sm space-y-2 mb-4"
+                    >
+                      {/* Date & Weather card */}
+                      {dailyBrief.weather && (
+                        <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-secondary/50 border border-primary/15 p-3.5 backdrop-blur-sm">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5" />
+                              {dailyBrief.date}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-3xl">{dailyBrief.weather.icon}</span>
+                            <div className="flex-1">
+                              <p className="text-lg font-bold text-foreground">{dailyBrief.weather.temp}</p>
+                              <p className="text-[11px] text-muted-foreground">{dailyBrief.weather.condition} · {dailyBrief.city}</p>
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground bg-secondary/60 rounded-lg px-2 py-1">
+                              <Droplets className="w-3 h-3" />
+                              {dailyBrief.weather.humidity}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Daily skincare tip */}
+                      {dailyBrief.tip && (
+                        <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-card border border-border/40 text-left rtl:text-right">
+                          <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center mt-0.5">
+                            <Lightbulb className="w-4 h-4 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">{dailyBrief.tip.label}</p>
+                            <p className="text-[11px] text-muted-foreground leading-snug">{dailyBrief.tip.text}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Events */}
+                      {dailyBrief.events && dailyBrief.events.items.length > 0 && (
+                        <div className="px-3 py-2.5 rounded-xl bg-card border border-border/40 text-left rtl:text-right">
+                          <p className="text-[10px] font-bold text-accent-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-primary" />
+                            {dailyBrief.events.label}
+                          </p>
+                          <div className="space-y-1">
+                            {dailyBrief.events.items.map((event: string, i: number) => (
+                              <p key={i} className="text-[11px] text-muted-foreground leading-snug">{event}</p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
 
                   {/* Contextual tips — compact cards */}
                   <motion.div 
