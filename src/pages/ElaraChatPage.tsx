@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingCart, Plus, MessageCircle, Sun, CloudRain, Heart, Dumbbell } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingCart, Plus, MessageCircle, Sun, CloudRain, Heart, Dumbbell, Cloud, Droplets, Calendar, Lightbulb } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import BottomNav from "@/components/layout/BottomNav";
