@@ -343,6 +343,7 @@ export const en = {
     noProductsFound: "No products found",
     clearAllFilters: "Clear all filters",
     viewAll: "View All",
+    productsFor: "Products for",
   },
   search: {
     recommendedForYou: "Recommended for You",

@@ -343,6 +343,7 @@ export const ar = {
     noProductsFound: "ما كو منتجات",
     clearAllFilters: "امسح كل الفلاتر",
     viewAll: "شوف الكل",
+    productsFor: "منتجات لـ",
   },
   search: {
     recommendedForYou: "نرشحلك",

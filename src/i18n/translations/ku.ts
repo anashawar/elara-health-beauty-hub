@@ -343,6 +343,7 @@ export const ku = {
     noProductsFound: "هیچ بەرهەمێک نەدۆزرایەوە",
     clearAllFilters: "هەموو فلتەرەکان بسڕەوە",
     viewAll: "هەموویان ببینە",
+    productsFor: "بەرهەمەکان بۆ",
   },
   search: {
     recommendedForYou: "پێشنیارکراو بۆ تۆ",

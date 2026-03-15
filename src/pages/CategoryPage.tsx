@@ -153,7 +153,7 @@ const CategoryPage = () => {
                 {activeConcern.icon}
               </div>
               <div>
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Products for</p>
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{t("categories.productsFor")}</p>
                 <h1 className="text-xl font-display font-bold text-foreground -mt-0.5">
                   {t(`concerns.${id === "dryskin" ? "drySkin" : id === "hairloss" ? "hairLoss" : id === "sensitive" ? "sensitiveSkin" : id === "weightloss" ? "weightLoss" : id}`) || activeConcern.name}
                 </h1>
