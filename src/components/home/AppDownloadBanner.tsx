@@ -79,7 +79,7 @@ const AppDownloadBanner = ({ compact = false }: AppDownloadBannerProps) => {
               Download ELARA App
             </h2>
             <p className="text-lg text-white/50 mt-2 max-w-md">
-              {t("app.getDiscountLong") || "Get 15% OFF on your first order! Shop smarter with AI-powered recommendations, exclusive deals, and faster checkout."}
+              Get 15% OFF on your first order! Shop smarter with AI-powered recommendations, exclusive deals, and faster checkout.
             </p>
 
             <div className="flex items-center gap-4 mt-6">
