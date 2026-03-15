@@ -8,7 +8,7 @@ import bannerFastDelivery from "@/assets/banner-fast-delivery.jpg";
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useApp } from "@/context/AppContext";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface HeroBannerItem {
@@ -33,7 +33,6 @@ const HeroBanner = () => {
   const { t } = useLanguage();
   const { setPendingCoupon } = useApp();
   const navigate = useNavigate();
-  const qc = useQueryClient();
 
   const { data: heroOffers = [] } = useQuery({
     queryKey: ["active-offers-hero"],
@@ -54,15 +53,8 @@ const HeroBanner = () => {
     },
   });
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('hero-offers-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, () => {
-        qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [qc]);
+  // Removed realtime subscription — offers don't change frequently enough to justify
+  // a persistent WebSocket connection. The 5-min staleTime handles freshness.
 
   const staticBanners: HeroBannerItem[] = [
     {
@@ -200,6 +192,8 @@ const HeroBanner = () => {
                 alt=""
                 className="absolute inset-0 w-full h-full object-cover"
                 draggable={false}
+                loading="lazy"
+                decoding="async"
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-primary/60" />
