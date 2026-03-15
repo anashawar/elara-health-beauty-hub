@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Search, X, ArrowRight, SlidersHorizontal, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useProducts, useCategories, useBrands, formatPrice, concerns } from "@/hooks/useProducts";
+import { useProducts, useCategories, useBrands, useFormatPrice, concerns } from "@/hooks/useProducts";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 

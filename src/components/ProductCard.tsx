@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/hooks/useAuth";
 import type { ProductWithRelations } from "@/hooks/useProducts";
-import { formatPrice } from "@/hooks/useProducts";
+import { useFormatPrice } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 import { toast } from "@/components/ui/sonner";

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/components/ui/sonner";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/hooks/useAuth";
-import { useProducts, useBrands, formatPrice } from "@/hooks/useProducts";
+import { useProducts, useBrands, useFormatPrice } from "@/hooks/useProducts";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 import { Share } from "@capacitor/share";
 import { Capacitor } from "@capacitor/core";

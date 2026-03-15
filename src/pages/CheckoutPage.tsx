@@ -5,7 +5,7 @@ import qiLogo from "@/assets/qi-logo.svg";
 import { ArrowLeft, Check, MapPin, ChevronDown, Sparkles, PartyPopper } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useApp } from "@/context/AppContext";
-import { formatPrice } from "@/hooks/useProducts";
+import { useFormatPrice } from "@/hooks/useProducts";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/layout/BottomNav";

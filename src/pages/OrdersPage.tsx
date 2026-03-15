@@ -4,7 +4,7 @@ import { ArrowLeft, Package } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { formatPrice } from "@/hooks/useProducts";
+import { useFormatPrice } from "@/hooks/useProducts";
 import BottomNav from "@/components/layout/BottomNav";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import SearchOverlay from "@/components/SearchOverlay";
