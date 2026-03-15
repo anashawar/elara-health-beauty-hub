@@ -276,7 +276,7 @@ const CheckoutPage = () => {
             disabled={!selectedAddress && !!user}
             className="w-full bg-primary text-primary-foreground font-semibold py-4 rounded-2xl hover:opacity-90 transition-opacity text-sm disabled:opacity-50 shadow-float"
           >
-            {t("checkout.placeOrder")} — {formatPrice(cartTotal + deliveryFee)}
+            {t("checkout.placeOrder")}
           </motion.button>
         </div>
       </form>
