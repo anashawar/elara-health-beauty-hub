@@ -13,7 +13,7 @@ const BottomNav = () => {
     { icon: Home, label: t("nav.home"), path: "/home" },
     { icon: LayoutGrid, label: t("nav.categories"), path: "/categories" },
     { icon: Sparkles, label: "ELARA AI", path: "/elara-ai", isAI: true },
-    { icon: Heart, label: t("nav.fav"), path: "/wishlist" },
+    { icon: ShoppingBag, label: t("nav.cart"), path: "/cart" },
     { icon: UserRound, label: t("nav.me"), path: "/profile" },
   ];
 
