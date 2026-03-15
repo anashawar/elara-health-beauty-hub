@@ -13,6 +13,7 @@ import AuthGuard from "./components/AuthGuard";
 // Eagerly loaded — critical path
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
+import ResponsiveHome from "./components/ResponsiveHome";
 
 // Lazy loaded — secondary pages
 const CollectionPage = lazy(() => import("./pages/CollectionPage"));
