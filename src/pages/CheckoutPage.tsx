@@ -431,6 +431,17 @@ const CheckoutPage = () => {
                 <span className="font-bold text-foreground text-lg">{formatPrice(finalTotal)}</span>
               </div>
             </div>
+
+            {/* Points preview */}
+            {calculatePoints(finalTotal) > 0 && (
+              <div className="border-t border-border pt-2 flex items-center justify-between">
+                <span className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
+                  <Star className="w-3.5 h-3.5 fill-current" />
+                  {t("rewards.youEarned")}
+                </span>
+                <span className="text-xs font-bold text-amber-600 dark:text-amber-400">+{calculatePoints(finalTotal)} pts</span>
+              </div>
+            )}
           </div>
         </div>
 
