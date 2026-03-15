@@ -141,7 +141,7 @@ const DesktopHeader = ({ onSearchClick }: DesktopHeaderProps) => {
                 </div>
                 <div className="text-left rtl:text-right">
                   <p className="text-xs font-semibold text-foreground leading-tight">{firstName}</p>
-                  <p className="text-[10px] text-muted-foreground leading-tight">{t("profile.myAccount") || "My Account"}</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">My Account</p>
                 </div>
               </Link>
             ) : (
