@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import fibLogo from "@/assets/fib-logo.png";
 import qiLogo from "@/assets/qi-logo.svg";
-import { ArrowLeft, Check, MapPin, ChevronDown, Sparkles, PartyPopper } from "lucide-react";
+import { ArrowLeft, Check, MapPin, ChevronDown, Sparkles, PartyPopper, Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useApp } from "@/context/AppContext";
 import { useFormatPrice } from "@/hooks/useProducts";
@@ -13,6 +13,7 @@ import DesktopHeader from "@/components/layout/DesktopHeader";
 import SearchOverlay from "@/components/SearchOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { calculatePoints, useAwardPoints } from "@/hooks/useLoyalty";
 
 const FIRST_ORDER_DISCOUNT_PERCENT = 15;
 const FIRST_ORDER_MIN_AMOUNT = 20000;
@@ -23,11 +24,13 @@ const CheckoutPage = () => {
   const { t, language } = useLanguage();
   const formatPrice = useFormatPrice();
   const [submitted, setSubmitted] = useState(false);
+  const [earnedPoints, setEarnedPoints] = useState(0);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [searchOpen, setSearchOpen] = useState(false);
+  const awardPoints = useAwardPoints();
   const deliveryFee = cartTotal >= 40000 ? 0 : 5000;
 
   // Check if user has any previous orders (for first-order discount)
@@ -111,6 +114,22 @@ const CheckoutPage = () => {
           price: item.product.price,
         }));
         await supabase.from("order_items").insert(items);
+
+        // Award loyalty points (1 point per 1,000 IQD)
+        const orderTotal = cartTotal - confirmedDiscount + deliveryFee;
+        const pts = calculatePoints(orderTotal);
+        if (pts > 0) {
+          setEarnedPoints(pts);
+          try {
+            await awardPoints.mutateAsync({
+              points: pts,
+              description: t("rewards.orderReward"),
+              referenceId: order.id,
+            });
+          } catch (e) {
+            console.error("Failed to award points:", e);
+          }
+        }
       }
     }
 
@@ -130,7 +149,28 @@ const CheckoutPage = () => {
           <Check className="w-10 h-10 text-sage" />
         </motion.div>
         <h2 className="text-2xl font-display font-bold text-foreground mb-2">{t("checkout.orderPlaced")}</h2>
-        <p className="text-sm text-muted-foreground text-center mb-6">{t("checkout.orderPlacedDesc")}</p>
+        <p className="text-sm text-muted-foreground text-center mb-4">{t("checkout.orderPlacedDesc")}</p>
+
+        {/* Points earned celebration */}
+        {earnedPoints > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="w-full max-w-xs bg-gradient-to-r from-amber-500/10 to-primary/10 rounded-2xl p-4 border border-amber-500/20 mb-6 text-center"
+          >
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+              <span className="text-sm font-display font-bold text-foreground">{t("rewards.youEarned")}</span>
+            </div>
+            <p className="text-3xl font-display font-black text-primary">{earnedPoints}</p>
+            <p className="text-xs text-muted-foreground">{t("rewards.pointsEarned")}</p>
+            <Link to="/rewards" className="inline-block mt-2 text-xs font-semibold text-primary hover:underline">
+              {t("rewards.title")} →
+            </Link>
+          </motion.div>
+        )}
+
         <div className="flex flex-col gap-3 w-full max-w-xs">
           <Link to="/orders" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-2xl text-sm text-center">
             {t("profile.myOrders")}
@@ -391,6 +431,17 @@ const CheckoutPage = () => {
                 <span className="font-bold text-foreground text-lg">{formatPrice(finalTotal)}</span>
               </div>
             </div>
+
+            {/* Points preview */}
+            {calculatePoints(finalTotal) > 0 && (
+              <div className="border-t border-border pt-2 flex items-center justify-between">
+                <span className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
+                  <Star className="w-3.5 h-3.5 fill-current" />
+                  {t("rewards.youEarned")}
+                </span>
+                <span className="text-xs font-bold text-amber-600 dark:text-amber-400">+{calculatePoints(finalTotal)} pts</span>
+              </div>
+            )}
           </div>
         </div>
 
