@@ -20,8 +20,8 @@ const AppDownloadBanner = ({ compact = false }: AppDownloadBannerProps) => {
               <Smartphone className="w-7 h-7 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-white">{t("app.downloadElara") || "Download ELARA App"}</p>
-              <p className="text-xs text-white/60 mt-0.5">{t("app.getDiscount") || "Get 15% OFF on your first order!"}</p>
+              <p className="text-sm font-bold text-white">Download ELARA App</p>
+              <p className="text-xs text-white/60 mt-0.5">Get 15% OFF on your first order!</p>
             </div>
             <div className="flex items-center gap-3">
               <a href="#" className="flex items-center gap-2 px-4 py-2.5 bg-black rounded-xl hover:bg-black/80 transition-colors">
