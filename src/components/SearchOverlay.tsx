@@ -97,8 +97,8 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
             <div className="space-y-6">
               <div>
                 <div className="flex items-center gap-1.5 mb-3"><Sparkles className="w-3.5 h-3.5 text-primary" /><p className="text-xs font-bold text-foreground uppercase tracking-wider">{t("search.recommendedForYou")}</p></div>
-                <div className="grid grid-cols-2 gap-2">
-                  {SMART_SUGGESTIONS.map(s => (<button key={s.query} onClick={() => setQuery(s.query)} className="flex items-center gap-2 px-3 py-2.5 bg-card rounded-xl border border-border/50 hover:border-primary/30 transition-all text-left rtl:text-right"><span className="text-base">{s.icon}</span><span className="text-xs font-medium text-foreground leading-tight">{s.label}</span></button>))}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {SMART_SUGGESTIONS.map(s => (<button key={s.query} onClick={() => setQuery(s.query)} className="flex items-center gap-2 px-3 py-2.5 bg-card md:bg-secondary/50 rounded-xl border border-border/50 hover:border-primary/30 transition-all text-left rtl:text-right"><span className="text-base">{s.icon}</span><span className="text-xs font-medium text-foreground leading-tight">{s.label}</span></button>))}
                 </div>
               </div>
               <div>
@@ -107,8 +107,8 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
               </div>
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">{t("search.browseCategories")}</p>
-                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                  {categories.slice(0, 6).map(cat => (<Link key={cat.id} to={`/category/${cat.slug}`} onClick={onClose} className="flex-shrink-0 flex flex-col items-center gap-1.5 w-16"><span className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-xl">{cat.icon}</span><span className="text-[10px] font-medium text-foreground text-center leading-tight">{cat.name}</span></Link>))}
+                <div className="flex gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1">
+                  {categories.slice(0, 8).map(cat => (<Link key={cat.id} to={`/category/${cat.slug}`} onClick={onClose} className="flex-shrink-0 flex flex-col items-center gap-1.5 w-16 md:w-20"><span className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-secondary flex items-center justify-center text-xl md:text-2xl">{cat.icon}</span><span className="text-[10px] md:text-xs font-medium text-foreground text-center leading-tight">{cat.name}</span></Link>))}
                 </div>
               </div>
             </div>
