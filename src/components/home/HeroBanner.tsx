@@ -209,7 +209,7 @@ const HeroBanner = () => {
               <h2 className="text-[18px] md:text-[34px] font-display font-bold text-white leading-[1.15] tracking-tight">
                 {banner.title}
               </h2>
-              <p className="text-[10px] md:text-[14px] text-white/75 mt-1 leading-relaxed max-w-[260px] md:max-w-[320px] line-clamp-2">
+              <p className="text-[11px] md:text-[14px] text-white/75 mt-1 leading-relaxed line-clamp-3">
                 {banner.subtitle}
               </p>
 
