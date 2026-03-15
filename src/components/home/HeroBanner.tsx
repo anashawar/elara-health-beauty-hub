@@ -33,7 +33,6 @@ const HeroBanner = () => {
   const { t } = useLanguage();
   const { setPendingCoupon } = useApp();
   const navigate = useNavigate();
-  const qc = useQueryClient();
 
   const { data: heroOffers = [] } = useQuery({
     queryKey: ["active-offers-hero"],
