@@ -101,6 +101,7 @@ export const en = {
   },
   product: {
     addToCart: "Add to Cart",
+    addedToCart: "Added to cart!",
     add: "Add",
     details: "Details & How to Use",
     benefits: "Benefits",
