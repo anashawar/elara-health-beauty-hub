@@ -367,8 +367,8 @@ const ProductPage = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">ELARA AI</p>
-                    <p className="text-sm font-bold text-white leading-tight">{t("product.askAI") || "Ask AI about this product"}</p>
-                    <p className="text-[11px] text-white/60 mt-0.5">{t("product.askAIDesc") || "Ingredients, usage tips, skin compatibility & more"}</p>
+                    <p className="text-sm font-bold text-white leading-tight">Have a question about this product?</p>
+                    <p className="text-[11px] text-white/60 mt-0.5">Get expert advice on ingredients, how to use it, and if it's right for you</p>
                   </div>
                   <motion.div
                     animate={{ x: [0, 4, 0] }}
