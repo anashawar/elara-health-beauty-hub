@@ -69,12 +69,12 @@ const DesktopHeader = ({ onSearchClick }: DesktopHeaderProps) => {
             {user && userCity && (
               <Link to="/addresses" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
                 <MapPin className="w-3 h-3 text-primary" />
-                <span>{t("common.deliverTo")} <strong className="text-foreground">{userCity}</strong></span>
+                <span>Deliver to <strong className="text-foreground">{userCity}</strong></span>
               </Link>
             )}
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Smartphone className="w-3 h-3" />
-              <span>{t("common.downloadApp") || "Download the App"} — <strong className="text-primary">15% OFF</strong></span>
+              <span>Download the App — <strong className="text-primary">15% OFF</strong></span>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -141,7 +141,7 @@ const DesktopHeader = ({ onSearchClick }: DesktopHeaderProps) => {
                 </div>
                 <div className="text-left rtl:text-right">
                   <p className="text-xs font-semibold text-foreground leading-tight">{firstName}</p>
-                  <p className="text-[10px] text-muted-foreground leading-tight">{t("profile.myAccount") || "My Account"}</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">My Account</p>
                 </div>
               </Link>
             ) : (
