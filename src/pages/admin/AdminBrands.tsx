@@ -173,7 +173,7 @@ export default function AdminBrands() {
           </Button>
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setForm(emptyForm); setEditing(false); } }}>
             <DialogTrigger asChild><Button size="sm" className="rounded-xl"><Plus className="h-4 w-4 mr-1.5" />Add</Button></DialogTrigger>
-            <DialogContent className="max-w-sm">
+            <DialogContent className="max-w-sm" onCloseAutoFocus={(e) => e.preventDefault()}>
               <DialogHeader><DialogTitle>{editing ? "Edit Brand" : "Add Brand"}</DialogTitle></DialogHeader>
               <div className="grid gap-3 mt-2">
                 <div><Label>Name *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
