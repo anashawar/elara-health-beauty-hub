@@ -239,7 +239,7 @@ export default function AdminBrands() {
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          {brands.map((b: any) => (
+          {filtered.map((b: any) => (
             <div
               key={b.id}
               className={`bg-card rounded-2xl border p-4 flex flex-col items-center hover:shadow-premium transition-all group cursor-pointer ${
