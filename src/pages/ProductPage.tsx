@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, Share2, ShoppingBag, Search, Truck, ShieldCheck, BadgeCheck, X, Star, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import SearchOverlay from "@/components/SearchOverlay";
@@ -15,6 +15,7 @@ import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
 import ReviewSection from "@/components/product/ReviewSection";
 import { useLanguage } from "@/i18n/LanguageContext";
+const AppDownloadBanner = lazy(() => import("@/components/home/AppDownloadBanner"));
 
 const PUBLISHED_URL = "https://elara-health-beauty-hub.lovable.app";
 
@@ -133,7 +134,7 @@ const ProductPage = () => {
         </div>
       </header>
 
-      <div className="app-container">
+      <div className="app-container md:max-w-7xl md:mx-auto">
         {/* Desktop breadcrumb */}
         <div className="hidden md:flex items-center gap-2 px-6 pt-4 pb-2 text-sm">
           <Link to="/home" className="text-muted-foreground hover:text-foreground transition-colors">{t("nav.home")}</Link>
@@ -389,6 +390,13 @@ const ProductPage = () => {
                 </div>
               </div>
             )}
+
+            {/* Desktop: App Download Banner */}
+            <div className="mt-8">
+              <Suspense fallback={null}>
+                <AppDownloadBanner compact />
+              </Suspense>
+            </div>
           </motion.div>
         </div>
       </div>

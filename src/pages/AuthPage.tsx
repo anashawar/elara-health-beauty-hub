@@ -199,7 +199,8 @@ const AuthPage = () => {
   const isSignUp = authMode === "signup";
 
   return (
-    <div className="min-h-screen bg-background max-w-lg mx-auto flex flex-col">
+    <div className="min-h-screen bg-background md:flex md:items-center md:justify-center">
+      <div className="w-full max-w-lg mx-auto md:bg-card md:rounded-3xl md:shadow-premium-lg md:border md:border-border/50 md:my-8 flex flex-col">
       {/* Logo + top spacing */}
       <div className="safe-area-top" />
       <div className="flex flex-col items-center pt-10 pb-2 px-5">
@@ -707,6 +708,7 @@ const AuthPage = () => {
         initialLat={gpsLat}
         initialLng={gpsLng}
       />
+      </div>
     </div>
   );
 };

@@ -20,23 +20,14 @@ function productMatchesConcern(
   product: { condition?: string | null; tags: string[]; description: string; title: string; benefits: string[] },
   concern: typeof allConcerns[0]
 ): boolean {
-  // Direct match via condition field
   if (product.condition) {
     const conditions = product.condition.split(",").map(s => s.trim().toLowerCase());
     if (conditions.includes(concern.id)) return true;
   }
-  // Direct match via tags
   if (product.tags.some(t => t.toLowerCase().includes(concern.id.replace("dryskin", "dry skin").replace("hairloss", "hair loss").replace("weightloss", "weight loss")))) {
     return true;
   }
-  // Auto-detect via keywords in title, description, benefits, tags
-  const searchText = [
-    product.title,
-    product.description,
-    ...product.benefits,
-    ...product.tags,
-  ].join(" ").toLowerCase();
-
+  const searchText = [product.title, product.description, ...product.benefits, ...product.tags].join(" ").toLowerCase();
   return concern.keywords.some(kw => searchText.includes(kw));
 }
 
@@ -45,7 +36,7 @@ const ConcernsSection = () => {
   const { data: products = [] } = useProducts();
 
   const activeConcerns = useMemo(() => {
-    if (products.length === 0) return allConcerns; // Show all while loading
+    if (products.length === 0) return allConcerns;
     return allConcerns
       .map(concern => ({
         ...concern,
@@ -69,7 +60,8 @@ const ConcernsSection = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5">
+      {/* Mobile: 2 cols, Desktop: 4 cols */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
         {activeConcerns.map((c, idx) => (
           <motion.div
             key={c.id}
@@ -79,15 +71,15 @@ const ConcernsSection = () => {
           >
             <Link
               to={`/concern/${c.id}`}
-              className="flex items-center gap-3 p-3.5 bg-card rounded-2xl border border-border/50 shadow-sm hover:shadow-premium hover:border-primary/30 transition-all duration-200 group"
+              className="flex items-center gap-3 p-3.5 md:p-4 bg-card rounded-2xl border border-border/50 shadow-sm hover:shadow-premium hover:border-primary/30 transition-all duration-200 group"
             >
-              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${c.gradient} flex items-center justify-center shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform duration-200`}>
+              <div className={`w-11 h-11 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${c.gradient} flex items-center justify-center shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform duration-200`}>
                 <span className="text-xl drop-shadow-sm">{c.icon}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-[13px] font-bold text-foreground leading-tight">{t(c.key)}</span>
+                <span className="text-[13px] md:text-sm font-bold text-foreground leading-tight">{t(c.key)}</span>
                 {"count" in c && (
-                  <span className="text-[10px] text-muted-foreground">{(c as any).count} {t("common.products")}</span>
+                  <span className="text-[10px] md:text-xs text-muted-foreground">{(c as any).count} {t("common.products")}</span>
                 )}
               </div>
             </Link>

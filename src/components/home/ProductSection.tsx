@@ -25,7 +25,6 @@ const ProductSection = ({ title, subtitle, products, viewAllLink, horizontal = t
       <section className="mt-8">
         {/* Glassmorphic trending header */}
         <div className="mx-4 rounded-t-3xl bg-gradient-to-r from-primary via-primary/85 to-violet-600 px-5 pt-5 pb-4 relative overflow-hidden">
-          {/* Mesh decoration */}
           <div className="absolute inset-0 opacity-30" style={{
             background: 'radial-gradient(circle at 90% 30%, hsl(352 42% 55% / 0.4) 0%, transparent 40%)'
           }} />
@@ -52,9 +51,15 @@ const ProductSection = ({ title, subtitle, products, viewAllLink, horizontal = t
         </div>
 
         <div className="mx-4 rounded-b-3xl bg-gradient-to-b from-primary/6 to-transparent pb-2">
-        <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth-x px-4 py-4">
+          {/* Mobile: horizontal scroll, Desktop: grid */}
+          <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth-x px-4 py-4 md:hidden">
             {products.map(p => (
               <ProductCard key={p.id} product={p} variant="horizontal" />
+            ))}
+          </div>
+          <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 px-4 py-4">
+            {products.slice(0, 10).map(p => (
+              <ProductCard key={p.id} product={p} variant="vertical" />
             ))}
           </div>
         </div>
@@ -76,13 +81,22 @@ const ProductSection = ({ title, subtitle, products, viewAllLink, horizontal = t
         )}
       </div>
       {horizontal ? (
-        <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth-x px-4 pb-2">
-          {products.map(p => (
-            <ProductCard key={p.id} product={p} variant="horizontal" />
-          ))}
-        </div>
+        <>
+          {/* Mobile: horizontal scroll */}
+          <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth-x px-4 pb-2 md:hidden">
+            {products.map(p => (
+              <ProductCard key={p.id} product={p} variant="horizontal" />
+            ))}
+          </div>
+          {/* Desktop: grid */}
+          <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 px-4">
+            {products.slice(0, 10).map(p => (
+              <ProductCard key={p.id} product={p} variant="vertical" />
+            ))}
+          </div>
+        </>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 px-4">
           {products.map(p => (
             <ProductCard key={p.id} product={p} variant="vertical" />
           ))}
