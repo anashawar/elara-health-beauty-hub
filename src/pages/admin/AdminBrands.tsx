@@ -15,6 +15,7 @@ const emptyForm: BrandForm = { name: "", slug: "", logo_url: "", country_of_orig
 export default function AdminBrands() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const [form, setForm] = useState<BrandForm>(emptyForm);
   const [editing, setEditing] = useState(false);
   const [findingLogos, setFindingLogos] = useState(false);
