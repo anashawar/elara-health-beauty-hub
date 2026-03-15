@@ -357,6 +357,7 @@ export const ar = {
     drySkinRelief: "ترطيب البشرة الجافة",
     koreanSkincare: "عناية كورية بالبشرة",
     underBudget: "بأقل من 15,000 د.ع",
+    askElaraAI: "اسأل إيلارا AI بدلاً من ذلك",
   },
   install: {
     title: "نزّل إيلارا",
