@@ -606,7 +606,7 @@ export default function AdminProducts() {
     
     // Filter out products that already have images
     const productsWithImages = new Set(
-      (allProducts || [])
+      (products || [])
         .filter((p: any) => p.product_images && p.product_images.length > 0)
         .map((p: any) => p.id)
     );
