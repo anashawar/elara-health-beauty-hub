@@ -193,6 +193,8 @@ const HeroBanner = () => {
                 alt=""
                 className="absolute inset-0 w-full h-full object-cover"
                 draggable={false}
+                loading="lazy"
+                decoding="async"
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-primary/60" />

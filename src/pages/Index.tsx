@@ -101,7 +101,7 @@ const Index = () => {
         </Suspense>
 
         {/* Full App Download Banner — Desktop only, before footer */}
-        <div className="px-4 mt-10">
+        <div className="hidden md:block px-4 mt-10">
           <Suspense fallback={null}>
             <AppDownloadBanner />
           </Suspense>
