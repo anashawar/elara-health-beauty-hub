@@ -628,9 +628,9 @@ export default function AdminProducts() {
     let totalSuccess = 0;
     let totalFail = 0;
 
-    for (let i = 0; i < ids.length; i += BATCH_SIZE) {
-      const batch = ids.slice(i, i + BATCH_SIZE);
-      setEnrichProgress({ done: i, total: ids.length, current: `Finding images batch ${Math.floor(i/BATCH_SIZE)+1}...` });
+    for (let i = 0; i < idsWithoutImages.length; i += BATCH_SIZE) {
+      const batch = idsWithoutImages.slice(i, i + BATCH_SIZE);
+      setEnrichProgress({ done: i, total: idsWithoutImages.length, current: `Finding images batch ${Math.floor(i/BATCH_SIZE)+1}...` });
 
       try {
         const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-product-images`, {
