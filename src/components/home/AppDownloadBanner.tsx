@@ -1,14 +1,12 @@
 import { Sparkles, Smartphone } from "lucide-react";
 import { motion } from "framer-motion";
 import elaraLogo from "@/assets/elara-logo.png";
-import { useLanguage } from "@/i18n/LanguageContext";
 
 interface AppDownloadBannerProps {
   compact?: boolean;
 }
 
 const AppDownloadBanner = ({ compact = false }: AppDownloadBannerProps) => {
-  const { t } = useLanguage();
 
   if (compact) {
     return (
@@ -22,8 +20,8 @@ const AppDownloadBanner = ({ compact = false }: AppDownloadBannerProps) => {
               <Smartphone className="w-7 h-7 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-white">{t("app.downloadElara") || "Download ELARA App"}</p>
-              <p className="text-xs text-white/60 mt-0.5">{t("app.getDiscount") || "Get 15% OFF on your first order!"}</p>
+              <p className="text-sm font-bold text-white">Download ELARA App</p>
+              <p className="text-xs text-white/60 mt-0.5">Get 15% OFF on your first order!</p>
             </div>
             <div className="flex items-center gap-3">
               <a href="#" className="flex items-center gap-2 px-4 py-2.5 bg-black rounded-xl hover:bg-black/80 transition-colors">
@@ -75,13 +73,13 @@ const AppDownloadBanner = ({ compact = false }: AppDownloadBannerProps) => {
           <div className="flex-1">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 text-primary text-xs font-bold mb-4">
               <Sparkles className="w-3.5 h-3.5" />
-              {t("app.exclusive") || "EXCLUSIVE OFFER"}
+              EXCLUSIVE OFFER
             </div>
             <h2 className="text-3xl font-display font-bold text-white leading-tight">
-              {t("app.downloadElara") || "Download ELARA App"}
+              Download ELARA App
             </h2>
             <p className="text-lg text-white/50 mt-2 max-w-md">
-              {t("app.getDiscountLong") || "Get 15% OFF on your first order! Shop smarter with AI-powered recommendations, exclusive deals, and faster checkout."}
+              Get 15% OFF on your first order! Shop smarter with AI-powered recommendations, exclusive deals, and faster checkout.
             </p>
 
             <div className="flex items-center gap-4 mt-6">
@@ -101,7 +99,7 @@ const AppDownloadBanner = ({ compact = false }: AppDownloadBannerProps) => {
               </a>
             </div>
 
-            <p className="text-xs text-white/30 mt-4">{t("app.useCode") || "Use code"} <span className="font-mono font-bold text-primary">ELARA15</span> {t("app.atCheckout") || "at checkout"}</p>
+            <p className="text-xs text-white/30 mt-4">Use code <span className="font-mono font-bold text-primary">ELARA15</span> at checkout</p>
           </div>
         </div>
       </div>
