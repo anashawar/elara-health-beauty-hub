@@ -10,13 +10,13 @@ import SearchOverlay from "@/components/SearchOverlay";
 import { useProducts } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-// Lazy load below-fold heavy sections
 const ProductSection = lazy(() => import("@/components/home/ProductSection"));
 const TodayOffersSlider = lazy(() => import("@/components/home/TodayOffersSlider"));
 const OffersBanner = lazy(() => import("@/components/home/OffersBanner"));
 const BrandsSection = lazy(() => import("@/components/home/BrandsSection"));
 const ConcernsSection = lazy(() => import("@/components/home/ConcernsSection"));
 const DealsBanner = lazy(() => import("@/components/home/DealsBanner"));
+const AppDownloadBanner = lazy(() => import("@/components/home/AppDownloadBanner"));
 
 const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -37,7 +37,9 @@ const Index = () => {
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       <HeroBanner />
-      <div className="app-container">
+
+      {/* Desktop: constrained width content */}
+      <div className="app-container md:max-w-7xl md:mx-auto">
         <CategoryGrid />
 
         <AskElaraCard />
@@ -61,6 +63,13 @@ const Index = () => {
           <OffersBanner />
         </Suspense>
 
+        {/* App Download Banner — Desktop only, after offers */}
+        <div className="px-4 mt-8">
+          <Suspense fallback={null}>
+            <AppDownloadBanner compact />
+          </Suspense>
+        </div>
+
         <Suspense fallback={null}>
           <BrandsSection />
         </Suspense>
@@ -83,9 +92,21 @@ const Index = () => {
           </Suspense>
         )}
 
-        {/* Footer */}
-        <footer className="mt-8 mb-4 px-4 text-center md:py-8 md:border-t md:border-border">
+        {/* Full App Download Banner — Desktop only, before footer */}
+        <div className="px-4 mt-10">
+          <Suspense fallback={null}>
+            <AppDownloadBanner />
+          </Suspense>
+        </div>
+
+        <footer className="mt-8 mb-4 px-4 text-center md:py-10 md:border-t md:border-border">
           <p className="text-xs text-muted-foreground">ELARA — {t("common.tagline")}</p>
+          <div className="hidden md:flex items-center justify-center gap-6 mt-4">
+            <a href="/about" className="text-xs text-muted-foreground hover:text-foreground transition-colors">{t("profile.aboutElara")}</a>
+            <a href="/faq" className="text-xs text-muted-foreground hover:text-foreground transition-colors">{t("profile.faq")}</a>
+            <a href="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">{t("profile.termsConditions")}</a>
+            <a href="/privacy" className="text-xs text-muted-foreground hover:text-foreground transition-colors">{t("profile.privacyPolicy")}</a>
+          </div>
         </footer>
       </div>
 
