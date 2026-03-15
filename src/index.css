@@ -285,3 +285,29 @@ input[type="search"], input[type="url"], input[type="number"], textarea {
   background: linear-gradient(to right, transparent, hsl(var(--background)));
   pointer-events: none;
 }
+
+/* GPU acceleration for scrollable containers */
+.overflow-x-auto,
+.overflow-y-auto {
+  will-change: scroll-position;
+  transform: translateZ(0);
+}
+
+/* Reduce paint on fixed/sticky elements */
+nav[class*="fixed"],
+header[class*="sticky"] {
+  will-change: transform;
+  transform: translateZ(0);
+  contain: layout style;
+}
+
+/* Optimize image rendering */
+img {
+  content-visibility: auto;
+}
+
+/* Faster transition defaults for interactive elements */
+button, a, [role="button"] {
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
