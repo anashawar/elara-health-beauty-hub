@@ -15,6 +15,7 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
   const { t } = useLanguage();
+  const formatPrice = useFormatPrice();
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [priceFilter, setPriceFilter] = useState<string | null>(null);

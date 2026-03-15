@@ -18,6 +18,7 @@ const ProductCard = memo(({ product, variant = "vertical" }: ProductCardProps) =
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const formatPrice = useFormatPrice();
   const { t } = useLanguage();
   const { data: activeOffers = [] } = useActiveOffers();
   const wishlisted = isInWishlist(product.id);

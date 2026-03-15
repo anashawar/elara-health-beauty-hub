@@ -14,6 +14,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 const OrdersPage = () => {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
+  const formatPrice = useFormatPrice();
   const [searchOpen, setSearchOpen] = useState(false);
   const qc = useQueryClient();
 

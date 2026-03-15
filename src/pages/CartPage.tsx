@@ -24,6 +24,7 @@ const CartPage = () => {
   const { cart, updateQuantity, removeFromCart, cartTotal, cartCount, clearCart, pendingCoupon, setPendingCoupon } = useApp();
   const { user } = useAuth();
   const { t } = useLanguage();
+  const formatPrice = useFormatPrice();
   const [coupon, setCoupon] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);

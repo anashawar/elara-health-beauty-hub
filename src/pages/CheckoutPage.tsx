@@ -21,6 +21,7 @@ const CheckoutPage = () => {
   const { cart, cartTotal, clearCart } = useApp();
   const { user } = useAuth();
   const { t, language } = useLanguage();
+  const formatPrice = useFormatPrice();
   const [submitted, setSubmitted] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
