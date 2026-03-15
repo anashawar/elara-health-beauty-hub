@@ -101,6 +101,7 @@ export const ku = {
   },
   product: {
     addToCart: "زیادی بکە بۆ سەبەتە",
+    addedToCart: "!زیادکرا بۆ سەبەتە",
     add: "زیادی بکە",
     details: "وردەکاری و چۆنیەتی بەکارهێنان",
     benefits: "سوودەکانی",

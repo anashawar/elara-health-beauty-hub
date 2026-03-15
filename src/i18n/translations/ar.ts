@@ -101,6 +101,7 @@ export const ar = {
   },
   product: {
     addToCart: "أضف للسلة",
+    addedToCart: "!تمت الإضافة للسلة",
     add: "أضف",
     details: "التفاصيل وطريقة الاستخدام",
     benefits: "الفوائد",
