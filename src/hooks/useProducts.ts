@@ -78,11 +78,18 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
           ? (p.usage_instructions_ku || p.usage_instructions || "")
           : (p.usage_instructions || "");
 
+    const localizedBrand =
+      language === "ar"
+        ? (p.brands?.name_ar || p.brands?.name || "")
+        : language === "ku"
+          ? (p.brands?.name_ku || p.brands?.name || "")
+          : (p.brands?.name || "");
+
     return {
       id: p.id,
       title: localizedTitle,
       slug: p.slug,
-      brand: p.brands?.name || "",
+      brand: localizedBrand,
       brand_id: p.brand_id,
       category_id: p.category_id,
       category_slug: p.categories?.slug || null,
