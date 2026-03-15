@@ -73,26 +73,26 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background" style={{ height: '100%', minHeight: '-webkit-fill-available' }}>
-      <div className="max-w-lg mx-auto flex flex-col h-full" style={{ height: '100%', minHeight: '-webkit-fill-available' }}>
-        <div className="border-b border-border flex-shrink-0 sticky top-0 z-10 bg-background" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-          <div className="flex items-center gap-3 px-4 py-3">
+    <div className="fixed inset-0 z-50 bg-background md:bg-background/80 md:backdrop-blur-sm" style={{ height: '100%', minHeight: '-webkit-fill-available' }}>
+      <div className="max-w-lg md:max-w-4xl mx-auto flex flex-col h-full md:h-auto md:max-h-[85vh] md:mt-8 md:rounded-2xl md:border md:border-border md:shadow-premium md:bg-card" style={{ height: '100%', minHeight: '-webkit-fill-available' }}>
+        <div className="border-b border-border flex-shrink-0 sticky top-0 z-10 bg-background md:bg-card md:rounded-t-2xl" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+          <div className="flex items-center gap-3 px-4 md:px-6 py-3 md:py-4">
             <Search className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-            <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} placeholder={t("common.searchFull")} className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none text-base" style={{ fontSize: '16px' }} />
+            <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} placeholder={t("common.searchFull")} className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none text-base md:text-lg" style={{ fontSize: '16px' }} />
             {(query || activeFilter || priceFilter) && (<button onClick={() => { setQuery(""); setActiveFilter(null); setPriceFilter(null); }} className="p-1"><X className="w-4 h-4 text-muted-foreground" /></button>)}
-            <button onClick={onClose} className="text-xs text-primary font-semibold">{t("common.cancel")}</button>
+            <button onClick={onClose} className="text-xs md:text-sm text-primary font-semibold md:px-3 md:py-1.5 md:rounded-lg md:hover:bg-primary/10 transition-colors">{t("common.cancel")}</button>
           </div>
-          <div className="px-4 pb-3 flex gap-2 overflow-x-auto no-scrollbar">
+          <div className="px-4 md:px-6 pb-3 flex gap-2 overflow-x-auto no-scrollbar">
             {[{ key: "under15k", label: "Under 15K" }, { key: "15k-30k", label: "15K–30K" }, { key: "30k-60k", label: "30K–60K" }, { key: "over60k", label: "60K+" }].map(pf => (
-              <button key={pf.key} onClick={() => setPriceFilter(prev => prev === pf.key ? null : pf.key)} className={`flex-shrink-0 text-[11px] px-3 py-1.5 rounded-lg font-medium transition-colors ${priceFilter === pf.key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>{pf.label}</button>
+              <button key={pf.key} onClick={() => setPriceFilter(prev => prev === pf.key ? null : pf.key)} className={`flex-shrink-0 text-[11px] md:text-xs px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors ${priceFilter === pf.key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-accent"}`}>{pf.label}</button>
             ))}
             {concerns.slice(0, 4).map(c => (
-              <button key={c.id} onClick={() => setActiveFilter(prev => prev === c.id ? null : c.id)} className={`flex-shrink-0 text-[11px] px-3 py-1.5 rounded-lg font-medium transition-colors ${activeFilter === c.id ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>{c.icon} {c.name}</button>
+              <button key={c.id} onClick={() => setActiveFilter(prev => prev === c.id ? null : c.id)} className={`flex-shrink-0 text-[11px] md:text-xs px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors ${activeFilter === c.id ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-accent"}`}>{c.icon} {c.name}</button>
             ))}
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4">
           {!isSearching && (
             <div className="space-y-6">
               <div>
