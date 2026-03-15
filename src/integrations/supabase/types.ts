@@ -117,6 +117,7 @@ export type Database = {
         Row: {
           country_of_origin: string | null
           created_at: string
+          featured: boolean
           id: string
           logo_url: string | null
           name: string
@@ -127,6 +128,7 @@ export type Database = {
         Insert: {
           country_of_origin?: string | null
           created_at?: string
+          featured?: boolean
           id?: string
           logo_url?: string | null
           name: string
@@ -137,6 +139,7 @@ export type Database = {
         Update: {
           country_of_origin?: string | null
           created_at?: string
+          featured?: boolean
           id?: string
           logo_url?: string | null
           name?: string
