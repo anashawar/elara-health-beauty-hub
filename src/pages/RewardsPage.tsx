@@ -48,11 +48,17 @@ const RewardsPage = () => {
       toast.error(t("rewards.notEnoughPoints"));
       return;
     }
+    if (reward.stock !== null && reward.stock !== undefined && reward.stock <= 0) {
+      toast.error(t("rewards.outOfStock") || "This reward is out of stock");
+      return;
+    }
+    const title = getRewardTitle(reward);
+    if (!confirm(`${t("rewards.confirmRedeem") || "Redeem"} "${title}" for ${reward.points_cost} points?`)) return;
     try {
-      await redeemMutation.mutateAsync({ rewardId: reward.id, pointsCost: reward.points_cost });
-      toast.success(t("rewards.redeemed"));
-    } catch {
-      toast.error(t("rewards.redeemFailed"));
+      await redeemMutation.mutateAsync({ rewardId: reward.id, pointsCost: reward.points_cost, rewardTitle: reward.title });
+      toast.success(`🎉 ${t("rewards.redeemed") || "Reward redeemed!"}`);
+    } catch (e: any) {
+      toast.error(e?.message?.includes("stock") ? (t("rewards.outOfStock") || "Out of stock") : (t("rewards.redeemFailed") || "Redemption failed"));
     }
   };
 
@@ -236,14 +242,23 @@ const RewardsPage = () => {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-bold text-foreground">{getRewardTitle(reward)}</h3>
                         <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{getRewardDesc(reward)}</p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Star className="w-3 h-3 text-primary fill-primary" />
-                          <span className="text-xs font-bold text-primary">{reward.points_cost} pts</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-1">
+                            <Star className="w-3 h-3 text-primary fill-primary" />
+                            <span className="text-xs font-bold text-primary">{reward.points_cost} pts</span>
+                          </div>
+                          {reward.stock !== null && reward.stock !== undefined && (
+                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
+                              reward.stock > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-destructive/10 text-destructive"
+                            }`}>
+                              {reward.stock > 0 ? `${reward.stock} left` : "Out of stock"}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <button
                         onClick={() => handleRedeem(reward)}
-                        disabled={balance < reward.points_cost || redeemMutation.isPending}
+                        disabled={balance < reward.points_cost || redeemMutation.isPending || (reward.stock !== null && reward.stock !== undefined && reward.stock <= 0)}
                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 ${
                           balance >= reward.points_cost
                             ? "bg-primary text-primary-foreground shadow-sm"

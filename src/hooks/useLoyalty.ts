@@ -112,16 +112,16 @@ export function useRedeemReward() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ rewardId, pointsCost }: { rewardId: string; pointsCost: number }) => {
+    mutationFn: async ({ rewardId, pointsCost, rewardTitle }: { rewardId: string; pointsCost: number; rewardTitle: string }) => {
       // Call redeem function
       const { data, error } = await supabase.rpc("redeem_loyalty_points", {
         _user_id: user!.id,
         _points: pointsCost,
-        _description: "Reward redemption",
+        _description: `Redeemed: ${rewardTitle}`,
         _reference_id: rewardId,
       });
       if (error) throw error;
-      if (!data) throw new Error("Insufficient points");
+      if (!data) throw new Error("Insufficient points or out of stock");
 
       // Create redemption record
       const { error: redemptionError } = await supabase.from("loyalty_redemptions").insert({
