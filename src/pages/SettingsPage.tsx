@@ -24,6 +24,7 @@ const SettingsPage = () => {
   const [birthdate, setBirthdate] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profile, isLoading } = useQuery({
@@ -37,24 +38,47 @@ const SettingsPage = () => {
   });
 
   useEffect(() => {
-    if (profile) { setFullName(profile.full_name || ""); setPhone(profile.phone || ""); setGender((profile as any).gender || ""); setBirthdate((profile as any).birthdate || ""); }
-    else if (user) { setFullName(user.user_metadata?.full_name || ""); setGender(user.user_metadata?.gender || ""); setBirthdate(user.user_metadata?.birthdate || ""); }
+    if (profile) {
+      setFullName(profile.full_name || "");
+      setPhone(profile.phone || "");
+      setGender(profile.gender || "");
+      setBirthdate(profile.birthdate || "");
+      setAvatarPreview(profile.avatar_url || null);
+    } else if (user) {
+      setFullName(user.user_metadata?.full_name || "");
+      setGender(user.user_metadata?.gender || "");
+      setBirthdate(user.user_metadata?.birthdate || "");
+    }
   }, [profile, user]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
-      const payload = { user_id: user.id, full_name: fullName || null, phone: phone || null, gender: gender || null, birthdate: birthdate || null } as any;
+      const updatePayload = {
+        full_name: fullName || null,
+        phone: phone || null,
+        gender: gender || null,
+        birthdate: birthdate || null,
+      };
       if (profile) {
-        const { error } = await supabase.from("profiles").update(payload).eq("id", profile.id);
+        const { error } = await supabase.from("profiles").update(updatePayload).eq("user_id", user.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("profiles").insert(payload);
+        const { error } = await supabase.from("profiles").insert({
+          user_id: user.id,
+          ...updatePayload,
+        });
         if (error) throw error;
       }
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["profile"] }); toast(t("settings.profileUpdated")); },
-    onError: (e: any) => toast(e.message),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast(t("settings.profileUpdated"));
+    },
+    onError: (e: any) => {
+      console.error("Profile save error:", e);
+      toast(e.message || "Failed to save profile");
+    },
   });
 
   const handleSignOut = async () => { await signOut(); toast(t("profile.signedOut")); navigate("/home"); };
@@ -87,8 +111,16 @@ const SettingsPage = () => {
 
       const filePath = `${user.id}/avatar.jpg`;
 
-      // Delete old file first to avoid stale cache issues
-      await supabase.storage.from("avatars").remove([filePath]);
+      // Delete ALL old files in user's avatar folder (handles old .gif, .png etc)
+      try {
+        const { data: existingFiles } = await supabase.storage.from("avatars").list(user.id);
+        if (existingFiles && existingFiles.length > 0) {
+          const filesToDelete = existingFiles.map(f => `${user.id}/${f.name}`);
+          await supabase.storage.from("avatars").remove(filesToDelete);
+        }
+      } catch {
+        // Ignore errors when listing/deleting old files
+      }
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
@@ -98,11 +130,16 @@ const SettingsPage = () => {
       const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
       const avatarUrl = `${publicUrl}?t=${Date.now()}`;
 
+      // Show preview immediately
+      setAvatarPreview(avatarUrl);
+
       // Update profile with avatar URL
       if (profile) {
-        await supabase.from("profiles").update({ avatar_url: avatarUrl } as any).eq("id", profile.id);
+        const { error } = await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("user_id", user.id);
+        if (error) throw error;
       } else {
-        await supabase.from("profiles").insert({ user_id: user.id, avatar_url: avatarUrl } as any);
+        const { error } = await supabase.from("profiles").insert({ user_id: user.id, avatar_url: avatarUrl });
+        if (error) throw error;
       }
 
       queryClient.invalidateQueries({ queryKey: ["profile"] });
@@ -110,6 +147,8 @@ const SettingsPage = () => {
     } catch (err: any) {
       console.error("Avatar upload error:", err);
       toast(err.message || "Failed to upload photo");
+      // Revert preview on error
+      setAvatarPreview(profile?.avatar_url || null);
     } finally {
       setUploadingAvatar(false);
       // Reset file input so same file can be re-selected
@@ -201,8 +240,8 @@ const SettingsPage = () => {
               <div className="bg-card rounded-2xl p-4 shadow-premium flex flex-col items-center gap-3">
                 <div className="relative">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent overflow-hidden flex items-center justify-center">
-                    {(profile as any)?.avatar_url ? (
-                      <img src={(profile as any).avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    {avatarPreview ? (
+                      <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-3xl">👤</span>
                     )}
