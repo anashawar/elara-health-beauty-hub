@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/components/ui/sonner";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/hooks/useAuth";
-import { useProducts, useBrands, formatPrice } from "@/hooks/useProducts";
+import { useProducts, useBrands, useFormatPrice } from "@/hooks/useProducts";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 import { Share } from "@capacitor/share";
 import { Capacitor } from "@capacitor/core";
@@ -39,6 +39,7 @@ const handleNativeShare = async (title: string, text: string, url: string, fallb
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const { t } = useLanguage();
+  const formatPrice = useFormatPrice();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -367,8 +368,8 @@ const ProductPage = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">ELARA AI</p>
-                    <p className="text-sm font-bold text-white leading-tight">Have a question about this product?</p>
-                    <p className="text-[11px] text-white/60 mt-0.5">Get expert advice on ingredients, how to use it, and if it's right for you</p>
+                    <p className="text-sm font-bold text-white leading-tight">{t("product.aiQuestion")}</p>
+                    <p className="text-[11px] text-white/60 mt-0.5">{t("product.aiDesc")}</p>
                   </div>
                   <motion.div
                     animate={{ x: [0, 4, 0] }}

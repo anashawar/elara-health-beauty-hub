@@ -43,7 +43,7 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
       .from("products")
       .select(`
         *,
-        brands ( name ),
+        brands ( name, name_ar, name_ku ),
         categories ( slug ),
         product_images ( image_url, sort_order ),
         product_tags ( tag )
@@ -78,11 +78,18 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
           ? (p.usage_instructions_ku || p.usage_instructions || "")
           : (p.usage_instructions || "");
 
+    const localizedBrand =
+      language === "ar"
+        ? (p.brands?.name_ar || p.brands?.name || "")
+        : language === "ku"
+          ? (p.brands?.name_ku || p.brands?.name || "")
+          : (p.brands?.name || "");
+
     return {
       id: p.id,
       title: localizedTitle,
       slug: p.slug,
-      brand: p.brands?.name || "",
+      brand: localizedBrand,
       brand_id: p.brand_id,
       category_id: p.category_id,
       category_slug: p.categories?.slug || null,
@@ -227,7 +234,15 @@ export function useBanners() {
   });
 }
 
-export const formatPrice = (price: number) => `${price.toLocaleString()} IQD`;
+export const formatPrice = (price: number, lang?: string) => {
+  const currency = lang === "ar" ? "د.ع" : lang === "ku" ? "د.ع" : "IQD";
+  return `${price.toLocaleString()} ${currency}`;
+};
+
+export function useFormatPrice() {
+  const { language } = useLanguage();
+  return (price: number) => formatPrice(price, language);
+}
 
 // Keep concerns as static data since they're not in the DB
 export const concerns = [

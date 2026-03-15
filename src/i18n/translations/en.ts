@@ -141,6 +141,8 @@ export const en = {
     noProductsFound: "No products found for this brand",
     outOfStock: "Out of Stock",
     shareText: "Check out {{title}} by {{brand}} on ELARA!",
+    aiQuestion: "Have a question about this product?",
+    aiDesc: "Get expert advice on ingredients, how to use it, and if it's right for you",
   },
   cart: {
     myBag: "My Bag",
@@ -341,6 +343,7 @@ export const en = {
     noProductsFound: "No products found",
     clearAllFilters: "Clear all filters",
     viewAll: "View All",
+    productsFor: "Products for",
   },
   search: {
     recommendedForYou: "Recommended for You",

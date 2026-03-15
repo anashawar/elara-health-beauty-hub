@@ -153,7 +153,7 @@ const CategoryPage = () => {
                 {activeConcern.icon}
               </div>
               <div>
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Products for</p>
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{t("categories.productsFor")}</p>
                 <h1 className="text-xl font-display font-bold text-foreground -mt-0.5">
                   {t(`concerns.${id === "dryskin" ? "drySkin" : id === "hairloss" ? "hairLoss" : id === "sensitive" ? "sensitiveSkin" : id === "weightloss" ? "weightLoss" : id}`) || activeConcern.name}
                 </h1>
@@ -203,7 +203,7 @@ const CategoryPage = () => {
         <div className="hidden md:block px-6 pt-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Link to={isConcernRoute ? "/home" : "/categories"} className="text-sm text-muted-foreground hover:text-foreground">← Back</Link>
+              <Link to={isConcernRoute ? "/home" : "/categories"} className="text-sm text-muted-foreground hover:text-foreground">← {t("common.back")}</Link>
               <span className="text-muted-foreground">/</span>
               <h1 className="text-2xl font-display font-bold text-foreground">
                 {activeConcern ? (t(`concerns.${id === "dryskin" ? "drySkin" : id === "hairloss" ? "hairLoss" : id === "sensitive" ? "sensitiveSkin" : id === "weightloss" ? "weightLoss" : id}`) || activeConcern.name) : activeSubName ? getSubName(activeSubName) : category ? getCatName(category) : t("categories.allProducts")}

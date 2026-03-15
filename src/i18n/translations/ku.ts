@@ -141,6 +141,8 @@ export const ku = {
     noProductsFound: "هیچ بەرهەمێک نەدۆزرایەوە بۆ ئەم براندە",
     outOfStock: "نەماوە لە کۆگا",
     shareText: "سەیری {{title}} بکە لە {{brand}} لەسەر ئێلارا!",
+    aiQuestion: "پرسیارت هەیە دەربارەی ئەم بەرهەمە؟",
+    aiDesc: "ڕاوێژی پسپۆڕانە وەربگرە دەربارەی پێکهاتە، چۆنیەتی بەکارهێنان، و ئایا بۆ تۆ گونجاوە",
   },
   cart: {
     myBag: "سەبەتەکەم",
@@ -341,6 +343,7 @@ export const ku = {
     noProductsFound: "هیچ بەرهەمێک نەدۆزرایەوە",
     clearAllFilters: "هەموو فلتەرەکان بسڕەوە",
     viewAll: "هەموویان ببینە",
+    productsFor: "بەرهەمەکان بۆ",
   },
   search: {
     recommendedForYou: "پێشنیارکراو بۆ تۆ",

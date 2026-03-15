@@ -5,7 +5,7 @@ import qiLogo from "@/assets/qi-logo.svg";
 import { ArrowLeft, Check, MapPin, ChevronDown, Sparkles, PartyPopper } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useApp } from "@/context/AppContext";
-import { formatPrice } from "@/hooks/useProducts";
+import { useFormatPrice } from "@/hooks/useProducts";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/layout/BottomNav";
@@ -21,6 +21,7 @@ const CheckoutPage = () => {
   const { cart, cartTotal, clearCart } = useApp();
   const { user } = useAuth();
   const { t, language } = useLanguage();
+  const formatPrice = useFormatPrice();
   const [submitted, setSubmitted] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showAddressPicker, setShowAddressPicker] = useState(false);

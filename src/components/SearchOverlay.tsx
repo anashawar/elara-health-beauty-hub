@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Search, X, ArrowRight, SlidersHorizontal, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useProducts, useCategories, useBrands, formatPrice, concerns } from "@/hooks/useProducts";
+import { useProducts, useCategories, useBrands, useFormatPrice, concerns } from "@/hooks/useProducts";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 
@@ -15,6 +15,7 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
   const { t } = useLanguage();
+  const formatPrice = useFormatPrice();
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [priceFilter, setPriceFilter] = useState<string | null>(null);
