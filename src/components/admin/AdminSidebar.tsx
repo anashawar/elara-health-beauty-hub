@@ -12,6 +12,7 @@ import {
   BarChart3,
   Percent,
   Bell,
+  Languages,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -43,6 +44,7 @@ const navItems = [
   { title: "Banners", url: "/admin/banners", icon: Image },
   { title: "Coupons", url: "/admin/coupons", icon: Ticket },
   { title: "Notifications", url: "/admin/notifications", icon: Bell },
+  { title: "Translate", url: "/admin/translate", icon: Languages },
 ];
 
 export default function AdminSidebar() {

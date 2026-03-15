@@ -49,6 +49,7 @@ const AdminCoupons = lazy(() => import("./pages/admin/AdminCoupons"));
 const AdminRevenue = lazy(() => import("./pages/admin/AdminRevenue"));
 const AdminOffers = lazy(() => import("./pages/admin/AdminOffers"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
+const AdminTranslate = lazy(() => import("./pages/admin/AdminTranslate"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -127,6 +128,7 @@ const App = () => (
                 <Route path="coupons" element={<AdminCoupons />} />
                 <Route path="offers" element={<AdminOffers />} />
                 <Route path="notifications" element={<AdminNotifications />} />
+                <Route path="translate" element={<AdminTranslate />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
