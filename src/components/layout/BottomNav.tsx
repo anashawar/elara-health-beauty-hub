@@ -1,4 +1,4 @@
-import { Home, LayoutGrid, Heart, UserRound, Sparkles } from "lucide-react";
+import { Home, LayoutGrid, ShoppingBag, UserRound, Sparkles } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { useLanguage } from "@/i18n/LanguageContext";
