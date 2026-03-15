@@ -200,8 +200,8 @@ const CartPage = () => {
             <Link to="/elara-ai" className="mt-4 flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/20 group">
               <Sparkles className="w-5 h-5 text-primary" />
               <div>
-                <p className="text-xs font-bold text-foreground">{t("cart.askAIHelp") || "Not sure what to buy?"}</p>
-                <p className="text-[10px] text-muted-foreground">{t("cart.askAIHelpDesc") || "Let ELARA AI recommend products for you"}</p>
+                <p className="text-xs font-bold text-foreground">Not sure what to buy?</p>
+                <p className="text-[10px] text-muted-foreground">Let ELARA AI recommend the perfect products for you</p>
               </div>
               <ChevronRight className="w-4 h-4 text-primary rtl:rotate-180" />
             </Link>
