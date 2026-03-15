@@ -266,6 +266,7 @@ const ElaraChatPage = () => {
   const { data: products = [] } = useProducts();
   const { addToCart } = useApp();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -273,6 +274,7 @@ const ElaraChatPage = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [isNewConversation, setIsNewConversation] = useState(false);
+  const [productContextHandled, setProductContextHandled] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
