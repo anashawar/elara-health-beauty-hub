@@ -114,6 +114,22 @@ const CheckoutPage = () => {
           price: item.product.price,
         }));
         await supabase.from("order_items").insert(items);
+
+        // Award loyalty points (1 point per 1,000 IQD)
+        const orderTotal = cartTotal - confirmedDiscount + deliveryFee;
+        const pts = calculatePoints(orderTotal);
+        if (pts > 0) {
+          setEarnedPoints(pts);
+          try {
+            await awardPoints.mutateAsync({
+              points: pts,
+              description: t("rewards.orderReward"),
+              referenceId: order.id,
+            });
+          } catch (e) {
+            console.error("Failed to award points:", e);
+          }
+        }
       }
     }
 
