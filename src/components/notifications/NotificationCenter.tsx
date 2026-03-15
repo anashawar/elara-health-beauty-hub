@@ -24,32 +24,32 @@ const NotificationItem = forwardRef<HTMLButtonElement, { notification: Notificat
       <button
         ref={ref}
         onClick={() => onRead(notification)}
-        className={`w-full flex items-start gap-3 p-3.5 text-left rounded-2xl transition-all active:scale-[0.98] ${
+        className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-all active:scale-[0.98] ${
           notification.is_read
-            ? "bg-transparent hover:bg-secondary/50"
-            : "bg-primary/[0.03] hover:bg-primary/[0.06]"
+            ? "bg-transparent"
+            : "bg-primary/[0.04]"
         }`}
       >
-        <div className={`w-10 h-10 rounded-xl ${config.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+        <div className={`w-9 h-9 rounded-full ${config.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
           {notification.icon && notification.icon !== "🔔" ? (
-            <span className="text-lg">{notification.icon}</span>
+            <span className="text-base">{notification.icon}</span>
           ) : (
-            <Icon className={`w-4.5 h-4.5 ${config.color}`} />
+            <Icon className={`w-4 h-4 ${config.color}`} />
           )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <p className={`text-[13px] font-semibold leading-snug ${notification.is_read ? "text-foreground/70" : "text-foreground"}`}>
+            <p className={`text-[13px] font-semibold leading-snug ${notification.is_read ? "text-foreground/60" : "text-foreground"}`}>
               {notification.title}
             </p>
             {!notification.is_read && (
               <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />
             )}
           </div>
-          <p className={`text-[12px] leading-relaxed mt-0.5 line-clamp-2 ${notification.is_read ? "text-muted-foreground/60" : "text-muted-foreground"}`}>
+          <p className={`text-[12px] leading-relaxed mt-0.5 line-clamp-2 ${notification.is_read ? "text-muted-foreground/50" : "text-muted-foreground"}`}>
             {notification.body}
           </p>
-          <p className="text-[10px] text-muted-foreground/50 mt-1">{timeAgo}</p>
+          <p className="text-[10px] text-muted-foreground/40 mt-1">{timeAgo}</p>
         </div>
         {notification.link_url && (
           <ChevronRight className="w-4 h-4 text-muted-foreground/30 flex-shrink-0 mt-2 rtl:rotate-180" />
@@ -94,8 +94,10 @@ export default function NotificationCenter() {
         )}
       </button>
 
+      {/* Mobile: bottom sheet full screen, Desktop: side panel */}
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="w-full max-w-sm p-0 flex flex-col">
+        {/* Desktop: right side panel */}
+        <SheetContent side="right" className="hidden md:flex w-full max-w-sm p-0 flex-col">
           <SheetHeader className="px-5 py-4 border-b border-border/40">
             <div className="flex items-center justify-between w-full">
               <div>
@@ -119,18 +121,9 @@ export default function NotificationCenter() {
               )}
             </div>
           </SheetHeader>
-
-          <div className="flex-1 overflow-y-auto p-3 space-y-1">
+          <div className="flex-1 overflow-y-auto divide-y divide-border/30">
             {notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center px-8">
-                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
-                  <Bell className="w-7 h-7 text-muted-foreground/40" />
-                </div>
-                <p className="text-sm font-semibold text-foreground">No notifications yet</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  We'll notify you about offers, orders, and more
-                </p>
-              </div>
+              <EmptyState />
             ) : (
               notifications.map((n) => (
                 <NotificationItem key={n.id} notification={n} onRead={handleRead} />
@@ -139,6 +132,90 @@ export default function NotificationCenter() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Mobile: custom full-screen overlay */}
+      <AnimatePresence>
+        {open && (
+          <div className="md:hidden fixed inset-0 z-50">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setOpen(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 350 }}
+              className="absolute inset-x-0 bottom-0 top-10 bg-background rounded-t-[20px] flex flex-col overflow-hidden"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            >
+              {/* Drag handle */}
+              <div className="flex justify-center pt-2.5 pb-1">
+                <div className="w-9 h-1 rounded-full bg-muted-foreground/20" />
+              </div>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-3">
+                <div>
+                  <h2 className="text-[17px] font-display font-bold text-foreground">Notifications</h2>
+                  {unreadCount > 0 && (
+                    <p className="text-[12px] text-muted-foreground mt-0.5">{unreadCount} unread</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={() => markAllAsRead.mutate()}
+                      className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-semibold text-primary bg-primary/10 rounded-full active:scale-95 transition-all"
+                    >
+                      <CheckCheck className="w-3 h-3" />
+                      Read all
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setOpen(false)}
+                    className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center active:scale-90 transition-transform"
+                  >
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Separator */}
+              <div className="h-px bg-border/40 mx-4" />
+
+              {/* Notification list */}
+              <div className="flex-1 overflow-y-auto overscroll-contain divide-y divide-border/20">
+                {notifications.length === 0 ? (
+                  <EmptyState />
+                ) : (
+                  notifications.map((n) => (
+                    <NotificationItem key={n.id} notification={n} onRead={handleRead} />
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center px-8 py-16">
+      <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center mb-3">
+        <Bell className="w-6 h-6 text-muted-foreground/30" />
+      </div>
+      <p className="text-sm font-semibold text-foreground">No notifications yet</p>
+      <p className="text-xs text-muted-foreground mt-1">
+        We'll notify you about offers, orders & more
+      </p>
+    </div>
   );
 }
