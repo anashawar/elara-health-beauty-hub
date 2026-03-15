@@ -7,7 +7,6 @@ interface AppDownloadBannerProps {
 }
 
 const AppDownloadBanner = ({ compact = false }: AppDownloadBannerProps) => {
-  const { t } = useLanguage();
 
   if (compact) {
     return (
