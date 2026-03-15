@@ -314,6 +314,23 @@ const ElaraChatPage = () => {
   const placeholder = useMemo(() => getPlaceholder(language, userGender), [language, userGender]);
   const tryAskingLabel = useMemo(() => getTryAskingLabel(language, userGender), [language, userGender]);
 
+  // Fetch daily brief (weather, events, tips)
+  const BRIEF_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/daily-brief`;
+  const { data: dailyBrief } = useQuery({
+    queryKey: ["daily-brief", userCity, language, userGender, isKurdistan],
+    queryFn: async () => {
+      const resp = await fetch(BRIEF_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ city: userCity, language, gender: userGender, is_kurdistan: isKurdistan }),
+      });
+      if (!resp.ok) return null;
+      return resp.json();
+    },
+    staleTime: 30 * 60 * 1000, // 30 min
+    refetchOnWindowFocus: false,
+  });
+
   const { data: conversations = [] } = useQuery({
     queryKey: ["chat-conversations", user?.id],
     queryFn: async () => {
