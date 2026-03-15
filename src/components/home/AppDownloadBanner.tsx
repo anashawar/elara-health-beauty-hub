@@ -73,7 +73,7 @@ const AppDownloadBanner = ({ compact = false }: AppDownloadBannerProps) => {
           <div className="flex-1">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 text-primary text-xs font-bold mb-4">
               <Sparkles className="w-3.5 h-3.5" />
-              {t("app.exclusive") || "EXCLUSIVE OFFER"}
+              EXCLUSIVE OFFER
             </div>
             <h2 className="text-3xl font-display font-bold text-white leading-tight">
               {t("app.downloadElara") || "Download ELARA App"}
