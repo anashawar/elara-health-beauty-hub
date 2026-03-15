@@ -389,6 +389,13 @@ const ProductPage = () => {
                 </div>
               </div>
             )}
+
+            {/* Desktop: App Download Banner */}
+            <div className="mt-8">
+              <Suspense fallback={null}>
+                <AppDownloadBanner compact />
+              </Suspense>
+            </div>
           </motion.div>
         </div>
       </div>
