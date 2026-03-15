@@ -239,6 +239,11 @@ export const formatPrice = (price: number, lang?: string) => {
   return `${price.toLocaleString()} ${currency}`;
 };
 
+export function useFormatPrice() {
+  const { language } = useLanguage();
+  return (price: number) => formatPrice(price, language);
+}
+
 // Keep concerns as static data since they're not in the DB
 export const concerns = [
   { id: "acne", name: "Acne", icon: "🎯" },
