@@ -42,6 +42,7 @@ const ProductCard = memo(({ product, variant = "vertical" }: ProductCardProps) =
       return;
     }
     addToCart(product);
+    toast.success(t("product.addedToCart") || "Added to cart");
   }, [outOfStock, user, product, addToCart, navigate, t]);
 
   const handleToggleWishlist = useCallback((e: React.MouseEvent) => {
