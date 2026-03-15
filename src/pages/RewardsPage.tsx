@@ -242,9 +242,18 @@ const RewardsPage = () => {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-bold text-foreground">{getRewardTitle(reward)}</h3>
                         <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{getRewardDesc(reward)}</p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Star className="w-3 h-3 text-primary fill-primary" />
-                          <span className="text-xs font-bold text-primary">{reward.points_cost} pts</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-1">
+                            <Star className="w-3 h-3 text-primary fill-primary" />
+                            <span className="text-xs font-bold text-primary">{reward.points_cost} pts</span>
+                          </div>
+                          {reward.stock !== null && reward.stock !== undefined && (
+                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
+                              reward.stock > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-destructive/10 text-destructive"
+                            }`}>
+                              {reward.stock > 0 ? `${reward.stock} left` : "Out of stock"}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <button
