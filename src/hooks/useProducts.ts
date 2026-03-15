@@ -78,12 +78,7 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
           ? (p.usage_instructions_ku || p.usage_instructions || "")
           : (p.usage_instructions || "");
 
-    const localizedBrand =
-      language === "ar"
-        ? (p.brands?.name_ar || p.brands?.name || "")
-        : language === "ku"
-          ? (p.brands?.name_ku || p.brands?.name || "")
-          : (p.brands?.name || "");
+    const localizedBrand = p.brands?.name || "";
 
     return {
       id: p.id,
@@ -234,9 +229,8 @@ export function useBanners() {
   });
 }
 
-export const formatPrice = (price: number, lang?: string) => {
-  const currency = lang === "ar" ? "د.ع" : lang === "ku" ? "د.ع" : "IQD";
-  return `${price.toLocaleString()} ${currency}`;
+export const formatPrice = (price: number, _lang?: string) => {
+  return `${price.toLocaleString()} IQD`;
 };
 
 export function useFormatPrice() {
