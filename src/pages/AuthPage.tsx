@@ -708,6 +708,7 @@ const AuthPage = () => {
         initialLat={gpsLat}
         initialLng={gpsLng}
       />
+      </div>
     </div>
   );
 };
