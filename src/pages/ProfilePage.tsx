@@ -138,6 +138,31 @@ const ProfilePage = () => {
             </div>
           </Link>
 
+          {/* ELARA Rewards */}
+          {user && (
+            <Link to="/rewards" className="block mx-4 md:mx-6 mt-3">
+              <div className="bg-gradient-to-r from-amber-500/10 via-primary/5 to-amber-500/10 rounded-2xl p-4 shadow-premium border border-amber-500/20 relative overflow-hidden group hover:shadow-xl transition-all">
+                <div className="absolute top-2 right-2 opacity-10">
+                  <Crown className="w-14 h-14 text-amber-500" />
+                </div>
+                <div className="relative flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                    <Star className="w-6 h-6 text-white fill-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-display font-bold text-foreground">{t("rewards.title")}</h3>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{t("rewards.subtitle")}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs">{tierInfo.emoji}</span>
+                      <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">{loyaltyBalance.toLocaleString()} pts</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-amber-500 rtl:rotate-180 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            </Link>
+          )}
+
           {/* Menu */}
           <div className="mx-4 md:mx-6 mt-4 bg-card rounded-2xl shadow-premium overflow-hidden">
             {menuItems.map((item, idx) => (
