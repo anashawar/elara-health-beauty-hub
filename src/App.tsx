@@ -114,6 +114,7 @@ const App = () => (
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/install" element={<InstallPage />} />
               <Route path="/elara-ai" element={<AuthGuard><ElaraChatPage /></AuthGuard>} />
+              <Route path="/rewards" element={<AuthGuard><RewardsPage /></AuthGuard>} />
               {/* Admin Panel */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />

@@ -38,6 +38,11 @@ const ProfilePage = () => {
     enabled: !!user,
   });
 
+  const { data: loyaltyData } = useLoyaltyPoints();
+  const loyaltyBalance = loyaltyData?.balance || 0;
+  const loyaltyTier = loyaltyData?.tier || "bronze";
+  const tierInfo = TIER_THRESHOLDS[loyaltyTier as keyof typeof TIER_THRESHOLDS] || TIER_THRESHOLDS.bronze;
+
   const menuItems = [
     { icon: Package, label: t("profile.myOrders"), path: "/orders" },
     { icon: Heart, label: t("profile.wishlist"), path: "/wishlist" },
