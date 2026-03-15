@@ -603,16 +603,34 @@ export default function AdminProducts() {
   // Image search handler
   const handleSearchImages = async (ids: string[]) => {
     if (ids.length === 0) { toast.error("No products selected"); return; }
+    
+    // Filter out products that already have images
+    const productsWithImages = new Set(
+      (products || [])
+        .filter((p: any) => p.product_images && p.product_images.length > 0)
+        .map((p: any) => p.id)
+    );
+    const idsWithoutImages = ids.filter(id => !productsWithImages.has(id));
+    
+    if (idsWithoutImages.length === 0) {
+      toast.info("All selected products already have images");
+      return;
+    }
+    
+    if (idsWithoutImages.length < ids.length) {
+      toast.info(`Skipping ${ids.length - idsWithoutImages.length} products that already have images`);
+    }
+    
     setEnriching(true);
-    setEnrichProgress({ done: 0, total: ids.length, current: "Searching for product images..." });
+    setEnrichProgress({ done: 0, total: idsWithoutImages.length, current: "Searching for product images..." });
 
     const BATCH_SIZE = 5;
     let totalSuccess = 0;
     let totalFail = 0;
 
-    for (let i = 0; i < ids.length; i += BATCH_SIZE) {
-      const batch = ids.slice(i, i + BATCH_SIZE);
-      setEnrichProgress({ done: i, total: ids.length, current: `Finding images batch ${Math.floor(i/BATCH_SIZE)+1}...` });
+    for (let i = 0; i < idsWithoutImages.length; i += BATCH_SIZE) {
+      const batch = idsWithoutImages.slice(i, i + BATCH_SIZE);
+      setEnrichProgress({ done: i, total: idsWithoutImages.length, current: `Finding images batch ${Math.floor(i/BATCH_SIZE)+1}...` });
 
       try {
         const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-product-images`, {
@@ -639,7 +657,7 @@ export default function AdminProducts() {
         totalFail += batch.length;
       }
 
-      if (i + BATCH_SIZE < ids.length) {
+      if (i + BATCH_SIZE < idsWithoutImages.length) {
         await new Promise(r => setTimeout(r, 2000));
       }
     }
