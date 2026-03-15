@@ -73,32 +73,32 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background" style={{ height: '100%', minHeight: '-webkit-fill-available' }}>
-      <div className="max-w-lg mx-auto flex flex-col h-full" style={{ height: '100%', minHeight: '-webkit-fill-available' }}>
-        <div className="border-b border-border flex-shrink-0 sticky top-0 z-10 bg-background" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-          <div className="flex items-center gap-3 px-4 py-3">
+    <div className="fixed inset-0 z-50 bg-background md:bg-background/80 md:backdrop-blur-sm" style={{ height: '100%', minHeight: '-webkit-fill-available' }}>
+      <div className="max-w-lg md:max-w-4xl mx-auto flex flex-col h-full md:h-auto md:max-h-[85vh] md:mt-8 md:rounded-2xl md:border md:border-border md:shadow-premium md:bg-card" style={{ height: '100%', minHeight: '-webkit-fill-available' }}>
+        <div className="border-b border-border flex-shrink-0 sticky top-0 z-10 bg-background md:bg-card md:rounded-t-2xl" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+          <div className="flex items-center gap-3 px-4 md:px-6 py-3 md:py-4">
             <Search className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-            <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} placeholder={t("common.searchFull")} className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none text-base" style={{ fontSize: '16px' }} />
+            <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} placeholder={t("common.searchFull")} className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none text-base md:text-lg" style={{ fontSize: '16px' }} />
             {(query || activeFilter || priceFilter) && (<button onClick={() => { setQuery(""); setActiveFilter(null); setPriceFilter(null); }} className="p-1"><X className="w-4 h-4 text-muted-foreground" /></button>)}
-            <button onClick={onClose} className="text-xs text-primary font-semibold">{t("common.cancel")}</button>
+            <button onClick={onClose} className="text-xs md:text-sm text-primary font-semibold md:px-3 md:py-1.5 md:rounded-lg md:hover:bg-primary/10 transition-colors">{t("common.cancel")}</button>
           </div>
-          <div className="px-4 pb-3 flex gap-2 overflow-x-auto no-scrollbar">
+          <div className="px-4 md:px-6 pb-3 flex gap-2 overflow-x-auto no-scrollbar">
             {[{ key: "under15k", label: "Under 15K" }, { key: "15k-30k", label: "15K–30K" }, { key: "30k-60k", label: "30K–60K" }, { key: "over60k", label: "60K+" }].map(pf => (
-              <button key={pf.key} onClick={() => setPriceFilter(prev => prev === pf.key ? null : pf.key)} className={`flex-shrink-0 text-[11px] px-3 py-1.5 rounded-lg font-medium transition-colors ${priceFilter === pf.key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>{pf.label}</button>
+              <button key={pf.key} onClick={() => setPriceFilter(prev => prev === pf.key ? null : pf.key)} className={`flex-shrink-0 text-[11px] md:text-xs px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors ${priceFilter === pf.key ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-accent"}`}>{pf.label}</button>
             ))}
             {concerns.slice(0, 4).map(c => (
-              <button key={c.id} onClick={() => setActiveFilter(prev => prev === c.id ? null : c.id)} className={`flex-shrink-0 text-[11px] px-3 py-1.5 rounded-lg font-medium transition-colors ${activeFilter === c.id ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>{c.icon} {c.name}</button>
+              <button key={c.id} onClick={() => setActiveFilter(prev => prev === c.id ? null : c.id)} className={`flex-shrink-0 text-[11px] md:text-xs px-3 md:px-4 py-1.5 md:py-2 rounded-lg font-medium transition-colors ${activeFilter === c.id ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-accent"}`}>{c.icon} {c.name}</button>
             ))}
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4">
           {!isSearching && (
             <div className="space-y-6">
               <div>
                 <div className="flex items-center gap-1.5 mb-3"><Sparkles className="w-3.5 h-3.5 text-primary" /><p className="text-xs font-bold text-foreground uppercase tracking-wider">{t("search.recommendedForYou")}</p></div>
-                <div className="grid grid-cols-2 gap-2">
-                  {SMART_SUGGESTIONS.map(s => (<button key={s.query} onClick={() => setQuery(s.query)} className="flex items-center gap-2 px-3 py-2.5 bg-card rounded-xl border border-border/50 hover:border-primary/30 transition-all text-left rtl:text-right"><span className="text-base">{s.icon}</span><span className="text-xs font-medium text-foreground leading-tight">{s.label}</span></button>))}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {SMART_SUGGESTIONS.map(s => (<button key={s.query} onClick={() => setQuery(s.query)} className="flex items-center gap-2 px-3 py-2.5 bg-card md:bg-secondary/50 rounded-xl border border-border/50 hover:border-primary/30 transition-all text-left rtl:text-right"><span className="text-base">{s.icon}</span><span className="text-xs font-medium text-foreground leading-tight">{s.label}</span></button>))}
                 </div>
               </div>
               <div>
@@ -107,8 +107,8 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
               </div>
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">{t("search.browseCategories")}</p>
-                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                  {categories.slice(0, 6).map(cat => (<Link key={cat.id} to={`/category/${cat.slug}`} onClick={onClose} className="flex-shrink-0 flex flex-col items-center gap-1.5 w-16"><span className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-xl">{cat.icon}</span><span className="text-[10px] font-medium text-foreground text-center leading-tight">{cat.name}</span></Link>))}
+                <div className="flex gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1">
+                  {categories.slice(0, 8).map(cat => (<Link key={cat.id} to={`/category/${cat.slug}`} onClick={onClose} className="flex-shrink-0 flex flex-col items-center gap-1.5 w-16 md:w-20"><span className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-secondary flex items-center justify-center text-xl md:text-2xl">{cat.icon}</span><span className="text-[10px] md:text-xs font-medium text-foreground text-center leading-tight">{cat.name}</span></Link>))}
                 </div>
               </div>
             </div>
@@ -125,7 +125,7 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
 
           {filteredResults.categories.length > 0 && (<div className="mb-4"><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("nav.categories")}</p>{filteredResults.categories.map(cat => (<Link key={cat.id} to={`/category/${cat.slug}`} onClick={onClose} className="flex items-center justify-between py-2.5 border-b border-border/50"><div className="flex items-center gap-2"><span className="text-lg">{cat.icon}</span><span className="text-sm font-medium text-foreground">{cat.name}</span></div><ArrowRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" /></Link>))}</div>)}
 
-          {filteredResults.products.length > 0 && (<div><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("common.products")} ({filteredResults.products.length})</p>{filteredResults.products.map(p => (<Link key={p.id} to={`/product/${p.id}`} onClick={onClose} className="flex items-center gap-3 py-2.5 border-b border-border/50"><img src={p.image} alt={p.title} className="w-14 h-14 rounded-xl object-cover bg-secondary flex-shrink-0" /><div className="flex-1 min-w-0"><p className="text-[10px] font-bold text-primary uppercase tracking-wider">{p.brand}</p><p className="text-sm font-medium text-foreground truncate">{p.title}</p><div className="flex items-center gap-2 mt-0.5"><span className="text-xs font-bold text-foreground">{formatPrice(p.price)}</span>{p.originalPrice && <span className="text-[10px] text-muted-foreground line-through">{formatPrice(p.originalPrice)}</span>}</div></div></Link>))}</div>)}
+          {filteredResults.products.length > 0 && (<div><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("common.products")} ({filteredResults.products.length})</p><div className="md:grid md:grid-cols-2 md:gap-x-4">{filteredResults.products.map(p => (<Link key={p.id} to={`/product/${p.id}`} onClick={onClose} className="flex items-center gap-3 py-2.5 border-b border-border/50 hover:bg-secondary/50 md:px-3 md:rounded-xl md:border-none transition-colors"><img src={p.image} alt={p.title} className="w-14 h-14 rounded-xl object-cover bg-secondary flex-shrink-0" /><div className="flex-1 min-w-0"><p className="text-[10px] font-bold text-primary uppercase tracking-wider">{p.brand}</p><p className="text-sm font-medium text-foreground truncate">{p.title}</p><div className="flex items-center gap-2 mt-0.5"><span className="text-xs font-bold text-foreground">{formatPrice(p.price)}</span>{p.originalPrice && <span className="text-[10px] text-muted-foreground line-through">{formatPrice(p.originalPrice)}</span>}</div></div></Link>))}</div></div>)}
 
           {isSearching && !hasResults && (
             <div className="text-center mt-12">
