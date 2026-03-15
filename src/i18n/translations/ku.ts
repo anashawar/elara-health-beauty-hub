@@ -357,6 +357,7 @@ export const ku = {
     drySkinRelief: "نەمکردنەوەی پێستی وشک",
     koreanSkincare: "چاودێری پێستی کۆری",
     underBudget: "کەمتر لە ١٥,٠٠٠ د.ع",
+    askElaraAI: "لە ئێلارا AI بپرسە",
   },
   install: {
     title: "ئێلارا دابمەزرێنە",

@@ -357,6 +357,7 @@ export const en = {
     drySkinRelief: "Dry skin relief",
     koreanSkincare: "Korean skincare",
     underBudget: "Under 15,000 IQD",
+    askElaraAI: "Ask ELARA AI instead",
   },
   install: {
     title: "Install ELARA",
