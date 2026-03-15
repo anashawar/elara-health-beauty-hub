@@ -69,7 +69,7 @@ const DesktopHeader = ({ onSearchClick }: DesktopHeaderProps) => {
             {user && userCity && (
               <Link to="/addresses" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
                 <MapPin className="w-3 h-3 text-primary" />
-                <span>{t("common.deliverTo")} <strong className="text-foreground">{userCity}</strong></span>
+                <span>Deliver to <strong className="text-foreground">{userCity}</strong></span>
               </Link>
             )}
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
