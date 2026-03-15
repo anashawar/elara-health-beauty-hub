@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Pencil, Trash2, Loader2, Tag, Sparkles, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Tag, Sparkles, ImageIcon, Search } from "lucide-react";
 import { toast } from "sonner";
 
 interface BrandForm { id?: string; name: string; slug: string; logo_url: string; country_of_origin: string; featured: boolean; }
@@ -15,6 +15,7 @@ const emptyForm: BrandForm = { name: "", slug: "", logo_url: "", country_of_orig
 export default function AdminBrands() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const [form, setForm] = useState<BrandForm>(emptyForm);
   const [editing, setEditing] = useState(false);
   const [findingLogos, setFindingLogos] = useState(false);
@@ -136,6 +137,12 @@ export default function AdminBrands() {
     toast.success(`Logo search complete: ${totalSuccess} found, ${totalFail} failed`);
   };
 
+  const filtered = brands.filter((b: any) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return b.name?.toLowerCase().includes(q) || b.slug?.toLowerCase().includes(q) || b.country_of_origin?.toLowerCase().includes(q);
+  });
+
   const brandsWithoutLogos = brands.filter((b: any) => !b.logo_url).length;
 
   return (
@@ -143,7 +150,7 @@ export default function AdminBrands() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Brands</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{brands.length} brands{brandsWithoutLogos > 0 && ` · ${brandsWithoutLogos} without logos`}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{filtered.length} of {brands.length} brands{brandsWithoutLogos > 0 && ` · ${brandsWithoutLogos} without logos`}</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -218,11 +225,21 @@ export default function AdminBrands() {
         </div>
       )}
 
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search brands by name, slug, or country..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9 rounded-xl"
+        />
+      </div>
+
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          {brands.map((b: any) => (
+          {filtered.map((b: any) => (
             <div
               key={b.id}
               className={`bg-card rounded-2xl border p-4 flex flex-col items-center hover:shadow-premium transition-all group cursor-pointer ${
