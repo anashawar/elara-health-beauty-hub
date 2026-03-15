@@ -43,7 +43,7 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
       .from("products")
       .select(`
         *,
-        brands ( name ),
+        brands ( name, name_ar, name_ku ),
         categories ( slug ),
         product_images ( image_url, sort_order ),
         product_tags ( tag )
