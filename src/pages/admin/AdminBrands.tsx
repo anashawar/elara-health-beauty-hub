@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Pencil, Trash2, Loader2, Tag, Sparkles, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Tag, Sparkles, ImageIcon, Search } from "lucide-react";
 import { toast } from "sonner";
 
 interface BrandForm { id?: string; name: string; slug: string; logo_url: string; country_of_origin: string; featured: boolean; }
