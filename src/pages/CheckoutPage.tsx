@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import fibLogo from "@/assets/fib-logo.png";
 import qiLogo from "@/assets/qi-logo.svg";
-import { ArrowLeft, Check, MapPin, ChevronDown, Sparkles, PartyPopper } from "lucide-react";
+import { ArrowLeft, Check, MapPin, ChevronDown, Sparkles, PartyPopper, Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useApp } from "@/context/AppContext";
 import { useFormatPrice } from "@/hooks/useProducts";
@@ -13,6 +13,7 @@ import DesktopHeader from "@/components/layout/DesktopHeader";
 import SearchOverlay from "@/components/SearchOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { calculatePoints, useAwardPoints } from "@/hooks/useLoyalty";
 
 const FIRST_ORDER_DISCOUNT_PERCENT = 15;
 const FIRST_ORDER_MIN_AMOUNT = 20000;
