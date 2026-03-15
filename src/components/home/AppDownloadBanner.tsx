@@ -99,7 +99,7 @@ const AppDownloadBanner = ({ compact = false }: AppDownloadBannerProps) => {
               </a>
             </div>
 
-            <p className="text-xs text-white/30 mt-4">{t("app.useCode") || "Use code"} <span className="font-mono font-bold text-primary">ELARA15</span> {t("app.atCheckout") || "at checkout"}</p>
+            <p className="text-xs text-white/30 mt-4">Use code <span className="font-mono font-bold text-primary">ELARA15</span> at checkout</p>
           </div>
         </div>
       </div>
