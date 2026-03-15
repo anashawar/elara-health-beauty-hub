@@ -13,6 +13,7 @@ import AuthGuard from "./components/AuthGuard";
 // Eagerly loaded — critical path
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
+import ResponsiveHome from "./components/ResponsiveHome";
 
 // Lazy loaded — secondary pages
 const CollectionPage = lazy(() => import("./pages/CollectionPage"));
@@ -91,7 +92,7 @@ const App = () => (
             <SwipeBackWrapper>
             <Suspense fallback={PageFallback}>
             <Routes>
-              <Route path="/" element={<AuthPage />} />
+              <Route path="/" element={<ResponsiveHome />} />
               <Route path="/home" element={<Index />} />
               <Route path="/categories" element={<CategoriesPage />} />
               <Route path="/shop" element={<CategoryPage />} />
