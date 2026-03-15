@@ -23,6 +23,8 @@ function isJunkImage(url: string): boolean {
     ".gif", ".svg", "data:image",
     "blog", "article", "editorial", "lifestyle", "category-",
     "collection-", "best-", "top-", "how-to",
+    "swatch", "color-", "shade-", "related", "recommend",
+    "similar", "also-", "you-may", "recently",
   ];
   return reject.some(p => lower.includes(p));
 }
@@ -32,30 +34,30 @@ function scoreImage(url: string, titleWords: string[], brandSlug: string, produc
   if (isJunkImage(lower)) return -1;
   if (!/\.(jpg|jpeg|png|webp)/i.test(lower.split("?")[0])) return -1;
 
-  // Reject images of different sizes/variants of the same product
-  // e.g. if product is 200ml, reject URLs containing "100ml", "400ml", "50ml"
+  // Reject images of different sizes/variants
   if (productVolume) {
     const vol = productVolume.replace(/\s+/g, "");
-    // Find all volume mentions in URL (e.g. "100ml", "400-ml", "50ml")
     const urlVolumes = lower.match(/(\d+)\s*-?\s*(ml|g|oz|mg)/gi) || [];
     for (const uv of urlVolumes) {
       const uvNorm = uv.replace(/[\s-]/g, "").toLowerCase();
       const prodNorm = vol.toLowerCase();
-      // If the URL mentions a volume and it doesn't match, reject
       if (uvNorm !== prodNorm && !lower.includes(prodNorm)) {
         return -1;
       }
     }
   }
 
-  let score = 1; // base score for valid image
+  let score = 1;
 
-  // Brand in URL
-  if (brandSlug && brandSlug.length > 2 && lower.includes(brandSlug)) score += 8;
+  // Brand in URL — strong signal
+  if (brandSlug && brandSlug.length > 2 && lower.includes(brandSlug)) score += 10;
 
-  // Title words in URL
+  // Title words in URL — each matching word is a strong signal
   const matched = titleWords.filter(w => w.length > 3 && lower.includes(w));
-  score += matched.length * 4;
+  score += matched.length * 5;
+
+  // Bonus: many title words matched = very likely correct product
+  if (matched.length >= 3) score += 10;
 
   // Trusted product image domains
   const trusted = [
@@ -83,10 +85,10 @@ function scoreImage(url: string, titleWords: string[], brandSlug: string, produc
   // Low-res penalty
   if (/_thumb|_xs\.|_sm\.|\/thumb\/|\/small\/|_50x|_75x|_100x|_150x/i.test(lower)) score -= 8;
 
-  // Boost: white/clean background indicators (common in e-commerce product shots)
+  // Boost: white/clean background indicators
   if (/white|clean|studio|packshot|_1\./i.test(lower)) score += 3;
 
-  // Boost: first/main product image (usually _1 or _01)
+  // Boost: first/main product image
   if (/[_-](1|01)\.\w+$/.test(lower)) score += 4;
 
   return score;
@@ -117,18 +119,13 @@ async function verifyImage(url: string): Promise<boolean> {
 /** Extract image URLs from markdown content */
 function extractImagesFromMarkdown(markdown: string): string[] {
   const images: string[] = [];
-
-  // ![alt](url)
   const mdRegex = /!\[.*?\]\((https?:\/\/[^\s)]+)\)/gi;
   let m;
   while ((m = mdRegex.exec(markdown)) !== null) images.push(m[1]);
-
-  // Bare image URLs
   const urlRegex = /(https?:\/\/[^\s"'<>]+\.(jpg|jpeg|png|webp)(\?[^\s"'<>]*)?)/gi;
   while ((m = urlRegex.exec(markdown)) !== null) {
     if (!images.includes(m[1])) images.push(m[1]);
   }
-
   return images;
 }
 
@@ -172,11 +169,10 @@ serve(async (req) => {
       const fullName = `${brandName} ${product.title}`.trim();
       const volumeStr = (product as any).volume_ml ? `${(product as any).volume_ml}${(product as any).volume_unit || "ml"}` : undefined;
 
-      // Multiple search strategies — first query targets white background product shots
+      // Precise search queries — use exact product name with quotes for accuracy
       const searchQueries = [
-        `"${fullName}" product white background`,
-        `${fullName} site:lookfantastic.com OR site:notino.com OR site:caretobeauty.com OR site:iherb.com`,
-        `${fullName} site:amazon.com OR site:sephora.com OR site:beautybay.com OR site:boots.com`,
+        `"${fullName}" product image${volumeStr ? ` ${volumeStr}` : ""}`,
+        `"${fullName}" site:lookfantastic.com OR site:notino.com OR site:caretobeauty.com OR site:iherb.com OR site:sephora.com`,
       ];
 
       try {
@@ -184,7 +180,8 @@ serve(async (req) => {
         let paymentRequired = false;
 
         for (const query of searchQueries) {
-          if (candidates.length >= 20 || paymentRequired) break;
+          // Stop as soon as we have good candidates
+          if (candidates.filter(c => c.score >= 15).length >= 3 || paymentRequired) break;
 
           console.log(`Searching: ${query}`);
           const resp = await fetch("https://api.firecrawl.dev/v1/search", {
@@ -195,7 +192,7 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               query,
-              limit: 5,
+              limit: 3,
               scrapeOptions: {
                 formats: ["markdown"],
                 onlyMainContent: true,
@@ -217,8 +214,6 @@ serve(async (req) => {
           for (const result of searchResults) {
             const md = result.markdown || "";
             const pageImages = extractImagesFromMarkdown(md);
-
-            // Also check metadata for images
             if (result.metadata?.ogImage) pageImages.unshift(result.metadata.ogImage);
 
             for (const imgUrl of pageImages) {
@@ -238,67 +233,57 @@ serve(async (req) => {
           continue;
         }
 
-        // Sort, deduplicate aggressively — only keep genuinely different images
+        // Sort by score descending — pick only the BEST single image
         candidates.sort((a, b) => b.score - a.score);
+
+        // Deduplicate
         const seen = new Set<string>();
         const uniqueCandidates: string[] = [];
-
         for (const c of candidates) {
-          // Extract base filename for aggressive dedup
           const urlPath = c.url.split("?")[0].toLowerCase().replace(/\/+$/, "");
-          // Get the core filename without size/CDN params
-          const filename = urlPath.split("/").pop() || "";
-          // Strip size suffixes: _2, _1, dimensions like 1600x1600
-          const baseFile = filename
-            .replace(/\.\w+$/, "")                    // remove extension
-            .replace(/_\d+$/, "")                      // remove trailing _N
-            .replace(/[-_]\d{3,4}x\d{3,4}/g, "")     // remove dimensions
-            .replace(/[-_](large|medium|small|xl|xxl)/gi, ""); // remove size labels
-
-          // Skip if we already have an image with the same base filename
-          if (seen.has(baseFile)) {
-            console.log(`⊘ Duplicate base "${baseFile}": ${c.url}`);
-            continue;
-          }
-          // Also skip if URL path (without query) is identical
           if (seen.has(urlPath)) continue;
-
-          seen.add(baseFile);
           seen.add(urlPath);
           uniqueCandidates.push(c.url);
-          if (uniqueCandidates.length >= 12) break;
+          if (uniqueCandidates.length >= 5) break; // Keep 5 candidates to verify, but only save 1
         }
 
-        console.log(`${uniqueCandidates.length} unique candidates for "${fullName}"`);
+        console.log(`${uniqueCandidates.length} unique candidates for "${fullName}" (top score: ${candidates[0]?.score || 0})`);
 
-        // Verify accessibility and quality
-        const verified: string[] = [];
+        // Minimum score threshold — only accept high-confidence matches
+        const topScore = candidates[0]?.score || 0;
+        if (topScore < 10) {
+          console.log(`⚠ Top score ${topScore} too low for "${fullName}" — skipping to avoid wrong image`);
+          results.push({ id: product.id, status: "no_confident_match", topScore });
+          continue;
+        }
+
+        // Verify and save ONLY the single best image
+        let savedUrl: string | null = null;
         for (const url of uniqueCandidates) {
-          if (verified.length >= 4) break;
           const ok = await verifyImage(url);
           if (ok) {
-            console.log(`✓ ${url}`);
-            verified.push(url);
+            console.log(`✓ Best image: ${url} (score: ${candidates.find(c => c.url === url)?.score})`);
+            savedUrl = url;
+            break;
           } else {
-            console.log(`✗ ${url}`);
+            console.log(`✗ Failed verification: ${url}`);
           }
         }
 
-        if (verified.length === 0) {
-          console.log(`No images found for "${fullName}"`);
+        if (!savedUrl) {
+          console.log(`No verified images for "${fullName}"`);
           results.push({ id: product.id, status: "no_images_found" });
           continue;
         }
 
-        for (let i = 0; i < verified.length; i++) {
-          await supabase.from("product_images").insert({
-            product_id: product.id,
-            image_url: verified[i],
-            sort_order: i,
-          });
-        }
-        console.log(`✓ Saved ${verified.length} images for "${fullName}"`);
-        results.push({ id: product.id, status: "success", images: verified.length });
+        await supabase.from("product_images").insert({
+          product_id: product.id,
+          image_url: savedUrl,
+          sort_order: 0,
+        });
+
+        console.log(`✓ Saved 1 image for "${fullName}"`);
+        results.push({ id: product.id, status: "success", images: 1, url: savedUrl });
 
         await new Promise(r => setTimeout(r, 500));
       } catch (err) {
