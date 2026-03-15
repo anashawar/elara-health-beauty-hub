@@ -344,6 +344,41 @@ const ProductPage = () => {
               )}
             </AnimatePresence>
 
+            {/* Ask ELARA AI about this product */}
+            <Link
+              to={`/elara-ai?product=${encodeURIComponent(product.title)}&brand=${encodeURIComponent(product.brand)}`}
+              className="block mt-5"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary via-primary/90 to-violet-600 p-4 group"
+              >
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                  animate={{ x: ["-100%", "200%"] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                />
+                <div className="relative flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">ELARA AI</p>
+                    <p className="text-sm font-bold text-white leading-tight">{t("product.askAI") || "Ask AI about this product"}</p>
+                    <p className="text-[11px] text-white/60 mt-0.5">{t("product.askAIDesc") || "Ingredients, usage tips, skin compatibility & more"}</p>
+                  </div>
+                  <motion.div
+                    animate={{ x: [0, 4, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    <ChevronRight className="w-5 h-5 text-white/70 rtl:rotate-180" />
+                  </motion.div>
+                </div>
+              </motion.div>
+            </Link>
+
             <ReviewSection productId={product.id} />
 
             {related.length > 0 && (
