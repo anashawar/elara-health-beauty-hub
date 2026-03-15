@@ -148,6 +148,14 @@ export default function AdminBrands() {
         <div className="flex gap-2">
           <Button
             size="sm"
+            variant={multiSelect ? "default" : "outline"}
+            className="rounded-xl"
+            onClick={() => { setMultiSelect(!multiSelect); setSelectedIds(new Set()); }}
+          >
+            {multiSelect ? "Cancel" : "Select"}
+          </Button>
+          <Button
+            size="sm"
             variant="outline"
             className="rounded-xl"
             onClick={handleFindMissingLogos}
@@ -178,6 +186,26 @@ export default function AdminBrands() {
         </div>
       </div>
 
+      {multiSelect && selectedIds.size > 0 && (
+        <div className="mb-4 p-3 bg-primary/5 rounded-xl border border-primary/10 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={toggleSelectAll} className="text-sm font-medium text-primary hover:underline">
+              {selectedIds.size === brands.length ? "Deselect All" : "Select All"}
+            </button>
+            <span className="text-sm text-muted-foreground">{selectedIds.size} selected</span>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="rounded-xl" onClick={() => bulkFeatured.mutate(true)} disabled={bulkFeatured.isPending}>
+              {bulkFeatured.isPending ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1.5" />}
+              Set Featured
+            </Button>
+            <Button size="sm" variant="outline" className="rounded-xl" onClick={() => bulkFeatured.mutate(false)} disabled={bulkFeatured.isPending}>
+              Remove Featured
+            </Button>
+          </div>
+        </div>
+      )}
+
       {findingLogos && logoProgress && (
         <div className="mb-4 p-3 bg-primary/5 rounded-xl border border-primary/10">
           <div className="flex items-center gap-2 mb-2">
@@ -195,7 +223,23 @@ export default function AdminBrands() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {brands.map((b: any) => (
-            <div key={b.id} className="bg-card rounded-2xl border border-border/50 p-4 flex flex-col items-center hover:shadow-premium transition-shadow group">
+            <div
+              key={b.id}
+              className={`bg-card rounded-2xl border p-4 flex flex-col items-center hover:shadow-premium transition-all group cursor-pointer ${
+                multiSelect && selectedIds.has(b.id) ? "border-primary ring-2 ring-primary/20" : "border-border/50"
+              }`}
+              onClick={() => multiSelect && toggleSelect(b.id)}
+            >
+              {multiSelect && (
+                <div className="self-start mb-1">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(b.id)}
+                    onChange={() => toggleSelect(b.id)}
+                    className="h-4 w-4 rounded border-border accent-primary"
+                  />
+                </div>
+              )}
               <div className="w-16 h-16 rounded-xl overflow-hidden bg-secondary/50 mb-3 p-2">
                 {b.logo_url ? (
                   <img src={b.logo_url} className="w-full h-full object-contain" alt={b.name} />
@@ -209,15 +253,17 @@ export default function AdminBrands() {
               {b.featured && <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">FEATURED</span>}
               {b.country_of_origin && <p className="text-[10px] text-muted-foreground">{b.country_of_origin}</p>}
               <p className="text-[10px] text-muted-foreground">{b.slug}</p>
-              <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg" onClick={() => {
-                  setForm({ id: b.id, name: b.name, slug: b.slug, logo_url: b.logo_url || "", country_of_origin: b.country_of_origin || "", featured: b.featured || false });
-                  setEditing(true); setOpen(true);
-                }}><Pencil className="h-3 w-3" /></Button>
-                <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg text-destructive" onClick={() => {
-                  if (confirm("Delete?")) del.mutate(b.id);
-                }}><Trash2 className="h-3 w-3" /></Button>
-              </div>
+              {!multiSelect && (
+                <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg" onClick={() => {
+                    setForm({ id: b.id, name: b.name, slug: b.slug, logo_url: b.logo_url || "", country_of_origin: b.country_of_origin || "", featured: b.featured || false });
+                    setEditing(true); setOpen(true);
+                  }}><Pencil className="h-3 w-3" /></Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg text-destructive" onClick={() => {
+                    if (confirm("Delete?")) del.mutate(b.id);
+                  }}><Trash2 className="h-3 w-3" /></Button>
+                </div>
+              )}
             </div>
           ))}
           {brands.length === 0 && (
