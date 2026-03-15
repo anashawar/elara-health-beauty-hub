@@ -76,7 +76,7 @@ const AppDownloadBanner = ({ compact = false }: AppDownloadBannerProps) => {
               EXCLUSIVE OFFER
             </div>
             <h2 className="text-3xl font-display font-bold text-white leading-tight">
-              {t("app.downloadElara") || "Download ELARA App"}
+              Download ELARA App
             </h2>
             <p className="text-lg text-white/50 mt-2 max-w-md">
               {t("app.getDiscountLong") || "Get 15% OFF on your first order! Shop smarter with AI-powered recommendations, exclusive deals, and faster checkout."}
