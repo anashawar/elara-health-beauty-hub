@@ -141,6 +141,8 @@ export const ar = {
     noProductsFound: "ما كو منتجات لهالماركة",
     outOfStock: "نفذ من المخزن",
     shareText: "شوف {{title}} من {{brand}} على إيلارا!",
+    aiQuestion: "عدك سؤال عن هالمنتج؟",
+    aiDesc: "احصل على نصيحة خبير عن المكونات وطريقة الاستخدام وإذا يناسبك",
   },
   cart: {
     myBag: "سلّتي",
