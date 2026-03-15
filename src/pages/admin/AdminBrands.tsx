@@ -31,7 +31,7 @@ export default function AdminBrands() {
 
   const save = useMutation({
     mutationFn: async (f: BrandForm) => {
-      const payload = { name: f.name, slug: f.slug || f.name.toLowerCase().replace(/\s+/g, "-"), logo_url: f.logo_url || null, country_of_origin: f.country_of_origin || null };
+      const payload = { name: f.name, slug: f.slug || f.name.toLowerCase().replace(/\s+/g, "-"), logo_url: f.logo_url || null, country_of_origin: f.country_of_origin || null, featured: f.featured };
       if (f.id) {
         const { error } = await supabase.from("brands").update(payload).eq("id", f.id);
         if (error) throw error;
