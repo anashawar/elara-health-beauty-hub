@@ -80,7 +80,7 @@ const CheckoutPage = () => {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 max-w-lg mx-auto">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 max-w-lg mx-auto pb-24" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}

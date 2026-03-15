@@ -60,7 +60,7 @@ const ProfilePage = () => {
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {/* Mobile header */}
-      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border md:hidden">
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/30 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="flex items-center gap-3 px-4 py-3">
           <UserRound className="w-5 h-5 text-primary" />
           <h1 className="text-lg font-display font-bold text-foreground">{t("profile.title")}</h1>
