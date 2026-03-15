@@ -200,30 +200,30 @@ const HeroBanner = () => {
             )}
             <div className={`absolute inset-0 bg-gradient-to-t rtl:bg-gradient-to-t ${banner.overlay}`} />
 
-            <div className="relative h-full flex flex-col justify-end px-5 pb-8 pt-16 z-10 max-w-[85%] md:max-w-[60%] md:px-10 md:pb-12">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md text-[11px] font-bold uppercase tracking-widest text-white w-fit mb-3 border border-white/10">
-                {banner.isOffer ? <Sparkles className="w-3.5 h-3.5" /> : banner.tagIcon && <banner.tagIcon className="w-3.5 h-3.5" />}
+            <div className="relative h-full flex flex-col justify-end px-5 pb-7 pt-12 z-10 max-w-[85%] md:max-w-[60%] md:px-10 md:pb-12">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-md text-[10px] font-bold uppercase tracking-widest text-white w-fit mb-2 border border-white/10">
+                {banner.isOffer ? <Sparkles className="w-3 h-3" /> : banner.tagIcon && <banner.tagIcon className="w-3 h-3" />}
                 {banner.tag}
               </span>
 
-              <h2 className="text-[22px] md:text-[34px] font-display font-bold text-white leading-[1.15] tracking-tight">
+              <h2 className="text-[18px] md:text-[34px] font-display font-bold text-white leading-[1.15] tracking-tight">
                 {banner.title}
               </h2>
-              <p className="text-[11px] md:text-[14px] text-white/75 mt-1.5 leading-relaxed max-w-[280px] md:max-w-[320px] line-clamp-2">
+              <p className="text-[10px] md:text-[14px] text-white/75 mt-1 leading-relaxed max-w-[260px] md:max-w-[320px] line-clamp-2">
                 {banner.subtitle}
               </p>
 
               {banner.coupon && (
                 <button
                   onClick={() => copyCoupon(banner.coupon!)}
-                  className="mt-3 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-mono font-bold w-fit hover:bg-white/20 active:scale-95 transition-all"
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white text-[11px] font-mono font-bold w-fit hover:bg-white/20 active:scale-95 transition-all"
                 >
                   <Copy className="w-3 h-3 opacity-70" />
                   {banner.coupon}
                 </button>
               )}
 
-              <div className="mt-4">
+              <div className="mt-2.5">
                 {banner.coupon ? (
                   <button
                     type="button"
@@ -231,18 +231,18 @@ const HeroBanner = () => {
                       setPendingCoupon(banner.coupon!);
                       navigate(banner.ctaLink);
                     }}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-foreground text-[13px] font-semibold rounded-full w-fit hover:bg-white/90 active:scale-95 transition-all shadow-lg"
+                    className="inline-flex items-center gap-1.5 px-5 py-2 bg-white text-foreground text-[12px] font-semibold rounded-full w-fit hover:bg-white/90 active:scale-95 transition-all shadow-lg"
                   >
                     {banner.cta}
-                    <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+                    <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
                   </button>
                 ) : (
                   <Link
                     to={banner.ctaLink}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-foreground text-[13px] font-semibold rounded-full w-fit hover:bg-white/90 active:scale-95 transition-all shadow-lg"
+                    className="inline-flex items-center gap-1.5 px-5 py-2 bg-white text-foreground text-[12px] font-semibold rounded-full w-fit hover:bg-white/90 active:scale-95 transition-all shadow-lg"
                   >
                     {banner.cta}
-                    <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+                    <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
                   </Link>
                 )}
               </div>
