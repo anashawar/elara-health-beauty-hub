@@ -137,6 +137,12 @@ export default function AdminBrands() {
     toast.success(`Logo search complete: ${totalSuccess} found, ${totalFail} failed`);
   };
 
+  const filtered = brands.filter((b: any) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return b.name?.toLowerCase().includes(q) || b.slug?.toLowerCase().includes(q) || b.country_of_origin?.toLowerCase().includes(q);
+  });
+
   const brandsWithoutLogos = brands.filter((b: any) => !b.logo_url).length;
 
   return (
