@@ -11,10 +11,12 @@ const BrandsSection = () => {
   const { t } = useLanguage();
   const [showAll, setShowAll] = useState(false);
 
-  if (brands.length === 0) return null;
+  const featuredBrands = brands.filter((b: any) => b.featured);
 
-  const desktopBrands = showAll ? brands : brands.slice(0, DESKTOP_INITIAL);
-  const hasMore = brands.length > DESKTOP_INITIAL;
+  if (featuredBrands.length === 0) return null;
+
+  const desktopBrands = showAll ? featuredBrands : featuredBrands.slice(0, DESKTOP_INITIAL);
+  const hasMore = featuredBrands.length > DESKTOP_INITIAL;
 
   return (
     <section className="px-4 mt-8">
