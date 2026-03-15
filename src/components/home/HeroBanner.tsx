@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Gift, Truck, ShieldCheck, ArrowRight, Copy, Sparkles } from "lucide-react";
+import { Gift, Truck, ShieldCheck, ArrowRight, Copy, Sparkles, Zap } from "lucide-react";
 import bannerDiscount from "@/assets/banner-discount.jpg";
 import bannerDelivery from "@/assets/banner-delivery.jpg";
 import bannerOriginal from "@/assets/banner-original.jpg";
+import bannerFastDelivery from "@/assets/banner-fast-delivery.jpg";
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useApp } from "@/context/AppContext";
