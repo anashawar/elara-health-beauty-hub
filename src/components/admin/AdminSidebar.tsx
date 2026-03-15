@@ -12,6 +12,7 @@ import {
   BarChart3,
   Percent,
   Bell,
+  Languages,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
