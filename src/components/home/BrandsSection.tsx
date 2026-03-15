@@ -69,7 +69,7 @@ const BrandsSection = () => {
             {showAll ? (
               <>Show Less <ChevronUp className="w-4 h-4" /></>
             ) : (
-              <>View All Brands ({brands.length}) <ChevronDown className="w-4 h-4" /></>
+              <>View All Brands ({featuredBrands.length}) <ChevronDown className="w-4 h-4" /></>
             )}
           </button>
         </div>

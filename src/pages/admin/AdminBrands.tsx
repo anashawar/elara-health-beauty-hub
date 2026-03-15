@@ -171,6 +171,7 @@ export default function AdminBrands() {
                 )}
               </div>
               <p className="text-sm font-bold text-foreground text-center">{b.name}</p>
+              {b.featured && <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">FEATURED</span>}
               {b.country_of_origin && <p className="text-[10px] text-muted-foreground">{b.country_of_origin}</p>}
               <p className="text-[10px] text-muted-foreground">{b.slug}</p>
               <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
