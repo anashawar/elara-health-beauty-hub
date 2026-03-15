@@ -18,6 +18,7 @@ const BrandsSection = lazy(() => import("@/components/home/BrandsSection"));
 const ConcernsSection = lazy(() => import("@/components/home/ConcernsSection"));
 const DealsBanner = lazy(() => import("@/components/home/DealsBanner"));
 const AppDownloadBanner = lazy(() => import("@/components/home/AppDownloadBanner"));
+const WhyElaraBanner = lazy(() => import("@/components/home/WhyElaraBanner"));
 
 const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -93,6 +94,11 @@ const Index = () => {
             </>
           </Suspense>
         )}
+
+        {/* Why ELARA animated banner */}
+        <Suspense fallback={null}>
+          <WhyElaraBanner />
+        </Suspense>
 
         {/* Full App Download Banner — Desktop only, before footer */}
         <div className="px-4 mt-10">
