@@ -19,6 +19,41 @@ export default function AdminBrands() {
   const [editing, setEditing] = useState(false);
   const [findingLogos, setFindingLogos] = useState(false);
   const [logoProgress, setLogoProgress] = useState<{ done: number; total: number } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [multiSelect, setMultiSelect] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === brands.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(brands.map((b: any) => b.id)));
+    }
+  };
+
+  const bulkFeatured = useMutation({
+    mutationFn: async (featured: boolean) => {
+      const ids = Array.from(selectedIds);
+      for (const id of ids) {
+        const { error } = await supabase.from("brands").update({ featured }).eq("id", id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-brands"] });
+      toast.success("Updated");
+      setSelectedIds(new Set());
+      setMultiSelect(false);
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   const { data: brands = [], isLoading } = useQuery({
     queryKey: ["admin-brands"],
