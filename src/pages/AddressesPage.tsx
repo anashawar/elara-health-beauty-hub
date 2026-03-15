@@ -138,6 +138,12 @@ const AddressesPage = () => {
 
   const handleSave = () => {
     if (!form.city) { toast(t("auth.selectCity")); return; }
+    if (!form.area.trim()) { toast(t("addresses.areaRequired") || "Area/Neighborhood is required"); return; }
+    if (!form.street.trim()) { toast(t("addresses.streetRequired") || "Street is required"); return; }
+    if (!form.building.trim()) { toast(t("addresses.buildingRequired") || "Building is required"); return; }
+    if (!form.floor.trim()) { toast(t("addresses.floorRequired") || "Floor is required"); return; }
+    if (!form.apartment.trim()) { toast(t("addresses.aptRequired") || "Apartment is required"); return; }
+    if (!form.phone.trim()) { toast(t("addresses.phoneRequired") || "WhatsApp number is required"); return; }
     saveMutation.mutate({ ...form, id: editingId || undefined });
   };
 
@@ -274,14 +280,32 @@ const AddressesPage = () => {
                     )}
                   </div>
 
-                  <Input value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))} placeholder={t("auth.area")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
-                  <Input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder={t("auth.streetPlaceholder")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
-                  <div className="grid grid-cols-3 gap-2">
-                    <Input value={form.building} onChange={e => setForm(f => ({ ...f, building: e.target.value }))} placeholder={t("auth.building")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
-                    <Input value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} placeholder={t("auth.floor")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
-                    <Input value={form.apartment} onChange={e => setForm(f => ({ ...f, apartment: e.target.value }))} placeholder={t("auth.apartment") || "Apt"} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.area")} *</label>
+                    <Input value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))} placeholder={t("auth.area")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                   </div>
-                  <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder={t("auth.phoneNumber")} type="tel" className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.streetPlaceholder")} *</label>
+                    <Input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder={t("auth.streetPlaceholder")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.building")} *</label>
+                      <Input value={form.building} onChange={e => setForm(f => ({ ...f, building: e.target.value }))} placeholder={t("auth.building")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.floor")} *</label>
+                      <Input value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} placeholder={t("auth.floor")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.apartment") || "Apt"} *</label>
+                      <Input value={form.apartment} onChange={e => setForm(f => ({ ...f, apartment: e.target.value }))} placeholder={t("auth.apartment") || "Apt"} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.phoneNumber")} (WhatsApp) *</label>
+                    <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder={t("auth.phoneNumber")} type="tel" className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                  </div>
                   <Button onClick={handleSave} disabled={saveMutation.isPending} className="w-full h-11 rounded-xl text-sm font-semibold">
                     {saveMutation.isPending ? t("auth.saving") : editingId ? t("addresses.updateAddress") : t("addresses.saveAddress")}
                   </Button>
