@@ -54,15 +54,8 @@ const HeroBanner = () => {
     },
   });
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('hero-offers-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, () => {
-        qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [qc]);
+  // Removed realtime subscription — offers don't change frequently enough to justify
+  // a persistent WebSocket connection. The 5-min staleTime handles freshness.
 
   const staticBanners: HeroBannerItem[] = [
     {
