@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import fibLogo from "@/assets/fib-logo.png";
 import qiLogo from "@/assets/qi-logo.svg";
-import { ArrowLeft, Check, MapPin, ChevronDown } from "lucide-react";
+import { ArrowLeft, Check, MapPin, ChevronDown, Sparkles, PartyPopper } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useApp } from "@/context/AppContext";
 import { formatPrice } from "@/hooks/useProducts";
@@ -14,10 +14,13 @@ import SearchOverlay from "@/components/SearchOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 
+const FIRST_ORDER_DISCOUNT_PERCENT = 15;
+const FIRST_ORDER_MIN_AMOUNT = 20000;
+
 const CheckoutPage = () => {
   const { cart, cartTotal, clearCart } = useApp();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [submitted, setSubmitted] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
@@ -25,6 +28,28 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [searchOpen, setSearchOpen] = useState(false);
   const deliveryFee = cartTotal >= 40000 ? 0 : 5000;
+
+  // Check if user has any previous orders (for first-order discount)
+  const { data: existingOrderCount, isLoading: ordersCountLoading } = useQuery({
+    queryKey: ["user-order-count", user?.id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!user,
+    staleTime: 0, // Always fresh — critical for accuracy
+  });
+
+  const isFirstOrder = existingOrderCount === 0 && !ordersCountLoading;
+  const meetsMinimum = cartTotal >= FIRST_ORDER_MIN_AMOUNT;
+  const firstOrderDiscount = isFirstOrder && meetsMinimum
+    ? Math.round((cartTotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250
+    : 0;
+  const finalTotal = cartTotal - firstOrderDiscount + deliveryFee;
 
   const { data: addresses = [], isLoading: addressesLoading } = useQuery({
     queryKey: ["addresses", user?.id],
@@ -49,15 +74,29 @@ const CheckoutPage = () => {
     e.preventDefault();
 
     if (user && selectedAddress) {
+      // Re-verify first order status at submit time to prevent race conditions
+      const { count: freshCount } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      const confirmedFirstOrder = (freshCount ?? 0) === 0;
+      const confirmedDiscount = confirmedFirstOrder && meetsMinimum
+        ? Math.round((cartTotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250
+        : 0;
+
       const { data: order, error: orderError } = await supabase.from("orders").insert({
         user_id: user.id,
         address_id: selectedAddress.id,
         subtotal: cartTotal,
         delivery_fee: deliveryFee,
-        discount: 0,
-        total: cartTotal + deliveryFee,
+        discount: confirmedDiscount,
+        total: cartTotal - confirmedDiscount + deliveryFee,
         payment_method: paymentMethod,
-        notes: notes || null,
+        notes: confirmedDiscount > 0
+          ? [notes, `[First Order -${FIRST_ORDER_DISCOUNT_PERCENT}%]`].filter(Boolean).join(" | ")
+          : (notes || null),
+        coupon_code: confirmedDiscount > 0 ? `FIRST_ORDER_${FIRST_ORDER_DISCOUNT_PERCENT}` : null,
         status: "pending",
       }).select().single();
 
@@ -110,7 +149,27 @@ const CheckoutPage = () => {
     { value: "qicard", label: t("checkout.qicard"), desc: t("checkout.qicardDesc"), icon: null, image: qiLogo },
   ];
 
-  // searchOpen moved to top with other useState hooks
+  const firstOrderTexts = {
+    en: {
+      title: "🎉 First Order Discount!",
+      desc: `You get ${FIRST_ORDER_DISCOUNT_PERCENT}% off your first order`,
+      saving: "You're saving",
+      belowMin: `Add ${formatPrice(FIRST_ORDER_MIN_AMOUNT - cartTotal)} more to unlock your ${FIRST_ORDER_DISCOUNT_PERCENT}% first order discount!`,
+    },
+    ar: {
+      title: "🎉 خصم الطلب الأول!",
+      desc: `تحصل على خصم ${FIRST_ORDER_DISCOUNT_PERCENT}% على طلبك الأول`,
+      saving: "توفيرك",
+      belowMin: `أضف ${formatPrice(FIRST_ORDER_MIN_AMOUNT - cartTotal)} إضافية للحصول على خصم ${FIRST_ORDER_DISCOUNT_PERCENT}% على طلبك الأول!`,
+    },
+    ku: {
+      title: "🎉 داشکانی داواکاری یەکەم!",
+      desc: `${FIRST_ORDER_DISCOUNT_PERCENT}% داشکان لەسەر داواکاری یەکەمت`,
+      saving: "پاشەکەوتت",
+      belowMin: `${formatPrice(FIRST_ORDER_MIN_AMOUNT - cartTotal)} زیاتر زیاد بکە بۆ کردنەوەی ${FIRST_ORDER_DISCOUNT_PERCENT}% داشکانی داواکاری یەکەم!`,
+    },
+  };
+  const fot = firstOrderTexts[language] || firstOrderTexts.en;
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8">
@@ -134,6 +193,48 @@ const CheckoutPage = () => {
         </div>
 
       <form onSubmit={handleSubmit} className="px-4 md:px-6 mt-4 space-y-4 md:max-w-2xl">
+
+        {/* First Order Discount Banner */}
+        {isFirstOrder && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`relative overflow-hidden rounded-2xl p-4 ${
+              meetsMinimum
+                ? "bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700"
+                : "bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500"
+            }`}
+          >
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/20" />
+              <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/10" />
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-1">
+                {meetsMinimum ? (
+                  <Sparkles className="w-5 h-5 text-white" />
+                ) : (
+                  <PartyPopper className="w-5 h-5 text-white" />
+                )}
+                <h3 className="text-sm font-display font-bold text-white tracking-wide">
+                  {fot.title}
+                </h3>
+              </div>
+              {meetsMinimum ? (
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs text-white/85">{fot.desc}</p>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-white/20">
+                    <p className="text-[10px] text-white/70 uppercase tracking-wider font-medium">{fot.saving}</p>
+                    <p className="text-base font-display font-bold text-white">-{formatPrice(firstOrderDiscount)}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-white/85 mt-1">{fot.belowMin}</p>
+              )}
+            </div>
+          </motion.div>
+        )}
+
         {/* Delivery Address */}
         <div className="bg-card rounded-2xl p-4 shadow-premium">
           <div className="flex items-center justify-between mb-3">
@@ -258,7 +359,23 @@ const CheckoutPage = () => {
                 <span className="text-foreground font-medium">{formatPrice(item.product.price * item.quantity)}</span>
               </div>
             ))}
-            <div className="border-t border-border pt-2 mt-2 flex justify-between text-sm">
+
+            {/* First order discount line */}
+            {firstOrderDiscount > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="border-t border-border pt-2 mt-2 flex justify-between text-sm"
+              >
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {fot.title}
+                </span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">-{formatPrice(firstOrderDiscount)}</span>
+              </motion.div>
+            )}
+
+            <div className={`border-t border-border pt-2 ${firstOrderDiscount === 0 ? "mt-2" : ""} flex justify-between text-sm`}>
               <span className="text-muted-foreground">{t("cart.delivery")}</span>
               <span className={deliveryFee === 0 ? "text-sage font-medium" : "text-foreground font-medium"}>
                 {deliveryFee === 0 ? t("common.free") : formatPrice(deliveryFee)}
@@ -266,7 +383,12 @@ const CheckoutPage = () => {
             </div>
             <div className="border-t border-border pt-2 flex justify-between">
               <span className="font-bold text-foreground">{t("cart.total")}</span>
-              <span className="font-bold text-foreground text-lg">{formatPrice(cartTotal + deliveryFee)}</span>
+              <div className="text-right">
+                {firstOrderDiscount > 0 && (
+                  <span className="text-xs text-muted-foreground line-through mr-2">{formatPrice(cartTotal + deliveryFee)}</span>
+                )}
+                <span className="font-bold text-foreground text-lg">{formatPrice(finalTotal)}</span>
+              </div>
             </div>
           </div>
         </div>
