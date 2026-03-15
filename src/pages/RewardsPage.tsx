@@ -258,7 +258,7 @@ const RewardsPage = () => {
                       </div>
                       <button
                         onClick={() => handleRedeem(reward)}
-                        disabled={balance < reward.points_cost || redeemMutation.isPending}
+                        disabled={balance < reward.points_cost || redeemMutation.isPending || (reward.stock !== null && reward.stock !== undefined && reward.stock <= 0)}
                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 ${
                           balance >= reward.points_cost
                             ? "bg-primary text-primary-foreground shadow-sm"
