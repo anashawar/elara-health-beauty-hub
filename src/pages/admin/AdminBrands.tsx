@@ -150,7 +150,7 @@ export default function AdminBrands() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Brands</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{brands.length} brands{brandsWithoutLogos > 0 && ` · ${brandsWithoutLogos} without logos`}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{filtered.length} of {brands.length} brands{brandsWithoutLogos > 0 && ` · ${brandsWithoutLogos} without logos`}</p>
         </div>
         <div className="flex gap-2">
           <Button
