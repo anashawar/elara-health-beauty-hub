@@ -4,6 +4,8 @@ import { AnimatePresence } from "framer-motion";
 const VALUE_PROPS = [
   "24 Hour Delivery 🚀",
   "AI is your best friend 🧠",
+  "Rewards on Orders 🎁",
+  "Smart Shopping 🛍️",
   "+3,000 Products 📦",
   "+250 Verified Brands ✓",
   "Reasonable Prices 🏷️",

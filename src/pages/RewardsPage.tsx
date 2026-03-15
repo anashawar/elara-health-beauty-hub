@@ -48,11 +48,17 @@ const RewardsPage = () => {
       toast.error(t("rewards.notEnoughPoints"));
       return;
     }
+    if (reward.stock !== null && reward.stock !== undefined && reward.stock <= 0) {
+      toast.error(t("rewards.outOfStock") || "This reward is out of stock");
+      return;
+    }
+    const title = getRewardTitle(reward);
+    if (!confirm(`${t("rewards.confirmRedeem") || "Redeem"} "${title}" for ${reward.points_cost} points?`)) return;
     try {
-      await redeemMutation.mutateAsync({ rewardId: reward.id, pointsCost: reward.points_cost });
-      toast.success(t("rewards.redeemed"));
-    } catch {
-      toast.error(t("rewards.redeemFailed"));
+      await redeemMutation.mutateAsync({ rewardId: reward.id, pointsCost: reward.points_cost, rewardTitle: reward.title });
+      toast.success(`🎉 ${t("rewards.redeemed") || "Reward redeemed!"}`);
+    } catch (e: any) {
+      toast.error(e?.message?.includes("stock") ? (t("rewards.outOfStock") || "Out of stock") : (t("rewards.redeemFailed") || "Redemption failed"));
     }
   };
 
