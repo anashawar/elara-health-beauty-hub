@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Gift, Truck, ShieldCheck, ArrowRight, Copy, Sparkles } from "lucide-react";
+import { Gift, Truck, ShieldCheck, ArrowRight, Copy, Sparkles, Zap } from "lucide-react";
 import bannerDiscount from "@/assets/banner-discount.jpg";
 import bannerDelivery from "@/assets/banner-delivery.jpg";
 import bannerOriginal from "@/assets/banner-original.jpg";
+import bannerFastDelivery from "@/assets/banner-fast-delivery.jpg";
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useApp } from "@/context/AppContext";
@@ -85,6 +86,17 @@ const HeroBanner = () => {
       cta: t("banner.startShopping"),
       ctaLink: "/categories",
       image: bannerDelivery,
+      overlay: "from-black/80 via-black/50 to-black/20",
+    },
+    {
+      id: "4",
+      tag: t("banner.quickDelivery"),
+      tagIcon: Zap,
+      title: t("banner.title4"),
+      subtitle: t("banner.subtitle4"),
+      cta: t("banner.orderNow"),
+      ctaLink: "/categories",
+      image: bannerFastDelivery,
       overlay: "from-black/80 via-black/50 to-black/20",
     },
     {
