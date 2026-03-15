@@ -89,6 +89,17 @@ const HeroBanner = () => {
       overlay: "from-black/80 via-black/50 to-black/20",
     },
     {
+      id: "4",
+      tag: t("banner.quickDelivery"),
+      tagIcon: Zap,
+      title: t("banner.title4"),
+      subtitle: t("banner.subtitle4"),
+      cta: t("banner.orderNow"),
+      ctaLink: "/categories",
+      image: bannerFastDelivery,
+      overlay: "from-black/80 via-black/50 to-black/20",
+    },
+    {
       id: "3",
       tag: t("banner.authentic"),
       tagIcon: ShieldCheck,
