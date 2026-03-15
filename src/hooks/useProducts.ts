@@ -78,12 +78,7 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
           ? (p.usage_instructions_ku || p.usage_instructions || "")
           : (p.usage_instructions || "");
 
-    const localizedBrand =
-      language === "ar"
-        ? (p.brands?.name_ar || p.brands?.name || "")
-        : language === "ku"
-          ? (p.brands?.name_ku || p.brands?.name || "")
-          : (p.brands?.name || "");
+    const localizedBrand = p.brands?.name || "";
 
     return {
       id: p.id,
