@@ -95,6 +95,11 @@ const Index = () => {
           </Suspense>
         )}
 
+        {/* Why ELARA animated banner */}
+        <Suspense fallback={null}>
+          <WhyElaraBanner />
+        </Suspense>
+
         {/* Full App Download Banner — Desktop only, before footer */}
         <div className="px-4 mt-10">
           <Suspense fallback={null}>
