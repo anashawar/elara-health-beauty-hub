@@ -1,7 +1,6 @@
 import { Sparkles, Smartphone } from "lucide-react";
 import { motion } from "framer-motion";
 import elaraLogo from "@/assets/elara-logo.png";
-import { useLanguage } from "@/i18n/LanguageContext";
 
 interface AppDownloadBannerProps {
   compact?: boolean;
