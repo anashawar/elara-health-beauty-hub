@@ -133,7 +133,7 @@ const ProductPage = () => {
         </div>
       </header>
 
-      <div className="app-container">
+      <div className="app-container md:max-w-7xl md:mx-auto">
         {/* Desktop breadcrumb */}
         <div className="hidden md:flex items-center gap-2 px-6 pt-4 pb-2 text-sm">
           <Link to="/home" className="text-muted-foreground hover:text-foreground transition-colors">{t("nav.home")}</Link>
