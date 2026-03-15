@@ -24,11 +24,13 @@ const CheckoutPage = () => {
   const { t, language } = useLanguage();
   const formatPrice = useFormatPrice();
   const [submitted, setSubmitted] = useState(false);
+  const [earnedPoints, setEarnedPoints] = useState(0);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [searchOpen, setSearchOpen] = useState(false);
+  const awardPoints = useAwardPoints();
   const deliveryFee = cartTotal >= 40000 ? 0 : 5000;
 
   // Check if user has any previous orders (for first-order discount)
