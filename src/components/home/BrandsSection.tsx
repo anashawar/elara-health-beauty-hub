@@ -34,7 +34,7 @@ const BrandsSection = () => {
 
       {/* Mobile: horizontal scroll — no stagger animations for performance */}
       <div className="flex gap-4 overflow-x-auto no-scrollbar pb-3 md:hidden">
-        {brands.map((brand) => (
+        {featuredBrands.map((brand) => (
           <Link
             key={brand.id}
             to={`/brand/${brand.slug}`}
