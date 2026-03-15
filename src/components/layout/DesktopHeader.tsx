@@ -74,7 +74,7 @@ const DesktopHeader = ({ onSearchClick }: DesktopHeaderProps) => {
             )}
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Smartphone className="w-3 h-3" />
-              <span>{t("common.downloadApp") || "Download the App"} — <strong className="text-primary">15% OFF</strong></span>
+              <span>Download the App — <strong className="text-primary">15% OFF</strong></span>
             </div>
           </div>
           <div className="flex items-center gap-3">
