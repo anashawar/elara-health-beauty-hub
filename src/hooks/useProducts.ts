@@ -234,7 +234,10 @@ export function useBanners() {
   });
 }
 
-export const formatPrice = (price: number) => `${price.toLocaleString()} IQD`;
+export const formatPrice = (price: number, lang?: string) => {
+  const currency = lang === "ar" ? "د.ع" : lang === "ku" ? "د.ع" : "IQD";
+  return `${price.toLocaleString()} ${currency}`;
+};
 
 // Keep concerns as static data since they're not in the DB
 export const concerns = [
