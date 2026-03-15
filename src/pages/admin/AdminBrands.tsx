@@ -9,8 +9,8 @@ import { Progress } from "@/components/ui/progress";
 import { Plus, Pencil, Trash2, Loader2, Tag, Sparkles, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
-interface BrandForm { id?: string; name: string; slug: string; logo_url: string; country_of_origin: string; }
-const emptyForm: BrandForm = { name: "", slug: "", logo_url: "", country_of_origin: "" };
+interface BrandForm { id?: string; name: string; slug: string; logo_url: string; country_of_origin: string; featured: boolean; }
+const emptyForm: BrandForm = { name: "", slug: "", logo_url: "", country_of_origin: "", featured: false };
 
 export default function AdminBrands() {
   const qc = useQueryClient();
@@ -31,7 +31,7 @@ export default function AdminBrands() {
 
   const save = useMutation({
     mutationFn: async (f: BrandForm) => {
-      const payload = { name: f.name, slug: f.slug || f.name.toLowerCase().replace(/\s+/g, "-"), logo_url: f.logo_url || null, country_of_origin: f.country_of_origin || null };
+      const payload = { name: f.name, slug: f.slug || f.name.toLowerCase().replace(/\s+/g, "-"), logo_url: f.logo_url || null, country_of_origin: f.country_of_origin || null, featured: f.featured };
       if (f.id) {
         const { error } = await supabase.from("brands").update(payload).eq("id", f.id);
         if (error) throw error;
@@ -130,6 +130,10 @@ export default function AdminBrands() {
                 <div><Label>Slug</Label><Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="auto-generated" /></div>
                 <div><Label>Logo URL</Label><Input value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} /></div>
                 <div><Label>Country of Origin</Label><Input value={form.country_of_origin} onChange={(e) => setForm({ ...form, country_of_origin: e.target.value })} placeholder="e.g. France, South Korea" /></div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="featured" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} className="h-4 w-4 rounded border-border accent-primary" />
+                  <Label htmlFor="featured">Featured on Homepage</Label>
+                </div>
                 <Button className="rounded-xl" onClick={() => save.mutate(form)} disabled={!form.name || save.isPending}>
                   {save.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}{editing ? "Update" : "Create"}
                 </Button>
@@ -167,11 +171,12 @@ export default function AdminBrands() {
                 )}
               </div>
               <p className="text-sm font-bold text-foreground text-center">{b.name}</p>
+              {b.featured && <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">FEATURED</span>}
               {b.country_of_origin && <p className="text-[10px] text-muted-foreground">{b.country_of_origin}</p>}
               <p className="text-[10px] text-muted-foreground">{b.slug}</p>
               <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg" onClick={() => {
-                  setForm({ id: b.id, name: b.name, slug: b.slug, logo_url: b.logo_url || "", country_of_origin: b.country_of_origin || "" });
+                  setForm({ id: b.id, name: b.name, slug: b.slug, logo_url: b.logo_url || "", country_of_origin: b.country_of_origin || "", featured: b.featured || false });
                   setEditing(true); setOpen(true);
                 }}><Pencil className="h-3 w-3" /></Button>
                 <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg text-destructive" onClick={() => {

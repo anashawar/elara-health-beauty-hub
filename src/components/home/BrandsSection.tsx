@@ -11,10 +11,12 @@ const BrandsSection = () => {
   const { t } = useLanguage();
   const [showAll, setShowAll] = useState(false);
 
-  if (brands.length === 0) return null;
+  const featuredBrands = brands.filter((b: any) => b.featured);
 
-  const desktopBrands = showAll ? brands : brands.slice(0, DESKTOP_INITIAL);
-  const hasMore = brands.length > DESKTOP_INITIAL;
+  if (featuredBrands.length === 0) return null;
+
+  const desktopBrands = showAll ? featuredBrands : featuredBrands.slice(0, DESKTOP_INITIAL);
+  const hasMore = featuredBrands.length > DESKTOP_INITIAL;
 
   return (
     <section className="px-4 mt-8">
@@ -32,7 +34,7 @@ const BrandsSection = () => {
 
       {/* Mobile: horizontal scroll — no stagger animations for performance */}
       <div className="flex gap-4 overflow-x-auto no-scrollbar pb-3 md:hidden">
-        {brands.map((brand) => (
+        {featuredBrands.map((brand) => (
           <Link
             key={brand.id}
             to={`/brand/${brand.slug}`}
@@ -67,7 +69,7 @@ const BrandsSection = () => {
             {showAll ? (
               <>Show Less <ChevronUp className="w-4 h-4" /></>
             ) : (
-              <>View All Brands ({brands.length}) <ChevronDown className="w-4 h-4" /></>
+              <>View All Brands ({featuredBrands.length}) <ChevronDown className="w-4 h-4" /></>
             )}
           </button>
         </div>

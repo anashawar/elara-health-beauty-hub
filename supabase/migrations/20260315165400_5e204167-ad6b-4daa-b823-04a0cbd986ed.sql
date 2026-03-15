@@ -1,0 +1,1 @@
+ALTER TABLE public.brands ADD COLUMN featured boolean NOT NULL DEFAULT false;
