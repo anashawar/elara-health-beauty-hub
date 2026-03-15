@@ -18,6 +18,7 @@ const BrandsSection = lazy(() => import("@/components/home/BrandsSection"));
 const ConcernsSection = lazy(() => import("@/components/home/ConcernsSection"));
 const DealsBanner = lazy(() => import("@/components/home/DealsBanner"));
 const AppDownloadBanner = lazy(() => import("@/components/home/AppDownloadBanner"));
+const WhyElaraBanner = lazy(() => import("@/components/home/WhyElaraBanner"));
 
 const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);
