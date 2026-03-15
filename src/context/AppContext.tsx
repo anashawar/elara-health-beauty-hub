@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
 import type { ProductWithRelations } from "@/hooks/useProducts";
 
 interface CartItem {
@@ -62,13 +62,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const isInWishlist = useCallback((productId: string) => wishlist.includes(productId), [wishlist]);
 
-  const cartTotal = cart.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
-  const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
+  // Memoize derived values to prevent re-computation on unrelated state changes
+  const cartTotal = useMemo(() => cart.reduce((sum, i) => sum + i.product.price * i.quantity, 0), [cart]);
+  const cartCount = useMemo(() => cart.reduce((sum, i) => sum + i.quantity, 0), [cart]);
 
   const clearCart = useCallback(() => setCart([]), []);
 
+  const value = useMemo(() => ({
+    cart, wishlist, addToCart, removeFromCart, updateQuantity,
+    toggleWishlist, isInWishlist, cartTotal, cartCount, clearCart,
+    pendingCoupon, setPendingCoupon,
+  }), [cart, wishlist, addToCart, removeFromCart, updateQuantity, toggleWishlist, isInWishlist, cartTotal, cartCount, clearCart, pendingCoupon]);
+
   return (
-    <AppContext.Provider value={{ cart, wishlist, addToCart, removeFromCart, updateQuantity, toggleWishlist, isInWishlist, cartTotal, cartCount, clearCart, pendingCoupon, setPendingCoupon }}>
+    <AppContext.Provider value={value}>
       {children}
     </AppContext.Provider>
   );

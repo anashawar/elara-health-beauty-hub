@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { useSwipeBack } from "@/hooks/useSwipeBack";
@@ -7,40 +8,46 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/context/AppContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import Index from "./pages/Index";
-import CollectionPage from "./pages/CollectionPage";
-import CategoryPage from "./pages/CategoryPage";
-import CategoriesPage from "./pages/CategoriesPage";
-import ProductPage from "./pages/ProductPage";
-import CartPage from "./pages/CartPage";
-import WishlistPage from "./pages/WishlistPage";
-import CheckoutPage from "./pages/CheckoutPage";
-import ProfilePage from "./pages/ProfilePage";
-import AuthPage from "./pages/AuthPage";
-import OrdersPage from "./pages/OrdersPage";
-import AddressesPage from "./pages/AddressesPage";
-import SettingsPage from "./pages/SettingsPage";
-import BrandPage from "./pages/BrandPage";
-import NotFound from "./pages/NotFound";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import InstallPage from "./pages/InstallPage";
-import ElaraChatPage from "./pages/ElaraChatPage";
-import AboutPage from "./pages/AboutPage";
-import FAQPage from "./pages/FAQPage";
-import TermsPage from "./pages/TermsPage";
-import PrivacyPage from "./pages/PrivacyPage";
 import AuthGuard from "./components/AuthGuard";
-import AdminLayout from "./components/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminProducts from "./pages/admin/AdminProducts";
-import AdminOrders from "./pages/admin/AdminOrders";
-import AdminCategories from "./pages/admin/AdminCategories";
-import AdminBanners from "./pages/admin/AdminBanners";
-import AdminBrands from "./pages/admin/AdminBrands";
-import AdminCoupons from "./pages/admin/AdminCoupons";
-import AdminRevenue from "./pages/admin/AdminRevenue";
-import AdminOffers from "./pages/admin/AdminOffers";
-import AdminNotifications from "./pages/admin/AdminNotifications";
+
+// Eagerly loaded — critical path
+import Index from "./pages/Index";
+import AuthPage from "./pages/AuthPage";
+
+// Lazy loaded — secondary pages
+const CollectionPage = lazy(() => import("./pages/CollectionPage"));
+const CategoryPage = lazy(() => import("./pages/CategoryPage"));
+const CategoriesPage = lazy(() => import("./pages/CategoriesPage"));
+const ProductPage = lazy(() => import("./pages/ProductPage"));
+const CartPage = lazy(() => import("./pages/CartPage"));
+const WishlistPage = lazy(() => import("./pages/WishlistPage"));
+const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const OrdersPage = lazy(() => import("./pages/OrdersPage"));
+const AddressesPage = lazy(() => import("./pages/AddressesPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const BrandPage = lazy(() => import("./pages/BrandPage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const InstallPage = lazy(() => import("./pages/InstallPage"));
+const ElaraChatPage = lazy(() => import("./pages/ElaraChatPage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
+const FAQPage = lazy(() => import("./pages/FAQPage"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
+
+// Admin — always lazy
+const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
+const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
+const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
+const AdminBanners = lazy(() => import("./pages/admin/AdminBanners"));
+const AdminBrands = lazy(() => import("./pages/admin/AdminBrands"));
+const AdminCoupons = lazy(() => import("./pages/admin/AdminCoupons"));
+const AdminRevenue = lazy(() => import("./pages/admin/AdminRevenue"));
+const AdminOffers = lazy(() => import("./pages/admin/AdminOffers"));
+const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +70,13 @@ const PushInit = () => {
   return null;
 };
 
+// Minimal loading fallback — keeps the screen from flashing
+const PageFallback = (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -73,6 +87,7 @@ const App = () => (
           <BrowserRouter>
             <PushInit />
             <SwipeBackWrapper>
+            <Suspense fallback={PageFallback}>
             <Routes>
               <Route path="/" element={<AuthPage />} />
               <Route path="/home" element={<Index />} />
@@ -113,6 +128,7 @@ const App = () => (
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
             </SwipeBackWrapper>
           </BrowserRouter>
         </AppProvider>
