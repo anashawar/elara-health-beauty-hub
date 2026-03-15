@@ -138,6 +138,12 @@ const AddressesPage = () => {
 
   const handleSave = () => {
     if (!form.city) { toast(t("auth.selectCity")); return; }
+    if (!form.area.trim()) { toast(t("addresses.areaRequired") || "Area/Neighborhood is required"); return; }
+    if (!form.street.trim()) { toast(t("addresses.streetRequired") || "Street is required"); return; }
+    if (!form.building.trim()) { toast(t("addresses.buildingRequired") || "Building is required"); return; }
+    if (!form.floor.trim()) { toast(t("addresses.floorRequired") || "Floor is required"); return; }
+    if (!form.apartment.trim()) { toast(t("addresses.aptRequired") || "Apartment is required"); return; }
+    if (!form.phone.trim()) { toast(t("addresses.phoneRequired") || "WhatsApp number is required"); return; }
     saveMutation.mutate({ ...form, id: editingId || undefined });
   };
 
