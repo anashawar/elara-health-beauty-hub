@@ -78,7 +78,7 @@ Return JSON in this exact format:
 Only include fields that were provided in the input. If benefits was provided, return it as an array.`;
 
       try {
-        const aiResponse = await fetch("https://api.lovable.dev/v1/chat/completions", {
+        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
