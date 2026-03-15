@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { useCategories } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { motion } from "framer-motion";
 
 const CategoryGrid = () => {
   const { data: categories = [] } = useCategories();
@@ -19,25 +18,18 @@ const CategoryGrid = () => {
 
   return (
     <section className="px-4 mt-5">
-      {/* Mobile: 4 cols, Desktop: 8 cols in a row */}
       <div className="grid grid-cols-4 md:grid-cols-8 gap-2.5 md:gap-3">
-        {displayCategories.map((cat, i) => (
-          <motion.div
+        {displayCategories.map((cat) => (
+          <Link
             key={cat.id}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.04, duration: 0.3 }}
+            to={`/category/${cat.slug}`}
+            className="flex flex-col items-center gap-1.5 md:gap-2 py-3 md:py-4 rounded-2xl bg-card border border-border/40 shadow-glass hover:shadow-premium hover:border-primary/30 active:scale-95 md:active:scale-100 md:hover:scale-105 transition-all duration-200"
           >
-            <Link
-              to={`/category/${cat.slug}`}
-              className="flex flex-col items-center gap-1.5 md:gap-2 py-3 md:py-4 rounded-2xl bg-card border border-border/40 shadow-glass hover:shadow-premium hover:border-primary/30 active:scale-95 md:active:scale-100 md:hover:scale-105 transition-all duration-200"
-            >
-              <span className="text-[26px] md:text-[32px] leading-none">{cat.icon}</span>
-              <span className="text-[10px] md:text-xs font-semibold text-foreground text-center leading-tight line-clamp-1 px-1">
-                {getCatName(cat)}
-              </span>
-            </Link>
-          </motion.div>
+            <span className="text-[26px] md:text-[32px] leading-none">{cat.icon}</span>
+            <span className="text-[10px] md:text-xs font-semibold text-foreground text-center leading-tight line-clamp-1 px-1">
+              {getCatName(cat)}
+            </span>
+          </Link>
         ))}
       </div>
     </section>

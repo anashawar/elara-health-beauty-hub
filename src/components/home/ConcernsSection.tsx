@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { motion } from "framer-motion";
 import { Stethoscope } from "lucide-react";
 import { useMemo } from "react";
 import { useProducts } from "@/hooks/useProducts";
@@ -60,30 +59,24 @@ const ConcernsSection = () => {
         </div>
       </div>
 
-      {/* Mobile: 2 cols, Desktop: 4 cols */}
+      {/* No stagger animations — CSS transitions only for performance */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
-        {activeConcerns.map((c, idx) => (
-          <motion.div
+        {activeConcerns.map((c) => (
+          <Link
             key={c.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.04 }}
+            to={`/concern/${c.id}`}
+            className="flex items-center gap-3 p-3.5 md:p-4 bg-card rounded-2xl border border-border/50 shadow-sm hover:shadow-premium hover:border-primary/30 active:scale-[0.97] transition-all duration-200 group"
           >
-            <Link
-              to={`/concern/${c.id}`}
-              className="flex items-center gap-3 p-3.5 md:p-4 bg-card rounded-2xl border border-border/50 shadow-sm hover:shadow-premium hover:border-primary/30 transition-all duration-200 group"
-            >
-              <div className={`w-11 h-11 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${c.gradient} flex items-center justify-center shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform duration-200`}>
-                <span className="text-xl drop-shadow-sm">{c.icon}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[13px] md:text-sm font-bold text-foreground leading-tight">{t(c.key)}</span>
-                {"count" in c && (
-                  <span className="text-[10px] md:text-xs text-muted-foreground">{(c as any).count} {t("common.products")}</span>
-                )}
-              </div>
-            </Link>
-          </motion.div>
+            <div className={`w-11 h-11 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${c.gradient} flex items-center justify-center shadow-sm flex-shrink-0 group-hover:scale-110 transition-transform duration-200`}>
+              <span className="text-xl drop-shadow-sm">{c.icon}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[13px] md:text-sm font-bold text-foreground leading-tight">{t(c.key)}</span>
+              {"count" in c && (
+                <span className="text-[10px] md:text-xs text-muted-foreground">{(c as any).count} {t("common.products")}</span>
+              )}
+            </div>
+          </Link>
         ))}
       </div>
     </section>
