@@ -234,9 +234,8 @@ export function useBanners() {
   });
 }
 
-export const formatPrice = (price: number, lang?: string) => {
-  const currency = lang === "ar" ? "د.ع" : lang === "ku" ? "د.ع" : "IQD";
-  return `${price.toLocaleString()} ${currency}`;
+export const formatPrice = (price: number, _lang?: string) => {
+  return `${price.toLocaleString()} IQD`;
 };
 
 export function useFormatPrice() {
