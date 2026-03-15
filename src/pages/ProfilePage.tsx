@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import SearchOverlay from "@/components/SearchOverlay";
+import { useLoyaltyPoints, TIER_THRESHOLDS } from "@/hooks/useLoyalty";
 
 const ProfilePage = () => {
   const { user, loading, signOut } = useAuth();
