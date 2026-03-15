@@ -148,13 +148,18 @@ const CartPage = () => {
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {/* Mobile Header */}
-      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border md:hidden">
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/30 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="flex items-center justify-between px-4 py-3">
-          <div>
-            <h1 className="text-lg font-display font-bold text-foreground">{t("cart.myBag")}</h1>
-            {cart.length > 0 && (
-              <p className="text-[10px] text-muted-foreground">{cartCount} {cartCount !== 1 ? t("common.items") : t("common.item")}</p>
-            )}
+          <div className="flex items-center gap-3">
+            <Link to="/home" className="p-2 -ml-2 rounded-xl active:bg-secondary active:scale-90 transition-all">
+              <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
+            </Link>
+            <div>
+              <h1 className="text-lg font-display font-bold text-foreground">{t("cart.myBag")}</h1>
+              {cart.length > 0 && (
+                <p className="text-[10px] text-muted-foreground">{cartCount} {cartCount !== 1 ? t("common.items") : t("common.item")}</p>
+              )}
+            </div>
           </div>
           {cart.length > 0 && (
             <button onClick={clearCart} className="text-xs text-destructive font-medium px-3 py-1.5 bg-destructive/10 rounded-lg active:scale-95 transition-transform">
