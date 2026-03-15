@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Send, Sparkles, Loader2, Trash2, ShoppingCart, Plus, MessageCircle, Sun, CloudRain, Heart, Dumbbell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
@@ -266,6 +266,7 @@ const ElaraChatPage = () => {
   const { data: products = [] } = useProducts();
   const { addToCart } = useApp();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -273,6 +274,7 @@ const ElaraChatPage = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [isNewConversation, setIsNewConversation] = useState(false);
+  const [productContextHandled, setProductContextHandled] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -545,7 +547,26 @@ const ElaraChatPage = () => {
     }
   };
 
-  const startNewChat = () => { setConversationId(null); setMessages([]); setShowHistory(false); setIsNewConversation(false); };
+  // Auto-start conversation when navigated from a product page
+  useEffect(() => {
+    if (productContextHandled) return;
+    const productName = searchParams.get("product");
+    const brandName = searchParams.get("brand");
+    if (!productName) return;
+    
+    setProductContextHandled(true);
+    // Clear query params so refresh doesn't re-trigger
+    setSearchParams({}, { replace: true });
+    
+    const brandText = brandName ? ` by ${brandName}` : "";
+    const aiGreeting: Msg = {
+      role: "assistant",
+      content: `Hi! 👋 I see you're looking at **${productName}**${brandText}. I'd love to help!\n\nWhat would you like to know? I can tell you about:\n• **Ingredients** & what they do\n• **How to use it** for best results\n• Whether it's **right for your skin type**\n• How it **compares** to similar products\n\nJust ask away! ✨`
+    };
+    setMessages([aiGreeting]);
+  }, [searchParams, productContextHandled, setSearchParams]);
+
+  const startNewChat = () => { setConversationId(null); setMessages([]); setShowHistory(false); setIsNewConversation(false); setProductContextHandled(false); };
   const loadConversation = (id: string) => { setIsNewConversation(false); setConversationId(id); setShowHistory(false); };
 
   const deleteConversation = async (id: string, e: React.MouseEvent) => {
