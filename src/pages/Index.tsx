@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useState, lazy, Suspense } from "react";
 import TopHeader from "@/components/layout/TopHeader";
 import DesktopHeader from "@/components/layout/DesktopHeader";
@@ -23,10 +24,11 @@ const Index = () => {
   const { data: products = [], isLoading } = useProducts();
   const { t } = useLanguage();
 
-  const trending = products.filter(p => p.isTrending);
-  const picks = products.filter(p => p.isPick);
-  const offers = products.filter(p => p.originalPrice);
-  const newArrivals = products.filter(p => p.isNew);
+  // Memoize filtered product lists to prevent re-filtering on every render
+  const trending = useMemo(() => products.filter(p => p.isTrending), [products]);
+  const picks = useMemo(() => products.filter(p => p.isPick), [products]);
+  const offers = useMemo(() => products.filter(p => p.originalPrice), [products]);
+  const newArrivals = useMemo(() => products.filter(p => p.isNew), [products]);
 
   const SectionFallback = <ProductSectionSkeleton />;
 

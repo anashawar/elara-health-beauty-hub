@@ -1,10 +1,10 @@
+import { memo } from "react";
 import { Home, LayoutGrid, ShoppingBag, UserRound, Sparkles } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { motion } from "framer-motion";
 
-const BottomNav = () => {
+const BottomNav = memo(() => {
   const location = useLocation();
   const { cartCount } = useApp();
   const { t } = useLanguage();
@@ -18,7 +18,7 @@ const BottomNav = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" style={{ contain: 'layout style' }}>
       <div className="app-container">
         <div className="bg-card/95 backdrop-blur-xl border-t border-border/40 shadow-[0_-1px_3px_hsl(20_10%_12%/0.04)] bottom-nav-safe">
           <div className="flex items-center justify-around py-1">
@@ -32,17 +32,15 @@ const BottomNav = () => {
                     to={path}
                     className="relative flex flex-col items-center gap-0.5 px-4 -mt-4"
                   >
-                    <motion.div
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                      className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-float border-2 ${
+                    <div
+                      className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-float border-2 transition-colors duration-150 ${
                         isActive
                           ? "bg-primary border-primary/30"
                           : "bg-gradient-to-br from-primary to-violet-600 border-primary/20"
                       }`}
                     >
                       <Sparkles className="w-5 h-5 text-white" />
-                    </motion.div>
+                    </div>
                     <span className={`text-[9px] leading-tight mt-0.5 font-bold ${
                       isActive ? "text-primary" : "text-primary/70"
                     }`}>
@@ -60,22 +58,23 @@ const BottomNav = () => {
                 >
                   <div className="relative">
                     {isActive && (
-                      <motion.div
-                        layoutId="nav-pill"
-                        className="absolute -inset-2.5 bg-primary/10 rounded-2xl"
-                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                      />
+                      <div className="absolute -inset-2.5 bg-primary/10 rounded-2xl" />
                     )}
                     <Icon
-                      className={`relative w-[22px] h-[22px] transition-all duration-200 ${
+                      className={`relative w-[22px] h-[22px] transition-colors duration-150 ${
                         isActive
                           ? "text-primary stroke-[2.5px]"
                           : "text-muted-foreground/70 stroke-[1.8px]"
                       }`}
                     />
+                    {path === "/cart" && cartCount > 0 && (
+                      <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+                        {cartCount}
+                      </span>
+                    )}
                   </div>
                   <span
-                    className={`text-[10px] leading-tight transition-all duration-200 ${
+                    className={`text-[10px] leading-tight transition-colors duration-150 ${
                       isActive
                         ? "text-primary font-bold"
                         : "text-muted-foreground/60 font-medium"
@@ -91,6 +90,8 @@ const BottomNav = () => {
       </div>
     </nav>
   );
-};
+});
+
+BottomNav.displayName = "BottomNav";
 
 export default BottomNav;
