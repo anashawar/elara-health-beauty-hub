@@ -46,11 +46,9 @@ export async function generateSkinReportPdf(
   doc.rect(0, 0, w, 38, "F");
   doc.setFillColor(168, 85, 247); // violet-500
   doc.rect(w * 0.5, 0, w * 0.5, 38, "F");
-  // Blend overlay
-  doc.setFillColor(219, 39, 119);
-  doc.setGState(new (jsPDF as any).GState({ opacity: 0.5 }));
-  doc.rect(w * 0.4, 0, w * 0.3, 38, "F");
-  doc.setGState(new (jsPDF as any).GState({ opacity: 1 }));
+  // Blend overlay (skip GState for iOS WKWebView compatibility)
+  doc.setFillColor(190, 60, 180);
+  doc.rect(w * 0.4, 0, w * 0.2, 38, "F");
 
   // Brand name
   doc.setTextColor(255, 255, 255);
