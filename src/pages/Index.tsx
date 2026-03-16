@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useState, lazy, Suspense } from "react";
 import TopHeader from "@/components/layout/TopHeader";
 import DesktopHeader from "@/components/layout/DesktopHeader";
@@ -8,7 +7,7 @@ import CategoryGrid from "@/components/home/CategoryGrid";
 import AskElaraCard from "@/components/home/AskElaraCard";
 import ProductSectionSkeleton from "@/components/home/ProductSectionSkeleton";
 import SearchOverlay from "@/components/SearchOverlay";
-import { useProducts } from "@/hooks/useProducts";
+import { useTrendingProducts, usePickProducts, useOfferProducts, useNewProducts } from "@/hooks/useHomeProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 const ProductSection = lazy(() => import("@/components/home/ProductSection"));
@@ -23,15 +22,15 @@ import { MobileAppTopStrip, MobileAppHeroBanner, MobileAppInlineBanner } from "@
 
 const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);
-  const { data: products = [], isLoading } = useProducts();
   const { t } = useLanguage();
 
-  // Memoize filtered product lists to prevent re-filtering on every render
-  const trending = useMemo(() => products.filter(p => p.isTrending), [products]);
-  const picks = useMemo(() => products.filter(p => p.isPick), [products]);
-  const offers = useMemo(() => products.filter(p => p.originalPrice), [products]);
-  const newArrivals = useMemo(() => products.filter(p => p.isNew), [products]);
+  // Lightweight per-section queries — each fetches only ~20 products instead of all 2800
+  const { data: trending = [], isLoading: loadingTrending } = useTrendingProducts();
+  const { data: picks = [], isLoading: loadingPicks } = usePickProducts();
+  const { data: offers = [], isLoading: loadingOffers } = useOfferProducts();
+  const { data: newArrivals = [], isLoading: loadingNew } = useNewProducts();
 
+  const isLoading = loadingTrending;
   const SectionFallback = <ProductSectionSkeleton />;
 
   return (
