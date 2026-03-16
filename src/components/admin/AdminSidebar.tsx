@@ -48,6 +48,7 @@ const navItems = [
   { title: "Notifications", url: "/admin/notifications", icon: Bell },
   { title: "Translate", url: "/admin/translate", icon: Languages },
   { title: "Image Finder", url: "/admin/images", icon: ImagePlus },
+  { title: "Support Chat", url: "/admin/support", icon: Headphones },
 ];
 
 export default function AdminSidebar() {

@@ -135,6 +135,7 @@ const App = () => (
                 <Route path="notifications" element={<AdminNotifications />} />
                 <Route path="translate" element={<AdminTranslate />} />
                 <Route path="images" element={<AdminImageSearch />} />
+                <Route path="support" element={<AdminSupport />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
