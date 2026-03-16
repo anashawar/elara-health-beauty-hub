@@ -65,11 +65,11 @@ const DesktopFooter = () => {
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-sm text-muted-foreground">+964 780 000 0000</span>
+                <span className="text-sm text-muted-foreground">+964 750 722 9002</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-sm text-muted-foreground">hello@elara.iq</span>
+                <span className="text-sm text-muted-foreground">info@elarastore.co</span>
               </div>
             </div>
           </div>
