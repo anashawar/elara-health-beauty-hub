@@ -1025,7 +1025,7 @@ export default function AdminProducts() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <Label>Description</Label>
                 <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
