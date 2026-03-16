@@ -124,6 +124,7 @@ const App = () => (
               <Route path="/rewards" element={<AuthGuard><RewardsPage /></AuthGuard>} />
               <Route path="/support" element={<AuthGuard><SupportPage /></AuthGuard>} />
               <Route path="/skin-scan" element={<AuthGuard><SkinScanPage /></AuthGuard>} />
+              <Route path="/skin-scan/history" element={<AuthGuard><SkinScanHistoryPage /></AuthGuard>} />
               {/* Admin Panel */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
