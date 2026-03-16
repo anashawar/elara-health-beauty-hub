@@ -50,11 +50,11 @@ function scoreImage(url: string, titleWords: string[], brandSlug: string, produc
   let score = 1;
 
   // Brand in URL — strong signal
-  if (brandSlug && brandSlug.length > 2 && lower.includes(brandSlug)) score += 10;
+  if (brandSlug && brandSlug.length > 2 && lower.includes(brandSlug)) score += 8;
 
-  // Title words in URL — each matching word is a strong signal
+  // Title words in URL — each matching word is a signal
   const matched = titleWords.filter(w => w.length > 3 && lower.includes(w));
-  score += matched.length * 5;
+  score += matched.length * 3;
 
   // Bonus: many title words matched = very likely correct product
   if (matched.length >= 3) score += 10;
@@ -165,14 +165,21 @@ serve(async (req) => {
 
       const brandName = (product as any).brands?.name || "";
       const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, "");
-      const titleWords = product.title.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
-      const fullName = `${brandName} ${product.title}`.trim();
+      
+      // Remove duplicate brand name from title if it starts with the brand
+      let cleanTitle = product.title;
+      if (brandName && cleanTitle.toLowerCase().startsWith(brandName.toLowerCase())) {
+        cleanTitle = cleanTitle.slice(brandName.length).trim();
+      }
+      
+      const titleWords = `${brandName} ${cleanTitle}`.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
+      const fullName = `${brandName} ${cleanTitle}`.trim();
       const volumeStr = (product as any).volume_ml ? `${(product as any).volume_ml}${(product as any).volume_unit || "ml"}` : undefined;
 
-      // Precise search queries — use exact product name with quotes for accuracy
+      // Search queries — try product retailer sites first, then general
       const searchQueries = [
-        `"${fullName}" product image${volumeStr ? ` ${volumeStr}` : ""}`,
-        `"${fullName}" site:lookfantastic.com OR site:notino.com OR site:caretobeauty.com OR site:iherb.com OR site:sephora.com`,
+        `${fullName} site:lookfantastic.com OR site:notino.com OR site:caretobeauty.com OR site:iherb.com OR site:sephora.com OR site:amazon.com`,
+        `${fullName} product${volumeStr ? ` ${volumeStr}` : ""}`,
       ];
 
       try {
@@ -181,7 +188,7 @@ serve(async (req) => {
 
         for (const query of searchQueries) {
           // Stop as soon as we have good candidates
-          if (candidates.filter(c => c.score >= 15).length >= 3 || paymentRequired) break;
+          if (candidates.filter(c => c.score >= 10).length >= 3 || paymentRequired) break;
 
           console.log(`Searching: ${query}`);
           const resp = await fetch("https://api.firecrawl.dev/v1/search", {
@@ -251,7 +258,7 @@ serve(async (req) => {
 
         // Minimum score threshold — only accept high-confidence matches
         const topScore = candidates[0]?.score || 0;
-        if (topScore < 10) {
+        if (topScore < 5) {
           console.log(`⚠ Top score ${topScore} too low for "${fullName}" — skipping to avoid wrong image`);
           results.push({ id: product.id, status: "no_confident_match", topScore });
           continue;
