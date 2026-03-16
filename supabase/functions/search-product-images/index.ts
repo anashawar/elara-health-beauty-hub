@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.1";
 
 const corsHeaders = {
@@ -25,6 +24,7 @@ function isJunkImage(url: string): boolean {
     "collection-", "best-", "top-", "how-to",
     "swatch", "color-", "shade-", "related", "recommend",
     "similar", "also-", "you-may", "recently",
+    "store-locator", "reward", "loyalty", "gift-card",
   ];
   return reject.some(p => lower.includes(p));
 }
@@ -32,34 +32,25 @@ function isJunkImage(url: string): boolean {
 function scoreImage(url: string, titleWords: string[], brandSlug: string, productVolume?: string): number {
   const lower = url.toLowerCase();
   if (isJunkImage(lower)) return -1;
-  if (!/\.(jpg|jpeg|png|webp)/i.test(lower.split("?")[0])) return -1;
-
-  // Reject images of different sizes/variants
-  if (productVolume) {
-    const vol = productVolume.replace(/\s+/g, "");
-    const urlVolumes = lower.match(/(\d+)\s*-?\s*(ml|g|oz|mg)/gi) || [];
-    for (const uv of urlVolumes) {
-      const uvNorm = uv.replace(/[\s-]/g, "").toLowerCase();
-      const prodNorm = vol.toLowerCase();
-      if (uvNorm !== prodNorm && !lower.includes(prodNorm)) {
-        return -1;
-      }
-    }
-  }
+  
+  // Accept common image formats
+  const path = lower.split("?")[0];
+  if (!/\.(jpg|jpeg|png|webp)/i.test(path)) return -1;
 
   let score = 1;
 
   // Brand in URL — strong signal
-  if (brandSlug && brandSlug.length > 2 && lower.includes(brandSlug)) score += 8;
+  if (brandSlug && brandSlug.length > 2 && lower.includes(brandSlug)) score += 6;
 
   // Title words in URL — each matching word is a signal
   const matched = titleWords.filter(w => w.length > 3 && lower.includes(w));
-  score += matched.length * 3;
+  score += matched.length * 2;
 
-  // Bonus: many title words matched = very likely correct product
-  if (matched.length >= 3) score += 10;
+  // Bonus: many title words matched
+  if (matched.length >= 3) score += 8;
+  if (matched.length >= 2) score += 3;
 
-  // Trusted product image domains
+  // Trusted product image CDNs/domains
   const trusted = [
     "cloudinary", "shopify", "cdn.shopify", "scene7", "akamaized",
     "imgix", "fastly", "amazonaws", "cloudfront",
@@ -68,28 +59,33 @@ function scoreImage(url: string, titleWords: string[], brandSlug: string, produc
     "chemistwarehouse", "boots.com", "superdrug",
     "feelunique", "beautybay", "caretobeauty",
     "amazon", "media-amazon", "images-na.ssl-images-amazon",
+    "fragrancex", "fragrancenet", "perfumetrader",
+    "douglas", "niche-beauty", "parfumdreams",
+    "incidecoder", "beautylish", "sokoglam",
+    "yesstyle", "stylevana", "jolse",
+    "static.thcdn", "images.asos", "cdn-images",
   ];
-  if (trusted.some(d => lower.includes(d))) score += 6;
+  if (trusted.some(d => lower.includes(d))) score += 5;
 
   // Product path patterns
-  if (/\/product|\/media\/catalog|\/image\/product|\/p\//i.test(lower)) score += 5;
+  if (/\/product|\/media\/catalog|\/image\/product|\/p\/|\/dp\//i.test(lower)) score += 4;
 
   // High-res indicators
   const sizeMatch = /(\d{3,4})x(\d{3,4})/.exec(lower);
   if (sizeMatch) {
     const w = parseInt(sizeMatch[1]), h = parseInt(sizeMatch[2]);
-    if (w >= 400 && h >= 400) score += 4;
-    if (w >= 800 && h >= 800) score += 3;
+    if (w >= 400 && h >= 400) score += 3;
+    if (w >= 800 && h >= 800) score += 2;
   }
 
   // Low-res penalty
-  if (/_thumb|_xs\.|_sm\.|\/thumb\/|\/small\/|_50x|_75x|_100x|_150x/i.test(lower)) score -= 8;
+  if (/_thumb|_xs\.|_sm\.|\/thumb\/|\/small\/|_50x|_75x|_100x|_150x/i.test(lower)) score -= 6;
 
   // Boost: white/clean background indicators
-  if (/white|clean|studio|packshot|_1\./i.test(lower)) score += 3;
+  if (/white|clean|studio|packshot|_1\./i.test(lower)) score += 2;
 
   // Boost: first/main product image
-  if (/[_-](1|01)\.\w+$/.test(lower)) score += 4;
+  if (/[_-](1|01)\.\w+$/.test(lower)) score += 3;
 
   return score;
 }
@@ -109,7 +105,7 @@ async function verifyImage(url: string): Promise<boolean> {
     const ct = resp.headers.get("content-type") || "";
     if (!ct.startsWith("image/")) return false;
     const size = parseInt(resp.headers.get("content-length") || "0");
-    if (size > 0 && size < 10000) return false; // Reject < 10KB
+    if (size > 0 && size < 5000) return false; // Reject < 5KB
     return true;
   } catch {
     return false;
@@ -119,17 +115,52 @@ async function verifyImage(url: string): Promise<boolean> {
 /** Extract image URLs from markdown content */
 function extractImagesFromMarkdown(markdown: string): string[] {
   const images: string[] = [];
+  // Markdown image syntax
   const mdRegex = /!\[.*?\]\((https?:\/\/[^\s)]+)\)/gi;
   let m;
   while ((m = mdRegex.exec(markdown)) !== null) images.push(m[1]);
+  // Raw image URLs
   const urlRegex = /(https?:\/\/[^\s"'<>]+\.(jpg|jpeg|png|webp)(\?[^\s"'<>]*)?)/gi;
   while ((m = urlRegex.exec(markdown)) !== null) {
+    if (!images.includes(m[1])) images.push(m[1]);
+  }
+  // HTML img src
+  const srcRegex = /src=["'](https?:\/\/[^"']+\.(jpg|jpeg|png|webp)[^"']*)/gi;
+  while ((m = srcRegex.exec(markdown)) !== null) {
     if (!images.includes(m[1])) images.push(m[1]);
   }
   return images;
 }
 
-serve(async (req) => {
+/** Generate multiple search query variations for better coverage */
+function buildSearchQueries(brandName: string, title: string, volumeStr?: string): string[] {
+  const fullName = `${brandName} ${title}`.trim();
+  const queries: string[] = [];
+
+  // Strategy 1: Full name + product image (most specific)
+  queries.push(`${fullName} product image`);
+
+  // Strategy 2: Full name on trusted retailer sites  
+  queries.push(`${fullName} site:lookfantastic.com OR site:notino.com OR site:iherb.com OR site:sephora.com`);
+
+  // Strategy 3: Full name + volume for exact match
+  if (volumeStr) {
+    queries.push(`${fullName} ${volumeStr}`);
+  }
+
+  // Strategy 4: Brand + key title words (broader)
+  const words = title.split(/\s+/).filter(w => w.length > 3).slice(0, 4);
+  if (words.length >= 2 && brandName) {
+    queries.push(`${brandName} ${words.join(" ")}`);
+  }
+
+  // Strategy 5: Just the product name on Amazon/shopping
+  queries.push(`${fullName} site:amazon.com OR site:ebay.com`);
+
+  return queries;
+}
+
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -166,7 +197,7 @@ serve(async (req) => {
       const brandName = (product as any).brands?.name || "";
       const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, "");
       
-      // Remove duplicate brand name from title if it starts with the brand
+      // Clean title: remove brand prefix if present
       let cleanTitle = product.title;
       if (brandName && cleanTitle.toLowerCase().startsWith(brandName.toLowerCase())) {
         cleanTitle = cleanTitle.slice(brandName.length).trim();
@@ -176,21 +207,22 @@ serve(async (req) => {
       const fullName = `${brandName} ${cleanTitle}`.trim();
       const volumeStr = (product as any).volume_ml ? `${(product as any).volume_ml}${(product as any).volume_unit || "ml"}` : undefined;
 
-      // Search queries — try product retailer sites first, then general
-      const searchQueries = [
-        `${fullName} site:lookfantastic.com OR site:notino.com OR site:caretobeauty.com OR site:iherb.com OR site:sephora.com OR site:amazon.com`,
-        `${fullName} product${volumeStr ? ` ${volumeStr}` : ""}`,
-      ];
+      const searchQueries = buildSearchQueries(brandName, cleanTitle, volumeStr);
 
       try {
         const candidates: { url: string; score: number }[] = [];
         let paymentRequired = false;
+        let queriesUsed = 0;
+        const MAX_QUERIES = 4; // Try up to 4 query variations
 
         for (const query of searchQueries) {
-          // Stop as soon as we have good candidates
-          if (candidates.filter(c => c.score >= 10).length >= 3 || paymentRequired) break;
+          // Stop once we have a good candidate or hit query limit
+          if (candidates.filter(c => c.score >= 8).length >= 2 || paymentRequired) break;
+          if (queriesUsed >= MAX_QUERIES) break;
+          queriesUsed++;
 
-          console.log(`Searching: ${query}`);
+          console.log(`[${product.id.slice(0,8)}] Query: ${query.slice(0, 80)}...`);
+          
           const resp = await fetch("https://api.firecrawl.dev/v1/search", {
             method: "POST",
             headers: {
@@ -199,11 +231,11 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               query,
-              limit: 3,
+              limit: 5, // More results per query
               scrapeOptions: {
                 formats: ["markdown"],
                 onlyMainContent: true,
-                waitFor: 1500,
+                waitFor: 2000,
               },
             }),
           });
@@ -221,7 +253,10 @@ serve(async (req) => {
           for (const result of searchResults) {
             const md = result.markdown || "";
             const pageImages = extractImagesFromMarkdown(md);
+            
+            // Also grab OG image and any metadata images
             if (result.metadata?.ogImage) pageImages.unshift(result.metadata.ogImage);
+            if (result.metadata?.image) pageImages.unshift(result.metadata.image);
 
             for (const imgUrl of pageImages) {
               if (!imgUrl.startsWith("http")) continue;
@@ -232,7 +267,8 @@ serve(async (req) => {
             }
           }
 
-          await new Promise(r => setTimeout(r, 500));
+          // Small delay between queries to be respectful
+          await new Promise(r => setTimeout(r, 300));
         }
 
         if (paymentRequired) {
@@ -240,46 +276,47 @@ serve(async (req) => {
           continue;
         }
 
-        // Sort by score descending — pick only the BEST single image
+        // Sort by score descending
         candidates.sort((a, b) => b.score - a.score);
 
         // Deduplicate
         const seen = new Set<string>();
-        const uniqueCandidates: string[] = [];
+        const uniqueCandidates: { url: string; score: number }[] = [];
         for (const c of candidates) {
           const urlPath = c.url.split("?")[0].toLowerCase().replace(/\/+$/, "");
           if (seen.has(urlPath)) continue;
           seen.add(urlPath);
-          uniqueCandidates.push(c.url);
-          if (uniqueCandidates.length >= 5) break; // Keep 5 candidates to verify, but only save 1
+          uniqueCandidates.push(c);
+          if (uniqueCandidates.length >= 8) break;
         }
 
-        console.log(`${uniqueCandidates.length} unique candidates for "${fullName}" (top score: ${candidates[0]?.score || 0})`);
+        const topScore = uniqueCandidates[0]?.score || 0;
+        console.log(`[${product.id.slice(0,8)}] "${fullName}" → ${uniqueCandidates.length} candidates, top score: ${topScore}`);
 
-        // Minimum score threshold — only accept high-confidence matches
-        const topScore = candidates[0]?.score || 0;
-        if (topScore < 5) {
-          console.log(`⚠ Top score ${topScore} too low for "${fullName}" — skipping to avoid wrong image`);
-          results.push({ id: product.id, status: "no_confident_match", topScore });
+        // Accept images with score >= 3 (more permissive)
+        if (topScore < 3) {
+          console.log(`[${product.id.slice(0,8)}] ⚠ Score too low (${topScore}) — skipping`);
+          results.push({ id: product.id, status: "no_confident_match", topScore, title: fullName });
           continue;
         }
 
-        // Verify and save ONLY the single best image
+        // Verify and save the best image
         let savedUrl: string | null = null;
-        for (const url of uniqueCandidates) {
-          const ok = await verifyImage(url);
+        for (const c of uniqueCandidates) {
+          if (c.score < 3) break; // Don't bother verifying low-score images
+          const ok = await verifyImage(c.url);
           if (ok) {
-            console.log(`✓ Best image: ${url} (score: ${candidates.find(c => c.url === url)?.score})`);
-            savedUrl = url;
+            savedUrl = c.url;
+            console.log(`[${product.id.slice(0,8)}] ✓ Saved: ${c.url} (score: ${c.score})`);
             break;
           } else {
-            console.log(`✗ Failed verification: ${url}`);
+            console.log(`[${product.id.slice(0,8)}] ✗ Verify failed: ${c.url}`);
           }
         }
 
         if (!savedUrl) {
-          console.log(`No verified images for "${fullName}"`);
-          results.push({ id: product.id, status: "no_images_found" });
+          console.log(`[${product.id.slice(0,8)}] No verified images for "${fullName}"`);
+          results.push({ id: product.id, status: "no_images_found", title: fullName });
           continue;
         }
 
@@ -289,13 +326,12 @@ serve(async (req) => {
           sort_order: 0,
         });
 
-        console.log(`✓ Saved 1 image for "${fullName}"`);
-        results.push({ id: product.id, status: "success", images: 1, url: savedUrl });
+        results.push({ id: product.id, status: "success", images: 1, url: savedUrl, title: fullName });
 
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 300));
       } catch (err) {
         console.error(`Error for ${product.id}:`, err);
-        results.push({ id: product.id, status: "error", error: String(err) });
+        results.push({ id: product.id, status: "error", error: String(err), title: fullName });
       }
     }
 
