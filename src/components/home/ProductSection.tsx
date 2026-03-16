@@ -105,6 +105,8 @@ const ProductSection = memo(({ title, subtitle, products, viewAllLink, horizonta
       )}
     </section>
   );
-};
+});
+
+ProductSection.displayName = "ProductSection";
 
 export default ProductSection;
