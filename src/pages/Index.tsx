@@ -9,6 +9,7 @@ import AskElaraCard from "@/components/home/AskElaraCard";
 import SkinScanBanner from "@/components/home/SkinScanBanner";
 import ProductSectionSkeleton from "@/components/home/ProductSectionSkeleton";
 import SearchOverlay from "@/components/SearchOverlay";
+import SEOHead, { organizationJsonLd, websiteJsonLd } from "@/components/SEOHead";
 import { useTrendingProducts, usePickProducts, useOfferProducts, useNewProducts } from "@/hooks/useHomeProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 
