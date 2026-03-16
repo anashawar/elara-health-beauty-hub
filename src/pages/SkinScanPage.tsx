@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "@/components/ui/sonner";
 import BottomNav from "@/components/layout/BottomNav";
+import NativeAppGate from "@/components/NativeAppGate";
 import { useQuery } from "@tanstack/react-query";
 
 type Phase = "capture" | "scanning" | "results";
