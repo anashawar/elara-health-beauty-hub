@@ -144,6 +144,7 @@ function SkinScanContent() {
     if (Capacitor.isNativePlatform()) {
       try {
         const { Camera: CapCamera, CameraResultType, CameraSource, CameraDirection } = await import("@capacitor/camera");
+        console.log("[SkinScan] Opening native camera...");
         const photo = await CapCamera.getPhoto({
           quality: 85,
           resultType: CameraResultType.DataUrl,
@@ -153,9 +154,27 @@ function SkinScanContent() {
           height: 960,
           correctOrientation: true,
         });
+        console.log("[SkinScan] Photo result:", { 
+          hasDataUrl: !!photo.dataUrl, 
+          format: photo.format,
+          dataUrlLength: photo.dataUrl?.length 
+        });
         if (photo.dataUrl) {
           setCapturedImage(photo.dataUrl);
           analyzeSkin(photo.dataUrl);
+        } else {
+          // Fallback: try base64String
+          const base64 = photo.base64String;
+          if (base64) {
+            const mimeType = photo.format === "png" ? "image/png" : "image/jpeg";
+            const dataUrl = `data:${mimeType};base64,${base64}`;
+            console.log("[SkinScan] Using base64String fallback, length:", base64.length);
+            setCapturedImage(dataUrl);
+            analyzeSkin(dataUrl);
+          } else {
+            console.error("[SkinScan] No dataUrl or base64String in photo result");
+            toast.error("Failed to capture photo. Please try uploading an image instead.");
+          }
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
