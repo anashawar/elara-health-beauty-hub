@@ -67,7 +67,7 @@ const content = {
       "لأن صحتك تبدأ من اللي تختاره — وإحنا نسهّل عليك الاختيار.",
     ],
     contactQ: "عندك أسئلة؟ تواصل وياانا بأي وقت.",
-    contactCTA: "تواصل وياانا — info@elara.iq",
+    contactCTA: "تواصل وياانا — info@elarastore.co",
   },
   ku: {
     pageTitle: "دەربارەی ئێلارا",
