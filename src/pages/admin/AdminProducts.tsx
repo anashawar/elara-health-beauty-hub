@@ -1125,7 +1125,7 @@ export default function AdminProducts() {
                   })}
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-3 md:col-span-2">
                 <div className="col-span-2">
                   <Label>Volume</Label>
                   <Input value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} placeholder="e.g. 50" />
