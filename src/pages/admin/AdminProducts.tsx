@@ -963,16 +963,16 @@ export default function AdminProducts() {
           <DialogTrigger asChild>
             <Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1.5" />Manual Add</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" onCloseAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>{editing ? "Edit Product" : "Add Product"}</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 mt-2">
-              <div>
+            <div className="grid gap-4 mt-2 md:grid-cols-2">
+              <div className="md:col-span-2">
                 <Label>Title *</Label>
                 <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-3 md:col-span-2">
                 <div>
                   <Label>Price (IQD) *</Label>
                   <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: +e.target.value })} />
@@ -986,7 +986,7 @@ export default function AdminProducts() {
                   <Input type="number" placeholder="Confidential" value={form.cost ?? ""} onChange={(e) => setForm({ ...form, cost: e.target.value ? +e.target.value : null })} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 md:col-span-2">
                 <div>
                   <Label>Category</Label>
                   <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v, subcategory_id: "" })}>
@@ -1025,7 +1025,7 @@ export default function AdminProducts() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <Label>Description</Label>
                 <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
@@ -1039,7 +1039,7 @@ export default function AdminProducts() {
               </div>
 
               {/* Main Image */}
-              <div>
+              <div className="md:col-span-2">
                 <Label className="mb-2 block">Main Image</Label>
                 {mainImagePreview ? (
                   <div className="relative w-full h-40 rounded-xl overflow-hidden border border-border bg-muted">
@@ -1060,7 +1060,7 @@ export default function AdminProducts() {
               </div>
 
               {/* Additional Images */}
-              <div>
+              <div className="md:col-span-2">
                 <Label className="mb-2 block">Additional Images <span className="text-muted-foreground font-normal">(up to 10)</span></Label>
                 <div className="grid grid-cols-4 gap-2">
                   {existingImages.slice(editing ? 1 : 0).map((img) => (
@@ -1089,7 +1089,7 @@ export default function AdminProducts() {
                 </div>
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <Label>Skin Concerns <span className="text-muted-foreground font-normal">(multi-select)</span></Label>
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   {[
@@ -1125,7 +1125,7 @@ export default function AdminProducts() {
                   })}
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-3 md:col-span-2">
                 <div className="col-span-2">
                   <Label>Volume</Label>
                   <Input value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} placeholder="e.g. 50" />
@@ -1164,7 +1164,7 @@ export default function AdminProducts() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center gap-6 flex-wrap">
+              <div className="flex items-center gap-6 flex-wrap md:col-span-2">
                 <label className="flex items-center gap-2 text-sm">
                   <Switch checked={form.in_stock} onCheckedChange={(v) => setForm({ ...form, in_stock: v })} />
                   <span className={form.in_stock ? "text-sage font-medium" : "text-destructive font-medium"}>{form.in_stock ? "In Stock" : "Out of Stock"}</span>
@@ -1179,7 +1179,7 @@ export default function AdminProducts() {
                   <Switch checked={form.is_pick} onCheckedChange={(v) => setForm({ ...form, is_pick: v })} /> Staff Pick
                 </label>
               </div>
-              <Button onClick={() => saveMutation.mutate(form)} disabled={!form.title || !form.price || saveMutation.isPending || uploading || translating}>
+              <Button className="md:col-span-2" onClick={() => saveMutation.mutate(form)} disabled={!form.title || !form.price || saveMutation.isPending || uploading || translating}>
                 {(saveMutation.isPending || uploading) && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
                 {translating ? <><Languages className="h-4 w-4 mr-1.5 animate-pulse" />Translating...</> : editing ? "Update" : "Create"}
               </Button>
