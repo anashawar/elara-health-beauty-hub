@@ -6,6 +6,7 @@ import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
 import FloatingSearch from "@/components/layout/FloatingSearch";
 import { useLanguage } from "@/i18n/LanguageContext";
+import SEOHead, { breadcrumbJsonLd } from "@/components/SEOHead";
 
 const BrandPage = () => {
   const { id } = useParams<{ id: string }>();
