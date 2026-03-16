@@ -26,7 +26,7 @@ interface HeroBannerItem {
   discountLabel?: string;
 }
 
-const HeroBanner = () => {
+const HeroBanner = memo(() => {
   const [current, setCurrent] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const autoPlayRef = useRef<ReturnType<typeof setInterval>>();
