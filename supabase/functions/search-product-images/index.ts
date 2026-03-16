@@ -188,7 +188,7 @@ serve(async (req) => {
 
         for (const query of searchQueries) {
           // Stop as soon as we have good candidates
-          if (candidates.filter(c => c.score >= 15).length >= 3 || paymentRequired) break;
+          if (candidates.filter(c => c.score >= 10).length >= 3 || paymentRequired) break;
 
           console.log(`Searching: ${query}`);
           const resp = await fetch("https://api.firecrawl.dev/v1/search", {
