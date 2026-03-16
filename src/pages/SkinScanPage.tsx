@@ -33,6 +33,12 @@ interface Analysis {
   elasticity_score: number;
   clarity_score: number;
   texture_score: number;
+  acne_score?: number;
+  pigmentation_score?: number;
+  dryness_score?: number;
+  oiliness_score?: number;
+  pores_score?: number;
+  dark_circles_score?: number;
   problems: SkinProblem[];
   routine: { morning: RoutineStep[]; evening: RoutineStep[]; weekly?: RoutineStep[] };
   recommended_product_ids: string[];
