@@ -84,34 +84,38 @@ const ProfilePage = () => {
 
           {/* User Card */}
           <div className="mx-4 md:mx-6 mt-4 bg-card rounded-2xl p-5 shadow-premium">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center overflow-hidden">
-                {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-2xl">👤</span>
-                )}
-              </div>
-              <div>
-                {user ? (
-                  <>
-                    <h3 className="text-base font-bold text-foreground">
-                      {user.user_metadata?.full_name || t("profile.elaraUser")}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{user.email}</p>
-                  </>
-                ) : (
-                  <>
+            {user ? (
+              <Link to="/settings" className="flex items-center gap-4 group">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center overflow-hidden">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-2xl">👤</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-bold text-foreground">
+                    {user.user_metadata?.full_name || t("profile.elaraUser")}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{user.email}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground/50 rtl:rotate-180 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            ) : (
+              <>
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center">
+                    <span className="text-2xl">👤</span>
+                  </div>
+                  <div>
                     <h3 className="text-base font-bold text-foreground">{t("profile.welcome")}</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">{t("profile.signInForPersonalized")}</p>
-                  </>
-                )}
-              </div>
-            </div>
-            {!user && (
-              <Link to="/auth" className="block w-full mt-4 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm hover:opacity-90 transition-opacity text-center">
-                {t("profile.signInCreateAccount")}
-              </Link>
+                  </div>
+                </div>
+                <Link to="/auth" className="block w-full mt-4 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm hover:opacity-90 transition-opacity text-center">
+                  {t("profile.signInCreateAccount")}
+                </Link>
+              </>
             )}
           </div>
 
