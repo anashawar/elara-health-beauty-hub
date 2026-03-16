@@ -51,6 +51,7 @@ const AdminRevenue = lazy(() => import("./pages/admin/AdminRevenue"));
 const AdminOffers = lazy(() => import("./pages/admin/AdminOffers"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
 const AdminTranslate = lazy(() => import("./pages/admin/AdminTranslate"));
+const AdminImageSearch = lazy(() => import("./pages/admin/AdminImageSearch"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
