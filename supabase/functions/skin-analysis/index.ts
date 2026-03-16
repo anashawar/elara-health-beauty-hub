@@ -57,7 +57,14 @@ serve(async (req) => {
 
 ${langInstruction}
 
-Analyze the provided face photo and return a detailed JSON response with this EXACT structure:
+CRITICAL FACE VALIDATION RULE:
+Before performing any analysis, you MUST first verify that the image contains a REAL HUMAN FACE with visible skin. 
+If the image does NOT contain a clear human face (e.g. it's a logo, product photo, landscape, animal, cartoon, object, screenshot, meme, text, or anything other than a real person's face), you MUST respond with ONLY this JSON:
+{"error": "no_face_detected", "message": "Please upload a clear photo of your face for skin analysis."}
+
+Do NOT analyze non-face images under any circumstances. Be very strict about this.
+
+If a valid human face IS detected, analyze the face photo and return a detailed JSON response with this EXACT structure:
 {
   "overall_score": <number 0-100>,
   "skin_type": "<oily|dry|combination|normal|sensitive>",
@@ -99,10 +106,10 @@ Available products from ELARA catalog to recommend (pick the most relevant ones 
 ${JSON.stringify(productList.slice(0, 100))}
 
 IMPORTANT:
+- REJECT any image that is not a real human face — logos, products, objects, cartoons, animals, screenshots must all be rejected
 - Be scientifically accurate and detailed
 - Only return valid JSON, no markdown or extra text
 - Recommend 3-8 products from the provided list that match the skin needs
-- If no face is clearly visible, still provide general analysis based on what you can see
 - Scores should reflect realistic assessment, not always high
 - PAY SPECIAL ATTENTION to common concerns in Iraq/Middle East: acne, pigmentation/dark spots, dryness, oiliness, enlarged pores, and dark circles
 - Always provide acne_score, pigmentation_score, dryness_score, oiliness_score, pores_score, and dark_circles_score even if the concern is minimal
