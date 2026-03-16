@@ -167,6 +167,8 @@ const SettingsPage = () => {
     { code: "ku", label: t("settings.kurdish"), native: "کوردی" },
   ];
 
+  const { currentIcon, switchIcon, switching } = useAppIcon();
+
   if (authLoading) return null;
 
   const LanguageSelector = () => (
