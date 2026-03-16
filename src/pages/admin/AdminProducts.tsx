@@ -1060,7 +1060,7 @@ export default function AdminProducts() {
               </div>
 
               {/* Additional Images */}
-              <div>
+              <div className="md:col-span-2">
                 <Label className="mb-2 block">Additional Images <span className="text-muted-foreground font-normal">(up to 10)</span></Label>
                 <div className="grid grid-cols-4 gap-2">
                   {existingImages.slice(editing ? 1 : 0).map((img) => (
