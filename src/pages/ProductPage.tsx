@@ -51,6 +51,8 @@ const ProductPage = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [showDetails, setShowDetails] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [zoomIndex, setZoomIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
   const { data: product, isLoading: productLoading } = useProduct(id);
   const { data: activeOffers = [] } = useActiveOffers();
