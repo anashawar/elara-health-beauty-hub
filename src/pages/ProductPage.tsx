@@ -52,10 +52,10 @@ const ProductPage = () => {
   const [showDetails, setShowDetails] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
-  const { data: allProducts = [] } = useProducts();
+  const { data: product, isLoading: productLoading } = useProduct(id);
   const { data: activeOffers = [] } = useActiveOffers();
   const { data: brands = [] } = useBrands();
-  const product = allProducts.find(p => p.id === id);
+  const { data: related = [] } = useRelatedProducts(product?.category_id, id);
 
   if (!product) {
     return (
