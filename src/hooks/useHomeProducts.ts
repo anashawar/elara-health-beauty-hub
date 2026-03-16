@@ -11,14 +11,12 @@ import type { ProductWithRelations } from "./useProducts";
 
 const SECTION_LIMIT = 20;
 
-// Minimal select for card display — skip description, benefits, usage, tags
+// Minimal select for card display — only what ProductCard needs
 const CARD_SELECT = `
   id, title, title_ar, title_ku, slug, price, original_price,
   is_new, is_trending, is_pick, in_stock,
-  brand_id, category_id, subcategory_id,
-  country_of_origin, form, gender, volume_ml, volume_unit, application, skin_type, condition,
-  brands ( name, name_ar, name_ku ),
-  categories ( slug ),
+  brand_id, category_id,
+  brands ( name ),
   product_images ( image_url, sort_order )
 `;
 
