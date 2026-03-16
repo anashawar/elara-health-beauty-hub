@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronRight, Heart, MapPin, Settings, Package, LogOut, Sparkles, MessageCircle, Info, HelpCircle, FileText, Lock, UserRound, Crown, Star } from "lucide-react";
+import { ChevronRight, Heart, MapPin, Settings, Package, LogOut, Sparkles, MessageCircle, Info, HelpCircle, FileText, Lock, UserRound, Crown, Star, Headphones } from "lucide-react";
 import BottomNav from "@/components/layout/BottomNav";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,6 +47,7 @@ const ProfilePage = () => {
     { icon: Package, label: t("profile.myOrders"), path: "/orders" },
     { icon: Heart, label: t("profile.wishlist"), path: "/wishlist" },
     { icon: MapPin, label: t("profile.addresses"), path: "/addresses" },
+    { icon: Headphones, label: "Contact Support", path: "/support" },
     { icon: Settings, label: t("profile.settings"), path: "/settings" },
     { icon: Info, label: t("profile.aboutElara"), path: "/about" },
     { icon: HelpCircle, label: t("profile.faq"), path: "/faq" },

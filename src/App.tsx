@@ -37,6 +37,7 @@ const FAQPage = lazy(() => import("./pages/FAQPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const RewardsPage = lazy(() => import("./pages/RewardsPage"));
+const SupportPage = lazy(() => import("./pages/SupportPage"));
 
 // Admin — always lazy
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
@@ -52,6 +53,7 @@ const AdminOffers = lazy(() => import("./pages/admin/AdminOffers"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
 const AdminTranslate = lazy(() => import("./pages/admin/AdminTranslate"));
 const AdminImageSearch = lazy(() => import("./pages/admin/AdminImageSearch"));
+const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -118,6 +120,7 @@ const App = () => (
               <Route path="/install" element={<InstallPage />} />
               <Route path="/elara-ai" element={<AuthGuard><ElaraChatPage /></AuthGuard>} />
               <Route path="/rewards" element={<AuthGuard><RewardsPage /></AuthGuard>} />
+              <Route path="/support" element={<AuthGuard><SupportPage /></AuthGuard>} />
               {/* Admin Panel */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
@@ -132,6 +135,7 @@ const App = () => (
                 <Route path="notifications" element={<AdminNotifications />} />
                 <Route path="translate" element={<AdminTranslate />} />
                 <Route path="images" element={<AdminImageSearch />} />
+                <Route path="support" element={<AdminSupport />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
