@@ -165,11 +165,7 @@ function SkinScanContent() {
           const dataUrl = `data:${mimeType};base64,${base64}`;
           console.log("[SkinScan] Constructed dataUrl, length:", dataUrl.length);
           setCapturedImage(dataUrl);
-          // Call analyzeSkin directly here instead of via closure
-          setPhase("scanning");
-          setScanProgress(0);
-          setScanStep(0);
-          doAnalyzeSkin(dataUrl);
+          analyzeSkin(dataUrl);
         } else {
           console.error("[SkinScan] No base64String in photo result. Full photo keys:", Object.keys(photo));
           toast.error("Failed to capture photo. Please try uploading an image instead.");
