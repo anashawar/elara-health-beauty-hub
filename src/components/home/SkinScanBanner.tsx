@@ -1,6 +1,5 @@
 import { Scan, Sparkles, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 const SkinScanBanner = () => {
@@ -9,52 +8,27 @@ const SkinScanBanner = () => {
   return (
     <section className="px-4 mt-6">
       <Link to="/skin-scan" className="block">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="relative rounded-3xl overflow-hidden shadow-float group"
-        >
+        <div className="relative rounded-3xl overflow-hidden shadow-float group active:scale-[0.98] transition-transform duration-200">
           {/* Background */}
           <div className="absolute inset-0 bg-gradient-to-br from-rose-500 via-primary to-violet-500" />
           <div className="absolute inset-0 opacity-30" style={{
             background: 'radial-gradient(circle at 90% 10%, hsl(352 80% 70% / 0.5) 0%, transparent 40%), radial-gradient(circle at 10% 90%, hsl(280 60% 60% / 0.4) 0%, transparent 40%)'
           }} />
 
-          {/* Animated glow */}
-          <motion.div
-            animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.25, 0.1] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/15 blur-3xl"
-          />
+          {/* Static glow */}
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/10 blur-3xl" />
 
-          {/* Scan grid lines */}
+          {/* Grid lines — pure CSS */}
           <div className="absolute inset-0 opacity-[0.06]" style={{
             backgroundImage: 'linear-gradient(0deg, white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)',
             backgroundSize: '20px 20px'
           }} />
 
-          {/* Scanning line */}
-          <motion.div
-            animate={{ x: ["-100%", "200%"] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-0 bottom-0 w-16 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-          />
-
           {/* Content */}
           <div className="relative p-5 flex gap-4 items-center z-10">
-            <motion.div
-              animate={{ rotate: [0, 360] }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="flex-shrink-0 w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg relative"
-            >
+            <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg">
               <Scan className="w-8 h-8 text-white" />
-              <motion.div
-                animate={{ scale: [1, 1.3, 1], opacity: [0.6, 0, 0.6] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="absolute inset-0 border-2 border-white/30 rounded-2xl"
-              />
-            </motion.div>
+            </div>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-1">
@@ -71,15 +45,11 @@ const SkinScanBanner = () => {
               </p>
             </div>
 
-            <motion.div
-              animate={{ x: [0, 4, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="flex-shrink-0 w-10 h-10 rounded-2xl bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg"
-            >
+            <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
               <ArrowRight className="w-5 h-5 text-rose-500 rtl:rotate-180" />
-            </motion.div>
+            </div>
           </div>
-        </motion.div>
+        </div>
       </Link>
     </section>
   );

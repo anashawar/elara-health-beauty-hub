@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { X, Download, Sparkles, Gift, Smartphone } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
-import { motion, AnimatePresence } from "framer-motion";
 import elaraLogo from "@/assets/elara-logo.png";
 
 const isNative = Capacitor.isNativePlatform();
@@ -39,21 +38,12 @@ export const MobileAppHeroBanner = () => {
 
   return (
     <div className="md:hidden px-4 mt-4">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-foreground via-foreground/95 to-foreground/85 p-5"
-      >
-        {/* Decorative glow */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-foreground via-foreground/95 to-foreground/85 p-5">
+        {/* Static glow */}
         <div className="absolute inset-0 opacity-15" style={{
           background: 'radial-gradient(circle at 80% 20%, hsl(var(--primary) / 0.6) 0%, transparent 50%), radial-gradient(circle at 20% 80%, hsl(38 70% 55% / 0.4) 0%, transparent 50%)'
         }} />
-        <motion.div
-          animate={{ scale: [1, 1.3, 1], opacity: [0.1, 0.25, 0.1] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-primary/20 blur-2xl"
-        />
+        <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-primary/15 blur-2xl" />
 
         <div className="relative">
           <div className="flex items-start gap-4">
@@ -95,7 +85,7 @@ export const MobileAppHeroBanner = () => {
             Use code <span className="font-mono font-bold text-primary">ELARA15</span> at checkout
           </p>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };
@@ -110,7 +100,7 @@ export const MobileAppInlineBanner = () => {
         <div className="absolute inset-0 opacity-20" style={{
           background: 'radial-gradient(circle at 90% 50%, white 0%, transparent 60%)'
         }} />
-        <div className="relative flex-shrink-0 w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+        <div className="relative flex-shrink-0 w-11 h-11 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center">
           <Download className="w-5 h-5 text-white" />
         </div>
         <div className="relative flex-1 min-w-0">
@@ -134,33 +124,25 @@ export const ProductPageAppBanner = () => {
   if (isNative || dismissed) return null;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: -50, opacity: 0 }}
-        transition={{ delay: 1.5, duration: 0.4 }}
-        className="md:hidden px-4 my-4"
-      >
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-foreground/95 to-foreground/85 px-4 py-3 flex items-center gap-3">
-          <button onClick={() => setDismissed(true)} className="absolute top-1.5 right-2 p-0.5 rounded-full hover:bg-white/10 transition-colors">
-            <X className="w-3 h-3 text-white/40" />
-          </button>
-          <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-primary/20 border border-white/10 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-bold text-white leading-tight">Better on the app!</p>
-            <p className="text-[9px] text-white/40 leading-tight mt-0.5">15% OFF first order • Faster checkout</p>
-          </div>
-          <a
-            href="#"
-            className="flex-shrink-0 px-3 py-1.5 bg-primary rounded-full text-[10px] font-bold text-primary-foreground hover:opacity-90 transition-opacity"
-          >
-            Open App
-          </a>
+    <div className="md:hidden px-4 my-4 animate-fade-in">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-foreground/95 to-foreground/85 px-4 py-3 flex items-center gap-3">
+        <button onClick={() => setDismissed(true)} className="absolute top-1.5 right-2 p-0.5 rounded-full hover:bg-white/10 transition-colors">
+          <X className="w-3 h-3 text-white/40" />
+        </button>
+        <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-primary/20 border border-white/10 flex items-center justify-center">
+          <Sparkles className="w-4 h-4 text-primary" />
         </div>
-      </motion.div>
-    </AnimatePresence>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-bold text-white leading-tight">Better on the app!</p>
+          <p className="text-[9px] text-white/40 leading-tight mt-0.5">15% OFF first order • Faster checkout</p>
+        </div>
+        <a
+          href="#"
+          className="flex-shrink-0 px-3 py-1.5 bg-primary rounded-full text-[10px] font-bold text-primary-foreground hover:opacity-90 transition-opacity"
+        >
+          Open App
+        </a>
+      </div>
+    </div>
   );
 };
