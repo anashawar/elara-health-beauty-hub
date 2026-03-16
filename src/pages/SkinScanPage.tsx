@@ -848,9 +848,31 @@ export default function SkinScanPage() {
             </motion.div>
           )}
 
-          {/* Report saved notice */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="text-center py-3">
-            <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1">
+          {/* Share & saved notice */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="space-y-3">
+            <button
+              onClick={async () => {
+                const shareText = language === "ar"
+                  ? `✨ نتيجة تحليل بشرتي من ELARA AI: ${analysis.overall_score}/100\nنوع البشرة: ${analysis.skin_type}\n${analysis.summary || ''}\n\nجرب تحليل بشرتك مجاناً!`
+                  : `✨ My ELARA AI Skin Score: ${analysis.overall_score}/100\nSkin Type: ${analysis.skin_type}\n${analysis.summary || ''}\n\nTry your free skin analysis!`;
+                try {
+                  const { Share } = await import("@capacitor/share");
+                  await Share.share({ title: "ELARA AI Skin Analyzer", text: shareText, url: window.location.origin + "/skin-scan" });
+                } catch {
+                  if (navigator.share) {
+                    await navigator.share({ title: "ELARA AI Skin Analyzer", text: shareText, url: window.location.origin + "/skin-scan" });
+                  } else {
+                    await navigator.clipboard.writeText(shareText + "\n" + window.location.origin + "/skin-scan");
+                    toast.success(language === "ar" ? "تم النسخ!" : "Copied to clipboard!");
+                  }
+                }
+              }}
+              className="w-full py-3 bg-gradient-to-r from-rose-500 via-primary to-violet-500 text-white font-semibold rounded-2xl text-sm flex items-center justify-center gap-2 shadow-lg"
+            >
+              <Share2 className="w-4 h-4" />
+              {language === "ar" ? "شارك نتائجك" : language === "ku" ? "ئەنجامەکانت هاوبەش بکە" : "Share Your Results"}
+            </button>
+            <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1 text-center">
               <Clock className="w-3 h-3" />
               {language === "ar" ? "تم حفظ هذا التقرير تلقائياً في سجلك" : "This report has been automatically saved to your history"}
             </p>
