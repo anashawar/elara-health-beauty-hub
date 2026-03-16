@@ -12,6 +12,7 @@ import DesktopHeader from "@/components/layout/DesktopHeader";
 import SearchOverlay from "@/components/SearchOverlay";
 import { motion } from "framer-motion";
 import { useLanguage, type Language } from "@/i18n/LanguageContext";
+import { useAppIcon, APP_ICON_OPTIONS } from "@/hooks/useAppIcon";
 
 const SettingsPage = () => {
   const { user, loading: authLoading, signOut } = useAuth();
