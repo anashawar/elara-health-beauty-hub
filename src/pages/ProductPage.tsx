@@ -57,6 +57,14 @@ const ProductPage = () => {
   const { data: brands = [] } = useBrands();
   const { data: related = [] } = useRelatedProducts(product?.category_id, id);
 
+  if (productLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   if (!product) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
