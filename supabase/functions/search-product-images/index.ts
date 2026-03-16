@@ -98,38 +98,92 @@ function upgradeToHighRes(url: string): string {
   return u;
 }
 
+function isProbablyImageUrl(url: string): boolean {
+  return /\.(jpg|jpeg|png|webp|avif)(?:$|\?)/i.test(url);
+}
+
+async function isUsableImageResponse(resp: Response, url: string): Promise<boolean> {
+  if (!resp.ok) return false;
+
+  const contentType = (resp.headers.get("content-type") || "").toLowerCase();
+  const contentLength = parseInt(resp.headers.get("content-length") || "0");
+  const contentRange = resp.headers.get("content-range") || "";
+  const totalFromRange = parseInt(contentRange.match(/\/(\d+)$/)?.[1] || "0");
+  const totalSize = totalFromRange || contentLength;
+
+  if (!contentType.startsWith("image/") && !isProbablyImageUrl(url)) return false;
+  if (totalSize > 0 && totalSize < 5000) return false;
+
+  return true;
+}
+
 async function verifyImage(url: string): Promise<boolean> {
-  try {
-    const resp = await fetch(url, { method: "HEAD", redirect: "follow" });
-    if (!resp.ok) return false;
-    const ct = resp.headers.get("content-type") || "";
-    if (!ct.startsWith("image/")) return false;
-    const size = parseInt(resp.headers.get("content-length") || "0");
-    if (size > 0 && size < 5000) return false; // Reject < 5KB
-    return true;
-  } catch {
-    return false;
+  const attempts: RequestInit[] = [
+    { method: "HEAD", redirect: "follow" },
+    {
+      method: "GET",
+      redirect: "follow",
+      headers: {
+        Range: "bytes=0-8191",
+        Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+      },
+    },
+  ];
+
+  for (const attempt of attempts) {
+    try {
+      const resp = await fetch(url, attempt);
+      if (await isUsableImageResponse(resp, url)) return true;
+    } catch {
+      // Try the next verification strategy.
+    }
   }
+
+  return false;
 }
 
 /** Extract image URLs from markdown content */
 function extractImagesFromMarkdown(markdown: string): string[] {
   const images: string[] = [];
-  // Markdown image syntax
   const mdRegex = /!\[.*?\]\((https?:\/\/[^\s)]+)\)/gi;
   let m;
   while ((m = mdRegex.exec(markdown)) !== null) images.push(m[1]);
-  // Raw image URLs
-  const urlRegex = /(https?:\/\/[^\s"'<>]+\.(jpg|jpeg|png|webp)(\?[^\s"'<>]*)?)/gi;
+
+  const urlRegex = /(https?:\/\/[^\s"'<>]+\.(jpg|jpeg|png|webp|avif)(\?[^\s"'<>]*)?)/gi;
   while ((m = urlRegex.exec(markdown)) !== null) {
     if (!images.includes(m[1])) images.push(m[1]);
   }
-  // HTML img src
-  const srcRegex = /src=["'](https?:\/\/[^"']+\.(jpg|jpeg|png|webp)[^"']*)/gi;
+
+  const srcRegex = /src=["'](https?:\/\/[^"']+\.(jpg|jpeg|png|webp|avif)[^"']*)/gi;
   while ((m = srcRegex.exec(markdown)) !== null) {
     if (!images.includes(m[1])) images.push(m[1]);
   }
+
   return images;
+}
+
+function flattenPossibleUrls(value: unknown): string[] {
+  if (!value) return [];
+  if (typeof value === "string") return [value];
+  if (Array.isArray(value)) return value.flatMap(flattenPossibleUrls);
+  if (typeof value === "object") {
+    return Object.values(value as Record<string, unknown>).flatMap(flattenPossibleUrls);
+  }
+  return [];
+}
+
+function extractImagesFromSearchResult(result: any): string[] {
+  const payload = result?.data ?? result ?? {};
+  const markdown = typeof payload.markdown === "string" ? payload.markdown : "";
+
+  const urls = [
+    ...flattenPossibleUrls(payload.metadata?.ogImage),
+    ...flattenPossibleUrls(payload.metadata?.image),
+    ...flattenPossibleUrls(payload.metadata?.images),
+    ...extractImagesFromMarkdown(markdown),
+  ];
+
+  return Array.from(new Set(urls.filter((url): url is string => typeof url === "string" && url.startsWith("http"))));
 }
 
 /** Generate multiple search query variations for better coverage */
@@ -137,24 +191,18 @@ function buildSearchQueries(brandName: string, title: string, volumeStr?: string
   const fullName = `${brandName} ${title}`.trim();
   const queries: string[] = [];
 
-  // Strategy 1: Full name + product image (most specific)
   queries.push(`${fullName} product image`);
-
-  // Strategy 2: Full name on trusted retailer sites  
   queries.push(`${fullName} site:lookfantastic.com OR site:notino.com OR site:iherb.com OR site:sephora.com`);
 
-  // Strategy 3: Full name + volume for exact match
   if (volumeStr) {
     queries.push(`${fullName} ${volumeStr}`);
   }
 
-  // Strategy 4: Brand + key title words (broader)
   const words = title.split(/\s+/).filter(w => w.length > 3).slice(0, 4);
   if (words.length >= 2 && brandName) {
     queries.push(`${brandName} ${words.join(" ")}`);
   }
 
-  // Strategy 5: Just the product name on Amazon/shopping
   queries.push(`${fullName} site:amazon.com OR site:ebay.com`);
 
   return queries;
@@ -251,18 +299,15 @@ Deno.serve(async (req) => {
           const searchResults = data.data || [];
 
           for (const result of searchResults) {
-            const md = result.markdown || "";
-            const pageImages = extractImagesFromMarkdown(md);
-            
-            // Also grab OG image and any metadata images
-            if (result.metadata?.ogImage) pageImages.unshift(result.metadata.ogImage);
-            if (result.metadata?.image) pageImages.unshift(result.metadata.image);
+            const pageImages = extractImagesFromSearchResult(result);
 
-            for (const imgUrl of pageImages) {
+            for (const rawImgUrl of pageImages) {
+              const imgUrl = upgradeToHighRes(rawImgUrl);
               if (!imgUrl.startsWith("http")) continue;
+
               const score = scoreImage(imgUrl, titleWords, brandSlug, volumeStr);
               if (score > 0) {
-                candidates.push({ url: upgradeToHighRes(imgUrl), score });
+                candidates.push({ url: imgUrl, score });
               }
             }
           }
