@@ -39,6 +39,7 @@ const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const RewardsPage = lazy(() => import("./pages/RewardsPage"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
 const SkinScanPage = lazy(() => import("./pages/SkinScanPage"));
+const SkinScanHistoryPage = lazy(() => import("./pages/SkinScanHistoryPage"));
 
 // Admin — always lazy
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
