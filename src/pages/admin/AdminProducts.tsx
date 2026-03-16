@@ -968,7 +968,7 @@ export default function AdminProducts() {
               <DialogTitle>{editing ? "Edit Product" : "Add Product"}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 mt-2 md:grid-cols-2">
-              <div>
+              <div className="md:col-span-2">
                 <Label>Title *</Label>
                 <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </div>
