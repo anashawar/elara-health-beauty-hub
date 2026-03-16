@@ -625,24 +625,24 @@ function SkinScanContent() {
             <div className="flex items-center gap-2">
               <button
                 onClick={async () => {
-                  const shareText = language === "ar"
-                    ? `✨ نتيجة تحليل بشرتي من ELARA AI: ${analysis.overall_score}/100\nنوع البشرة: ${analysis.skin_type}\n${analysis.summary || ''}\n\nجرب تحليل بشرتك مجاناً!`
-                    : `✨ My ELARA AI Skin Analysis Score: ${analysis.overall_score}/100\nSkin Type: ${analysis.skin_type}\n${analysis.summary || ''}\n\nTry your free skin analysis!`;
                   try {
-                    const { Share } = await import("@capacitor/share");
-                    await Share.share({ title: "ELARA AI Skin Analyzer", text: shareText, url: window.location.origin + "/skin-scan" });
-                  } catch {
-                    if (navigator.share) {
-                      await navigator.share({ title: "ELARA AI Skin Analyzer", text: shareText, url: window.location.origin + "/skin-scan" });
-                    } else {
-                      await navigator.clipboard.writeText(shareText + "\n" + window.location.origin + "/skin-scan");
-                      toast.success(language === "ar" ? "تم النسخ!" : "Copied to clipboard!");
-                    }
+                    toast.info(language === "ar" ? "جاري إنشاء التقرير..." : "Generating report...");
+                    const blob = await generateSkinReportPdf(analysis as any, user?.user_metadata?.full_name || "", language);
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `ELARA-Skin-Report-${new Date().toISOString().slice(0, 10)}.pdf`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success(language === "ar" ? "تم تحميل التقرير!" : "Report downloaded!");
+                  } catch (err) {
+                    console.error(err);
+                    toast.error(language === "ar" ? "فشل إنشاء التقرير" : "Failed to generate report");
                   }
                 }}
                 className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-secondary"
               >
-                <Share2 className="w-4 h-4 text-primary" />
+                <FileDown className="w-4 h-4 text-primary" />
               </button>
               <button onClick={reset} className="text-xs font-medium text-primary flex items-center gap-1">
                 <RotateCcw className="w-3.5 h-3.5" />
