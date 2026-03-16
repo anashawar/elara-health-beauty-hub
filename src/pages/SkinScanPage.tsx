@@ -930,25 +930,25 @@ function SkinScanContent() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="space-y-3">
             <button
               onClick={async () => {
-                const shareText = language === "ar"
-                  ? `✨ نتيجة تحليل بشرتي من ELARA AI: ${analysis.overall_score}/100\nنوع البشرة: ${analysis.skin_type}\n${analysis.summary || ''}\n\nجرب تحليل بشرتك مجاناً!`
-                  : `✨ My ELARA AI Skin Score: ${analysis.overall_score}/100\nSkin Type: ${analysis.skin_type}\n${analysis.summary || ''}\n\nTry your free skin analysis!`;
                 try {
-                  const { Share } = await import("@capacitor/share");
-                  await Share.share({ title: "ELARA AI Skin Analyzer", text: shareText, url: window.location.origin + "/skin-scan" });
-                } catch {
-                  if (navigator.share) {
-                    await navigator.share({ title: "ELARA AI Skin Analyzer", text: shareText, url: window.location.origin + "/skin-scan" });
-                  } else {
-                    await navigator.clipboard.writeText(shareText + "\n" + window.location.origin + "/skin-scan");
-                    toast.success(language === "ar" ? "تم النسخ!" : "Copied to clipboard!");
-                  }
+                  toast.info(language === "ar" ? "جاري إنشاء التقرير..." : "Generating report...");
+                  const blob = await generateSkinReportPdf(analysis as any, user?.user_metadata?.full_name || "", language);
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `ELARA-Skin-Report-${new Date().toISOString().slice(0, 10)}.pdf`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast.success(language === "ar" ? "تم تحميل التقرير!" : "Report downloaded!");
+                } catch (err) {
+                  console.error(err);
+                  toast.error(language === "ar" ? "فشل إنشاء التقرير" : "Failed to generate report");
                 }
               }}
               className="w-full py-3 bg-gradient-to-r from-rose-500 via-primary to-violet-500 text-white font-semibold rounded-2xl text-sm flex items-center justify-center gap-2 shadow-lg"
             >
-              <Share2 className="w-4 h-4" />
-              {language === "ar" ? "شارك نتائجك" : language === "ku" ? "ئەنجامەکانت هاوبەش بکە" : "Share Your Results"}
+              <FileDown className="w-4 h-4" />
+              {language === "ar" ? "تحميل التقرير PDF" : language === "ku" ? "داگرتنی ڕاپۆرت PDF" : "Download Report as PDF"}
             </button>
             <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1 text-center">
               <Clock className="w-3 h-3" />
