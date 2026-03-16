@@ -147,7 +147,7 @@ function SkinScanContent() {
         console.log("[SkinScan] Opening native camera...");
         const photo = await CapCamera.getPhoto({
           quality: 85,
-          resultType: CameraResultType.DataUrl,
+          resultType: CameraResultType.Base64,
           source: CameraSource.Camera,
           direction: useFrontCamera ? CameraDirection.Front : CameraDirection.Rear,
           width: 1280,
@@ -155,30 +155,24 @@ function SkinScanContent() {
           correctOrientation: true,
         });
         console.log("[SkinScan] Photo result:", { 
-          hasDataUrl: !!photo.dataUrl, 
+          hasBase64: !!photo.base64String, 
           format: photo.format,
-          dataUrlLength: photo.dataUrl?.length 
+          base64Length: photo.base64String?.length 
         });
-        if (photo.dataUrl) {
-          setCapturedImage(photo.dataUrl);
-          analyzeSkin(photo.dataUrl);
+        const base64 = photo.base64String;
+        if (base64) {
+          const mimeType = photo.format === "png" ? "image/png" : "image/jpeg";
+          const dataUrl = `data:${mimeType};base64,${base64}`;
+          console.log("[SkinScan] Constructed dataUrl, length:", dataUrl.length);
+          setCapturedImage(dataUrl);
+          analyzeSkin(dataUrl);
         } else {
-          // Fallback: try base64String
-          const base64 = photo.base64String;
-          if (base64) {
-            const mimeType = photo.format === "png" ? "image/png" : "image/jpeg";
-            const dataUrl = `data:${mimeType};base64,${base64}`;
-            console.log("[SkinScan] Using base64String fallback, length:", base64.length);
-            setCapturedImage(dataUrl);
-            analyzeSkin(dataUrl);
-          } else {
-            console.error("[SkinScan] No dataUrl or base64String in photo result");
-            toast.error("Failed to capture photo. Please try uploading an image instead.");
-          }
+          console.error("[SkinScan] No base64String in photo result. Full photo keys:", Object.keys(photo));
+          toast.error("Failed to capture photo. Please try uploading an image instead.");
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        console.error("Capacitor camera error:", err);
+        console.error("[SkinScan] Capacitor camera error:", JSON.stringify(err));
         if (!msg.includes("cancelled") && !msg.includes("User cancelled")) {
           toast.error(language === "ar" ? "تعذر فتح الكاميرا" : "Could not open camera");
         }
