@@ -122,6 +122,7 @@ const App = () => (
               <Route path="/elara-ai" element={<AuthGuard><ElaraChatPage /></AuthGuard>} />
               <Route path="/rewards" element={<AuthGuard><RewardsPage /></AuthGuard>} />
               <Route path="/support" element={<AuthGuard><SupportPage /></AuthGuard>} />
+              <Route path="/skin-scan" element={<AuthGuard><SkinScanPage /></AuthGuard>} />
               {/* Admin Panel */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
