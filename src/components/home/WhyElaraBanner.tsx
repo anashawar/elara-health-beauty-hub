@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 const VALUE_PROPS = [
-  "ELARA AI — First in Iraq 🇮🇶🧠",
+  "Most Advanced AI in Beauty 🧠",
   "Your AI Beauty Consultant ✨",
   "AI Skin Analysis & Routines 💡",
   "24 Hour Delivery 🚀",
