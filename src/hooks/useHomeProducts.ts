@@ -65,7 +65,7 @@ async function fetchSection(
   language: "en" | "ar" | "ku",
   limit = SECTION_LIMIT
 ): Promise<ProductWithRelations[]> {
-  let query = supabase.from("products").select(CARD_SELECT);
+  let query = supabase.from("products").select(CARD_SELECT) as any;
 
   for (const [key, value] of Object.entries(filter)) {
     query = query.eq(key, value);
