@@ -1,7 +1,6 @@
 import { memo } from "react";
 import { ChevronRight, Flame } from "lucide-react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import ProductCard from "@/components/ProductCard";
 import type { ProductWithRelations } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
