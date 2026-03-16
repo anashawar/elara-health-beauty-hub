@@ -167,6 +167,14 @@ IMPORTANT:
       throw new Error("Failed to parse skin analysis");
     }
 
+    // Check if AI rejected the image (no face detected)
+    if (analysis.error === "no_face_detected") {
+      return new Response(JSON.stringify({ error: "no_face_detected", message: analysis.message }), {
+        status: 422,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Save to database
     const { error: saveError } = await supabase.from("skin_analyses").insert({
       user_id: user.id,
