@@ -382,6 +382,8 @@ const ProductPage = () => {
               </motion.div>
             </Link>
 
+            <ProductPageAppBanner />
+
             <ReviewSection productId={product.id} />
 
             {related.length > 0 && (
