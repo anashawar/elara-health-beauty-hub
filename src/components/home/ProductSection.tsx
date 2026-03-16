@@ -15,7 +15,7 @@ interface ProductSectionProps {
   variant?: "default" | "trending";
 }
 
-const ProductSection = ({ title, subtitle, products, viewAllLink, horizontal = true, variant = "default" }: ProductSectionProps) => {
+const ProductSection = memo(({ title, subtitle, products, viewAllLink, horizontal = true, variant = "default" }: ProductSectionProps) => {
   const { t } = useLanguage();
   if (products.length === 0) return null;
 
