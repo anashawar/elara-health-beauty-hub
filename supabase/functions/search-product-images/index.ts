@@ -299,18 +299,15 @@ Deno.serve(async (req) => {
           const searchResults = data.data || [];
 
           for (const result of searchResults) {
-            const md = result.markdown || "";
-            const pageImages = extractImagesFromMarkdown(md);
-            
-            // Also grab OG image and any metadata images
-            if (result.metadata?.ogImage) pageImages.unshift(result.metadata.ogImage);
-            if (result.metadata?.image) pageImages.unshift(result.metadata.image);
+            const pageImages = extractImagesFromSearchResult(result);
 
-            for (const imgUrl of pageImages) {
+            for (const rawImgUrl of pageImages) {
+              const imgUrl = upgradeToHighRes(rawImgUrl);
               if (!imgUrl.startsWith("http")) continue;
+
               const score = scoreImage(imgUrl, titleWords, brandSlug, volumeStr);
               if (score > 0) {
-                candidates.push({ url: upgradeToHighRes(imgUrl), score });
+                candidates.push({ url: imgUrl, score });
               }
             }
           }
