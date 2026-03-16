@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
-const BATCH_SIZE = 3; // Smaller batches = more reliable with multiple queries per product
+const BATCH_SIZE = 2; // Keep batches small because each product now performs deeper image extraction
 
 interface ResultEntry {
   id: string;
