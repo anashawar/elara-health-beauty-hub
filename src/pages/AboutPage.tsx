@@ -35,7 +35,7 @@ const content = {
       "Because your health starts with what you choose — and we make choosing easier.",
     ],
     contactQ: "Have questions? Reach out anytime.",
-    contactCTA: "Contact us — info@elara.iq",
+    contactCTA: "Contact us — info@elarastore.co",
   },
   ar: {
     pageTitle: "عن إيلارا",
