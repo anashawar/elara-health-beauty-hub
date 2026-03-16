@@ -209,9 +209,9 @@ const CheckoutPage = () => {
   }
 
   const paymentMethods = [
-    { value: "cod", label: t("checkout.cod"), desc: t("checkout.codDesc"), icon: "💵", image: null },
-    { value: "fib", label: t("checkout.fib"), desc: t("checkout.fibDesc"), icon: null, image: fibLogo },
-    { value: "qicard", label: t("checkout.qicard"), desc: t("checkout.qicardDesc"), icon: null, image: qiLogo },
+    { value: "cod", label: t("checkout.cod"), desc: t("checkout.codDesc"), icon: "💵", image: null, active: true },
+    { value: "fib", label: t("checkout.fib"), desc: t("checkout.fibDesc"), icon: null, image: fibLogo, active: false },
+    { value: "qicard", label: t("checkout.qicard"), desc: t("checkout.qicardDesc"), icon: null, image: qiLogo, active: false },
   ];
 
   const firstOrderTexts = {
@@ -383,7 +383,7 @@ const CheckoutPage = () => {
         <div className="bg-card rounded-2xl p-4 shadow-premium">
           <h3 className="text-sm font-bold text-foreground mb-3">{t("checkout.paymentMethod")}</h3>
           <div className="space-y-2">
-            {paymentMethods.map(method => (
+            {paymentMethods.filter(m => m.active).map(method => (
               <label
                 key={method.value}
                 className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer border-2 transition-all ${
