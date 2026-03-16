@@ -1164,7 +1164,7 @@ export default function AdminProducts() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center gap-6 flex-wrap">
+              <div className="flex items-center gap-6 flex-wrap md:col-span-2">
                 <label className="flex items-center gap-2 text-sm">
                   <Switch checked={form.in_stock} onCheckedChange={(v) => setForm({ ...form, in_stock: v })} />
                   <span className={form.in_stock ? "text-sage font-medium" : "text-destructive font-medium"}>{form.in_stock ? "In Stock" : "Out of Stock"}</span>
