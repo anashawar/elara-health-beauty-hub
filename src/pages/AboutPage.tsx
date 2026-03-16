@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Sparkles, Globe, Users, ShieldCheck, Heart, ArrowRight, Gift, Truck } from "lucide-react";
+import { Sparkles, Globe, Users, ShieldCheck, Heart, ArrowRight, Gift, Truck, BrainCircuit, MessageCircle, Scan } from "lucide-react";
+import { Link } from "react-router-dom";
 import PageShell from "@/components/layout/PageShell";
 import elaraBanner from "@/assets/elara-banner.webp";
 import { useLanguage } from "@/i18n/LanguageContext";
