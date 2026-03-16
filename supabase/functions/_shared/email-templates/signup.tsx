@@ -30,23 +30,20 @@ export const SignupEmail = ({
 }: SignupEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Confirm your email for {siteName}</Preview>
+    <Preview>Confirm your email for ELARA</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
+        <Img src="https://elara-health-beauty-hub.lovable.app/app-icon.png" width="48" height="48" alt="ELARA" style={{ marginBottom: '24px', borderRadius: '12px' }} />
+        <Heading style={h1}>Welcome to ELARA ✨</Heading>
         <Text style={text}>
-          Thanks for signing up for{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          !
+          Thanks for joining ELARA — your destination for health & beauty in Iraq.
         </Text>
         <Text style={text}>
           Please confirm your email address (
           <Link href={`mailto:${recipient}`} style={link}>
             {recipient}
           </Link>
-          ) by clicking the button below:
+          ) to get started:
         </Text>
         <Button style={button} href={confirmationUrl}>
           Verify Email
@@ -61,27 +58,10 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const main = { backgroundColor: '#faf7f5', fontFamily: "'DM Sans', Arial, sans-serif" }
+const container = { padding: '40px 30px', maxWidth: '480px', margin: '0 auto' }
+const h1 = { fontSize: '24px', fontWeight: 'bold' as const, color: '#1a1a1a', margin: '0 0 16px' }
+const text = { fontSize: '14px', color: '#6b6b6b', lineHeight: '1.6', margin: '0 0 20px' }
+const link = { color: '#b5838d', textDecoration: 'underline' }
+const button = { backgroundColor: '#b5838d', color: '#ffffff', fontSize: '14px', fontWeight: 'bold' as const, borderRadius: '12px', padding: '14px 28px', textDecoration: 'none' }
+const footer = { fontSize: '12px', color: '#aaa', margin: '30px 0 0' }
