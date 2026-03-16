@@ -65,6 +65,12 @@ Analyze the provided face photo and return a detailed JSON response with this EX
   "elasticity_score": <number 0-100>,
   "clarity_score": <number 0-100>,
   "texture_score": <number 0-100>,
+  "acne_score": <number 0-100, where 100 = no acne at all, 0 = severe acne>,
+  "pigmentation_score": <number 0-100, where 100 = perfectly even tone, 0 = severe hyperpigmentation/dark spots>,
+  "dryness_score": <number 0-100, where 100 = perfectly moisturized, 0 = extremely dry/flaky>,
+  "oiliness_score": <number 0-100, where 100 = no excess oil, 0 = extremely oily/shiny>,
+  "pores_score": <number 0-100, where 100 = barely visible pores, 0 = very enlarged pores>,
+  "dark_circles_score": <number 0-100, where 100 = no dark circles, 0 = severe dark circles>,
   "problems": [
     {
       "name": "<problem name>",
