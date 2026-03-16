@@ -1177,6 +1177,57 @@ export type Database = {
           },
         ]
       }
+      skin_analyses: {
+        Row: {
+          clarity_score: number | null
+          created_at: string
+          elasticity_score: number | null
+          full_analysis: Json | null
+          hydration_score: number | null
+          id: string
+          image_url: string | null
+          overall_score: number
+          problems: Json | null
+          recommended_product_ids: string[] | null
+          routine: Json | null
+          skin_type: string | null
+          texture_score: number | null
+          user_id: string
+        }
+        Insert: {
+          clarity_score?: number | null
+          created_at?: string
+          elasticity_score?: number | null
+          full_analysis?: Json | null
+          hydration_score?: number | null
+          id?: string
+          image_url?: string | null
+          overall_score?: number
+          problems?: Json | null
+          recommended_product_ids?: string[] | null
+          routine?: Json | null
+          skin_type?: string | null
+          texture_score?: number | null
+          user_id: string
+        }
+        Update: {
+          clarity_score?: number | null
+          created_at?: string
+          elasticity_score?: number | null
+          full_analysis?: Json | null
+          hydration_score?: number | null
+          id?: string
+          image_url?: string | null
+          overall_score?: number
+          problems?: Json | null
+          recommended_product_ids?: string[] | null
+          routine?: Json | null
+          skin_type?: string | null
+          texture_score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       subcategories: {
         Row: {
           category_id: string

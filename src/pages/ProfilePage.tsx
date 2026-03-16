@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronRight, Heart, MapPin, Settings, Package, LogOut, Sparkles, MessageCircle, Info, HelpCircle, FileText, Lock, UserRound, Crown, Star, Headphones } from "lucide-react";
+import { ChevronRight, Heart, MapPin, Settings, Package, LogOut, Sparkles, MessageCircle, Info, HelpCircle, FileText, Lock, UserRound, Crown, Star, Headphones, Scan } from "lucide-react";
 import BottomNav from "@/components/layout/BottomNav";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,7 +14,7 @@ import { useLoyaltyPoints, TIER_THRESHOLDS } from "@/hooks/useLoyalty";
 const ProfilePage = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [searchOpen, setSearchOpen] = useState(false);
 
   const { data: profile } = useQuery({
@@ -44,6 +44,7 @@ const ProfilePage = () => {
   const tierInfo = TIER_THRESHOLDS[loyaltyTier as keyof typeof TIER_THRESHOLDS] || TIER_THRESHOLDS.bronze;
 
   const menuItems = [
+    { icon: Scan, label: language === "ar" ? "تحليل البشرة AI" : language === "ku" ? "شیکردنەوەی پێست AI" : "AI Skin Scan", path: "/skin-scan" },
     { icon: Package, label: t("profile.myOrders"), path: "/orders" },
     { icon: Heart, label: t("profile.wishlist"), path: "/wishlist" },
     { icon: MapPin, label: t("profile.addresses"), path: "/addresses" },

@@ -265,12 +265,18 @@ export default function AboutPage() {
               })}
             </div>
 
-            {/* CTA */}
-            <Link to="/elara-ai" className="inline-flex items-center gap-2 bg-background text-primary font-bold text-sm px-5 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
-              <Sparkles className="w-4 h-4" />
-              {c.aiSection.cta}
-              <ArrowRight className="w-4 h-4 rtl:rotate-180" />
-            </Link>
+            {/* CTAs */}
+            <div className="flex flex-wrap gap-2.5">
+              <Link to="/skin-scan" className="inline-flex items-center gap-2 bg-background text-primary font-bold text-sm px-5 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                <Scan className="w-4 h-4" />
+                {language === "ar" ? "حلل بشرتك" : language === "ku" ? "پێستت شیبکەرەوە" : "Scan Your Skin"}
+                <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+              </Link>
+              <Link to="/elara-ai" className="inline-flex items-center gap-2 bg-background/20 text-primary-foreground border border-background/30 font-bold text-sm px-5 py-3 rounded-xl hover:bg-background/30 transition-all">
+                <Sparkles className="w-4 h-4" />
+                {c.aiSection.cta}
+              </Link>
+            </div>
           </div>
         </motion.div>
 

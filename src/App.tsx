@@ -38,6 +38,7 @@ const TermsPage = lazy(() => import("./pages/TermsPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const RewardsPage = lazy(() => import("./pages/RewardsPage"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
+const SkinScanPage = lazy(() => import("./pages/SkinScanPage"));
 
 // Admin — always lazy
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
@@ -121,6 +122,7 @@ const App = () => (
               <Route path="/elara-ai" element={<AuthGuard><ElaraChatPage /></AuthGuard>} />
               <Route path="/rewards" element={<AuthGuard><RewardsPage /></AuthGuard>} />
               <Route path="/support" element={<AuthGuard><SupportPage /></AuthGuard>} />
+              <Route path="/skin-scan" element={<AuthGuard><SkinScanPage /></AuthGuard>} />
               {/* Admin Panel */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
