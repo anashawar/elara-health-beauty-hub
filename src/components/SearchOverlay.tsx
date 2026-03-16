@@ -123,7 +123,7 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
               </div>
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">{t("search.trending")}</p>
-                <div className="flex flex-wrap gap-2">{TRENDING_TERMS.map(term => (<button key={term} onClick={() => setQuery(term)} className="text-xs bg-secondary text-secondary-foreground px-3 py-2 rounded-xl hover:bg-accent transition-colors">{term}</button>))}</div>
+                <div className="flex flex-wrap gap-2">{TRENDING_TERMS.map(term => (<button key={term} onClick={() => { setQuery(term); setDebouncedQuery(term); }} className="text-xs bg-secondary text-secondary-foreground px-3 py-2 rounded-xl hover:bg-accent transition-colors">{term}</button>))}</div>
               </div>
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">{t("search.browseCategories")}</p>
