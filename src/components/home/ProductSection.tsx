@@ -1,7 +1,6 @@
 import { memo } from "react";
 import { ChevronRight, Flame } from "lucide-react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import ProductCard from "@/components/ProductCard";
 import type { ProductWithRelations } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -31,13 +30,9 @@ const ProductSection = memo(({ title, subtitle, products, viewAllLink, horizonta
           }} />
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <motion.div
-                animate={{ rotate: [0, -10, 10, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/10"
-              >
+              <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/10">
                 <Flame className="w-5 h-5 text-white" />
-              </motion.div>
+              </div>
               <div>
                 <h2 className="text-xl font-display font-bold text-white tracking-tight">{title}</h2>
                 {subtitle && <p className="text-[12px] text-white/60 mt-0.5">{subtitle}</p>}

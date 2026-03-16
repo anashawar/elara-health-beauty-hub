@@ -1,5 +1,4 @@
 import { Sparkles, Smartphone } from "lucide-react";
-import { motion } from "framer-motion";
 import elaraLogo from "@/assets/elara-logo.png";
 
 interface AppDownloadBannerProps {
@@ -52,11 +51,7 @@ const AppDownloadBanner = ({ compact = false }: AppDownloadBannerProps) => {
         <div className="absolute inset-0 opacity-10" style={{
           background: 'radial-gradient(circle at 70% 30%, hsl(268 84% 58% / 0.6) 0%, transparent 50%), radial-gradient(circle at 30% 70%, hsl(352 42% 55% / 0.4) 0%, transparent 50%)'
         }} />
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-primary/20 blur-3xl"
-        />
+        <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-primary/15 blur-3xl" />
 
         <div className="relative flex items-center gap-10">
           {/* Phone mockup placeholder */}

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
 
 const VALUE_PROPS = [
   "ELARA AI — First in Iraq 🇮🇶🧠",
@@ -19,7 +18,7 @@ const WhyElaraBanner = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % VALUE_PROPS.length);
-    }, 2400);
+    }, 3000); // Slowed from 2.4s to 3s
     return () => clearInterval(interval);
   }, []);
 
@@ -33,23 +32,21 @@ const WhyElaraBanner = () => {
       <div className="w-px h-8 bg-background/15 flex-shrink-0" />
 
       <div className="relative h-6 flex-1 overflow-hidden">
-        <AnimatePresence mode="wait">
-          <p
-            key={currentIndex}
-            className="absolute inset-0 flex items-center text-sm font-semibold text-background/85 whitespace-nowrap animate-fade-in"
-          >
-            {VALUE_PROPS[currentIndex]}
-          </p>
-        </AnimatePresence>
+        <p
+          key={currentIndex}
+          className="absolute inset-0 flex items-center text-sm font-semibold text-background/85 whitespace-nowrap animate-fade-in"
+        >
+          {VALUE_PROPS[currentIndex]}
+        </p>
       </div>
 
-      {/* Minimal dot indicator */}
+      {/* Simplified indicator — just 3 dots */}
       <div className="flex gap-1 flex-shrink-0">
-        {VALUE_PROPS.map((_, i) => (
+        {[0, 1, 2].map(i => (
           <div
             key={i}
-            className={`h-1 rounded-full transition-all duration-300 ${
-              i === currentIndex ? "w-3 bg-primary" : "w-1 bg-background/20"
+            className={`h-1 rounded-full transition-all duration-500 ${
+              i === currentIndex % 3 ? "w-3 bg-primary" : "w-1 bg-background/20"
             }`}
           />
         ))}
