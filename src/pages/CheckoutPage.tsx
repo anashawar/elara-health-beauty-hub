@@ -115,6 +115,30 @@ const CheckoutPage = () => {
         }));
         await supabase.from("order_items").insert(items);
 
+        // Send order confirmation email (fire-and-forget)
+        const addressParts = [
+          selectedAddress.label, selectedAddress.city,
+          selectedAddress.area, selectedAddress.street,
+          selectedAddress.building, selectedAddress.floor,
+        ].filter(Boolean).join(", ");
+
+        supabase.functions.invoke("send-order-email", {
+          body: {
+            order_id: order.id,
+            items: cart.map(item => ({
+              title: item.product.title,
+              quantity: item.quantity,
+              price: item.product.price,
+            })),
+            subtotal: cartTotal,
+            delivery_fee: deliveryFee,
+            discount: confirmedDiscount,
+            total: cartTotal - confirmedDiscount + deliveryFee,
+            delivery_address: addressParts,
+            payment_method: paymentMethod,
+          },
+        }).catch(e => console.error("Order email failed:", e));
+
         // Award loyalty points (1 point per 1,000 IQD)
         const orderTotal = cartTotal - confirmedDiscount + deliveryFee;
         const pts = calculatePoints(orderTotal);
