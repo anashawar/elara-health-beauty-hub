@@ -592,10 +592,33 @@ export default function SkinScanPage() {
                 {language === "ar" ? "تقرير ELARA AI" : language === "ku" ? "ڕاپۆرتی ELARA AI" : "Your ELARA AI Report"}
               </h1>
             </div>
-            <button onClick={reset} className="text-xs font-medium text-primary flex items-center gap-1">
-              <RotateCcw className="w-3.5 h-3.5" />
-              {language === "ar" ? "إعادة" : language === "ku" ? "دووبارە" : "Rescan"}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={async () => {
+                  const shareText = language === "ar"
+                    ? `✨ نتيجة تحليل بشرتي من ELARA AI: ${analysis.overall_score}/100\nنوع البشرة: ${analysis.skin_type}\n${analysis.summary || ''}\n\nجرب تحليل بشرتك مجاناً!`
+                    : `✨ My ELARA AI Skin Analysis Score: ${analysis.overall_score}/100\nSkin Type: ${analysis.skin_type}\n${analysis.summary || ''}\n\nTry your free skin analysis!`;
+                  try {
+                    const { Share } = await import("@capacitor/share");
+                    await Share.share({ title: "ELARA AI Skin Analyzer", text: shareText, url: window.location.origin + "/skin-scan" });
+                  } catch {
+                    if (navigator.share) {
+                      await navigator.share({ title: "ELARA AI Skin Analyzer", text: shareText, url: window.location.origin + "/skin-scan" });
+                    } else {
+                      await navigator.clipboard.writeText(shareText + "\n" + window.location.origin + "/skin-scan");
+                      toast.success(language === "ar" ? "تم النسخ!" : "Copied to clipboard!");
+                    }
+                  }
+                }}
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-secondary"
+              >
+                <Share2 className="w-4 h-4 text-primary" />
+              </button>
+              <button onClick={reset} className="text-xs font-medium text-primary flex items-center gap-1">
+                <RotateCcw className="w-3.5 h-3.5" />
+                {language === "ar" ? "إعادة" : language === "ku" ? "دووبارە" : "Rescan"}
+              </button>
+            </div>
           </div>
         </header>
 
