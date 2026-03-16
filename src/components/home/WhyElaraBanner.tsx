@@ -2,14 +2,15 @@ import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 
 const VALUE_PROPS = [
+  "ELARA AI — First in Iraq 🇮🇶🧠",
+  "Your AI Beauty Consultant ✨",
+  "AI Skin Analysis & Routines 💡",
   "24 Hour Delivery 🚀",
-  "AI is your best friend 🧠",
-  "Rewards on Orders 🎁",
-  "Smart Shopping 🛍️",
   "+3,000 Products 📦",
   "+250 Verified Brands ✓",
+  "Rewards on Every Order 🎁",
+  "100% Original Products 💎",
   "Reasonable Prices 🏷️",
-  "100% Original Products ✨",
 ];
 
 const WhyElaraBanner = () => {
