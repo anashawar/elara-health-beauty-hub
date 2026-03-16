@@ -103,7 +103,7 @@ const content = {
   },
 };
 
-const diffIcons = [Sparkles, Globe, Users, ShieldCheck];
+const diffIcons = [Sparkles, Globe, Heart, ShieldCheck, Users];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
