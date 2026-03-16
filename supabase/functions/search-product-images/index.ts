@@ -165,14 +165,21 @@ serve(async (req) => {
 
       const brandName = (product as any).brands?.name || "";
       const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, "");
-      const titleWords = product.title.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
-      const fullName = `${brandName} ${product.title}`.trim();
+      
+      // Remove duplicate brand name from title if it starts with the brand
+      let cleanTitle = product.title;
+      if (brandName && cleanTitle.toLowerCase().startsWith(brandName.toLowerCase())) {
+        cleanTitle = cleanTitle.slice(brandName.length).trim();
+      }
+      
+      const titleWords = `${brandName} ${cleanTitle}`.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
+      const fullName = `${brandName} ${cleanTitle}`.trim();
       const volumeStr = (product as any).volume_ml ? `${(product as any).volume_ml}${(product as any).volume_unit || "ml"}` : undefined;
 
-      // Precise search queries — use exact product name with quotes for accuracy
+      // Search queries — try product retailer sites first, then general
       const searchQueries = [
-        `"${fullName}" product image${volumeStr ? ` ${volumeStr}` : ""}`,
-        `"${fullName}" site:lookfantastic.com OR site:notino.com OR site:caretobeauty.com OR site:iherb.com OR site:sephora.com`,
+        `${fullName} site:lookfantastic.com OR site:notino.com OR site:caretobeauty.com OR site:iherb.com OR site:sephora.com OR site:amazon.com`,
+        `${fullName} product${volumeStr ? ` ${volumeStr}` : ""}`,
       ];
 
       try {
