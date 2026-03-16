@@ -1039,7 +1039,7 @@ export default function AdminProducts() {
               </div>
 
               {/* Main Image */}
-              <div>
+              <div className="md:col-span-2">
                 <Label className="mb-2 block">Main Image</Label>
                 {mainImagePreview ? (
                   <div className="relative w-full h-40 rounded-xl overflow-hidden border border-border bg-muted">
