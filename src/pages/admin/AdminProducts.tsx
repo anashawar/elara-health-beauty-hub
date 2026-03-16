@@ -963,225 +963,243 @@ export default function AdminProducts() {
           <DialogTrigger asChild>
             <Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1.5" />Manual Add</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" onCloseAutoFocus={(e) => e.preventDefault()}>
-            <DialogHeader>
+          <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0" onCloseAutoFocus={(e) => e.preventDefault()}>
+            <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
               <DialogTitle>{editing ? "Edit Product" : "Add Product"}</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 mt-2 md:grid-cols-2">
-              <div className="md:col-span-2">
-                <Label>Title *</Label>
-                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-              </div>
-              <div className="grid grid-cols-3 gap-3 md:col-span-2">
-                <div>
-                  <Label>Price (IQD) *</Label>
-                  <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: +e.target.value })} />
-                </div>
-                <div>
-                  <Label>Discounted Price</Label>
-                  <Input type="number" placeholder="Leave empty if no discount" value={form.original_price ?? ""} onChange={(e) => setForm({ ...form, original_price: e.target.value ? +e.target.value : null })} />
-                </div>
-                <div>
-                  <Label>Cost (IQD) 🔒</Label>
-                  <Input type="number" placeholder="Confidential" value={form.cost ?? ""} onChange={(e) => setForm({ ...form, cost: e.target.value ? +e.target.value : null })} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 md:col-span-2">
-                <div>
-                  <Label>Category</Label>
-                  <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v, subcategory_id: "" })}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>
-                      {categories.map((c: any) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Subcategory</Label>
-                  <Select
-                    value={form.subcategory_id}
-                    onValueChange={(v) => setForm({ ...form, subcategory_id: v })}
-                    disabled={!form.category_id || filteredSubcategories.length === 0}
-                  >
-                    <SelectTrigger><SelectValue placeholder={!form.category_id ? "Select category first" : "Select"} /></SelectTrigger>
-                    <SelectContent>
-                      {filteredSubcategories.map((s: any) => (
-                        <SelectItem key={s.id} value={s.id}>{s.icon} {s.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <Label>Brand</Label>
-                <Select value={form.brand_id} onValueChange={(v) => setForm({ ...form, brand_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>
-                    {brands.map((b: any) => (
-                      <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="md:col-span-2">
-                <Label>Description</Label>
-                <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-              </div>
-              <div>
-                <Label>Benefits <span className="text-muted-foreground font-normal">(one per line)</span></Label>
-                <Textarea rows={3} placeholder="Hydrates skin deeply&#10;Reduces fine lines&#10;Brightens complexion" value={form.benefits} onChange={(e) => setForm({ ...form, benefits: e.target.value })} />
-              </div>
-              <div>
-                <Label>How to Use</Label>
-                <Textarea rows={3} placeholder="Apply a small amount to clean, dry skin morning and evening..." value={form.usage_instructions} onChange={(e) => setForm({ ...form, usage_instructions: e.target.value })} />
-              </div>
-
-              {/* Main Image */}
-              <div className="md:col-span-2">
-                <Label className="mb-2 block">Main Image</Label>
-                {mainImagePreview ? (
-                  <div className="relative w-full h-40 rounded-xl overflow-hidden border border-border bg-muted">
-                    <img src={mainImagePreview} className="w-full h-full object-cover" alt="Main" />
-                    {!editing || mainImage ? (
-                      <button onClick={() => { setMainImage(null); setMainImagePreview(null); }} className="absolute top-2 right-2 bg-background/80 rounded-full p-1 hover:bg-destructive hover:text-destructive-foreground transition-colors">
-                        <X className="h-4 w-4" />
-                      </button>
-                    ) : null}
+            <div className="overflow-y-auto flex-1 px-6 pb-2">
+              <div className="grid gap-4 mt-2 md:grid-cols-3">
+                {/* Left column: core info */}
+                <div className="md:col-span-2 grid gap-4">
+                  <div>
+                    <Label>Title *</Label>
+                    <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                   </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-32 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
-                    <Upload className="h-6 w-6 text-muted-foreground mb-1.5" />
-                    <span className="text-sm text-muted-foreground">Click to upload main image</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={handleMainImageChange} />
-                  </label>
-                )}
-              </div>
-
-              {/* Additional Images */}
-              <div className="md:col-span-2">
-                <Label className="mb-2 block">Additional Images <span className="text-muted-foreground font-normal">(up to 10)</span></Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {existingImages.slice(editing ? 1 : 0).map((img) => (
-                    <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
-                      <img src={img.image_url} className="w-full h-full object-cover" alt="" />
-                      <button onClick={() => deleteExistingImage(img.id)} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground transition-all">
-                        <X className="h-3 w-3" />
-                      </button>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label>Price (IQD) *</Label>
+                      <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: +e.target.value })} />
                     </div>
-                  ))}
-                  {additionalPreviews.map((url, idx) => (
-                    <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
-                      <img src={url} className="w-full h-full object-cover" alt="" />
-                      <button onClick={() => removeAdditional(idx)} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground transition-all">
-                        <X className="h-3 w-3" />
-                      </button>
+                    <div>
+                      <Label>Original Price</Label>
+                      <Input type="number" placeholder="No discount" value={form.original_price ?? ""} onChange={(e) => setForm({ ...form, original_price: e.target.value ? +e.target.value : null })} />
                     </div>
-                  ))}
-                  {(existingImages.length - (editing ? 1 : 0) + additionalImages.length) < 10 && (
-                    <label className="aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
-                      <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                      <span className="text-[10px] text-muted-foreground mt-0.5">Add</span>
-                      <input type="file" accept="image/*" multiple className="hidden" onChange={handleAdditionalImagesChange} />
-                    </label>
-                  )}
+                    <div>
+                      <Label>Cost (IQD) 🔒</Label>
+                      <Input type="number" placeholder="Confidential" value={form.cost ?? ""} onChange={(e) => setForm({ ...form, cost: e.target.value ? +e.target.value : null })} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label>Category</Label>
+                      <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v, subcategory_id: "" })}>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {categories.map((c: any) => (
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Subcategory</Label>
+                      <Select
+                        value={form.subcategory_id}
+                        onValueChange={(v) => setForm({ ...form, subcategory_id: v })}
+                        disabled={!form.category_id || filteredSubcategories.length === 0}
+                      >
+                        <SelectTrigger><SelectValue placeholder={!form.category_id ? "Category first" : "Select"} /></SelectTrigger>
+                        <SelectContent>
+                          {filteredSubcategories.map((s: any) => (
+                            <SelectItem key={s.id} value={s.id}>{s.icon} {s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Brand</Label>
+                      <Select value={form.brand_id} onValueChange={(v) => setForm({ ...form, brand_id: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {brands.map((b: any) => (
+                            <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Benefits <span className="text-muted-foreground font-normal">(one per line)</span></Label>
+                      <Textarea rows={3} placeholder="Hydrates skin deeply&#10;Reduces fine lines" value={form.benefits} onChange={(e) => setForm({ ...form, benefits: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>How to Use</Label>
+                      <Textarea rows={3} placeholder="Apply a small amount..." value={form.usage_instructions} onChange={(e) => setForm({ ...form, usage_instructions: e.target.value })} />
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <div className="md:col-span-2">
-                <Label>Skin Concerns <span className="text-muted-foreground font-normal">(multi-select)</span></Label>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  {[
-                    { value: "acne", label: "🎯 Acne" },
-                    { value: "dryskin", label: "💧 Dry Skin" },
-                    { value: "hyperpigmentation", label: "🌟 Hyperpigmentation" },
-                    { value: "hairloss", label: "💇 Hair Loss" },
-                    { value: "dandruff", label: "❄️ Dandruff" },
-                    { value: "sensitive", label: "🌸 Sensitive Skin" },
-                    { value: "immunity", label: "🛡️ Immunity" },
-                    { value: "weightloss", label: "⚡ Weight Loss" },
-                  ].map(c => {
-                    const selected = (form.condition || "").split(",").map(s => s.trim()).filter(Boolean);
-                    const isSelected = selected.includes(c.value);
-                    return (
-                      <label key={c.value} className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-colors text-sm ${
-                        isSelected ? "bg-primary/10 border-primary/30 text-primary font-medium" : "border-border hover:bg-secondary"
-                      }`}>
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => {
-                            const newSelected = isSelected
-                              ? selected.filter(s => s !== c.value)
-                              : [...selected, c.value];
-                            setForm({ ...form, condition: newSelected.join(",") });
-                          }}
-                          className="sr-only"
-                        />
-                        {c.label}
+                {/* Right column: images + attributes */}
+                <div className="grid gap-4 content-start">
+                  {/* Main Image */}
+                  <div>
+                    <Label className="mb-2 block">Main Image</Label>
+                    {mainImagePreview ? (
+                      <div className="relative w-full h-36 rounded-xl overflow-hidden border border-border bg-muted">
+                        <img src={mainImagePreview} className="w-full h-full object-cover" alt="Main" />
+                        {!editing || mainImage ? (
+                          <button onClick={() => { setMainImage(null); setMainImagePreview(null); }} className="absolute top-2 right-2 bg-background/80 rounded-full p-1 hover:bg-destructive hover:text-destructive-foreground transition-colors">
+                            <X className="h-4 w-4" />
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-28 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+                        <Upload className="h-5 w-5 text-muted-foreground mb-1" />
+                        <span className="text-xs text-muted-foreground">Upload main image</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={handleMainImageChange} />
                       </label>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3 md:col-span-2">
-                <div className="col-span-2">
-                  <Label>Volume</Label>
-                  <Input value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} placeholder="e.g. 50" />
-                </div>
-                <div>
-                  <Label>Unit</Label>
-                  <Select value={form.volume_unit} onValueChange={(v) => setForm({ ...form, volume_unit: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {["ml", "g", "oz", "fl oz", "L", "kg", "pcs", "sheets", "capsules", "tablets"].map(u => (
-                        <SelectItem key={u} value={u}>{u}</SelectItem>
+                    )}
+                  </div>
+
+                  {/* Additional Images */}
+                  <div>
+                    <Label className="mb-2 block">More Images <span className="text-muted-foreground font-normal">(up to 10)</span></Label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {existingImages.slice(editing ? 1 : 0).map((img) => (
+                        <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
+                          <img src={img.image_url} className="w-full h-full object-cover" alt="" />
+                          <button onClick={() => deleteExistingImage(img.id)} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground transition-all">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
                       ))}
-                    </SelectContent>
-                  </Select>
+                      {additionalPreviews.map((url, idx) => (
+                        <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
+                          <img src={url} className="w-full h-full object-cover" alt="" />
+                          <button onClick={() => removeAdditional(idx)} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground transition-all">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                      {(existingImages.length - (editing ? 1 : 0) + additionalImages.length) < 10 && (
+                        <label className="aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
+                          <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-[10px] text-muted-foreground mt-0.5">Add</span>
+                          <input type="file" accept="image/*" multiple className="hidden" onChange={handleAdditionalImagesChange} />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Quick attributes */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Volume</Label>
+                      <Input value={form.volume_ml} onChange={(e) => setForm({ ...form, volume_ml: e.target.value })} placeholder="50" className="h-8 text-sm" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Unit</Label>
+                      <Select value={form.volume_unit} onValueChange={(v) => setForm({ ...form, volume_unit: v })}>
+                        <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {["ml", "g", "oz", "fl oz", "L", "kg", "pcs", "sheets", "capsules", "tablets"].map(u => (
+                            <SelectItem key={u} value={u}>{u}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Skin Type</Label>
+                      <Select value={form.skin_type} onValueChange={(v) => setForm({ ...form, skin_type: v })}>
+                        <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {["All", "Oily", "Dry", "Combination", "Sensitive", "Normal", "Acne-Prone", "Mature"].map(t => (
+                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Form</Label>
+                      <Select value={form.product_form} onValueChange={(v) => setForm({ ...form, product_form: v })}>
+                        <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {["Cream", "Serum", "Gel", "Lotion", "Oil", "Foam", "Spray", "Powder", "Balm", "Mask", "Cleanser", "Toner", "Shampoo", "Conditioner", "Soap", "Capsules", "Tablets", "Drops", "Stick", "Patches"].map(f => (
+                            <SelectItem key={f} value={f}>{f}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Full width: concerns */}
+                <div className="md:col-span-3">
+                  <Label>Skin Concerns</Label>
+                  <div className="grid grid-cols-4 gap-1.5 mt-2">
+                    {[
+                      { value: "acne", label: "🎯 Acne" },
+                      { value: "dryskin", label: "💧 Dry Skin" },
+                      { value: "hyperpigmentation", label: "🌟 Hyperpigmentation" },
+                      { value: "hairloss", label: "💇 Hair Loss" },
+                      { value: "dandruff", label: "❄️ Dandruff" },
+                      { value: "sensitive", label: "🌸 Sensitive Skin" },
+                      { value: "immunity", label: "🛡️ Immunity" },
+                      { value: "weightloss", label: "⚡ Weight Loss" },
+                    ].map(c => {
+                      const selected = (form.condition || "").split(",").map(s => s.trim()).filter(Boolean);
+                      const isSelected = selected.includes(c.value);
+                      return (
+                        <label key={c.value} className={`flex items-center gap-1.5 p-2 rounded-lg border cursor-pointer transition-colors text-xs ${
+                          isSelected ? "bg-primary/10 border-primary/30 text-primary font-medium" : "border-border hover:bg-secondary"
+                        }`}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {
+                              const newSelected = isSelected
+                                ? selected.filter(s => s !== c.value)
+                                : [...selected, c.value];
+                              setForm({ ...form, condition: newSelected.join(",") });
+                            }}
+                            className="sr-only"
+                          />
+                          {c.label}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Full width: toggles */}
+                <div className="flex items-center gap-5 flex-wrap md:col-span-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <Switch checked={form.in_stock} onCheckedChange={(v) => setForm({ ...form, in_stock: v })} />
+                    <span className={form.in_stock ? "text-sage font-medium" : "text-destructive font-medium"}>{form.in_stock ? "In Stock" : "Out of Stock"}</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Switch checked={form.is_new} onCheckedChange={(v) => setForm({ ...form, is_new: v })} /> New
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Switch checked={form.is_trending} onCheckedChange={(v) => setForm({ ...form, is_trending: v })} /> Trending
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Switch checked={form.is_pick} onCheckedChange={(v) => setForm({ ...form, is_pick: v })} /> Staff Pick
+                  </label>
                 </div>
               </div>
-              <div>
-                <Label>Skin Type</Label>
-                <Select value={form.skin_type} onValueChange={(v) => setForm({ ...form, skin_type: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select skin type" /></SelectTrigger>
-                  <SelectContent>
-                    {["All", "Oily", "Dry", "Combination", "Sensitive", "Normal", "Acne-Prone", "Mature"].map(t => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Form</Label>
-                <Select value={form.product_form} onValueChange={(v) => setForm({ ...form, product_form: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select form" /></SelectTrigger>
-                  <SelectContent>
-                    {["Cream", "Serum", "Gel", "Lotion", "Oil", "Foam", "Spray", "Powder", "Balm", "Mask", "Cleanser", "Toner", "Shampoo", "Conditioner", "Soap", "Capsules", "Tablets", "Drops", "Stick", "Patches"].map(f => (
-                      <SelectItem key={f} value={f}>{f}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-6 flex-wrap md:col-span-2">
-                <label className="flex items-center gap-2 text-sm">
-                  <Switch checked={form.in_stock} onCheckedChange={(v) => setForm({ ...form, in_stock: v })} />
-                  <span className={form.in_stock ? "text-sage font-medium" : "text-destructive font-medium"}>{form.in_stock ? "In Stock" : "Out of Stock"}</span>
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <Switch checked={form.is_new} onCheckedChange={(v) => setForm({ ...form, is_new: v })} /> New
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <Switch checked={form.is_trending} onCheckedChange={(v) => setForm({ ...form, is_trending: v })} /> Trending
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <Switch checked={form.is_pick} onCheckedChange={(v) => setForm({ ...form, is_pick: v })} /> Staff Pick
-                </label>
-              </div>
-              <Button className="md:col-span-2" onClick={() => saveMutation.mutate(form)} disabled={!form.title || !form.price || saveMutation.isPending || uploading || translating}>
+            </div>
+            {/* Sticky save footer */}
+            <div className="shrink-0 border-t border-border px-6 py-3 bg-background">
+              <Button className="w-full" onClick={() => saveMutation.mutate(form)} disabled={!form.title || !form.price || saveMutation.isPending || uploading || translating}>
                 {(saveMutation.isPending || uploading) && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
-                {translating ? <><Languages className="h-4 w-4 mr-1.5 animate-pulse" />Translating...</> : editing ? "Update" : "Create"}
+                {translating ? <><Languages className="h-4 w-4 mr-1.5 animate-pulse" />Translating...</> : editing ? "Update Product" : "Create Product"}
               </Button>
             </div>
           </DialogContent>
