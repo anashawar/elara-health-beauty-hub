@@ -39,6 +39,7 @@ const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const RewardsPage = lazy(() => import("./pages/RewardsPage"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
 const SkinScanPage = lazy(() => import("./pages/SkinScanPage"));
+const SkinScanHistoryPage = lazy(() => import("./pages/SkinScanHistoryPage"));
 
 // Admin — always lazy
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
@@ -123,6 +124,7 @@ const App = () => (
               <Route path="/rewards" element={<AuthGuard><RewardsPage /></AuthGuard>} />
               <Route path="/support" element={<AuthGuard><SupportPage /></AuthGuard>} />
               <Route path="/skin-scan" element={<AuthGuard><SkinScanPage /></AuthGuard>} />
+              <Route path="/skin-scan/history" element={<AuthGuard><SkinScanHistoryPage /></AuthGuard>} />
               {/* Admin Panel */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />

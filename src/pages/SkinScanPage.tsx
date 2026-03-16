@@ -1,12 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, Upload, Sparkles, ArrowLeft, RotateCcw, Droplets, Zap, Eye, Fingerprint, AlertTriangle, Sun, Moon, Calendar, ShoppingBag, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
+import { Camera, Upload, Sparkles, ArrowLeft, RotateCcw, Droplets, Zap, Eye, Fingerprint, AlertTriangle, Sun, Moon, Calendar, ShoppingBag, ArrowRight, ChevronDown, ChevronUp, Scan, Clock, History } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "@/components/ui/sonner";
 import BottomNav from "@/components/layout/BottomNav";
+import { useQuery } from "@tanstack/react-query";
 
 type Phase = "capture" | "scanning" | "results";
 
@@ -98,16 +99,30 @@ export default function SkinScanPage() {
   const [useFrontCamera, setUseFrontCamera] = useState(true);
 
   const scanSteps = [
-    { label: language === "ar" ? "تحليل البشرة..." : language === "ku" ? "شیکردنەوەی پێست..." : "Analyzing skin texture...", icon: Fingerprint },
-    { label: language === "ar" ? "فحص الترطيب..." : language === "ku" ? "پشکنینی شێداری..." : "Checking hydration levels...", icon: Droplets },
+    { label: language === "ar" ? "تحليل البشرة..." : language === "ku" ? "شیکردنەوەی پێست..." : "Mapping skin texture...", icon: Fingerprint },
+    { label: language === "ar" ? "فحص الترطيب..." : language === "ku" ? "پشکنینی شێداری..." : "Measuring hydration levels...", icon: Droplets },
     { label: language === "ar" ? "كشف المشاكل..." : language === "ku" ? "دۆزینەوەی کێشەکان..." : "Detecting skin concerns...", icon: Eye },
-    { label: language === "ar" ? "بناء الروتين..." : language === "ku" ? "دروستکردنی ڕووتین..." : "Building your routine...", icon: Sparkles },
+    { label: language === "ar" ? "بناء الروتين المخصص..." : language === "ku" ? "دروستکردنی ڕووتین..." : "Building your personalized routine...", icon: Sparkles },
   ];
+
+  // Fetch past scans count
+  const { data: pastScans = [] } = useQuery({
+    queryKey: ["skin-scans", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("skin_analyses")
+        .select("id, overall_score, skin_type, created_at")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
   // Start camera
   const startCamera = useCallback(async () => {
     try {
-      // Stop any existing stream first
       streamRef.current?.getTracks().forEach(t => t.stop());
       streamRef.current = null;
 
@@ -118,7 +133,6 @@ export default function SkinScanPage() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
-        // Explicitly play — required on mobile browsers
         await videoRef.current.play();
         setCameraActive(true);
       }
@@ -177,7 +191,6 @@ export default function SkinScanPage() {
     setScanProgress(0);
     setScanStep(0);
 
-    // Animate scanning progress
     const stepDuration = 3000;
     const totalSteps = scanSteps.length;
     const interval = setInterval(() => {
@@ -217,6 +230,21 @@ export default function SkinScanPage() {
           .in("id", result.recommended_product_ids);
         setProducts(prods || []);
       }
+
+      // Save analysis to database
+      await supabase.from("skin_analyses").insert({
+        user_id: user!.id,
+        overall_score: result.overall_score,
+        skin_type: result.skin_type,
+        hydration_score: result.hydration_score,
+        elasticity_score: result.elasticity_score,
+        clarity_score: result.clarity_score,
+        texture_score: result.texture_score,
+        problems: result.problems as any,
+        routine: result.routine as any,
+        recommended_product_ids: result.recommended_product_ids,
+        full_analysis: result as any,
+      });
 
       setScanProgress(100);
       setTimeout(() => setPhase("results"), 800);
@@ -259,10 +287,16 @@ export default function SkinScanPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center pb-20">
         <div className="text-center px-6">
-          <Sparkles className="w-12 h-12 text-primary mx-auto mb-4" />
-          <h2 className="text-lg font-display font-bold text-foreground mb-2">AI Skin Analysis</h2>
-          <p className="text-sm text-muted-foreground mb-4">Sign in to scan your skin</p>
-          <button onClick={() => navigate("/auth")} className="px-6 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-semibold">Sign In</button>
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-rose-500 via-primary to-violet-500 mx-auto mb-4 flex items-center justify-center shadow-lg">
+            <Scan className="w-10 h-10 text-white" />
+          </div>
+          <h2 className="text-lg font-display font-bold text-foreground mb-2">ELARA AI Skin Analyzer</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            {language === "ar" ? "سجل دخول لتحليل بشرتك" : "Sign in to analyze your skin"}
+          </p>
+          <button onClick={() => navigate("/auth")} className="px-6 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-semibold">
+            {language === "ar" ? "تسجيل الدخول" : "Sign In"}
+          </button>
         </div>
         <BottomNav />
       </div>
@@ -274,12 +308,20 @@ export default function SkinScanPage() {
     return (
       <div className="min-h-screen bg-background" dir={isRtl ? "rtl" : "ltr"}>
         <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/30" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
-          <div className="flex items-center gap-3 px-4 py-3">
-            <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-secondary"><ArrowLeft className="w-5 h-5 rtl:rotate-180" /></button>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" />
-              <h1 className="text-lg font-display font-bold">AI Skin Scan</h1>
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-secondary"><ArrowLeft className="w-5 h-5 rtl:rotate-180" /></button>
+              <div className="flex items-center gap-2">
+                <Scan className="w-5 h-5 text-primary" />
+                <h1 className="text-lg font-display font-bold">ELARA AI Skin Analyzer</h1>
+              </div>
             </div>
+            {pastScans.length > 0 && (
+              <Link to="/skin-scan/history" className="flex items-center gap-1 text-xs text-primary font-medium">
+                <History className="w-3.5 h-3.5" />
+                {language === "ar" ? "السجل" : "History"}
+              </Link>
+            )}
           </div>
         </header>
 
@@ -308,6 +350,12 @@ export default function SkinScanPage() {
                   transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                   className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent"
                 />
+                {/* ELARA branding */}
+                <div className="absolute top-4 left-0 right-0 text-center">
+                  <span className="text-[10px] font-bold tracking-widest text-white/60 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full">
+                    ELARA AI SCANNING
+                  </span>
+                </div>
               </div>
 
               {/* Controls */}
@@ -327,15 +375,41 @@ export default function SkinScanPage() {
             <>
               {/* Hero */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-accent mx-auto mb-4 flex items-center justify-center shadow-lg">
-                  <Sparkles className="w-10 h-10 text-primary-foreground" />
+                <div className="relative w-24 h-24 mx-auto mb-5">
+                  <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-rose-500 via-primary to-violet-500 flex items-center justify-center shadow-xl">
+                    <Scan className="w-12 h-12 text-white" />
+                  </div>
+                  <motion.div
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0, 0.4] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute inset-0 border-2 border-primary rounded-3xl"
+                  />
                 </div>
-                <h2 className="text-xl font-display font-black text-foreground mb-2">
-                  {language === "ar" ? "تحليل البشرة بالذكاء الاصطناعي" : language === "ku" ? "شیکردنەوەی پێست بە AI" : "AI Skin Analysis"}
+                <div className="flex items-center justify-center gap-1.5 mb-2">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-primary">
+                    {language === "ar" ? "مدعوم بالذكاء الاصطناعي" : language === "ku" ? "بە هێزی AI" : "Powered by AI"}
+                  </span>
+                </div>
+                <h2 className="text-2xl font-display font-black text-foreground mb-2">
+                  ELARA AI Skin Analyzer
                 </h2>
-                <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                  {language === "ar" ? "التقط صورة سيلفي واحصل على تحليل بشرة مفصل وعلمي مع روتين مخصص" : language === "ku" ? "سێلفییەک بگرە و شیکردنەوەی پێستی زانستی وردبینەوە لەگەڵ ڕووتینی تایبەت" : "Take a selfie and get a detailed, scientific skin analysis with a personalized routine"}
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                  {language === "ar" ? "التقط صورة سيلفي واحصل على تحليل بشرة علمي مفصل مع روتين مخصص لك ومنتجات موصى بها" : language === "ku" ? "سێلفییەک بگرە و شیکردنەوەی زانستیی پێست و ڕووتینی تایبەت وەربگرە" : "Capture a selfie and receive a detailed scientific skin analysis with a personalized routine and product recommendations"}
                 </p>
+              </motion.div>
+
+              {/* Feature badges */}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="flex flex-wrap justify-center gap-2 mb-6">
+                {[
+                  { icon: "🔬", text: language === "ar" ? "تحليل علمي" : "Scientific Analysis" },
+                  { icon: "🧴", text: language === "ar" ? "منتجات مخصصة" : "Product Matching" },
+                  { icon: "📊", text: language === "ar" ? "نتائج فورية" : "Instant Results" },
+                ].map((b, i) => (
+                  <span key={i} className="flex items-center gap-1.5 text-[10px] font-medium bg-secondary text-muted-foreground px-3 py-1.5 rounded-full">
+                    <span>{b.icon}</span> {b.text}
+                  </span>
+                ))}
               </motion.div>
 
               {/* Action buttons */}
@@ -343,20 +417,25 @@ export default function SkinScanPage() {
                 <motion.button
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                   onClick={startCamera}
-                  className="w-full flex items-center gap-4 p-5 bg-gradient-to-br from-primary to-primary/80 rounded-2xl shadow-lg group"
+                  className="w-full flex items-center gap-4 p-5 bg-gradient-to-br from-rose-500 via-primary to-violet-500 rounded-2xl shadow-lg group relative overflow-hidden"
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-primary-foreground/15 backdrop-blur-sm flex items-center justify-center">
-                    <Camera className="w-7 h-7 text-primary-foreground" />
+                  <motion.div
+                    animate={{ x: ["-100%", "200%"] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-0 bottom-0 w-16 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                  />
+                  <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center relative z-10">
+                    <Camera className="w-7 h-7 text-white" />
                   </div>
-                  <div className="text-start flex-1">
-                    <h3 className="text-base font-bold text-primary-foreground">
-                      {language === "ar" ? "افتح الكاميرا" : language === "ku" ? "کامێرا بکەرەوە" : "Open Camera"}
+                  <div className="text-start flex-1 relative z-10">
+                    <h3 className="text-base font-bold text-white">
+                      {language === "ar" ? "امسح وجهك الآن" : language === "ku" ? "ئێستا دەموچاوت بسکانکە" : "Scan Your Face Now"}
                     </h3>
-                    <p className="text-xs text-primary-foreground/70 mt-0.5">
-                      {language === "ar" ? "مسح مباشر بتقنية AI المتقدمة" : language === "ku" ? "سکانی ڕاستەوخۆ بە AI" : "Live scan with advanced AI"}
+                    <p className="text-xs text-white/70 mt-0.5">
+                      {language === "ar" ? "مسح مباشر بتقنية ELARA AI" : language === "ku" ? "سکانی ڕاستەوخۆ بە ELARA AI" : "Live scan with ELARA AI technology"}
                     </p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-primary-foreground/60 rtl:rotate-180" />
+                  <ArrowRight className="w-5 h-5 text-white/60 rtl:rotate-180 relative z-10" />
                 </motion.button>
 
                 <motion.button
@@ -380,8 +459,36 @@ export default function SkinScanPage() {
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
               </div>
 
+              {/* Past scans */}
+              {pastScans.length > 0 && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="mt-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-primary" />
+                      {language === "ar" ? "تحليلاتك السابقة" : language === "ku" ? "شیکردنەوەکانی پێشووت" : "Your Past Scans"}
+                    </h4>
+                    <Link to="/skin-scan/history" className="text-[10px] text-primary font-medium">
+                      {language === "ar" ? "عرض الكل" : "View All"}
+                    </Link>
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {pastScans.map(scan => (
+                      <Link key={scan.id} to={`/skin-scan/history`} className="flex-shrink-0 bg-card rounded-xl border border-border/50 p-3 min-w-[120px]">
+                        <div className="text-center">
+                          <span className={`text-lg font-display font-black ${(scan.overall_score ?? 0) >= 70 ? 'text-green-600' : (scan.overall_score ?? 0) >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
+                            {scan.overall_score}
+                          </span>
+                          <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">{scan.skin_type}</p>
+                          <p className="text-[9px] text-muted-foreground/60 mt-1">{new Date(scan.created_at).toLocaleDateString()}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
               {/* Tips */}
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="mt-8 bg-card rounded-2xl border border-border/50 p-4">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="mt-6 bg-card rounded-2xl border border-border/50 p-4">
                 <h4 className="text-xs font-bold text-foreground mb-3">
                   {language === "ar" ? "للحصول على أفضل النتائج:" : language === "ku" ? "بۆ باشترین ئەنجام:" : "For best results:"}
                 </h4>
@@ -408,6 +515,15 @@ export default function SkinScanPage() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
         <div className="w-full max-w-sm text-center">
+          {/* ELARA branding */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6"
+          >
+            ELARA AI SKIN ANALYZER
+          </motion.p>
+
           {/* Captured image with scanning overlay */}
           {capturedImage && (
             <div className="relative w-48 h-48 rounded-full overflow-hidden mx-auto mb-8 border-4 border-primary/30">
@@ -453,7 +569,7 @@ export default function SkinScanPage() {
           {/* Progress bar */}
           <div className="w-full h-2 bg-secondary rounded-full overflow-hidden mb-2">
             <motion.div
-              className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+              className="h-full bg-gradient-to-r from-rose-500 via-primary to-violet-500 rounded-full"
               animate={{ width: `${scanProgress}%` }}
               transition={{ duration: 0.3 }}
             />
@@ -473,7 +589,7 @@ export default function SkinScanPage() {
             <div className="flex items-center gap-3">
               <button onClick={reset} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-secondary"><ArrowLeft className="w-5 h-5 rtl:rotate-180" /></button>
               <h1 className="text-lg font-display font-bold">
-                {language === "ar" ? "نتائج التحليل" : language === "ku" ? "ئەنجامی شیکردنەوە" : "Scan Results"}
+                {language === "ar" ? "تقرير ELARA AI" : language === "ku" ? "ڕاپۆرتی ELARA AI" : "Your ELARA AI Report"}
               </h1>
             </div>
             <button onClick={reset} className="text-xs font-medium text-primary flex items-center gap-1">
@@ -484,6 +600,21 @@ export default function SkinScanPage() {
         </header>
 
         <div className="max-w-lg mx-auto px-4 py-4 space-y-5">
+          {/* Personalized greeting */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-2xl p-4 border border-primary/10">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/20 flex-shrink-0 flex items-center justify-center">
+              {capturedImage ? <img src={capturedImage} alt="" className="w-full h-full object-cover" /> : <Scan className="w-5 h-5 text-primary" />}
+            </div>
+            <div>
+              <p className="text-xs font-bold text-foreground">
+                {language === "ar" ? `مرحباً ${user.user_metadata?.full_name || ''}، إليك تقرير بشرتك` : `Hey ${user.user_metadata?.full_name || 'there'}, here's your skin report`}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {language === "ar" ? "تحليل ELARA AI المتقدم" : "Analyzed by ELARA AI · "}{new Date().toLocaleDateString()}
+              </p>
+            </div>
+          </motion.div>
+
           {/* Overall Score */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-card rounded-3xl border border-border/50 shadow-premium p-6 text-center">
             <div className="relative inline-flex items-center justify-center">
@@ -496,13 +627,18 @@ export default function SkinScanPage() {
               {language === "ar" ? "نوع البشرة: " : language === "ku" ? "جۆری پێست: " : "Skin Type: "}
               <span className="font-semibold text-foreground">{analysis.skin_type}</span>
             </p>
-            {analysis.summary && <p className="text-xs text-muted-foreground mt-3 leading-relaxed">{analysis.summary}</p>}
+            {analysis.summary && (
+              <div className="mt-3 bg-secondary/50 rounded-xl p-3">
+                <p className="text-[11px] text-muted-foreground leading-relaxed italic">"{analysis.summary}"</p>
+              </div>
+            )}
           </motion.div>
 
           {/* Detailed Scores */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-card rounded-2xl border border-border/50 shadow-premium p-5">
-            <h3 className="text-sm font-bold text-foreground mb-4">
-              {language === "ar" ? "التحليل التفصيلي" : language === "ku" ? "شیکردنەوەی وردەکاری" : "Detailed Scores"}
+            <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-primary" />
+              {language === "ar" ? "التحليل التفصيلي" : language === "ku" ? "شیکردنەوەی وردەکاری" : "Detailed Breakdown"}
             </h3>
             <div className="grid grid-cols-4 gap-2">
               <div className="relative flex flex-col items-center">
@@ -525,11 +661,12 @@ export default function SkinScanPage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-card rounded-2xl border border-border/50 shadow-premium p-5">
               <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-500" />
-                {language === "ar" ? "المشاكل المكتشفة" : language === "ku" ? "کێشەکانی دۆزراوە" : "Problems Detected"}
+                {language === "ar" ? "المشاكل المكتشفة" : language === "ku" ? "کێشەکانی دۆزراوە" : "Concerns Detected"}
+                <span className="ml-auto text-[10px] bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-full font-medium">{analysis.problems.length} {language === "ar" ? "مشكلة" : "found"}</span>
               </h3>
               <div className="space-y-3">
                 {analysis.problems.map((p, i) => (
-                  <div key={i} className="bg-secondary/50 rounded-xl p-3.5">
+                  <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.1 }} className="bg-secondary/50 rounded-xl p-3.5">
                     <div className="flex items-center gap-2 mb-1.5">
                       <h4 className="text-xs font-bold text-foreground">{p.name}</h4>
                       <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${getSeverityColor(p.severity)}`}>{p.severity}</span>
@@ -538,7 +675,7 @@ export default function SkinScanPage() {
                     {p.affected_areas && (
                       <p className="text-[10px] text-muted-foreground/70 mt-1">📍 {p.affected_areas}</p>
                     )}
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </motion.div>
@@ -546,8 +683,9 @@ export default function SkinScanPage() {
 
           {/* Personalized Routine */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-card rounded-2xl border border-border/50 shadow-premium p-5">
-            <h3 className="text-sm font-bold text-foreground mb-3">
-              {language === "ar" ? "روتينك المخصص" : language === "ku" ? "ڕووتینی تایبەتی تۆ" : "Your Personalized Routine"}
+            <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              {language === "ar" ? "روتينك المخصص من ELARA" : language === "ku" ? "ڕووتینی تایبەتی تۆ لە ELARA" : "Your ELARA-Personalized Routine"}
             </h3>
 
             {/* Morning */}
@@ -582,7 +720,7 @@ export default function SkinScanPage() {
             {/* Evening */}
             <button onClick={() => setExpandedRoutine(expandedRoutine === "evening" ? null : "evening")} className="w-full flex items-center justify-between py-2.5 border-b border-border/30">
               <span className="flex items-center gap-2 text-xs font-semibold text-foreground">
-                <Moon className="w-4 h-4 text-indigo-400" />
+                <Moon className="w-4 h-4 text-violet-400" />
                 {language === "ar" ? "روتين المساء" : language === "ku" ? "ڕووتینی ئێوارە" : "Evening Routine"}
               </span>
               {expandedRoutine === "evening" ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
@@ -647,7 +785,7 @@ export default function SkinScanPage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="bg-card rounded-2xl border border-border/50 shadow-premium p-5">
               <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
                 <ShoppingBag className="w-4 h-4 text-primary" />
-                {language === "ar" ? "منتجات موصى بها من إيلارا" : language === "ku" ? "بەرهەمی پێشنیارکراو لە ئێلارا" : "Recommended from ELARA"}
+                {language === "ar" ? "منتجات ELARA الموصى بها لبشرتك" : language === "ku" ? "بەرهەمی ELARA ی پێشنیارکراو بۆ پێستت" : "ELARA Products Matched for You"}
               </h3>
               <div className="space-y-2">
                 {products.map(p => (
@@ -686,6 +824,14 @@ export default function SkinScanPage() {
               </ul>
             </motion.div>
           )}
+
+          {/* Report saved notice */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="text-center py-3">
+            <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1">
+              <Clock className="w-3 h-3" />
+              {language === "ar" ? "تم حفظ هذا التقرير تلقائياً في سجلك" : "This report has been automatically saved to your history"}
+            </p>
+          </motion.div>
         </div>
         <BottomNav />
       </div>
