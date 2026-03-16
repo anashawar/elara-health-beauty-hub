@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Search, X, ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useProducts, useCategories, useBrands, useFormatPrice, concerns } from "@/hooks/useProducts";
@@ -10,16 +10,17 @@ interface SearchOverlayProps {
 }
 
 const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
-  // Only fetch products when overlay is actually open — saves loading all 2800 products on page load
   const { data: products = [] } = useProducts();
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
   const { t } = useLanguage();
   const formatPrice = useFormatPrice();
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [priceFilter, setPriceFilter] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const SMART_SUGGESTIONS = [
     { label: t("search.bestForAcne"), query: "acne", icon: "🎯" },
@@ -34,17 +35,35 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
 
   const TRENDING_TERMS = ["CeraVe", "Retinol", "Niacinamide", "Collagen", "Hair Serum", "SPF"];
 
+  // Debounce search query (300ms)
+  const handleQueryChange = useCallback((value: string) => {
+    setQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedQuery(value), 300);
+  }, []);
+
   useEffect(() => {
     if (isOpen) { setTimeout(() => inputRef.current?.focus(), 100); }
-    else { setQuery(""); setActiveFilter(null); setPriceFilter(null); }
+    else { setQuery(""); setDebouncedQuery(""); setActiveFilter(null); setPriceFilter(null); }
   }, [isOpen]);
 
+  // Cleanup debounce on unmount
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
+
+  // Pre-build a search index once when products change
+  const searchIndex = useMemo(() => {
+    return products.map(p => ({
+      product: p,
+      searchText: [p.title, p.brand, p.description, p.skin_type, p.application, p.form, p.country_of_origin, ...(p.tags || []), ...(p.benefits || [])].filter(Boolean).join(" ").toLowerCase(),
+    }));
+  }, [products]);
+
   const filteredResults = useMemo(() => {
-    if (query.length < 2 && !activeFilter && !priceFilter) return { products: [], categories: [], brands: [] };
-    const q = query.toLowerCase();
-    let matchedProducts = products.filter(p => {
-      const searchFields = [p.title, p.brand, p.description, p.skin_type, p.application, p.form, p.country_of_origin, ...(p.tags || []), ...(p.benefits || [])].filter(Boolean).join(" ").toLowerCase();
-      const matchesQuery = q.length >= 2 ? searchFields.includes(q) : true;
+    const q = debouncedQuery.toLowerCase();
+    if (q.length < 2 && !activeFilter && !priceFilter) return { products: [], categories: [], brands: [] };
+
+    let matchedProducts = searchIndex.filter(({ product: p, searchText }) => {
+      const matchesQuery = q.length >= 2 ? searchText.includes(q) : true;
       let matchesPrice = true;
       if (priceFilter === "under15k") matchesPrice = p.price < 15000;
       else if (priceFilter === "15k-30k") matchesPrice = p.price >= 15000 && p.price <= 30000;
@@ -58,14 +77,15 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
         } else { matchesFilter = p.category_slug === activeFilter; }
       }
       return matchesQuery && matchesPrice && matchesFilter;
-    });
+    }).map(({ product }) => product);
+
     if (q === "budget") matchedProducts = products.filter(p => p.price < 15000).sort((a, b) => a.price - b.price);
     return {
       products: matchedProducts.slice(0, 20),
       categories: q.length >= 2 ? categories.filter(c => c.name.toLowerCase().includes(q)) : [],
       brands: q.length >= 2 ? brands.filter(b => b.name.toLowerCase().includes(q)) : [],
     };
-  }, [query, activeFilter, priceFilter, products, categories, brands]);
+  }, [debouncedQuery, activeFilter, priceFilter, searchIndex, products, categories, brands]);
 
   const hasResults = filteredResults.products.length > 0 || filteredResults.categories.length > 0 || filteredResults.brands.length > 0;
   const isSearching = query.length >= 2 || activeFilter || priceFilter;
@@ -78,8 +98,8 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
         <div className="border-b border-border flex-shrink-0 sticky top-0 z-10 bg-background md:bg-card md:rounded-t-2xl" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div className="flex items-center gap-3 px-4 md:px-6 py-3 md:py-4">
             <Search className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-            <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} placeholder={t("common.searchFull")} className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none text-base md:text-lg" style={{ fontSize: '16px' }} />
-            {(query || activeFilter || priceFilter) && (<button onClick={() => { setQuery(""); setActiveFilter(null); setPriceFilter(null); }} className="p-1"><X className="w-4 h-4 text-muted-foreground" /></button>)}
+            <input ref={inputRef} value={query} onChange={e => handleQueryChange(e.target.value)} placeholder={t("common.searchFull")} className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none text-base md:text-lg" style={{ fontSize: '16px' }} />
+            {(query || activeFilter || priceFilter) && (<button onClick={() => { setQuery(""); setDebouncedQuery(""); setActiveFilter(null); setPriceFilter(null); }} className="p-1"><X className="w-4 h-4 text-muted-foreground" /></button>)}
             <button onClick={onClose} className="text-xs md:text-sm text-primary font-semibold md:px-3 md:py-1.5 md:rounded-lg md:hover:bg-primary/10 transition-colors">{t("common.cancel")}</button>
           </div>
           <div className="px-4 md:px-6 pb-3 flex gap-2 overflow-x-auto no-scrollbar">
@@ -98,12 +118,12 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
               <div>
                 <div className="flex items-center gap-1.5 mb-3"><Sparkles className="w-3.5 h-3.5 text-primary" /><p className="text-xs font-bold text-foreground uppercase tracking-wider">{t("search.recommendedForYou")}</p></div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {SMART_SUGGESTIONS.map(s => (<button key={s.query} onClick={() => setQuery(s.query)} className="flex items-center gap-2 px-3 py-2.5 bg-card md:bg-secondary/50 rounded-xl border border-border/50 hover:border-primary/30 transition-all text-left rtl:text-right"><span className="text-base">{s.icon}</span><span className="text-xs font-medium text-foreground leading-tight">{s.label}</span></button>))}
+                  {SMART_SUGGESTIONS.map(s => (<button key={s.query} onClick={() => { setQuery(s.query); setDebouncedQuery(s.query); }} className="flex items-center gap-2 px-3 py-2.5 bg-card md:bg-secondary/50 rounded-xl border border-border/50 hover:border-primary/30 transition-all text-left rtl:text-right"><span className="text-base">{s.icon}</span><span className="text-xs font-medium text-foreground leading-tight">{s.label}</span></button>))}
                 </div>
               </div>
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">{t("search.trending")}</p>
-                <div className="flex flex-wrap gap-2">{TRENDING_TERMS.map(term => (<button key={term} onClick={() => setQuery(term)} className="text-xs bg-secondary text-secondary-foreground px-3 py-2 rounded-xl hover:bg-accent transition-colors">{term}</button>))}</div>
+                <div className="flex flex-wrap gap-2">{TRENDING_TERMS.map(term => (<button key={term} onClick={() => { setQuery(term); setDebouncedQuery(term); }} className="text-xs bg-secondary text-secondary-foreground px-3 py-2 rounded-xl hover:bg-accent transition-colors">{term}</button>))}</div>
               </div>
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">{t("search.browseCategories")}</p>
@@ -132,7 +152,7 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
               <p className="text-4xl mb-3">🔍</p>
               <p className="text-sm font-medium text-foreground mb-1">{t("common.noResults")}</p>
               <p className="text-xs text-muted-foreground mb-4">{t("common.tryDifferent")}</p>
-              <div className="flex flex-wrap justify-center gap-2 mb-5">{TRENDING_TERMS.slice(0, 4).map(term => (<button key={term} onClick={() => { setQuery(term); setActiveFilter(null); setPriceFilter(null); }} className="text-xs bg-secondary text-secondary-foreground px-3 py-2 rounded-xl">Try "{term}"</button>))}</div>
+              <div className="flex flex-wrap justify-center gap-2 mb-5">{TRENDING_TERMS.slice(0, 4).map(term => (<button key={term} onClick={() => { setQuery(term); setDebouncedQuery(term); setActiveFilter(null); setPriceFilter(null); }} className="text-xs bg-secondary text-secondary-foreground px-3 py-2 rounded-xl">Try "{term}"</button>))}</div>
               <Link to={`/elara-ai?q=${encodeURIComponent(query)}`} onClick={onClose} className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-primary to-violet-600 text-white font-semibold text-sm shadow-float">
                 <Sparkles className="w-4 h-4" />
                 {t("search.askElaraAI") || "Ask ELARA AI instead"}
