@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, Upload, Sparkles, ArrowLeft, RotateCcw, Droplets, Zap, Eye, Fingerprint, AlertTriangle, Sun, Moon, Calendar, ShoppingBag, ArrowRight, ChevronDown, ChevronUp, Scan, Clock, History, Share2 } from "lucide-react";
+import { Camera, Upload, Sparkles, ArrowLeft, RotateCcw, Droplets, Zap, Eye, Fingerprint, AlertTriangle, Sun, Moon, Calendar, ShoppingBag, ArrowRight, ChevronDown, ChevronUp, Scan, Clock, History, Share2, FileDown } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "@/components/ui/sonner";
 import BottomNav from "@/components/layout/BottomNav";
 import NativeAppGate from "@/components/NativeAppGate";
+import { generateSkinReportPdf } from "@/lib/generateSkinReportPdf";
 import { useQuery } from "@tanstack/react-query";
 
 type Phase = "capture" | "scanning" | "results";
