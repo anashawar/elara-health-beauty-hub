@@ -127,8 +127,8 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-display font-bold text-foreground mb-2">{c.contactTitle}</h2>
           <p className="text-sm text-muted-foreground mb-4">{c.contactDesc}</p>
           <div className="flex flex-col items-center gap-2">
-            <a href="mailto:support@elarastore.co" className="inline-flex items-center gap-2 text-sm text-primary font-semibold">
-              <Mail className="w-4 h-4" /> support@elarastore.co
+            <a href="mailto:info@elarastore.co" className="inline-flex items-center gap-2 text-sm text-primary font-semibold">
+              <Mail className="w-4 h-4" /> info@elarastore.co
             </a>
             <a href="tel:+9647507229002" className="inline-flex items-center gap-2 text-sm text-primary font-semibold">
               <Phone className="w-4 h-4" /> +964 750 722 9002
