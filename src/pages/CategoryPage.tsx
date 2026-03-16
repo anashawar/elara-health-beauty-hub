@@ -9,6 +9,7 @@ import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
 import { useProducts, useCategories, useSubcategories, concerns } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
+import SEOHead, { breadcrumbJsonLd } from "@/components/SEOHead";
 
 const concernKeywords: Record<string, string[]> = {
   acne: ["acne", "blemish", "pimple", "breakout", "zit"],
