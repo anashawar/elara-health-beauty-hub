@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Sparkles, Globe, Users, ShieldCheck, Heart, ArrowRight } from "lucide-react";
+import { Sparkles, Globe, Users, ShieldCheck, Heart, ArrowRight, Gift, Truck } from "lucide-react";
 import PageShell from "@/components/layout/PageShell";
 import elaraBanner from "@/assets/elara-banner.webp";
 import { useLanguage } from "@/i18n/LanguageContext";

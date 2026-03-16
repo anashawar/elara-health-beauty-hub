@@ -29,7 +29,7 @@ const content = {
       { title: "11. Changes to Terms", items: ["We may update these Terms & Conditions at any time. Any changes will be posted here with an updated revision date.", "Your continued use of ELARA means you accept the latest version of our terms."] },
     ] as Section[],
     contactText: "If you have any questions, please contact us via in-app support or at",
-    contactEmail: "support@elarastore.co",
+    contactEmail: "info@elarastore.co",
     thanks: "Thank you for shopping with ELARA — where your health & beauty come first! 💜",
   },
   ar: {
