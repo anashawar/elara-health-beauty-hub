@@ -84,6 +84,8 @@ const Index = () => {
           <ConcernsSection />
         </Suspense>
 
+        <MobileAppInlineBanner />
+
         <Suspense fallback={null}>
           <DealsBanner />
         </Suspense>

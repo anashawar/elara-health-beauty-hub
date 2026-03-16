@@ -16,6 +16,7 @@ import BottomNav from "@/components/layout/BottomNav";
 import ReviewSection from "@/components/product/ReviewSection";
 import { useLanguage } from "@/i18n/LanguageContext";
 const AppDownloadBanner = lazy(() => import("@/components/home/AppDownloadBanner"));
+import { ProductPageAppBanner } from "@/components/home/MobileAppBanners";
 
 const PUBLISHED_URL = "https://elara-health-beauty-hub.lovable.app";
 
