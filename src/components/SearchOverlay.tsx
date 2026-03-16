@@ -99,7 +99,7 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
           <div className="flex items-center gap-3 px-4 md:px-6 py-3 md:py-4">
             <Search className="w-5 h-5 text-muted-foreground flex-shrink-0" />
             <input ref={inputRef} value={query} onChange={e => handleQueryChange(e.target.value)} placeholder={t("common.searchFull")} className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none text-base md:text-lg" style={{ fontSize: '16px' }} />
-            {(query || activeFilter || priceFilter) && (<button onClick={() => { setQuery(""); setActiveFilter(null); setPriceFilter(null); }} className="p-1"><X className="w-4 h-4 text-muted-foreground" /></button>)}
+            {(query || activeFilter || priceFilter) && (<button onClick={() => { setQuery(""); setDebouncedQuery(""); setActiveFilter(null); setPriceFilter(null); }} className="p-1"><X className="w-4 h-4 text-muted-foreground" /></button>)}
             <button onClick={onClose} className="text-xs md:text-sm text-primary font-semibold md:px-3 md:py-1.5 md:rounded-lg md:hover:bg-primary/10 transition-colors">{t("common.cancel")}</button>
           </div>
           <div className="px-4 md:px-6 pb-3 flex gap-2 overflow-x-auto no-scrollbar">
