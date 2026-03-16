@@ -87,6 +87,7 @@ const PageFallback = (
 );
 
 const App = () => (
+  <HelmetProvider>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <LanguageProvider>
