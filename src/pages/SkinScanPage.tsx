@@ -685,6 +685,54 @@ export default function SkinScanPage() {
             </div>
           </motion.div>
 
+          {/* Common Concerns Rating */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-card rounded-2xl border border-border/50 shadow-premium p-5">
+            <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
+              {language === "ar" ? "تقييم المشاكل الشائعة" : language === "ku" ? "هەڵسەنگاندنی کێشە باوەکان" : "Common Concerns Rating"}
+            </h3>
+            <div className="space-y-3">
+              {[
+                { label: language === "ar" ? "حب الشباب" : "Acne", score: analysis.acne_score ?? 0, emoji: "🔴" },
+                { label: language === "ar" ? "تصبغات / بقع داكنة" : "Pigmentation", score: analysis.pigmentation_score ?? 0, emoji: "🟤" },
+                { label: language === "ar" ? "جفاف البشرة" : "Dryness", score: analysis.dryness_score ?? 0, emoji: "🏜️" },
+                { label: language === "ar" ? "دهون زائدة" : "Oiliness", score: analysis.oiliness_score ?? 0, emoji: "💧" },
+                { label: language === "ar" ? "المسام الواسعة" : "Pores", score: analysis.pores_score ?? 0, emoji: "🔵" },
+                { label: language === "ar" ? "هالات سوداء" : "Dark Circles", score: analysis.dark_circles_score ?? 0, emoji: "👁️" },
+              ].map((item, i) => {
+                const barColor = item.score >= 80 ? "bg-green-500" : item.score >= 60 ? "bg-amber-500" : "bg-red-500";
+                const statusText = item.score >= 80 
+                  ? (language === "ar" ? "ممتاز" : "Great") 
+                  : item.score >= 60 
+                    ? (language === "ar" ? "معتدل" : "Moderate") 
+                    : (language === "ar" ? "يحتاج عناية" : "Needs Care");
+                return (
+                  <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.06 }}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                        <span>{item.emoji}</span> {item.label}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-medium ${item.score >= 80 ? 'text-green-600' : item.score >= 60 ? 'text-amber-500' : 'text-red-500'}`}>
+                          {statusText}
+                        </span>
+                        <span className="text-xs font-bold text-foreground w-7 text-right">{item.score}</span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${item.score}%` }}
+                        transition={{ duration: 1, delay: 0.3 + i * 0.06, ease: "easeOut" }}
+                        className={`h-full rounded-full ${barColor}`}
+                      />
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+
           {/* Problems Detected */}
           {analysis.problems?.length > 0 && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-card rounded-2xl border border-border/50 shadow-premium p-5">
