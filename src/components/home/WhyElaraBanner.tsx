@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 
 const VALUE_PROPS = [
-  "Most Advanced AI in Beauty 🧠",
-  "Your AI Beauty Consultant ✨",
-  "AI Skin Analysis & Routines 💡",
-  "24 Hour Delivery 🚀",
+  "Most Advanced AI 🧠",
+  "AI Beauty Consultant ✨",
+  "AI Skin Analysis 💡",
+  "24h Delivery 🚀",
   "+3,000 Products 📦",
-  "+250 Verified Brands ✓",
-  "Rewards on Every Order 🎁",
-  "100% Original Products 💎",
-  "Reasonable Prices 🏷️",
+  "+250 Brands ✓",
+  "Rewards Every Order 🎁",
+  "100% Original 💎",
+  "Best Prices 🏷️",
 ];
 
 const WhyElaraBanner = () => {
