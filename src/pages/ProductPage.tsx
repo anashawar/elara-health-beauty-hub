@@ -429,6 +429,13 @@ const ProductPage = () => {
       </div>
 
       <BottomNav />
+      <ImageZoomViewer
+        images={images}
+        initialIndex={zoomIndex}
+        isOpen={zoomOpen}
+        onClose={() => setZoomOpen(false)}
+        productTitle={product.title}
+      />
     </div>
   );
 };
