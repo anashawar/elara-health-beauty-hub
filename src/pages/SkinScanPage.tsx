@@ -139,6 +139,34 @@ function SkinScanContent() {
 
   // Start camera
   const startCamera = useCallback(async () => {
+    // On native iOS/Android, use Capacitor Camera plugin directly
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const { Camera: CapCamera, CameraResultType, CameraSource, CameraDirection } = await import("@capacitor/camera");
+        const photo = await CapCamera.getPhoto({
+          quality: 85,
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Camera,
+          direction: useFrontCamera ? CameraDirection.Front : CameraDirection.Rear,
+          width: 1280,
+          height: 960,
+          correctOrientation: true,
+        });
+        if (photo.dataUrl) {
+          setCapturedImage(photo.dataUrl);
+          analyzeSkin(photo.dataUrl);
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("Capacitor camera error:", err);
+        if (!msg.includes("cancelled") && !msg.includes("User cancelled")) {
+          toast.error(language === "ar" ? "تعذر فتح الكاميرا" : "Could not open camera");
+        }
+      }
+      return;
+    }
+
+    // Web fallback: use getUserMedia
     try {
       streamRef.current?.getTracks().forEach(t => t.stop());
       streamRef.current = null;
