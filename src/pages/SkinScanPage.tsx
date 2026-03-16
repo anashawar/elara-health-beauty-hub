@@ -658,12 +658,8 @@ function SkinScanContent() {
                   try {
                     toast.info(language === "ar" ? "جاري إنشاء التقرير..." : "Generating report...");
                     const blob = await generateSkinReportPdf(analysis as any, user?.user_metadata?.full_name || "", language);
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `ELARA-Skin-Report-${new Date().toISOString().slice(0, 10)}.pdf`;
-                    a.click();
-                    URL.revokeObjectURL(url);
+                    const fileName = `ELARA-Skin-Report-${new Date().toISOString().slice(0, 10)}.pdf`;
+                    await savePdfBlob(blob, fileName);
                     toast.success(language === "ar" ? "تم تحميل التقرير!" : "Report downloaded!");
                   } catch (err) {
                     console.error(err);
