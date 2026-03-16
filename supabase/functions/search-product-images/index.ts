@@ -258,7 +258,7 @@ serve(async (req) => {
 
         // Minimum score threshold — only accept high-confidence matches
         const topScore = candidates[0]?.score || 0;
-        if (topScore < 10) {
+        if (topScore < 5) {
           console.log(`⚠ Top score ${topScore} too low for "${fullName}" — skipping to avoid wrong image`);
           results.push({ id: product.id, status: "no_confident_match", topScore });
           continue;
