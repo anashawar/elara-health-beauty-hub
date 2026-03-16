@@ -1234,92 +1234,120 @@ export default function AdminProducts() {
       ) : (
         <>
         <div className="rounded-xl border border-border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {(selectMode || multiSelect) && <TableHead className="w-10"></TableHead>}
-                <TableHead>Product</TableHead>
-                <TableHead className="hidden md:table-cell">Category</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead className="hidden md:table-cell">Cost</TableHead>
-                <TableHead className="hidden md:table-cell">Margin</TableHead>
-                <TableHead className="hidden md:table-cell">Flags</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedProducts.map((p: any) => {
-                const cost = costMap[p.id];
-                const margin = cost !== undefined && cost > 0 ? ((p.price - cost) / cost * 100) : null;
-                return (
-                <TableRow key={p.id} className={
-                  (selectMode && selectedForEnrich.has(p.id)) || (multiSelect && selectedProducts.has(p.id)) ? "bg-primary/5" : ""
-                }>
-                  {selectMode && (
-                    <TableCell className="w-10">
-                      <Checkbox
-                        checked={selectedForEnrich.has(p.id)}
-                        onCheckedChange={() => toggleSelectProduct(p.id)}
-                      />
-                    </TableCell>
-                  )}
-                  {multiSelect && !selectMode && (
-                    <TableCell className="w-10">
-                      <Checkbox
-                        checked={selectedProducts.has(p.id)}
-                        onCheckedChange={() => toggleMultiSelect(p.id)}
-                      />
-                    </TableCell>
-                  )}
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      {p.product_images?.[0]?.image_url ? (
-                        <img src={p.product_images[0].image_url} className="w-10 h-10 rounded-lg object-cover" alt="" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center"><ImageIcon className="h-4 w-4 text-muted-foreground" /></div>
-                      )}
-                      <div>
-                        <p className="font-medium text-sm text-foreground line-clamp-1">{p.title}</p>
-                        <p className="text-xs text-muted-foreground">{p.brands?.name || "—"}</p>
-                        {(!p.description || !p.brand_id || !p.category_id) && (
-                          <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">Needs AI</span>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{p.categories?.name || "—"}</TableCell>
-                  <TableCell className="text-sm font-medium">{formatPrice(p.price)}</TableCell>
-                  <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{cost !== undefined ? formatPrice(cost) : "—"}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {margin !== null ? (
-                      <span className={`text-xs font-bold ${margin >= 30 ? "text-emerald-600" : margin >= 15 ? "text-amber-600" : "text-red-600"}`}>
-                        {margin.toFixed(1)}%
-                      </span>
-                    ) : <span className="text-xs text-muted-foreground">—</span>}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="flex gap-1">
-                      {!p.in_stock && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">OOS</span>}
-                      {p.is_new && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">New</span>}
-                      {p.is_trending && <span className="text-[10px] bg-rose/10 text-rose px-1.5 py-0.5 rounded-full">Trend</span>}
-                      {p.is_pick && <span className="text-[10px] bg-gold/10 text-gold px-1.5 py-0.5 rounded-full">Pick</span>}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => {
-                        if (confirm("Delete this product?")) deleteMutation.mutate(p.id);
-                      }}><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );})}
-              {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={(selectMode || multiSelect) ? 9 : 8} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
+           <Table>
+             <TableHeader>
+               <TableRow className="bg-muted/30">
+                 {(selectMode || multiSelect) && <TableHead className="w-10"></TableHead>}
+                 <TableHead className="min-w-[320px]">Product</TableHead>
+                 <TableHead className="hidden lg:table-cell min-w-[120px]">Category</TableHead>
+                 <TableHead className="min-w-[100px] text-right">Price</TableHead>
+                 <TableHead className="hidden lg:table-cell min-w-[100px] text-right">Cost</TableHead>
+                 <TableHead className="hidden lg:table-cell min-w-[80px] text-center">Margin</TableHead>
+                 <TableHead className="hidden md:table-cell min-w-[80px] text-center">Stock</TableHead>
+                 <TableHead className="hidden md:table-cell min-w-[140px]">Flags</TableHead>
+                 <TableHead className="w-[90px] text-center">Actions</TableHead>
+               </TableRow>
+             </TableHeader>
+             <TableBody>
+               {paginatedProducts.map((p: any) => {
+                 const cost = costMap[p.id];
+                 const margin = cost !== undefined && cost > 0 ? ((p.price - cost) / cost * 100) : null;
+                 const imgCount = p.product_images?.length || 0;
+                 return (
+                 <TableRow key={p.id} className={`group ${
+                   (selectMode && selectedForEnrich.has(p.id)) || (multiSelect && selectedProducts.has(p.id)) ? "bg-primary/5" : ""
+                 }`}>
+                   {selectMode && (
+                     <TableCell className="w-10">
+                       <Checkbox
+                         checked={selectedForEnrich.has(p.id)}
+                         onCheckedChange={() => toggleSelectProduct(p.id)}
+                       />
+                     </TableCell>
+                   )}
+                   {multiSelect && !selectMode && (
+                     <TableCell className="w-10">
+                       <Checkbox
+                         checked={selectedProducts.has(p.id)}
+                         onCheckedChange={() => toggleMultiSelect(p.id)}
+                       />
+                     </TableCell>
+                   )}
+                   <TableCell>
+                     <div className="flex items-center gap-3">
+                       {p.product_images?.[0]?.image_url ? (
+                         <img src={p.product_images[0].image_url} className="w-12 h-12 rounded-lg object-cover border border-border shrink-0" alt="" />
+                       ) : (
+                         <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center border border-dashed border-border shrink-0"><ImageIcon className="h-5 w-5 text-muted-foreground" /></div>
+                       )}
+                       <div className="min-w-0 flex-1">
+                         <p className="font-medium text-sm text-foreground line-clamp-1 leading-tight">{p.title}</p>
+                         <p className="text-xs text-muted-foreground mt-0.5">{p.brands?.name || "No brand"}</p>
+                         <div className="flex items-center gap-1.5 mt-1">
+                           {(!p.description || !p.brand_id || !p.category_id) && (
+                             <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">Needs AI</span>
+                           )}
+                           {imgCount === 0 && (
+                             <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">No img</span>
+                           )}
+                           {imgCount > 1 && (
+                             <span className="text-[10px] text-muted-foreground">{imgCount} imgs</span>
+                           )}
+                         </div>
+                       </div>
+                     </div>
+                   </TableCell>
+                   <TableCell className="hidden lg:table-cell">
+                     <span className="text-sm text-muted-foreground">{p.categories?.name || "—"}</span>
+                     {p.subcategory_id && <p className="text-[11px] text-muted-foreground/60 mt-0.5 line-clamp-1">{p.subcategories?.name || ""}</p>}
+                   </TableCell>
+                   <TableCell className="text-right">
+                     <p className="text-sm font-semibold text-foreground">{formatPrice(p.price)}</p>
+                     {p.original_price && p.original_price > p.price && (
+                       <p className="text-[11px] text-muted-foreground line-through">{formatPrice(p.original_price)}</p>
+                     )}
+                   </TableCell>
+                   <TableCell className="hidden lg:table-cell text-right">
+                     <span className="text-sm text-muted-foreground">{cost !== undefined ? formatPrice(cost) : "—"}</span>
+                   </TableCell>
+                   <TableCell className="hidden lg:table-cell text-center">
+                     {margin !== null ? (
+                       <span className={`inline-flex items-center justify-center text-xs font-bold px-2 py-0.5 rounded-full ${
+                         margin >= 30 ? "bg-emerald-50 text-emerald-700" : margin >= 15 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"
+                       }`}>
+                         {margin.toFixed(0)}%
+                       </span>
+                     ) : <span className="text-xs text-muted-foreground">—</span>}
+                   </TableCell>
+                   <TableCell className="hidden md:table-cell text-center">
+                     {p.in_stock ? (
+                       <span className="inline-flex items-center text-[11px] font-medium text-emerald-600">✓ In stock</span>
+                     ) : (
+                       <span className="inline-flex items-center text-[11px] font-medium bg-red-50 text-red-600 px-2 py-0.5 rounded-full">Out of stock</span>
+                     )}
+                   </TableCell>
+                   <TableCell className="hidden md:table-cell">
+                     <div className="flex gap-1 flex-wrap">
+                       {p.is_new && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">New</span>}
+                       {p.is_trending && <span className="text-[10px] bg-rose/10 text-rose px-1.5 py-0.5 rounded-full font-medium">Trending</span>}
+                       {p.is_pick && <span className="text-[10px] bg-gold/10 text-gold px-1.5 py-0.5 rounded-full font-medium">Pick</span>}
+                     </div>
+                   </TableCell>
+                   <TableCell>
+                     <div className="flex gap-0.5 justify-center opacity-60 group-hover:opacity-100 transition-opacity">
+                       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(p)}><Pencil className="h-3.5 w-3.5" /></Button>
+                       <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => {
+                         if (confirm("Delete this product?")) deleteMutation.mutate(p.id);
+                       }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                     </div>
+                   </TableCell>
+                 </TableRow>
+               );})}
+               {filtered.length === 0 && (
+                 <TableRow><TableCell colSpan={(selectMode || multiSelect) ? 10 : 9} className="text-center py-12 text-muted-foreground">No products found</TableCell></TableRow>
+               )}
+             </TableBody>
+           </Table>
         </div>
 
         {totalPages > 1 && (
