@@ -266,6 +266,8 @@ const HeroBanner = memo(() => {
       </div>
     </div>
   );
-};
+});
+
+HeroBanner.displayName = "HeroBanner";
 
 export default HeroBanner;
