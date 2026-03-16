@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Gift, Truck, ShieldCheck, ArrowRight, Copy, Sparkles, Zap } from "lucide-react";
 import bannerDiscount from "@/assets/banner-discount.jpg";
