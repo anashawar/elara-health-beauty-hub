@@ -383,7 +383,7 @@ const CheckoutPage = () => {
         <div className="bg-card rounded-2xl p-4 shadow-premium">
           <h3 className="text-sm font-bold text-foreground mb-3">{t("checkout.paymentMethod")}</h3>
           <div className="space-y-2">
-            {paymentMethods.map(method => (
+            {paymentMethods.filter(m => m.active).map(method => (
               <label
                 key={method.value}
                 className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer border-2 transition-all ${
