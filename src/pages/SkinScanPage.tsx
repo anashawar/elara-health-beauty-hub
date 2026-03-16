@@ -86,6 +86,14 @@ const ScoreRing = ({ score, size = 80, label, color }: { score: number; size?: n
 };
 
 export default function SkinScanPage() {
+  return (
+    <NativeAppGate featureName="ELARA AI Skin Analyzer">
+      <SkinScanContent />
+    </NativeAppGate>
+  );
+}
+
+function SkinScanContent() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { language } = useLanguage();
