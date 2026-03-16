@@ -1,31 +1,27 @@
 project_id = "mycpfwnfvtsgshdzggrm"
 
-[functions.elara-chat]
-verify_jwt = false
-
-[functions.translate-product]
-verify_jwt = false
-
-[functions.send-otp]
-verify_jwt = false
-
-[functions.verify-otp]
-verify_jwt = false
-
-[functions.enrich-products]
-verify_jwt = false
-
-[functions.search-product-images]
-verify_jwt = false
-
-[functions.search-brand-logos]
-verify_jwt = false
-
-[functions.send-push]
-verify_jwt = false
-
-[functions.get-firebase-config]
-verify_jwt = false
-
-[functions.daily-brief]
-verify_jwt = false
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.daily-brief]
+    verify_jwt = false
+  [functions.elara-chat]
+    verify_jwt = false
+  [functions.enrich-products]
+    verify_jwt = false
+  [functions.get-firebase-config]
+    verify_jwt = false
+  [functions.search-brand-logos]
+    verify_jwt = false
+  [functions.search-product-images]
+    verify_jwt = false
+  [functions.send-otp]
+    verify_jwt = false
+  [functions.send-push]
+    verify_jwt = false
+  [functions.translate-product]
+    verify_jwt = false
+  [functions.verify-otp]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
