@@ -89,7 +89,9 @@ const Index = () => {
           <DealsBanner />
         </Suspense>
 
-        {!isLoading && (
+        {loadingPicks || loadingOffers || loadingNew ? (
+          <ProductSectionSkeleton />
+        ) : (
           <Suspense fallback={SectionFallback}>
             <>
               <ProductSection title={t("home.elaraPicks")} subtitle={t("home.curatedForYou")} products={picks} viewAllLink="/collection/picks" />
