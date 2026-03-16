@@ -2,6 +2,7 @@ import { useState, lazy, Suspense } from "react";
 import TopHeader from "@/components/layout/TopHeader";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import BottomNav from "@/components/layout/BottomNav";
+import DesktopFooter from "@/components/layout/DesktopFooter";
 import HeroBanner from "@/components/home/HeroBanner";
 import CategoryGrid from "@/components/home/CategoryGrid";
 import AskElaraCard from "@/components/home/AskElaraCard";
