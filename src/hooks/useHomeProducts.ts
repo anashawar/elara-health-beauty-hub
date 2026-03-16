@@ -11,14 +11,12 @@ import type { ProductWithRelations } from "./useProducts";
 
 const SECTION_LIMIT = 20;
 
-// Minimal select for card display — skip description, benefits, usage, tags
+// Minimal select for card display — only what ProductCard needs
 const CARD_SELECT = `
   id, title, title_ar, title_ku, slug, price, original_price,
   is_new, is_trending, is_pick, in_stock,
-  brand_id, category_id, subcategory_id,
-  country_of_origin, form, gender, volume_ml, volume_unit, application, skin_type, condition,
-  brands ( name, name_ar, name_ku ),
-  categories ( slug ),
+  brand_id, category_id,
+  brands ( name ),
   product_images ( image_url, sort_order )
 `;
 
@@ -33,8 +31,8 @@ function mapProduct(p: any, language: "en" | "ar" | "ku"): ProductWithRelations 
     brand: p.brands?.name || "",
     brand_id: p.brand_id,
     category_id: p.category_id,
-    category_slug: p.categories?.slug || null,
-    subcategory_id: p.subcategory_id || null,
+    category_slug: null,
+    subcategory_id: null,
     price: Number(p.price),
     originalPrice: p.original_price ? Number(p.original_price) : null,
     image: p.product_images?.[0]?.image_url || "/placeholder.svg",
@@ -48,14 +46,14 @@ function mapProduct(p: any, language: "en" | "ar" | "ku"): ProductWithRelations 
     isNew: p.is_new || false,
     isTrending: p.is_trending || false,
     isPick: p.is_pick || false,
-    country_of_origin: p.country_of_origin,
-    form: p.form,
-    gender: p.gender,
-    volume_ml: p.volume_ml,
-    volume_unit: p.volume_unit || "ml",
-    application: p.application,
-    skin_type: p.skin_type,
-    condition: p.condition || null,
+    country_of_origin: null,
+    form: null,
+    gender: null,
+    volume_ml: null,
+    volume_unit: "ml",
+    application: null,
+    skin_type: null,
+    condition: null,
     inStock: p.in_stock !== false,
   };
 }

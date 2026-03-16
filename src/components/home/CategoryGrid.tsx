@@ -1,8 +1,9 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { useCategories } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-const CategoryGrid = () => {
+const CategoryGrid = memo(() => {
   const { data: categories = [] } = useCategories();
   const { language } = useLanguage();
 
@@ -34,6 +35,8 @@ const CategoryGrid = () => {
       </div>
     </section>
   );
-};
+});
+
+CategoryGrid.displayName = "CategoryGrid";
 
 export default CategoryGrid;

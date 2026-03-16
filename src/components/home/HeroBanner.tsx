@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Gift, Truck, ShieldCheck, ArrowRight, Copy, Sparkles, Zap } from "lucide-react";
 import bannerDiscount from "@/assets/banner-discount.jpg";
@@ -26,7 +26,7 @@ interface HeroBannerItem {
   discountLabel?: string;
 }
 
-const HeroBanner = () => {
+const HeroBanner = memo(() => {
   const [current, setCurrent] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const autoPlayRef = useRef<ReturnType<typeof setInterval>>();
@@ -180,7 +180,7 @@ const HeroBanner = () => {
         className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden no-scrollbar h-full touch-pan-x md:touch-auto md:overflow-x-hidden"
         style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch", overscrollBehaviorY: "none" }}
       >
-        {banners.map((banner) => (
+        {banners.map((banner, idx) => (
           <div
             key={banner.id}
             className="w-full flex-shrink-0 snap-center relative h-full"
@@ -192,8 +192,9 @@ const HeroBanner = () => {
                 alt=""
                 className="absolute inset-0 w-full h-full object-cover"
                 draggable={false}
-                loading="lazy"
-                decoding="async"
+                loading={idx === 0 ? "eager" : "lazy"}
+                fetchPriority={idx === 0 ? "high" : "auto"}
+                decoding={idx === 0 ? "sync" : "async"}
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-primary/60" />
@@ -265,6 +266,8 @@ const HeroBanner = () => {
       </div>
     </div>
   );
-};
+});
+
+HeroBanner.displayName = "HeroBanner";
 
 export default HeroBanner;

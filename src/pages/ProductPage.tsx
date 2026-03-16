@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/components/ui/sonner";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/hooks/useAuth";
-import { useProducts, useBrands, useFormatPrice } from "@/hooks/useProducts";
+import { useProduct, useRelatedProducts, useBrands, useFormatPrice } from "@/hooks/useProducts";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 import { Share } from "@capacitor/share";
 import { Capacitor } from "@capacitor/core";
@@ -52,10 +52,18 @@ const ProductPage = () => {
   const [showDetails, setShowDetails] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
-  const { data: allProducts = [] } = useProducts();
+  const { data: product, isLoading: productLoading } = useProduct(id);
   const { data: activeOffers = [] } = useActiveOffers();
   const { data: brands = [] } = useBrands();
-  const product = allProducts.find(p => p.id === id);
+  const { data: related = [] } = useRelatedProducts(product?.category_id, id);
+
+  if (productLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -75,7 +83,7 @@ const ProductPage = () => {
       ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
       : 0;
 
-  const related = allProducts.filter(p => p.category_slug === product.category_slug && p.id !== product.id).slice(0, 4);
+  // related products are fetched via useRelatedProducts hook above
 
   const outOfStock = product ? !product.inStock : false;
 

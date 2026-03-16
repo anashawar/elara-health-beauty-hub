@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { ChevronRight, Flame } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -14,7 +15,7 @@ interface ProductSectionProps {
   variant?: "default" | "trending";
 }
 
-const ProductSection = ({ title, subtitle, products, viewAllLink, horizontal = true, variant = "default" }: ProductSectionProps) => {
+const ProductSection = memo(({ title, subtitle, products, viewAllLink, horizontal = true, variant = "default" }: ProductSectionProps) => {
   const { t } = useLanguage();
   if (products.length === 0) return null;
 
@@ -104,6 +105,8 @@ const ProductSection = ({ title, subtitle, products, viewAllLink, horizontal = t
       )}
     </section>
   );
-};
+});
+
+ProductSection.displayName = "ProductSection";
 
 export default ProductSection;
