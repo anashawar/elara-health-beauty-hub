@@ -17,6 +17,7 @@ import ReviewSection from "@/components/product/ReviewSection";
 import { useLanguage } from "@/i18n/LanguageContext";
 const AppDownloadBanner = lazy(() => import("@/components/home/AppDownloadBanner"));
 import { ProductPageAppBanner } from "@/components/home/MobileAppBanners";
+import ImageZoomViewer from "@/components/product/ImageZoomViewer";
 
 const PUBLISHED_URL = "https://elara-health-beauty-hub.lovable.app";
 
@@ -51,6 +52,8 @@ const ProductPage = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [showDetails, setShowDetails] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [zoomIndex, setZoomIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
   const { data: product, isLoading: productLoading } = useProduct(id);
   const { data: activeOffers = [] } = useActiveOffers();
@@ -164,7 +167,7 @@ const ProductPage = () => {
           <div className="relative md:sticky md:top-24 md:self-start">
             <div ref={sliderRef} onScroll={handleScroll} className="flex snap-x snap-mandatory overflow-x-auto no-scrollbar md:rounded-2xl md:overflow-hidden" style={{ scrollbarWidth: "none" }}>
               {images.map((img, idx) => (
-                <div key={idx} className="w-full flex-shrink-0 snap-center aspect-square bg-gradient-to-br from-secondary to-muted">
+                <div key={idx} className="w-full flex-shrink-0 snap-center aspect-square bg-gradient-to-br from-secondary to-muted cursor-zoom-in" onClick={() => { setZoomIndex(idx); setZoomOpen(true); }}>
                   <img src={img} alt={`${product.title} ${idx + 1}`} className="w-full h-full object-cover" />
                 </div>
               ))}
@@ -426,6 +429,13 @@ const ProductPage = () => {
       </div>
 
       <BottomNav />
+      <ImageZoomViewer
+        images={images}
+        initialIndex={zoomIndex}
+        isOpen={zoomOpen}
+        onClose={() => setZoomOpen(false)}
+        productTitle={product.title}
+      />
     </div>
   );
 };
