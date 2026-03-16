@@ -107,18 +107,29 @@ export default function SkinScanPage() {
   // Start camera
   const startCamera = useCallback(async () => {
     try {
+      // Stop any existing stream first
+      streamRef.current?.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: useFrontCamera ? "user" : "environment", width: { ideal: 1280 }, height: { ideal: 960 } },
+        audio: false,
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
+        // Explicitly play — required on mobile browsers
+        await videoRef.current.play();
         setCameraActive(true);
       }
-    } catch {
-      toast.error("Camera access denied");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Camera access denied";
+      console.error("Camera error:", err);
+      toast.error(msg.includes("NotAllowed") || msg.includes("Permission")
+        ? (language === "ar" ? "يرجى السماح بالوصول للكاميرا" : "Please allow camera access in your browser settings")
+        : (language === "ar" ? "تعذر فتح الكاميرا" : "Could not open camera"));
     }
-  }, [useFrontCamera]);
+  }, [useFrontCamera, language]);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach(t => t.stop());
