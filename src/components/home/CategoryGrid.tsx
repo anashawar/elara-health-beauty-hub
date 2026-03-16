@@ -35,6 +35,8 @@ const CategoryGrid = memo(() => {
       </div>
     </section>
   );
-};
+});
+
+CategoryGrid.displayName = "CategoryGrid";
 
 export default CategoryGrid;
