@@ -50,11 +50,11 @@ function scoreImage(url: string, titleWords: string[], brandSlug: string, produc
   let score = 1;
 
   // Brand in URL — strong signal
-  if (brandSlug && brandSlug.length > 2 && lower.includes(brandSlug)) score += 10;
+  if (brandSlug && brandSlug.length > 2 && lower.includes(brandSlug)) score += 8;
 
-  // Title words in URL — each matching word is a strong signal
+  // Title words in URL — each matching word is a signal
   const matched = titleWords.filter(w => w.length > 3 && lower.includes(w));
-  score += matched.length * 5;
+  score += matched.length * 3;
 
   // Bonus: many title words matched = very likely correct product
   if (matched.length >= 3) score += 10;
