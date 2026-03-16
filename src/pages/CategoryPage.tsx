@@ -9,6 +9,7 @@ import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
 import { useProducts, useCategories, useSubcategories, concerns } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
+import SEOHead, { breadcrumbJsonLd } from "@/components/SEOHead";
 
 const concernKeywords: Record<string, string[]> = {
   acne: ["acne", "blemish", "pimple", "breakout", "zit"],
@@ -125,9 +126,21 @@ const CategoryPage = () => {
   };
 
   const activeSubName = activeSubId ? categorySubs.find(s => s.id === activeSubId) : null;
+  const pageName = activeConcern?.name || (category ? getCatName(category) : t("categories.allProducts"));
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8">
+      <SEOHead
+        title={`${pageName} — Shop in Iraq`}
+        description={`Browse ${pageName} products in Iraq. Original brands, fast delivery. Shop on ELARA.`}
+        canonical={`https://elara-health-beauty-hub.lovable.app${routerLocation.pathname}`}
+        keywords={`${pageName}, ${pageName} iraq, buy ${pageName} iraq, beauty iraq, cosmetics iraq`}
+        jsonLd={breadcrumbJsonLd([
+          { name: "ELARA", url: "https://elara-health-beauty-hub.lovable.app" },
+          { name: "Categories", url: "https://elara-health-beauty-hub.lovable.app/categories" },
+          { name: pageName, url: `https://elara-health-beauty-hub.lovable.app${routerLocation.pathname}` },
+        ])}
+      />
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 

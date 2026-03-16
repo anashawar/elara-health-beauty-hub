@@ -6,6 +6,7 @@ import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
 import FloatingSearch from "@/components/layout/FloatingSearch";
 import { useLanguage } from "@/i18n/LanguageContext";
+import SEOHead, { breadcrumbJsonLd } from "@/components/SEOHead";
 
 const BrandPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +45,17 @@ const BrandPage = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 app-container">
+      <SEOHead
+        title={`${displayName} Products — Buy in Iraq`}
+        description={`Shop original ${displayName} products in Iraq. ${brandProducts.length} products available. Fast delivery across Iraq.`}
+        canonical={`https://elara-health-beauty-hub.lovable.app/brand/${brand?.slug || id}`}
+        keywords={`${displayName}, ${displayName} iraq, buy ${displayName} iraq, ${displayName} products, beauty iraq`}
+        jsonLd={breadcrumbJsonLd([
+          { name: "ELARA", url: "https://elara-health-beauty-hub.lovable.app" },
+          { name: "Brands", url: "https://elara-health-beauty-hub.lovable.app/shop" },
+          { name: displayName, url: `https://elara-health-beauty-hub.lovable.app/brand/${brand?.slug || id}` },
+        ])}
+      />
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
         <div className="flex items-center gap-3 px-4 py-3">

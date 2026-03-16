@@ -9,6 +9,7 @@ import AskElaraCard from "@/components/home/AskElaraCard";
 import SkinScanBanner from "@/components/home/SkinScanBanner";
 import ProductSectionSkeleton from "@/components/home/ProductSectionSkeleton";
 import SearchOverlay from "@/components/SearchOverlay";
+import SEOHead, { organizationJsonLd, websiteJsonLd } from "@/components/SEOHead";
 import { useTrendingProducts, usePickProducts, useOfferProducts, useNewProducts } from "@/hooks/useHomeProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 
@@ -37,6 +38,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8 scroll-bounce" style={{ minHeight: '-webkit-fill-available' }}>
+      <SEOHead
+        title="Shop Skincare, Makeup, Vitamins & More"
+        description="Iraq's #1 online health & beauty store. Shop original skincare, makeup, haircare, vitamins & supplements from top brands. Fast delivery across Iraq."
+        canonical="https://elara-health-beauty-hub.lovable.app/home"
+        keywords="beauty iraq, skincare iraq, makeup iraq, cosmetics iraq, health products iraq, online beauty store iraq, elara beauty, erbil beauty shop, baghdad skincare"
+        jsonLd={[organizationJsonLd, websiteJsonLd]}
+      />
       <MobileAppTopStrip />
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <TopHeader onSearchClick={() => setSearchOpen(true)} />
