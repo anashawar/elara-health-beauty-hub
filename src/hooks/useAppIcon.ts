@@ -1,6 +1,6 @@
 /**
  * Hook to switch between pre-bundled alternate app icons on iOS/Android.
- * Uses Capacitor plugin @niceplugins/capacitor-alternate-icons
+ * Uses @capacitor-community/app-icon plugin.
  * 
  * NATIVE SETUP REQUIRED — see public/icons/README.md
  */
@@ -41,14 +41,12 @@ export function useAppIcon() {
 
     setSwitching(true);
     try {
-      // Dynamic import to avoid bundling on web
-      const { AlternateIcons } = await import("@niceplugins/capacitor-alternate-icons");
+      const { AppIcon } = await import("@capacitor-community/app-icon");
 
       if (theme === "default") {
-        await AlternateIcons.reset();
+        await AppIcon.reset({ suppressNotification: false });
       } else {
-        // The icon name must match the alternate icon set configured in native project
-        await AlternateIcons.setAlternateIcon({ name: `icon-${theme}` });
+        await AppIcon.change({ name: `icon-${theme}`, suppressNotification: false });
       }
 
       localStorage.setItem("elara-app-icon", theme);
