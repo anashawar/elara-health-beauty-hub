@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Sparkles, Globe, Users, ShieldCheck, Heart, ArrowRight } from "lucide-react";
+import { Sparkles, Globe, Users, ShieldCheck, Heart, ArrowRight, Gift, Truck } from "lucide-react";
 import PageShell from "@/components/layout/PageShell";
 import elaraBanner from "@/assets/elara-banner.webp";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -16,15 +16,16 @@ const content = {
     ],
     stats: [
       { value: "100%", label: "Verified Brands" },
-      { value: "1500+", label: "Products" },
+      { value: "3,000+", label: "Products" },
       { value: "250+", label: "Brands" },
     ],
     diffTitle: "What makes ELARA different?",
     diffs: [
-      { title: "Smart & Personal", desc: "AI consultations, smart search, and tailored routines" },
+      { title: "Smart & Personal", desc: "AI beauty consultant, smart search, and personalized routines powered by Elara AI" },
       { title: "Multilingual & Local", desc: "Arabic, Kurdish, and English — we speak your language" },
-      { title: "Community-first", desc: "Built to connect, empower, and glow up Iraq's health & beauty culture" },
-      { title: "Only Original", desc: "Everything on ELARA is verified and original" },
+      { title: "Rewards & Loyalty", desc: "Earn points on every order and redeem exclusive rewards with ELARA Rewards" },
+      { title: "Only Original", desc: "Every product is verified authentic — 100% genuine, zero compromise" },
+      { title: "Fast & Reliable", desc: "Order confirmation emails, real-time tracking, and delivery across Iraq" },
     ],
     closing: "We're here to simplify your beauty journey — and make self-care a daily joy.",
     chooseTitle: "Choose ELARA",
@@ -34,7 +35,7 @@ const content = {
       "Because your health starts with what you choose — and we make choosing easier.",
     ],
     contactQ: "Have questions? Reach out anytime.",
-    contactCTA: "Contact us — info@elara.iq",
+    contactCTA: "Contact us — info@elarastore.co",
   },
   ar: {
     pageTitle: "عن إيلارا",
@@ -47,15 +48,16 @@ const content = {
     ],
     stats: [
       { value: "100%", label: "براندات موثقة" },
-      { value: "+1500", label: "منتج" },
+      { value: "+3,000", label: "منتج" },
       { value: "+250", label: "براند" },
     ],
     diffTitle: "شنو يميّز إيلارا؟",
     diffs: [
-      { title: "ذكية وشخصية", desc: "استشارات بالذكاء الاصطناعي، بحث ذكي، وروتين مخصص إلك" },
+      { title: "ذكية وشخصية", desc: "مستشار جمال بالذكاء الاصطناعي، بحث ذكي، وروتين مخصص إلك من إيلارا AI" },
       { title: "متعددة اللغات ومحلية", desc: "عربي، كردي، وإنگليزي — نحچي لغتك" },
-      { title: "المجتمع أولاً", desc: "مبنية لربط وتمكين ثقافة الصحة والجمال بالعراق" },
-      { title: "أصلي فقط", desc: "كل شي على إيلارا موثق وأصلي" },
+      { title: "مكافآت وولاء", desc: "اكسب نقاط على كل طلب واستبدلها بمكافآت حصرية مع مكافآت إيلارا" },
+      { title: "أصلي فقط", desc: "كل منتج موثق أصلي — 100% حقيقي، بدون تنازل" },
+      { title: "سريع وموثوق", desc: "إيميلات تأكيد الطلب، متابعة مباشرة، وتوصيل بكل أنحاء العراق" },
     ],
     closing: "إحنا هنا نسهّل رحلة جمالك — ونخلي العناية بالنفس فرحة يومية.",
     chooseTitle: "اختار إيلارا",
@@ -65,7 +67,7 @@ const content = {
       "لأن صحتك تبدأ من اللي تختاره — وإحنا نسهّل عليك الاختيار.",
     ],
     contactQ: "عندك أسئلة؟ تواصل وياانا بأي وقت.",
-    contactCTA: "تواصل وياانا — info@elara.iq",
+    contactCTA: "تواصل وياانا — info@elarastore.co",
   },
   ku: {
     pageTitle: "دەربارەی ئێلارا",
@@ -78,15 +80,16 @@ const content = {
     ],
     stats: [
       { value: "100%", label: "براندی پشتڕاستکراو" },
-      { value: "+1500", label: "بەرهەم" },
+      { value: "+3,000", label: "بەرهەم" },
       { value: "+250", label: "براند" },
     ],
     diffTitle: "چی ئێلارا جیاواز دەکات؟",
     diffs: [
-      { title: "زیرەک و کەسی", desc: "ڕاوێژکاری بە زیرەکی دەستکرد، گەڕانی زیرەک، و ڕووتینی تایبەت بە تۆ" },
+      { title: "زیرەک و کەسی", desc: "ڕاوێژکاری جوانکاری بە زیرەکی دەستکرد، گەڕانی زیرەک، و ڕووتینی تایبەت بە تۆ لە ئێلارا AI" },
       { title: "فرەزمان و خۆجێیی", desc: "عەرەبی، کوردی، و ئینگلیزی — بە زمانی تۆ قسە دەکەین" },
-      { title: "کۆمەڵگا لە پێشدا", desc: "دروستکراوە بۆ بەستنەوە، بەهێزکردن، و گەشەپێدانی کولتووری تەندروستی و جوانی عێراق" },
-      { title: "تەنها ئەسڵی", desc: "هەموو شتێک لەسەر ئێلارا پشتڕاستکراو و ئەسڵییە" },
+      { title: "خەڵات و وەفاداری", desc: "لە هەر داواکارییەکدا خاڵ بەدەستبهێنە و خەڵاتی تایبەت بگۆڕە لەگەڵ خەڵاتەکانی ئێلارا" },
+      { title: "تەنها ئەسڵی", desc: "هەموو بەرهەمێک پشتڕاستکراو و ئەسڵییە — 100% ڕاستەقینە، بێ گوزەشت" },
+      { title: "خێرا و متمانەپێکراو", desc: "ئیمەیڵی پشتڕاستکردنی داواکاری، شوێنکەوتنی ڕاستەوخۆ، و گەیاندن بۆ هەموو عێراق" },
     ],
     closing: "ئێمە لێرەین بۆ ئاسانکردنی گەشتی جوانیت — و ئەوەی چاودێری خۆت بکرێتە خۆشییەکی ڕۆژانە.",
     chooseTitle: "ئێلارا هەڵبژێرە",
@@ -96,11 +99,11 @@ const content = {
       "چونکە تەندروستیت لە هەڵبژاردنت دەستپێدەکات — و ئێمە هەڵبژاردن ئاسانتر دەکەین.",
     ],
     contactQ: "پرسیارت هەیە؟ لە هەر کاتێکدا پەیوەندیمان پێوە بکە.",
-    contactCTA: "پەیوەندیمان پێوە بکە — info@elara.iq",
+    contactCTA: "پەیوەندیمان پێوە بکە — info@elarastore.co",
   },
 };
 
-const diffIcons = [Sparkles, Globe, Users, ShieldCheck];
+const diffIcons = [Sparkles, Globe, Heart, ShieldCheck, Users];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },

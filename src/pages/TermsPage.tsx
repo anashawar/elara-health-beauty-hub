@@ -29,7 +29,7 @@ const content = {
       { title: "11. Changes to Terms", items: ["We may update these Terms & Conditions at any time. Any changes will be posted here with an updated revision date.", "Your continued use of ELARA means you accept the latest version of our terms."] },
     ] as Section[],
     contactText: "If you have any questions, please contact us via in-app support or at",
-    contactEmail: "support@elarastore.co",
+    contactEmail: "info@elarastore.co",
     thanks: "Thank you for shopping with ELARA — where your health & beauty come first! 💜",
   },
   ar: {
@@ -50,7 +50,7 @@ const content = {
       { title: "11. تغييرات على الشروط", items: ["ممكن نحدّث هذي الشروط والأحكام بأي وقت. أي تغييرات راح تنشر هنا بتاريخ مراجعة محدث.", "استمرارك باستخدام إيلارا يعني قبولك لآخر نسخة من شروطنا."] },
     ] as Section[],
     contactText: "إذا عندك أي أسئلة، تواصل وياانا عبر الدعم داخل التطبيق أو على",
-    contactEmail: "support@elarastore.co",
+    contactEmail: "info@elarastore.co",
     thanks: "شكراً لتسوقك مع إيلارا — حيث صحتك وجمالك بالمقام الأول! 💜",
   },
   ku: {
@@ -71,7 +71,7 @@ const content = {
       { title: "11. گۆڕانکاری لە مەرجەکان", items: ["لەوانەیە ئەم مەرج و ڕێسایانە لە هەر کاتێکدا نوێ بکەینەوە. هەر گۆڕانکارییەک لێرە بڵاو دەکرێتەوە بە بەرواری نوێکردنەوە.", "بەردەوامبوونت لە بەکارهێنانی ئێلارا واتای قبوڵکردنی دوایین وەشانی مەرجەکانمانە."] },
     ] as Section[],
     contactText: "ئەگەر پرسیارت هەیە، تکایە لە ڕێگای پشتگیری ناو بەرنامەکەوە یان لەم ئیمەیڵەوە پەیوەندیمان پێوە بکە",
-    contactEmail: "support@elarastore.co",
+    contactEmail: "info@elarastore.co",
     thanks: "سوپاس بۆ کڕینت لەگەڵ ئێلارا — کە تەندروستی و جوانیت لە پێشدایە! 💜",
   },
 };
