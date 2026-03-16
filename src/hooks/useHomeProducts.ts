@@ -108,9 +108,9 @@ export function useOfferProducts() {
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-offers", language],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from("products")
-        .select(CARD_SELECT)
+        .select(CARD_SELECT) as any)
         .not("original_price", "is", null)
         .order("created_at", { ascending: false })
         .limit(SECTION_LIMIT);
