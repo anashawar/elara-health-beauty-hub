@@ -6,6 +6,96 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const SEARCH_API_URL = "https://api.firecrawl.dev/v1/search";
+const MAX_SEARCH_QUERIES = 4;
+const MAX_RESULTS_PER_QUERY = 6;
+const MAX_CANDIDATES = 12;
+const MIN_PAGE_SCORE = 5;
+const MIN_IMAGE_SCORE = 10;
+const MIN_TRUST_FALLBACK_SCORE = 20;
+
+const BROWSER_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+  Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.9",
+  "Cache-Control": "no-cache",
+  Pragma: "no-cache",
+};
+
+type SearchResultLike = Record<string, any>;
+type ImageSource = "jsonld-product" | "jsonld" | "meta" | "metadata" | "img" | "markdown";
+
+type ExtractedImage = {
+  url: string;
+  source: ImageSource;
+};
+
+type CandidateImage = {
+  pageUrl: string;
+  pageScore: number;
+  resultTitle: string;
+  score: number;
+  source: ImageSource;
+  url: string;
+};
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function decodeHtmlEntities(input: string): string {
+  return input
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#x2F;/gi, "/");
+}
+
+function normalizeText(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeCompact(input: string): string {
+  return input.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function normalizeVolume(value?: string): string {
+  return (value || "").toLowerCase().replace(/\s+/g, "");
+}
+
+function safeAbsoluteUrl(value: string, baseUrl?: string): string | null {
+  if (!value) return null;
+  try {
+    return new URL(value, baseUrl).toString();
+  } catch {
+    return null;
+  }
+}
+
+function pickString(...values: unknown[]): string {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
+function isProbablyImageUrl(url: string): boolean {
+  return /\.(jpg|jpeg|png|webp|avif)(?:$|\?)/i.test(url);
+}
+
+function stripQueryAndHash(url: string): string {
+  return url.split("#")[0].split("?")[0];
+}
+
 function isJunkImage(url: string): boolean {
   const lower = url.toLowerCase();
   const reject = [
@@ -19,193 +109,398 @@ function isJunkImage(url: string): boolean {
     "review", "/user", "profile", "author", "comment",
     "newsletter", "subscribe", "popup", "modal", "close",
     "menu", "nav-", "/header", "/footer", "sidebar",
-    ".gif", ".svg", "data:image",
-    "blog", "article", "editorial", "lifestyle", "category-",
-    "collection-", "best-", "top-", "how-to",
-    "swatch", "color-", "shade-", "related", "recommend",
-    "similar", "also-", "you-may", "recently",
-    "store-locator", "reward", "loyalty", "gift-card",
+    "data:image", "hero-banner", "homepage-banner", "home-banner",
+    "collection_pages", "lookbook", "lifestyle", "editorial",
+    "related", "recommend", "recently", "gift-card", "whatsapp",
   ];
-  return reject.some(p => lower.includes(p));
+  return reject.some((pattern) => lower.includes(pattern));
 }
 
-function scoreImage(url: string, titleWords: string[], brandSlug: string, productVolume?: string): number {
-  const lower = url.toLowerCase();
-  if (isJunkImage(lower)) return -1;
-  
-  // Accept common image formats
-  const path = lower.split("?")[0];
-  if (!/\.(jpg|jpeg|png|webp)/i.test(path)) return -1;
+function scorePage(result: SearchResultLike, titleWords: string[], brandSlug: string, fullName: string, volumeStr?: string): number {
+  const payload = (typeof result?.data === "object" && result.data) ? result.data : result;
+  const pageUrl = pickString(payload?.url, result?.url);
+  const title = pickString(payload?.title, result?.title);
+  const description = pickString(payload?.description, result?.description);
+  const markdown = pickString(payload?.markdown, result?.markdown).slice(0, 400);
 
-  let score = 1;
+  const raw = `${pageUrl} ${title} ${description} ${markdown}`.toLowerCase();
+  const normalized = normalizeText(raw);
+  const compact = normalizeCompact(raw);
 
-  // Brand in URL — strong signal
-  if (brandSlug && brandSlug.length > 2 && lower.includes(brandSlug)) score += 6;
+  let score = 0;
 
-  // Title words in URL — each matching word is a signal
-  const matched = titleWords.filter(w => w.length > 3 && lower.includes(w));
-  score += matched.length * 2;
+  if (brandSlug && compact.includes(brandSlug)) score += 6;
 
-  // Bonus: many title words matched
-  if (matched.length >= 3) score += 8;
-  if (matched.length >= 2) score += 3;
+  const matchedWords = titleWords.filter((word) => normalized.includes(word));
+  score += matchedWords.length * 2;
+  if (matchedWords.length >= 4) score += 8;
+  else if (matchedWords.length >= 3) score += 5;
+  else if (matchedWords.length >= 2) score += 3;
 
-  // Trusted product image CDNs/domains
-  const trusted = [
-    "cloudinary", "shopify", "cdn.shopify", "scene7", "akamaized",
-    "imgix", "fastly", "amazonaws", "cloudfront",
-    "iherb", "lookfantastic", "notino", "notinoimg", "sephora",
-    "ulta", "cultbeauty", "dermstore", "skinstore",
-    "chemistwarehouse", "boots.com", "superdrug",
-    "feelunique", "beautybay", "caretobeauty",
-    "amazon", "media-amazon", "images-na.ssl-images-amazon",
-    "fragrancex", "fragrancenet", "perfumetrader",
-    "douglas", "niche-beauty", "parfumdreams",
-    "incidecoder", "beautylish", "sokoglam",
-    "yesstyle", "stylevana", "jolse",
-    "static.thcdn", "images.asos", "cdn-images",
-  ];
-  if (trusted.some(d => lower.includes(d))) score += 5;
+  const normalizedFullName = normalizeText(fullName);
+  if (normalizedFullName && normalized.includes(normalizedFullName)) score += 10;
 
-  // Product path patterns
-  if (/\/product|\/media\/catalog|\/image\/product|\/p\/|\/dp\//i.test(lower)) score += 4;
+  const compactVolume = normalizeVolume(volumeStr);
+  if (compactVolume && compact.includes(compactVolume)) score += 3;
 
-  // High-res indicators
-  const sizeMatch = /(\d{3,4})x(\d{3,4})/.exec(lower);
-  if (sizeMatch) {
-    const w = parseInt(sizeMatch[1]), h = parseInt(sizeMatch[2]);
-    if (w >= 400 && h >= 400) score += 3;
-    if (w >= 800 && h >= 800) score += 2;
-  }
+  if (/\/product|\/products|\/p\/|\/dp\/|sku|item/i.test(pageUrl)) score += 5;
+  if (/\b(buy|shop|price|foundation|serum|cream|gel|cleanser|moisturizer|lotion)\b/i.test(raw)) score += 2;
 
-  // Low-res penalty
-  if (/_thumb|_xs\.|_sm\.|\/thumb\/|\/small\/|_50x|_75x|_100x|_150x/i.test(lower)) score -= 6;
-
-  // Boost: white/clean background indicators
-  if (/white|clean|studio|packshot|_1\./i.test(lower)) score += 2;
-
-  // Boost: first/main product image
-  if (/[_-](1|01)\.\w+$/.test(lower)) score += 3;
+  if (/404|not found|page not found|page unavailable|error 404|requested page/i.test(raw)) score -= 25;
+  if (/blog|article|review|compare|best|top|collection|category|search|wishlist|news/i.test(raw)) score -= 8;
+  if (/homepage|landing|campaign|lookbook|gift guide|summer collection/i.test(raw)) score -= 7;
 
   return score;
 }
 
-function upgradeToHighRes(url: string): string {
-  let u = url;
-  u = u.replace(/_(?:100x100|150x150|200x200|300x300|thumb|small|xs|sm|s)\./gi, ".");
-  u = u.replace(/\/(?:thumb|small|thumbnail|xs|sm)\//, "/large/");
-  u = u.replace(/_\d+x\d*(\.\w+)$/, "$1");
-  return u;
-}
+function scoreImage(url: string, candidate: Omit<CandidateImage, "score" | "url">, titleWords: string[], brandSlug: string, productVolume?: string): number {
+  const lower = url.toLowerCase();
+  if (isJunkImage(lower)) return -1;
+  if (!isProbablyImageUrl(lower)) return -1;
 
-function isProbablyImageUrl(url: string): boolean {
-  return /\.(jpg|jpeg|png|webp|avif)(?:$|\?)/i.test(url);
-}
+  let score = candidate.pageScore;
+  const path = stripQueryAndHash(lower);
+  const compactPath = normalizeCompact(path);
 
-async function isUsableImageResponse(resp: Response, url: string): Promise<boolean> {
-  if (!resp.ok) return false;
+  if (brandSlug && compactPath.includes(brandSlug)) score += 6;
 
-  const contentType = (resp.headers.get("content-type") || "").toLowerCase();
-  const contentLength = parseInt(resp.headers.get("content-length") || "0");
-  const contentRange = resp.headers.get("content-range") || "";
-  const totalFromRange = parseInt(contentRange.match(/\/(\d+)$/)?.[1] || "0");
-  const totalSize = totalFromRange || contentLength;
+  const matched = titleWords.filter((word) => path.includes(word));
+  score += matched.length * 2;
+  if (matched.length >= 3) score += 6;
+  else if (matched.length >= 2) score += 3;
 
-  if (!contentType.startsWith("image/") && !isProbablyImageUrl(url)) return false;
-  if (totalSize > 0 && totalSize < 5000) return false;
+  const compactVolume = normalizeVolume(productVolume);
+  if (compactVolume && compactPath.includes(compactVolume)) score += 3;
 
-  return true;
-}
-
-async function verifyImage(url: string): Promise<boolean> {
-  const attempts: RequestInit[] = [
-    { method: "HEAD", redirect: "follow" },
-    {
-      method: "GET",
-      redirect: "follow",
-      headers: {
-        Range: "bytes=0-8191",
-        Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
-      },
-    },
+  const trusted = [
+    "cloudinary", "shopify", "cdn.shopify", "scene7", "akamaized",
+    "imgix", "fastly", "amazonaws", "cloudfront", "images.ctfassets.net",
+    "iherb", "lookfantastic", "notino", "notinoimg", "sephora", "ulta",
+    "cultbeauty", "dermstore", "skinstore", "chemistwarehouse", "boots.com",
+    "superdrug", "feelunique", "beautybay", "caretobeauty", "fragrancex",
+    "fragrancenet", "douglas", "parfumdreams", "beautylish", "yesstyle",
+    "stylevana", "jolse", "static.thcdn", "media-amazon", "images-na.ssl-images-amazon",
   ];
+  if (trusted.some((domain) => lower.includes(domain))) score += 4;
 
-  for (const attempt of attempts) {
-    try {
-      const resp = await fetch(url, attempt);
-      if (await isUsableImageResponse(resp, url)) return true;
-    } catch {
-      // Try the next verification strategy.
-    }
+  if (/\/product|\/products|\/catalog|\/media|\/image|\/images\//i.test(lower)) score += 3;
+  if (/white|clean|studio|packshot|front|primary|main|hero|default/i.test(lower)) score += 2;
+  if (/[_-](1|01|0)\.(jpg|jpeg|png|webp|avif)$/.test(path)) score += 2;
+
+  const sourceBonus: Record<ImageSource, number> = {
+    "jsonld-product": 12,
+    jsonld: 8,
+    meta: 7,
+    metadata: 6,
+    img: 3,
+    markdown: 1,
+  };
+  score += sourceBonus[candidate.source] || 0;
+
+  if (/(_thumb|_xs\.|_sm\.|\/thumb\/|\/small\/|_50x|_75x|_100x|_150x)/i.test(lower)) score -= 7;
+  if (/desktop_\d+|mobile_\d+|carousel|slider|swatch|shade|before-after/i.test(lower)) score -= 5;
+  if (/collection_pages|homepage|lookbook|editorial|blog/i.test(lower)) score -= 10;
+
+  return score;
+}
+
+function flattenPossibleUrls(value: unknown, baseUrl?: string): string[] {
+  if (!value) return [];
+
+  if (typeof value === "string") {
+    const absolute = safeAbsoluteUrl(decodeHtmlEntities(value.trim()), baseUrl);
+    return absolute ? [absolute] : [];
   }
 
-  return false;
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => flattenPossibleUrls(item, baseUrl));
+  }
+
+  if (typeof value === "object") {
+    const objectValue = value as Record<string, unknown>;
+    if (typeof objectValue.url === "string") {
+      return flattenPossibleUrls(objectValue.url, baseUrl);
+    }
+    return Object.values(objectValue).flatMap((item) => flattenPossibleUrls(item, baseUrl));
+  }
+
+  return [];
 }
 
-/** Extract image URLs from markdown content */
-function extractImagesFromMarkdown(markdown: string): string[] {
+function extractImagesFromMarkdown(markdown: string, baseUrl?: string): string[] {
   const images: string[] = [];
   const mdRegex = /!\[.*?\]\((https?:\/\/[^\s)]+)\)/gi;
-  let m;
-  while ((m = mdRegex.exec(markdown)) !== null) images.push(m[1]);
+  let match: RegExpExecArray | null;
 
-  const urlRegex = /(https?:\/\/[^\s"'<>]+\.(jpg|jpeg|png|webp|avif)(\?[^\s"'<>]*)?)/gi;
-  while ((m = urlRegex.exec(markdown)) !== null) {
-    if (!images.includes(m[1])) images.push(m[1]);
+  while ((match = mdRegex.exec(markdown)) !== null) {
+    const absolute = safeAbsoluteUrl(match[1], baseUrl);
+    if (absolute) images.push(absolute);
   }
 
-  const srcRegex = /src=["'](https?:\/\/[^"']+\.(jpg|jpeg|png|webp|avif)[^"']*)/gi;
-  while ((m = srcRegex.exec(markdown)) !== null) {
-    if (!images.includes(m[1])) images.push(m[1]);
+  const urlRegex = /(https?:\/\/[^\s"'<>]+\.(jpg|jpeg|png|webp|avif)(\?[^\s"'<>]*)?)/gi;
+  while ((match = urlRegex.exec(markdown)) !== null) {
+    const absolute = safeAbsoluteUrl(match[1], baseUrl);
+    if (absolute) images.push(absolute);
   }
 
   return images;
 }
 
-function flattenPossibleUrls(value: unknown): string[] {
-  if (!value) return [];
-  if (typeof value === "string") return [value];
-  if (Array.isArray(value)) return value.flatMap(flattenPossibleUrls);
-  if (typeof value === "object") {
-    return Object.values(value as Record<string, unknown>).flatMap(flattenPossibleUrls);
+function extractMetaImageUrls(html: string, baseUrl?: string): string[] {
+  const images: string[] = [];
+  const metaTagRegex = /<meta\b[^>]*>/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = metaTagRegex.exec(html)) !== null) {
+    const tag = match[0];
+    const property = (tag.match(/(?:property|name|itemprop)=(["'])(.*?)\1/i)?.[2] || "").toLowerCase();
+    if (!["og:image", "og:image:url", "twitter:image", "twitter:image:src", "image"].includes(property)) continue;
+
+    const content = tag.match(/content=(["'])(.*?)\1/i)?.[2];
+    if (!content) continue;
+
+    const absolute = safeAbsoluteUrl(decodeHtmlEntities(content), baseUrl);
+    if (absolute) images.push(absolute);
   }
-  return [];
+
+  const linkRegex = /<link\b[^>]*rel=(["'])image_src\1[^>]*href=(["'])(.*?)\2[^>]*>/gi;
+  while ((match = linkRegex.exec(html)) !== null) {
+    const absolute = safeAbsoluteUrl(decodeHtmlEntities(match[3]), baseUrl);
+    if (absolute) images.push(absolute);
+  }
+
+  return images;
 }
 
-function extractImagesFromSearchResult(result: any): string[] {
-  const payload = result?.data ?? result ?? {};
-  const markdown = typeof payload.markdown === "string" ? payload.markdown : "";
+function extractImageTags(html: string, baseUrl?: string): string[] {
+  const images: string[] = [];
+  const imgTagRegex = /<img\b[^>]*>/gi;
+  const attrNames = ["src", "data-src", "data-lazy-src", "data-original", "data-image", "data-zoom-image", "data-large_image"];
+  let match: RegExpExecArray | null;
 
-  const urls = [
-    ...flattenPossibleUrls(payload.metadata?.ogImage),
-    ...flattenPossibleUrls(payload.metadata?.image),
-    ...flattenPossibleUrls(payload.metadata?.images),
-    ...extractImagesFromMarkdown(markdown),
+  while ((match = imgTagRegex.exec(html)) !== null) {
+    const tag = match[0];
+
+    for (const attr of attrNames) {
+      const value = tag.match(new RegExp(`${attr}=(["'])(.*?)\\1`, "i"))?.[2];
+      if (!value) continue;
+      const absolute = safeAbsoluteUrl(decodeHtmlEntities(value), baseUrl);
+      if (absolute) images.push(absolute);
+    }
+
+    const srcset = tag.match(/srcset=(["'])(.*?)\1/i)?.[2];
+    if (srcset) {
+      const parts = srcset.split(",").map((part) => part.trim()).filter(Boolean);
+      const lastUrl = parts.at(-1)?.split(/\s+/)?.[0];
+      if (lastUrl) {
+        const absolute = safeAbsoluteUrl(decodeHtmlEntities(lastUrl), baseUrl);
+        if (absolute) images.push(absolute);
+      }
+    }
+  }
+
+  return images;
+}
+
+function extractJsonLdImages(html: string, baseUrl?: string): ExtractedImage[] {
+  const results: ExtractedImage[] = [];
+  const scriptRegex = /<script[^>]*type=(["'])application\/ld\+json\1[^>]*>([\s\S]*?)<\/script>/gi;
+  let match: RegExpExecArray | null;
+
+  const visitNode = (node: unknown, source: ImageSource) => {
+    if (!node) return;
+
+    if (Array.isArray(node)) {
+      for (const item of node) visitNode(item, source);
+      return;
+    }
+
+    if (typeof node !== "object") return;
+    const obj = node as Record<string, unknown>;
+    const typeValue = typeof obj["@type"] === "string" ? obj["@type"].toLowerCase() : "";
+    const nextSource: ImageSource = typeValue.includes("product") ? "jsonld-product" : source;
+
+    for (const imageKey of ["image", "images", "thumbnailUrl", "contentUrl"]) {
+      const urls = flattenPossibleUrls(obj[imageKey], baseUrl);
+      for (const url of urls) results.push({ url, source: nextSource });
+    }
+
+    for (const value of Object.values(obj)) {
+      visitNode(value, nextSource);
+    }
+  };
+
+  while ((match = scriptRegex.exec(html)) !== null) {
+    const rawJson = decodeHtmlEntities(match[2].trim())
+      .replace(/^<!--/, "")
+      .replace(/-->$/, "")
+      .trim();
+
+    if (!rawJson) continue;
+
+    try {
+      visitNode(JSON.parse(rawJson), "jsonld");
+    } catch {
+      // Ignore malformed JSON-LD blocks.
+    }
+  }
+
+  return results;
+}
+
+function extractImagesFromSearchResult(result: SearchResultLike): ExtractedImage[] {
+  const payload = (typeof result?.data === "object" && result.data) ? result.data : result;
+  const pageUrl = pickString(payload?.url, result?.url);
+  const markdown = pickString(payload?.markdown, result?.markdown);
+  const html = pickString(payload?.html, result?.html);
+  const metadata = payload?.metadata && typeof payload.metadata === "object" ? payload.metadata : {};
+
+  const extracted: ExtractedImage[] = [
+    ...flattenPossibleUrls((metadata as any)?.ogImage, pageUrl).map((url) => ({ url, source: "metadata" as const })),
+    ...flattenPossibleUrls((metadata as any)?.image, pageUrl).map((url) => ({ url, source: "metadata" as const })),
+    ...flattenPossibleUrls((metadata as any)?.images, pageUrl).map((url) => ({ url, source: "metadata" as const })),
+    ...extractMetaImageUrls(html, pageUrl).map((url) => ({ url, source: "meta" as const })),
+    ...extractJsonLdImages(html, pageUrl),
+    ...extractImageTags(html, pageUrl).map((url) => ({ url, source: "img" as const })),
+    ...extractImagesFromMarkdown(markdown, pageUrl).map((url) => ({ url, source: "markdown" as const })),
   ];
 
-  return Array.from(new Set(urls.filter((url): url is string => typeof url === "string" && url.startsWith("http"))));
+  const deduped = new Map<string, ExtractedImage>();
+  for (const item of extracted) {
+    if (!item.url.startsWith("http")) continue;
+    const key = stripQueryAndHash(item.url).toLowerCase();
+    if (!deduped.has(key)) deduped.set(key, item);
+  }
+
+  return Array.from(deduped.values());
 }
 
-/** Generate multiple search query variations for better coverage */
+function upgradeToHighRes(url: string): string {
+  let upgraded = url;
+  upgraded = upgraded.replace(/_(?:100x100|150x150|200x200|300x300|thumb|small|xs|sm|s)\./gi, ".");
+  upgraded = upgraded.replace(/\/(?:thumb|small|thumbnail|xs|sm)\//gi, "/large/");
+  upgraded = upgraded.replace(/_\d+x\d*(\.\w+)$/, "$1");
+  return upgraded;
+}
+
 function buildSearchQueries(brandName: string, title: string, volumeStr?: string): string[] {
   const fullName = `${brandName} ${title}`.trim();
-  const queries: string[] = [];
+  const retailerSites = "site:lookfantastic.com OR site:notino.com OR site:iherb.com OR site:sephora.com OR site:ulta.com OR site:boots.com";
 
-  queries.push(`${fullName} product image`);
-  queries.push(`${fullName} site:lookfantastic.com OR site:notino.com OR site:iherb.com OR site:sephora.com`);
+  const queries = [
+    `"${fullName}"`,
+    volumeStr ? `"${fullName}" "${volumeStr}"` : "",
+    `"${fullName}" product`,
+    `${fullName} product image`,
+    `${fullName} ${retailerSites}`,
+    `${brandName} ${title.split(/\s+/).slice(0, 4).join(" ")}`,
+  ].filter(Boolean);
 
-  if (volumeStr) {
-    queries.push(`${fullName} ${volumeStr}`);
+  return Array.from(new Set(queries)).slice(0, MAX_SEARCH_QUERIES);
+}
+
+async function searchWeb(apiKey: string, query: string): Promise<SearchResultLike[]> {
+  const resp = await fetch(SEARCH_API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query,
+      limit: MAX_RESULTS_PER_QUERY,
+      scrapeOptions: {
+        formats: ["html", "markdown"],
+        onlyMainContent: false,
+        waitFor: 1500,
+      },
+    }),
+  });
+
+  if (!resp.ok) {
+    const errorText = await resp.text();
+    const error = new Error(`Firecrawl search failed (${resp.status}): ${errorText}`);
+    (error as any).status = resp.status;
+    throw error;
   }
 
-  const words = title.split(/\s+/).filter(w => w.length > 3).slice(0, 4);
-  if (words.length >= 2 && brandName) {
-    queries.push(`${brandName} ${words.join(" ")}`);
+  const data = await resp.json();
+  return Array.isArray(data?.data) ? data.data : [];
+}
+
+function inferExtension(contentType: string, url: string): string {
+  if (contentType.includes("png")) return "png";
+  if (contentType.includes("webp")) return "webp";
+  if (contentType.includes("avif")) return "avif";
+  if (contentType.includes("jpeg") || contentType.includes("jpg")) return "jpg";
+  const byUrl = stripQueryAndHash(url).match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+  return byUrl || "jpg";
+}
+
+async function fetchImageBytes(url: string, pageUrl?: string): Promise<{ bytes: Uint8Array; contentType: string } | null> {
+  try {
+    const headers = new Headers(BROWSER_HEADERS);
+    if (pageUrl) {
+      try {
+        headers.set("Referer", `${new URL(pageUrl).origin}/`);
+      } catch {
+        // Ignore invalid referer.
+      }
+    }
+
+    const response = await fetch(url, {
+      method: "GET",
+      redirect: "follow",
+      headers,
+    });
+
+    if (!response.ok) return null;
+
+    const contentType = (response.headers.get("content-type") || "").toLowerCase();
+    const bytes = new Uint8Array(await response.arrayBuffer());
+
+    if ((!contentType.startsWith("image/") && !isProbablyImageUrl(url)) || bytes.byteLength < 5000) {
+      return null;
+    }
+
+    return { bytes, contentType: contentType.split(";")[0] || "image/jpeg" };
+  } catch {
+    return null;
+  }
+}
+
+async function persistImage(
+  supabase: ReturnType<typeof createClient>,
+  productId: string,
+  candidate: CandidateImage,
+  rank: number,
+): Promise<{ finalUrl: string; persisted: "storage" | "remote" } | null> {
+  const download = await fetchImageBytes(candidate.url, candidate.pageUrl);
+
+  if (download) {
+    const ext = inferExtension(download.contentType, candidate.url);
+    const path = `${productId}/${rank}-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("product-images")
+      .upload(path, download.bytes, {
+        contentType: download.contentType,
+        upsert: true,
+      });
+
+    if (!uploadError) {
+      const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+      return { finalUrl: data.publicUrl, persisted: "storage" };
+    }
+
+    console.error(`[${productId.slice(0, 8)}] Storage upload failed:`, uploadError.message);
   }
 
-  queries.push(`${fullName} site:amazon.com OR site:ebay.com`);
+  if (candidate.score >= MIN_TRUST_FALLBACK_SCORE && candidate.source !== "markdown" && candidate.source !== "img") {
+    return { finalUrl: candidate.url, persisted: "remote" };
+  }
 
-  return queries;
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -222,98 +517,87 @@ Deno.serve(async (req) => {
     const { product_ids } = await req.json();
     if (!product_ids?.length) throw new Error("product_ids array is required");
 
-    const { data: products, error: pErr } = await supabase
+    const { data: products, error: productsError } = await supabase
       .from("products")
-      .select("id, title, brands(name), volume_ml, volume_unit, form")
+      .select("id, title, brands(name), volume_ml, volume_unit")
       .in("id", product_ids);
-    if (pErr) throw pErr;
+    if (productsError) throw productsError;
 
     const { data: existingImages } = await supabase
       .from("product_images")
       .select("product_id")
       .in("product_id", product_ids);
-    const hasImageSet = new Set((existingImages || []).map((i: any) => i.product_id));
+    const hasImageSet = new Set((existingImages || []).map((item: any) => item.product_id));
 
     const results: any[] = [];
 
-    for (const product of (products || [])) {
+    for (const product of products || []) {
       if (hasImageSet.has(product.id)) {
         results.push({ id: product.id, status: "skipped", reason: "already has images" });
         continue;
       }
 
       const brandName = (product as any).brands?.name || "";
-      const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, "");
-      
-      // Clean title: remove brand prefix if present
       let cleanTitle = product.title;
       if (brandName && cleanTitle.toLowerCase().startsWith(brandName.toLowerCase())) {
         cleanTitle = cleanTitle.slice(brandName.length).trim();
       }
-      
-      const titleWords = `${brandName} ${cleanTitle}`.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
+
       const fullName = `${brandName} ${cleanTitle}`.trim();
-      const volumeStr = (product as any).volume_ml ? `${(product as any).volume_ml}${(product as any).volume_unit || "ml"}` : undefined;
+      const brandSlug = normalizeCompact(brandName);
+      const titleWords = Array.from(new Set(normalizeText(`${brandName} ${cleanTitle}`).split(" ").filter((word) => word.length > 2)));
+      const volumeStr = (product as any).volume_ml
+        ? `${(product as any).volume_ml}${(product as any).volume_unit || "ml"}`
+        : undefined;
 
       const searchQueries = buildSearchQueries(brandName, cleanTitle, volumeStr);
 
       try {
-        const candidates: { url: string; score: number }[] = [];
+        const candidates: CandidateImage[] = [];
         let paymentRequired = false;
-        let queriesUsed = 0;
-        const MAX_QUERIES = 4; // Try up to 4 query variations
 
         for (const query of searchQueries) {
-          // Stop once we have a good candidate or hit query limit
-          if (candidates.filter(c => c.score >= 8).length >= 2 || paymentRequired) break;
-          if (queriesUsed >= MAX_QUERIES) break;
-          queriesUsed++;
+          if (paymentRequired) break;
+          if (candidates.some((candidate) => candidate.score >= 24)) break;
 
-          console.log(`[${product.id.slice(0,8)}] Query: ${query.slice(0, 80)}...`);
-          
-          const resp = await fetch("https://api.firecrawl.dev/v1/search", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              query,
-              limit: 5, // More results per query
-              scrapeOptions: {
-                formats: ["markdown"],
-                onlyMainContent: true,
-                waitFor: 2000,
-              },
-            }),
-          });
+          console.log(`[${product.id.slice(0, 8)}] Query: ${query}`);
 
-          if (!resp.ok) {
-            const errText = await resp.text();
-            console.error(`Search error: ${resp.status} ${errText}`);
-            if (resp.status === 402) { paymentRequired = true; break; }
-            continue;
-          }
+          try {
+            const searchResults = await searchWeb(apiKey, query);
 
-          const data = await resp.json();
-          const searchResults = data.data || [];
+            for (const result of searchResults) {
+              const payload = (typeof result?.data === "object" && result.data) ? result.data : result;
+              const pageUrl = pickString(payload?.url, result?.url);
+              const resultTitle = pickString(payload?.title, result?.title);
+              const pageScore = scorePage(result, titleWords, brandSlug, fullName, volumeStr);
 
-          for (const result of searchResults) {
-            const pageImages = extractImagesFromSearchResult(result);
+              if (!pageUrl || pageScore < MIN_PAGE_SCORE) continue;
 
-            for (const rawImgUrl of pageImages) {
-              const imgUrl = upgradeToHighRes(rawImgUrl);
-              if (!imgUrl.startsWith("http")) continue;
-
-              const score = scoreImage(imgUrl, titleWords, brandSlug, volumeStr);
-              if (score > 0) {
-                candidates.push({ url: imgUrl, score });
+              const extractedImages = extractImagesFromSearchResult(result);
+              for (const extracted of extractedImages) {
+                const upgradedUrl = upgradeToHighRes(extracted.url);
+                const candidateBase = {
+                  pageUrl,
+                  pageScore,
+                  resultTitle,
+                  source: extracted.source,
+                };
+                const score = scoreImage(upgradedUrl, candidateBase, titleWords, brandSlug, volumeStr);
+                if (score >= MIN_IMAGE_SCORE) {
+                  candidates.push({ ...candidateBase, url: upgradedUrl, score });
+                }
               }
             }
+          } catch (error) {
+            const status = (error as any)?.status;
+            if (status === 402) {
+              paymentRequired = true;
+              break;
+            }
+            console.error(`[${product.id.slice(0, 8)}] Search error:`, error);
           }
 
-          // Small delay between queries to be respectful
-          await new Promise(r => setTimeout(r, 300));
+          await sleep(250);
         }
 
         if (paymentRequired) {
@@ -321,78 +605,86 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Sort by score descending
-        candidates.sort((a, b) => b.score - a.score);
-
-        // Deduplicate
-        const seen = new Set<string>();
-        const uniqueCandidates: { url: string; score: number }[] = [];
-        for (const c of candidates) {
-          const urlPath = c.url.split("?")[0].toLowerCase().replace(/\/+$/, "");
-          if (seen.has(urlPath)) continue;
-          seen.add(urlPath);
-          uniqueCandidates.push(c);
-          if (uniqueCandidates.length >= 8) break;
+        const deduped = new Map<string, CandidateImage>();
+        for (const candidate of candidates.sort((a, b) => b.score - a.score)) {
+          const key = stripQueryAndHash(candidate.url).toLowerCase();
+          const existing = deduped.get(key);
+          if (!existing || existing.score < candidate.score) {
+            deduped.set(key, candidate);
+          }
         }
 
-        const topScore = uniqueCandidates[0]?.score || 0;
-        console.log(`[${product.id.slice(0,8)}] "${fullName}" → ${uniqueCandidates.length} candidates, top score: ${topScore}`);
+        const uniqueCandidates = Array.from(deduped.values())
+          .sort((a, b) => b.score - a.score)
+          .slice(0, MAX_CANDIDATES);
 
-        // Accept images with score >= 3 (more permissive)
-        if (topScore < 3) {
-          console.log(`[${product.id.slice(0,8)}] ⚠ Score too low (${topScore}) — skipping`);
+        const topScore = uniqueCandidates[0]?.score || 0;
+        console.log(`[${product.id.slice(0, 8)}] "${fullName}" → ${uniqueCandidates.length} candidates, top score: ${topScore}`);
+
+        if (topScore < MIN_IMAGE_SCORE) {
           results.push({ id: product.id, status: "no_confident_match", topScore, title: fullName });
           continue;
         }
 
-        // Verify and save the best image
-        let savedUrl: string | null = null;
-        for (const c of uniqueCandidates) {
-          if (c.score < 3) break; // Don't bother verifying low-score images
-          const ok = await verifyImage(c.url);
-          if (ok) {
-            savedUrl = c.url;
-            console.log(`[${product.id.slice(0,8)}] ✓ Saved: ${c.url} (score: ${c.score})`);
+        let saved: { finalUrl: string; persisted: "storage" | "remote"; candidate: CandidateImage } | null = null;
+        for (let index = 0; index < uniqueCandidates.length; index++) {
+          const candidate = uniqueCandidates[index];
+          const persisted = await persistImage(supabase, product.id, candidate, index);
+          if (persisted) {
+            saved = { ...persisted, candidate };
+            console.log(
+              `[${product.id.slice(0, 8)}] ✓ Saved: ${persisted.finalUrl} (score: ${candidate.score}, source: ${candidate.source}, mode: ${persisted.persisted})`,
+            );
             break;
-          } else {
-            console.log(`[${product.id.slice(0,8)}] ✗ Verify failed: ${c.url}`);
           }
+
+          console.log(`[${product.id.slice(0, 8)}] ✗ Rejected: ${candidate.url} (score: ${candidate.score}, source: ${candidate.source})`);
         }
 
-        if (!savedUrl) {
-          console.log(`[${product.id.slice(0,8)}] No verified images for "${fullName}"`);
-          results.push({ id: product.id, status: "no_images_found", title: fullName });
+        if (!saved) {
+          results.push({ id: product.id, status: "no_images_found", title: fullName, topScore });
           continue;
         }
 
-        await supabase.from("product_images").insert({
+        const { error: insertError } = await supabase.from("product_images").insert({
           product_id: product.id,
-          image_url: savedUrl,
+          image_url: saved.finalUrl,
           sort_order: 0,
         });
 
-        results.push({ id: product.id, status: "success", images: 1, url: savedUrl, title: fullName });
+        if (insertError) throw insertError;
 
-        await new Promise(r => setTimeout(r, 300));
-      } catch (err) {
-        console.error(`Error for ${product.id}:`, err);
-        results.push({ id: product.id, status: "error", error: String(err), title: fullName });
+        results.push({
+          id: product.id,
+          status: "success",
+          images: 1,
+          url: saved.finalUrl,
+          source: saved.candidate.source,
+          persisted: saved.persisted,
+          score: saved.candidate.score,
+          title: fullName,
+        });
+
+        await sleep(250);
+      } catch (error) {
+        console.error(`Error for ${product.id}:`, error);
+        results.push({ id: product.id, status: "error", error: String(error), title: fullName });
       }
     }
 
-    const succeeded = results.filter(r => r.status === "success").length;
-    const skipped = results.filter(r => r.status === "skipped").length;
-    const failed = results.filter(r => r.status !== "success" && r.status !== "skipped").length;
+    const succeeded = results.filter((result) => result.status === "success").length;
+    const skipped = results.filter((result) => result.status === "skipped").length;
+    const failed = results.filter((result) => result.status !== "success" && result.status !== "skipped").length;
 
     return new Response(
       JSON.stringify({ success: true, processed: results.length, succeeded, skipped, failed, results }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (e) {
-    console.error("search-product-images error:", e);
+  } catch (error) {
+    console.error("search-product-images error:", error);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });

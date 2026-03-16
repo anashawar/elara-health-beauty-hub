@@ -624,7 +624,7 @@ export default function AdminProducts() {
     setEnriching(true);
     setEnrichProgress({ done: 0, total: idsWithoutImages.length, current: "Searching for product images..." });
 
-    const BATCH_SIZE = 5;
+    const BATCH_SIZE = 2;
     let totalSuccess = 0;
     let totalFail = 0;
 
