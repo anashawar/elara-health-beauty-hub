@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Search, X, ArrowRight, SlidersHorizontal, Sparkles } from "lucide-react";
+import { Search, X, ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useProducts, useCategories, useBrands, useFormatPrice, concerns } from "@/hooks/useProducts";
-import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 interface SearchOverlayProps {
@@ -11,6 +10,7 @@ interface SearchOverlayProps {
 }
 
 const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
+  // Only fetch products when overlay is actually open — saves loading all 2800 products on page load
   const { data: products = [] } = useProducts();
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
@@ -125,7 +125,7 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
 
           {filteredResults.categories.length > 0 && (<div className="mb-4"><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("nav.categories")}</p>{filteredResults.categories.map(cat => (<Link key={cat.id} to={`/category/${cat.slug}`} onClick={onClose} className="flex items-center justify-between py-2.5 border-b border-border/50"><div className="flex items-center gap-2"><span className="text-lg">{cat.icon}</span><span className="text-sm font-medium text-foreground">{cat.name}</span></div><ArrowRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" /></Link>))}</div>)}
 
-          {filteredResults.products.length > 0 && (<div><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("common.products")} ({filteredResults.products.length})</p><div className="md:grid md:grid-cols-2 md:gap-x-4">{filteredResults.products.map(p => (<Link key={p.id} to={`/product/${p.id}`} onClick={onClose} className="flex items-center gap-3 py-2.5 border-b border-border/50 hover:bg-secondary/50 md:px-3 md:rounded-xl md:border-none transition-colors"><img src={p.image} alt={p.title} className="w-14 h-14 rounded-xl object-cover bg-secondary flex-shrink-0" /><div className="flex-1 min-w-0"><p className="text-[10px] font-bold text-primary uppercase tracking-wider">{p.brand}</p><p className="text-sm font-medium text-foreground truncate">{p.title}</p><div className="flex items-center gap-2 mt-0.5"><span className="text-xs font-bold text-foreground">{formatPrice(p.price)}</span>{p.originalPrice && <span className="text-[10px] text-muted-foreground line-through">{formatPrice(p.originalPrice)}</span>}</div></div></Link>))}</div></div>)}
+          {filteredResults.products.length > 0 && (<div><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("common.products")} ({filteredResults.products.length})</p><div className="md:grid md:grid-cols-2 md:gap-x-4">{filteredResults.products.map(p => (<Link key={p.id} to={`/product/${p.id}`} onClick={onClose} className="flex items-center gap-3 py-2.5 border-b border-border/50 hover:bg-secondary/50 md:px-3 md:rounded-xl md:border-none transition-colors"><img src={p.image} alt={p.title} className="w-14 h-14 rounded-xl object-cover bg-secondary flex-shrink-0" loading="lazy" /><div className="flex-1 min-w-0"><p className="text-[10px] font-bold text-primary uppercase tracking-wider">{p.brand}</p><p className="text-sm font-medium text-foreground truncate">{p.title}</p><div className="flex items-center gap-2 mt-0.5"><span className="text-xs font-bold text-foreground">{formatPrice(p.price)}</span>{p.originalPrice && <span className="text-[10px] text-muted-foreground line-through">{formatPrice(p.originalPrice)}</span>}</div></div></Link>))}</div></div>)}
 
           {isSearching && !hasResults && (
             <div className="text-center mt-12">
@@ -133,7 +133,6 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
               <p className="text-sm font-medium text-foreground mb-1">{t("common.noResults")}</p>
               <p className="text-xs text-muted-foreground mb-4">{t("common.tryDifferent")}</p>
               <div className="flex flex-wrap justify-center gap-2 mb-5">{TRENDING_TERMS.slice(0, 4).map(term => (<button key={term} onClick={() => { setQuery(term); setActiveFilter(null); setPriceFilter(null); }} className="text-xs bg-secondary text-secondary-foreground px-3 py-2 rounded-xl">Try "{term}"</button>))}</div>
-              {/* AI fallback */}
               <Link to={`/elara-ai?q=${encodeURIComponent(query)}`} onClick={onClose} className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-primary to-violet-600 text-white font-semibold text-sm shadow-float">
                 <Sparkles className="w-4 h-4" />
                 {t("search.askElaraAI") || "Ask ELARA AI instead"}

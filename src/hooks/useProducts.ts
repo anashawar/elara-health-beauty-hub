@@ -33,8 +33,63 @@ export interface ProductWithRelations {
   inStock: boolean;
 }
 
+function mapRawProduct(p: any, language: "en" | "ar" | "ku"): ProductWithRelations {
+  const localizedTitle =
+    language === "ar" ? (p.title_ar || p.title) : language === "ku" ? (p.title_ku || p.title) : p.title;
+  const localizedDescription =
+    language === "ar"
+      ? (p.description_ar || p.description || "")
+      : language === "ku"
+        ? (p.description_ku || p.description || "")
+        : (p.description || "");
+  const localizedBenefits =
+    language === "ar"
+      ? (p.benefits_ar || p.benefits || [])
+      : language === "ku"
+        ? (p.benefits_ku || p.benefits || [])
+        : (p.benefits || []);
+  const localizedUsage =
+    language === "ar"
+      ? (p.usage_instructions_ar || p.usage_instructions || "")
+      : language === "ku"
+        ? (p.usage_instructions_ku || p.usage_instructions || "")
+        : (p.usage_instructions || "");
+
+  return {
+    id: p.id,
+    title: localizedTitle,
+    slug: p.slug,
+    brand: p.brands?.name || "",
+    brand_id: p.brand_id,
+    category_id: p.category_id,
+    category_slug: p.categories?.slug || null,
+    subcategory_id: p.subcategory_id || null,
+    price: Number(p.price),
+    originalPrice: p.original_price ? Number(p.original_price) : null,
+    image: p.product_images?.[0]?.image_url || "/placeholder.svg",
+    images: (p.product_images || [])
+      .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+      .map((img: any) => img.image_url),
+    tags: (p.product_tags || []).map((t: any) => t.tag),
+    description: localizedDescription,
+    benefits: localizedBenefits,
+    usage: localizedUsage,
+    isNew: p.is_new || false,
+    isTrending: p.is_trending || false,
+    isPick: p.is_pick || false,
+    country_of_origin: p.country_of_origin,
+    form: p.form,
+    gender: p.gender,
+    volume_ml: p.volume_ml,
+    volume_unit: p.volume_unit || "ml",
+    application: p.application,
+    skin_type: p.skin_type,
+    condition: p.condition || null,
+    inStock: p.in_stock !== false,
+  };
+}
+
 async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithRelations[]> {
-  // Paginate to fetch ALL products (default limit is 1000)
   let allProducts: any[] = [];
   let from = 0;
   const PAGE = 1000;
@@ -56,63 +111,7 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
     from += PAGE;
   }
 
-  return (allProducts || []).map((p: any) => {
-    const localizedTitle =
-      language === "ar" ? (p.title_ar || p.title) : language === "ku" ? (p.title_ku || p.title) : p.title;
-    const localizedDescription =
-      language === "ar"
-        ? (p.description_ar || p.description || "")
-        : language === "ku"
-          ? (p.description_ku || p.description || "")
-          : (p.description || "");
-    const localizedBenefits =
-      language === "ar"
-        ? (p.benefits_ar || p.benefits || [])
-        : language === "ku"
-          ? (p.benefits_ku || p.benefits || [])
-          : (p.benefits || []);
-    const localizedUsage =
-      language === "ar"
-        ? (p.usage_instructions_ar || p.usage_instructions || "")
-        : language === "ku"
-          ? (p.usage_instructions_ku || p.usage_instructions || "")
-          : (p.usage_instructions || "");
-
-    const localizedBrand = p.brands?.name || "";
-
-    return {
-      id: p.id,
-      title: localizedTitle,
-      slug: p.slug,
-      brand: localizedBrand,
-      brand_id: p.brand_id,
-      category_id: p.category_id,
-      category_slug: p.categories?.slug || null,
-      subcategory_id: p.subcategory_id || null,
-      price: Number(p.price),
-      originalPrice: p.original_price ? Number(p.original_price) : null,
-      image: p.product_images?.[0]?.image_url || "/placeholder.svg",
-      images: (p.product_images || [])
-        .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
-        .map((img: any) => img.image_url),
-      tags: (p.product_tags || []).map((t: any) => t.tag),
-      description: localizedDescription,
-      benefits: localizedBenefits,
-      usage: localizedUsage,
-      isNew: p.is_new || false,
-      isTrending: p.is_trending || false,
-      isPick: p.is_pick || false,
-      country_of_origin: p.country_of_origin,
-      form: p.form,
-      gender: p.gender,
-      volume_ml: p.volume_ml,
-      volume_unit: p.volume_unit || "ml",
-      application: p.application,
-      skin_type: p.skin_type,
-      condition: p.condition || null,
-      inStock: p.in_stock !== false,
-    };
-  });
+  return allProducts.map((p: any) => mapRawProduct(p, language));
 }
 
 export function useProducts() {
@@ -124,12 +123,71 @@ export function useProducts() {
   });
 }
 
+/**
+ * Fetch a single product by ID — much faster than loading all products.
+ * Falls back gracefully if product not found.
+ */
 export function useProduct(id: string | undefined) {
-  const { data: products, ...rest } = useProducts();
-  return {
-    ...rest,
-    data: products?.find((p) => p.id === id),
-  };
+  const { language } = useLanguage();
+
+  return useQuery<ProductWithRelations | null>({
+    queryKey: ["product", id, language],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          *,
+          brands ( name, name_ar, name_ku ),
+          categories ( slug ),
+          product_images ( image_url, sort_order ),
+          product_tags ( tag )
+        `)
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      return mapRawProduct(data, language);
+    },
+    enabled: !!id,
+  });
+}
+
+/**
+ * Fetch related products by category — limited to 8 for performance.
+ */
+export function useRelatedProducts(categoryId: string | null | undefined, excludeId: string | undefined) {
+  const { language } = useLanguage();
+
+  return useQuery<ProductWithRelations[]>({
+    queryKey: ["related-products", categoryId, excludeId, language],
+    queryFn: async () => {
+      if (!categoryId) return [];
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          id, title, title_ar, title_ku, slug, price, original_price,
+          is_new, is_trending, is_pick, in_stock,
+          brand_id, category_id, subcategory_id,
+          brands ( name, name_ar, name_ku ),
+          categories ( slug ),
+          product_images ( image_url, sort_order )
+        `)
+        .eq("category_id", categoryId)
+        .neq("id", excludeId || "")
+        .limit(8)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []).map((p: any) => ({
+        ...mapRawProduct({ ...p, product_tags: [] }, language),
+        tags: [],
+        description: "",
+        benefits: [],
+        usage: "",
+      }));
+    },
+    enabled: !!categoryId,
+  });
 }
 
 export interface CategoryRow {
