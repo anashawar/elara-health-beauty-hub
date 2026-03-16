@@ -36,10 +36,12 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8 scroll-bounce" style={{ minHeight: '-webkit-fill-available' }}>
+      <MobileAppTopStrip />
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <TopHeader onSearchClick={() => setSearchOpen(true)} />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
+      <MobileAppHeroBanner />
       <HeroBanner />
 
       {/* Desktop: constrained width content */}
