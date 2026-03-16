@@ -200,6 +200,80 @@ export default function AboutPage() {
           ))}
         </motion.div>
 
+        {/* ELARA AI — Hero Feature Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="mt-10 rounded-3xl overflow-hidden relative border border-primary/20"
+        >
+          {/* Gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-accent" />
+          <div className="absolute inset-0 opacity-30" style={{
+            background: 'radial-gradient(circle at 80% 20%, hsl(352 42% 55% / 0.5) 0%, transparent 50%), radial-gradient(circle at 20% 80%, hsl(38 70% 55% / 0.4) 0%, transparent 50%)'
+          }} />
+
+          {/* Floating orbs */}
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-background/10 blur-2xl"
+          />
+          <motion.div
+            animate={{ scale: [1, 1.3, 1], opacity: [0.08, 0.15, 0.08] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            className="absolute -bottom-6 -left-6 w-28 h-28 rounded-full bg-background/10 blur-2xl"
+          />
+
+          <div className="relative p-6 md:p-8 z-10">
+            {/* Badge */}
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-foreground/70 bg-background/15 backdrop-blur-sm px-3 py-1.5 rounded-full border border-background/10 mb-4">
+              {c.aiSection.badge}
+            </span>
+
+            <div className="flex items-center gap-3 mb-3">
+              <motion.div
+                animate={{ rotate: [0, 5, -5, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="w-12 h-12 rounded-2xl bg-background/15 backdrop-blur-md border border-background/20 flex items-center justify-center"
+              >
+                <Sparkles className="w-6 h-6 text-primary-foreground" />
+              </motion.div>
+              <h2 className="text-xl md:text-2xl font-display font-black text-primary-foreground">
+                {c.aiSection.title}
+              </h2>
+            </div>
+
+            <p className="text-sm font-semibold text-primary-foreground/90 mb-2">{c.aiSection.subtitle}</p>
+            <p className="text-xs text-primary-foreground/65 leading-relaxed mb-5">{c.aiSection.desc}</p>
+
+            {/* AI features */}
+            <div className="space-y-2.5 mb-5">
+              {c.aiSection.features.map((f, i) => {
+                const FIcon = aiFeatureIcons[f.icon as keyof typeof aiFeatureIcons];
+                return (
+                  <div key={i} className="flex items-start gap-3 bg-background/10 backdrop-blur-sm rounded-xl p-3 border border-background/10">
+                    <div className="w-8 h-8 rounded-lg bg-background/15 flex items-center justify-center flex-shrink-0">
+                      <FIcon className="w-4 h-4 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-primary-foreground">{f.label}</h4>
+                      <p className="text-[11px] text-primary-foreground/60 mt-0.5">{f.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* CTA */}
+            <Link to="/elara-ai" className="inline-flex items-center gap-2 bg-background text-primary font-bold text-sm px-5 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+              <Sparkles className="w-4 h-4" />
+              {c.aiSection.cta}
+              <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+            </Link>
+          </div>
+        </motion.div>
+
         {/* Differentiators */}
         <div className="mt-12">
           <motion.h2 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-lg md:text-xl font-display font-bold text-foreground mb-5">
