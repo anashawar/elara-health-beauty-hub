@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApp } from "@/context/AppContext";
+import NativeAppGate from "@/components/NativeAppGate";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
