@@ -19,6 +19,7 @@ const ConcernsSection = lazy(() => import("@/components/home/ConcernsSection"));
 const DealsBanner = lazy(() => import("@/components/home/DealsBanner"));
 const AppDownloadBanner = lazy(() => import("@/components/home/AppDownloadBanner"));
 const WhyElaraBanner = lazy(() => import("@/components/home/WhyElaraBanner"));
+import { MobileAppTopStrip, MobileAppHeroBanner, MobileAppInlineBanner } from "@/components/home/MobileAppBanners";
 
 const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -35,10 +36,12 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8 scroll-bounce" style={{ minHeight: '-webkit-fill-available' }}>
+      <MobileAppTopStrip />
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <TopHeader onSearchClick={() => setSearchOpen(true)} />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
+      <MobileAppHeroBanner />
       <HeroBanner />
 
       {/* Desktop: constrained width content */}
@@ -80,6 +83,8 @@ const Index = () => {
         <Suspense fallback={null}>
           <ConcernsSection />
         </Suspense>
+
+        <MobileAppInlineBanner />
 
         <Suspense fallback={null}>
           <DealsBanner />
