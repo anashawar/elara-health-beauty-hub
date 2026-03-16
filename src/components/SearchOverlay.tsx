@@ -118,7 +118,7 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
               <div>
                 <div className="flex items-center gap-1.5 mb-3"><Sparkles className="w-3.5 h-3.5 text-primary" /><p className="text-xs font-bold text-foreground uppercase tracking-wider">{t("search.recommendedForYou")}</p></div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {SMART_SUGGESTIONS.map(s => (<button key={s.query} onClick={() => setQuery(s.query)} className="flex items-center gap-2 px-3 py-2.5 bg-card md:bg-secondary/50 rounded-xl border border-border/50 hover:border-primary/30 transition-all text-left rtl:text-right"><span className="text-base">{s.icon}</span><span className="text-xs font-medium text-foreground leading-tight">{s.label}</span></button>))}
+                  {SMART_SUGGESTIONS.map(s => (<button key={s.query} onClick={() => { setQuery(s.query); setDebouncedQuery(s.query); }} className="flex items-center gap-2 px-3 py-2.5 bg-card md:bg-secondary/50 rounded-xl border border-border/50 hover:border-primary/30 transition-all text-left rtl:text-right"><span className="text-base">{s.icon}</span><span className="text-xs font-medium text-foreground leading-tight">{s.label}</span></button>))}
                 </div>
               </div>
               <div>
