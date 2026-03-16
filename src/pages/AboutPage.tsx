@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Sparkles, Globe, Users, ShieldCheck, Heart, ArrowRight, Gift, Truck } from "lucide-react";
+import { Sparkles, Globe, Users, ShieldCheck, Heart, ArrowRight, Gift, Truck, BrainCircuit, MessageCircle, Scan } from "lucide-react";
+import { Link } from "react-router-dom";
 import PageShell from "@/components/layout/PageShell";
 import elaraBanner from "@/assets/elara-banner.webp";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -19,9 +20,20 @@ const content = {
       { value: "3,000+", label: "Products" },
       { value: "250+", label: "Brands" },
     ],
+    aiSection: {
+      badge: "🇮🇶 First of its kind in Iraq",
+      title: "Meet ELARA AI",
+      subtitle: "Your personal AI beauty & health consultant — built right into the platform.",
+      desc: "ELARA AI is the first AI-powered beauty assistant in Iraq. It understands your skin, your concerns, and your goals — then gives you expert-level advice, personalized routines, and smart product recommendations in Arabic, Kurdish, and English.",
+      features: [
+        { icon: "brain", label: "AI Beauty Consultant", desc: "Get personalized skincare & grooming advice 24/7" },
+        { icon: "scan", label: "Smart Skin Analysis", desc: "AI-powered analysis tailored to your skin type & concerns" },
+        { icon: "chat", label: "Ask Anything", desc: "Chat naturally about products, routines, or ingredients" },
+      ],
+      cta: "Try ELARA AI",
+    },
     diffTitle: "What makes ELARA different?",
     diffs: [
-      { title: "Smart & Personal", desc: "AI beauty consultant, smart search, and personalized routines powered by Elara AI" },
       { title: "Multilingual & Local", desc: "Arabic, Kurdish, and English — we speak your language" },
       { title: "Rewards & Loyalty", desc: "Earn points on every order and redeem exclusive rewards with ELARA Rewards" },
       { title: "Only Original", desc: "Every product is verified authentic — 100% genuine, zero compromise" },
@@ -51,9 +63,20 @@ const content = {
       { value: "+3,000", label: "منتج" },
       { value: "+250", label: "براند" },
     ],
+    aiSection: {
+      badge: "🇮🇶 الأول من نوعه في العراق",
+      title: "تعرّف على إيلارا AI",
+      subtitle: "مستشارك الشخصي للجمال والصحة بالذكاء الاصطناعي — مدمج داخل المنصة.",
+      desc: "إيلارا AI هو أول مساعد جمال بالذكاء الاصطناعي في العراق. يفهم بشرتك، مخاوفك، وأهدافك — ويعطيك نصائح بمستوى خبير، روتينات مخصصة، وتوصيات ذكية بالعربي، الكردي، والإنگليزي.",
+      features: [
+        { icon: "brain", label: "مستشار جمال AI", desc: "نصائح مخصصة للعناية بالبشرة والعناية الشخصية ٢٤/٧" },
+        { icon: "scan", label: "تحليل البشرة الذكي", desc: "تحليل بالذكاء الاصطناعي مخصص لنوع بشرتك ومخاوفك" },
+        { icon: "chat", label: "اسأل أي شي", desc: "دردش بشكل طبيعي عن المنتجات، الروتينات، أو المكونات" },
+      ],
+      cta: "جرّب إيلارا AI",
+    },
     diffTitle: "شنو يميّز إيلارا؟",
     diffs: [
-      { title: "ذكية وشخصية", desc: "مستشار جمال بالذكاء الاصطناعي، بحث ذكي، وروتين مخصص إلك من إيلارا AI" },
       { title: "متعددة اللغات ومحلية", desc: "عربي، كردي، وإنگليزي — نحچي لغتك" },
       { title: "مكافآت وولاء", desc: "اكسب نقاط على كل طلب واستبدلها بمكافآت حصرية مع مكافآت إيلارا" },
       { title: "أصلي فقط", desc: "كل منتج موثق أصلي — 100% حقيقي، بدون تنازل" },
@@ -83,9 +106,20 @@ const content = {
       { value: "+3,000", label: "بەرهەم" },
       { value: "+250", label: "براند" },
     ],
+    aiSection: {
+      badge: "🇮🇶 یەکەمین لە جۆری خۆی لە عێراق",
+      title: "ئێلارا AI بناسە",
+      subtitle: "ڕاوێژکاری تایبەتی AIی جوانی و تەندروستیت — لەناو پلاتفۆرمەکە دروستکراوە.",
+      desc: "ئێلارا AI یەکەمین یاریدەدەری جوانکارییە بە زیرەکی دەستکرد لە عێراق. پێستت، نیگەرانییەکانت، و ئامانجەکانت تێدەگات — پاشان ڕاوێژی پسپۆڕانە، ڕووتینی تایبەت، و پێشنیاری بەرهەمی زیرەک پێشکەشت دەکات بە عەرەبی، کوردی، و ئینگلیزی.",
+      features: [
+        { icon: "brain", label: "ڕاوێژکاری جوانی AI", desc: "ڕاوێژی تایبەت بۆ چاودێری پێست و خۆتاشین ٢٤/٧" },
+        { icon: "scan", label: "شیکردنەوەی پێستی زیرەک", desc: "شیکردنەوە بە AI تایبەت بە جۆری پێست و نیگەرانییەکانت" },
+        { icon: "chat", label: "هەرچییەک بپرسە", desc: "بە شێوەیەکی ئاسایی قسە بکە دەربارەی بەرهەم، ڕووتین، یان پێکهاتەکان" },
+      ],
+      cta: "ئێلارا AI تاقی بکەرەوە",
+    },
     diffTitle: "چی ئێلارا جیاواز دەکات؟",
     diffs: [
-      { title: "زیرەک و کەسی", desc: "ڕاوێژکاری جوانکاری بە زیرەکی دەستکرد، گەڕانی زیرەک، و ڕووتینی تایبەت بە تۆ لە ئێلارا AI" },
       { title: "فرەزمان و خۆجێیی", desc: "عەرەبی، کوردی، و ئینگلیزی — بە زمانی تۆ قسە دەکەین" },
       { title: "خەڵات و وەفاداری", desc: "لە هەر داواکارییەکدا خاڵ بەدەستبهێنە و خەڵاتی تایبەت بگۆڕە لەگەڵ خەڵاتەکانی ئێلارا" },
       { title: "تەنها ئەسڵی", desc: "هەموو بەرهەمێک پشتڕاستکراو و ئەسڵییە — 100% ڕاستەقینە، بێ گوزەشت" },
@@ -103,7 +137,9 @@ const content = {
   },
 };
 
-const diffIcons = [Sparkles, Globe, Heart, ShieldCheck, Users];
+const diffIcons = [Globe, Heart, ShieldCheck, Truck];
+
+const aiFeatureIcons = { brain: BrainCircuit, scan: Scan, chat: MessageCircle };
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -162,6 +198,80 @@ export default function AboutPage() {
               <p className="text-[11px] md:text-xs text-muted-foreground mt-1 font-medium">{s.label}</p>
             </div>
           ))}
+        </motion.div>
+
+        {/* ELARA AI — Hero Feature Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="mt-10 rounded-3xl overflow-hidden relative border border-primary/20"
+        >
+          {/* Gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-accent" />
+          <div className="absolute inset-0 opacity-30" style={{
+            background: 'radial-gradient(circle at 80% 20%, hsl(352 42% 55% / 0.5) 0%, transparent 50%), radial-gradient(circle at 20% 80%, hsl(38 70% 55% / 0.4) 0%, transparent 50%)'
+          }} />
+
+          {/* Floating orbs */}
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-background/10 blur-2xl"
+          />
+          <motion.div
+            animate={{ scale: [1, 1.3, 1], opacity: [0.08, 0.15, 0.08] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            className="absolute -bottom-6 -left-6 w-28 h-28 rounded-full bg-background/10 blur-2xl"
+          />
+
+          <div className="relative p-6 md:p-8 z-10">
+            {/* Badge */}
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-primary-foreground/70 bg-background/15 backdrop-blur-sm px-3 py-1.5 rounded-full border border-background/10 mb-4">
+              {c.aiSection.badge}
+            </span>
+
+            <div className="flex items-center gap-3 mb-3">
+              <motion.div
+                animate={{ rotate: [0, 5, -5, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="w-12 h-12 rounded-2xl bg-background/15 backdrop-blur-md border border-background/20 flex items-center justify-center"
+              >
+                <Sparkles className="w-6 h-6 text-primary-foreground" />
+              </motion.div>
+              <h2 className="text-xl md:text-2xl font-display font-black text-primary-foreground">
+                {c.aiSection.title}
+              </h2>
+            </div>
+
+            <p className="text-sm font-semibold text-primary-foreground/90 mb-2">{c.aiSection.subtitle}</p>
+            <p className="text-xs text-primary-foreground/65 leading-relaxed mb-5">{c.aiSection.desc}</p>
+
+            {/* AI features */}
+            <div className="space-y-2.5 mb-5">
+              {c.aiSection.features.map((f, i) => {
+                const FIcon = aiFeatureIcons[f.icon as keyof typeof aiFeatureIcons];
+                return (
+                  <div key={i} className="flex items-start gap-3 bg-background/10 backdrop-blur-sm rounded-xl p-3 border border-background/10">
+                    <div className="w-8 h-8 rounded-lg bg-background/15 flex items-center justify-center flex-shrink-0">
+                      <FIcon className="w-4 h-4 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-primary-foreground">{f.label}</h4>
+                      <p className="text-[11px] text-primary-foreground/60 mt-0.5">{f.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* CTA */}
+            <Link to="/elara-ai" className="inline-flex items-center gap-2 bg-background text-primary font-bold text-sm px-5 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+              <Sparkles className="w-4 h-4" />
+              {c.aiSection.cta}
+              <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+            </Link>
+          </div>
         </motion.div>
 
         {/* Differentiators */}
