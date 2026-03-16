@@ -2,6 +2,7 @@ import { useState, lazy, Suspense } from "react";
 import TopHeader from "@/components/layout/TopHeader";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import BottomNav from "@/components/layout/BottomNav";
+import DesktopFooter from "@/components/layout/DesktopFooter";
 import HeroBanner from "@/components/home/HeroBanner";
 import CategoryGrid from "@/components/home/CategoryGrid";
 import AskElaraCard from "@/components/home/AskElaraCard";
@@ -115,14 +116,10 @@ const Index = () => {
           </Suspense>
         </div>
 
-        <footer className="mt-8 mb-4 px-4 text-center md:py-10 md:border-t md:border-border">
+        <DesktopFooter />
+
+        <footer className="mt-8 mb-4 px-4 text-center md:hidden">
           <p className="text-xs text-muted-foreground">ELARA — {t("common.tagline")}</p>
-          <div className="hidden md:flex items-center justify-center gap-6 mt-4">
-            <a href="/about" className="text-xs text-muted-foreground hover:text-foreground transition-colors">{t("profile.aboutElara")}</a>
-            <a href="/faq" className="text-xs text-muted-foreground hover:text-foreground transition-colors">{t("profile.faq")}</a>
-            <a href="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">{t("profile.termsConditions")}</a>
-            <a href="/privacy" className="text-xs text-muted-foreground hover:text-foreground transition-colors">{t("profile.privacyPolicy")}</a>
-          </div>
         </footer>
       </div>
 
