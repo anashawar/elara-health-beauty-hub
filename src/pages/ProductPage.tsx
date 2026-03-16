@@ -111,8 +111,41 @@ const ProductPage = () => {
     if (sliderRef.current) setCurrentSlide(Math.round(sliderRef.current.scrollLeft / sliderRef.current.offsetWidth));
   };
 
+  const brandObj = brands.find((b: any) => b.id === product.brand_id);
+  const brandName = brandObj?.name || "";
+  const productImage = images[0] || "";
+  const seoTitle = `${product.title}${brandName ? ` by ${brandName}` : ""} — Buy in Iraq`;
+  const seoDesc = product.description
+    ? product.description.slice(0, 155)
+    : `Buy ${product.title} online in Iraq. Original product, fast delivery. Shop on ELARA.`;
+
   return (
     <div className="min-h-screen bg-background pb-36 md:pb-8">
+      <SEOHead
+        title={seoTitle}
+        description={seoDesc}
+        canonical={`https://elara-health-beauty-hub.lovable.app/product/${product.slug}`}
+        image={productImage}
+        type="product"
+        keywords={`${product.title}, ${brandName}, buy ${product.title} iraq, ${brandName} iraq, beauty iraq, skincare iraq`}
+        jsonLd={[
+          productJsonLd({
+            title: product.title,
+            description: product.description || undefined,
+            price: displayPrice,
+            originalPrice: originalDisplayPrice || undefined,
+            image: productImage,
+            slug: product.slug,
+            brandName: brandName || undefined,
+            inStock: product.inStock,
+          }),
+          breadcrumbJsonLd([
+            { name: "ELARA", url: "https://elara-health-beauty-hub.lovable.app" },
+            { name: "Shop", url: "https://elara-health-beauty-hub.lovable.app/shop" },
+            { name: product.title, url: `https://elara-health-beauty-hub.lovable.app/product/${product.slug}` },
+          ]),
+        ]}
+      />
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
