@@ -137,7 +137,9 @@ const content = {
   },
 };
 
-const diffIcons = [Sparkles, Globe, Heart, ShieldCheck, Users];
+const diffIcons = [Globe, Heart, ShieldCheck, Truck];
+
+const aiFeatureIcons = { brain: BrainCircuit, scan: Scan, chat: MessageCircle };
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
