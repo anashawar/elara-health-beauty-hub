@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Search, X, ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useProducts, useCategories, useBrands, useFormatPrice, concerns } from "@/hooks/useProducts";
@@ -10,16 +10,17 @@ interface SearchOverlayProps {
 }
 
 const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
-  // Only fetch products when overlay is actually open — saves loading all 2800 products on page load
   const { data: products = [] } = useProducts();
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
   const { t } = useLanguage();
   const formatPrice = useFormatPrice();
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [priceFilter, setPriceFilter] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const SMART_SUGGESTIONS = [
     { label: t("search.bestForAcne"), query: "acne", icon: "🎯" },
@@ -34,17 +35,35 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
 
   const TRENDING_TERMS = ["CeraVe", "Retinol", "Niacinamide", "Collagen", "Hair Serum", "SPF"];
 
+  // Debounce search query (300ms)
+  const handleQueryChange = useCallback((value: string) => {
+    setQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedQuery(value), 300);
+  }, []);
+
   useEffect(() => {
     if (isOpen) { setTimeout(() => inputRef.current?.focus(), 100); }
-    else { setQuery(""); setActiveFilter(null); setPriceFilter(null); }
+    else { setQuery(""); setDebouncedQuery(""); setActiveFilter(null); setPriceFilter(null); }
   }, [isOpen]);
 
+  // Cleanup debounce on unmount
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
+
+  // Pre-build a search index once when products change
+  const searchIndex = useMemo(() => {
+    return products.map(p => ({
+      product: p,
+      searchText: [p.title, p.brand, p.description, p.skin_type, p.application, p.form, p.country_of_origin, ...(p.tags || []), ...(p.benefits || [])].filter(Boolean).join(" ").toLowerCase(),
+    }));
+  }, [products]);
+
   const filteredResults = useMemo(() => {
-    if (query.length < 2 && !activeFilter && !priceFilter) return { products: [], categories: [], brands: [] };
-    const q = query.toLowerCase();
-    let matchedProducts = products.filter(p => {
-      const searchFields = [p.title, p.brand, p.description, p.skin_type, p.application, p.form, p.country_of_origin, ...(p.tags || []), ...(p.benefits || [])].filter(Boolean).join(" ").toLowerCase();
-      const matchesQuery = q.length >= 2 ? searchFields.includes(q) : true;
+    const q = debouncedQuery.toLowerCase();
+    if (q.length < 2 && !activeFilter && !priceFilter) return { products: [], categories: [], brands: [] };
+
+    let matchedProducts = searchIndex.filter(({ product: p, searchText }) => {
+      const matchesQuery = q.length >= 2 ? searchText.includes(q) : true;
       let matchesPrice = true;
       if (priceFilter === "under15k") matchesPrice = p.price < 15000;
       else if (priceFilter === "15k-30k") matchesPrice = p.price >= 15000 && p.price <= 30000;
@@ -58,14 +77,15 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
         } else { matchesFilter = p.category_slug === activeFilter; }
       }
       return matchesQuery && matchesPrice && matchesFilter;
-    });
+    }).map(({ product }) => product);
+
     if (q === "budget") matchedProducts = products.filter(p => p.price < 15000).sort((a, b) => a.price - b.price);
     return {
       products: matchedProducts.slice(0, 20),
       categories: q.length >= 2 ? categories.filter(c => c.name.toLowerCase().includes(q)) : [],
       brands: q.length >= 2 ? brands.filter(b => b.name.toLowerCase().includes(q)) : [],
     };
-  }, [query, activeFilter, priceFilter, products, categories, brands]);
+  }, [debouncedQuery, activeFilter, priceFilter, searchIndex, products, categories, brands]);
 
   const hasResults = filteredResults.products.length > 0 || filteredResults.categories.length > 0 || filteredResults.brands.length > 0;
   const isSearching = query.length >= 2 || activeFilter || priceFilter;
