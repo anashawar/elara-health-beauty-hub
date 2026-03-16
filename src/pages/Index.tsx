@@ -49,6 +49,7 @@ const Index = () => {
         <CategoryGrid />
 
         <AskElaraCard />
+        <SkinScanBanner />
 
         {isLoading ? (
           <>
