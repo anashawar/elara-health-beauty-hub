@@ -13,6 +13,7 @@ import {
   Percent,
   Bell,
   Languages,
+  ImagePlus,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -45,6 +46,7 @@ const navItems = [
   { title: "Coupons", url: "/admin/coupons", icon: Ticket },
   { title: "Notifications", url: "/admin/notifications", icon: Bell },
   { title: "Translate", url: "/admin/translate", icon: Languages },
+  { title: "Image Finder", url: "/admin/images", icon: ImagePlus },
 ];
 
 export default function AdminSidebar() {
