@@ -14,7 +14,7 @@ import { useLoyaltyPoints, TIER_THRESHOLDS } from "@/hooks/useLoyalty";
 const ProfilePage = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [searchOpen, setSearchOpen] = useState(false);
 
   const { data: profile } = useQuery({
