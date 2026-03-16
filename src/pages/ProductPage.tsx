@@ -15,6 +15,7 @@ import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
 import ReviewSection from "@/components/product/ReviewSection";
 import { useLanguage } from "@/i18n/LanguageContext";
+import SEOHead, { productJsonLd, breadcrumbJsonLd } from "@/components/SEOHead";
 const AppDownloadBanner = lazy(() => import("@/components/home/AppDownloadBanner"));
 import { ProductPageAppBanner } from "@/components/home/MobileAppBanners";
 import ImageZoomViewer from "@/components/product/ImageZoomViewer";
