@@ -232,6 +232,20 @@ function SkinScanContent() {
       clearInterval(stepInterval);
 
       if (error) throw error;
+      
+      // Handle no face detected
+      if (data?.error === "no_face_detected") {
+        const noFaceMsg = language === "ar" 
+          ? "⚠️ لم يتم اكتشاف وجه! يرجى رفع صورة واضحة لوجهك فقط." 
+          : language === "ku" 
+            ? "⚠️ دەموچاو نەدۆزرایەوە! تکایە تەنها وێنەیەکی ڕوون لە دەموچاوت هەڵبگرە."
+            : "⚠️ No face detected! Please upload a clear photo of your face only.";
+        toast.error(noFaceMsg, { duration: 5000 });
+        setPhase("capture");
+        setCapturedImage(null);
+        return;
+      }
+      
       if (data?.error) throw new Error(data.error);
 
       const result = data.analysis as Analysis;
