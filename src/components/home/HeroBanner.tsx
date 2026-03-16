@@ -180,7 +180,7 @@ const HeroBanner = memo(() => {
         className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden no-scrollbar h-full touch-pan-x md:touch-auto md:overflow-x-hidden"
         style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch", overscrollBehaviorY: "none" }}
       >
-        {banners.map((banner) => (
+        {banners.map((banner, idx) => (
           <div
             key={banner.id}
             className="w-full flex-shrink-0 snap-center relative h-full"
