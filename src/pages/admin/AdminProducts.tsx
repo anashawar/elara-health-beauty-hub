@@ -1089,7 +1089,7 @@ export default function AdminProducts() {
                 </div>
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <Label>Skin Concerns <span className="text-muted-foreground font-normal">(multi-select)</span></Label>
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   {[
