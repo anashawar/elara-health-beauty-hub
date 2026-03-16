@@ -65,6 +65,12 @@ Analyze the provided face photo and return a detailed JSON response with this EX
   "elasticity_score": <number 0-100>,
   "clarity_score": <number 0-100>,
   "texture_score": <number 0-100>,
+  "acne_score": <number 0-100, where 100 = no acne at all, 0 = severe acne>,
+  "pigmentation_score": <number 0-100, where 100 = perfectly even tone, 0 = severe hyperpigmentation/dark spots>,
+  "dryness_score": <number 0-100, where 100 = perfectly moisturized, 0 = extremely dry/flaky>,
+  "oiliness_score": <number 0-100, where 100 = no excess oil, 0 = extremely oily/shiny>,
+  "pores_score": <number 0-100, where 100 = barely visible pores, 0 = very enlarged pores>,
+  "dark_circles_score": <number 0-100, where 100 = no dark circles, 0 = severe dark circles>,
   "problems": [
     {
       "name": "<problem name>",
@@ -97,7 +103,10 @@ IMPORTANT:
 - Only return valid JSON, no markdown or extra text
 - Recommend 3-8 products from the provided list that match the skin needs
 - If no face is clearly visible, still provide general analysis based on what you can see
-- Scores should reflect realistic assessment, not always high`;
+- Scores should reflect realistic assessment, not always high
+- PAY SPECIAL ATTENTION to common concerns in Iraq/Middle East: acne, pigmentation/dark spots, dryness, oiliness, enlarged pores, and dark circles
+- Always provide acne_score, pigmentation_score, dryness_score, oiliness_score, pores_score, and dark_circles_score even if the concern is minimal
+- In the problems array, always check for and include: acne (even mild), hyperpigmentation, dark spots, sun damage, dryness, dehydration, oily T-zone, enlarged pores, dark circles if detected`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
