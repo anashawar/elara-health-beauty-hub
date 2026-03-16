@@ -44,6 +44,7 @@ const ProfilePage = () => {
   const tierInfo = TIER_THRESHOLDS[loyaltyTier as keyof typeof TIER_THRESHOLDS] || TIER_THRESHOLDS.bronze;
 
   const menuItems = [
+    { icon: Scan, label: language === "ar" ? "تحليل البشرة AI" : language === "ku" ? "شیکردنەوەی پێست AI" : "AI Skin Scan", path: "/skin-scan" },
     { icon: Package, label: t("profile.myOrders"), path: "/orders" },
     { icon: Heart, label: t("profile.wishlist"), path: "/wishlist" },
     { icon: MapPin, label: t("profile.addresses"), path: "/addresses" },
