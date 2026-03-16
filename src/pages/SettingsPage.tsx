@@ -361,6 +361,7 @@ const SettingsPage = () => {
                 </div>
               </div>
 
+              <div className="bg-card rounded-2xl shadow-premium overflow-hidden">
                 <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-4 hover:bg-destructive/5 transition-colors text-destructive">
                   <LogOut className="w-5 h-5" />
                   <span className="text-sm font-medium">{t("common.signOut")}</span>
