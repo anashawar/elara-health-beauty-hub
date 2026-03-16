@@ -10,6 +10,7 @@ import { toast } from "@/components/ui/sonner";
 import BottomNav from "@/components/layout/BottomNav";
 import NativeAppGate from "@/components/NativeAppGate";
 import { generateSkinReportPdf } from "@/lib/generateSkinReportPdf";
+import { savePdfBlob } from "@/lib/savePdfBlob";
 import { useQuery } from "@tanstack/react-query";
 
 type Phase = "capture" | "scanning" | "results";
