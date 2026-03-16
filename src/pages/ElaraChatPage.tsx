@@ -916,4 +916,10 @@ const ElaraChatPage = () => {
   );
 };
 
-export default ElaraChatPage;
+const ElaraChatPageWrapper = () => (
+  <NativeAppGate featureName="ELARA AI">
+    <ElaraChatPage />
+  </NativeAppGate>
+);
+
+export default ElaraChatPageWrapper;
