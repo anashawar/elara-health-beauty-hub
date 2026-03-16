@@ -83,7 +83,7 @@ const ProductPage = () => {
       ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
       : 0;
 
-  const related = allProducts.filter(p => p.category_slug === product.category_slug && p.id !== product.id).slice(0, 4);
+  // related products are fetched via useRelatedProducts hook above
 
   const outOfStock = product ? !product.inStock : false;
 
