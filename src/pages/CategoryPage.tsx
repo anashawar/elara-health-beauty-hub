@@ -126,8 +126,6 @@ const CategoryPage = () => {
   };
 
   const activeSubName = activeSubId ? categorySubs.find(s => s.id === activeSubId) : null;
-
-  return (
   const pageName = activeConcern?.name || (category ? getCatName(category) : t("categories.allProducts"));
 
   return (
