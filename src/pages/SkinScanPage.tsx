@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "@/components/ui/sonner";
 import BottomNav from "@/components/layout/BottomNav";
+import NativeAppGate from "@/components/NativeAppGate";
 import { useQuery } from "@tanstack/react-query";
 
 type Phase = "capture" | "scanning" | "results";
@@ -85,6 +86,14 @@ const ScoreRing = ({ score, size = 80, label, color }: { score: number; size?: n
 };
 
 export default function SkinScanPage() {
+  return (
+    <NativeAppGate featureName="ELARA AI Skin Analyzer">
+      <SkinScanContent />
+    </NativeAppGate>
+  );
+}
+
+function SkinScanContent() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { language } = useLanguage();
