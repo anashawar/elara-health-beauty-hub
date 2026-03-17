@@ -1121,7 +1121,7 @@ export default function AdminProducts() {
                           </button>
                         </div>
                       ))}
-                      {(existingImages.length - (editing ? 1 : 0) + additionalImages.length) < 10 && (
+                      {(existingImages.length - (mainImagePreview && editing && !mainImage && existingImages.length > 0 ? 1 : 0) + additionalImages.length) < 10 && (
                         <label className="aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
                           <ImageIcon className="h-4 w-4 text-muted-foreground" />
                           <span className="text-[10px] text-muted-foreground mt-0.5">Add</span>
