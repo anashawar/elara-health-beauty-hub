@@ -378,9 +378,14 @@ const AddressesPage = () => {
                       </button>
                     </div>
                   </div>
-                  <p className="text-sm text-foreground">{addr.city}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {[addr.area, addr.street, addr.building, addr.floor, (addr as any).apartment].filter(Boolean).join(", ")}
+                  <p className="text-sm text-foreground font-medium">{addr.city}{addr.area ? ` — ${addr.area}` : ""}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {[
+                      addr.street,
+                      addr.building && (addr.label === "House" ? `${t("addresses.houseNumber") || "House"} ${addr.building}` : `${t("addresses.buildingLabel") || "Bldg."} ${addr.building}`),
+                      addr.floor && `${t("addresses.floorLabel") || "Floor"} ${addr.floor}`,
+                      (addr as any).apartment && `${t("addresses.apartmentLabel") || "Apt."} ${(addr as any).apartment}`,
+                    ].filter(Boolean).join(" · ")}
                   </p>
                   {addr.phone && <p className="text-xs text-muted-foreground mt-1">📞 {addr.phone}</p>}
                   {!addr.is_default && (
