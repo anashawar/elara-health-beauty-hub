@@ -161,6 +161,10 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
             </div>
           )}
         </div>
+        {/* Show bottom nav so users can tap Home to leave search */}
+        <div className="md:hidden" onClick={onClose}>
+          <BottomNav />
+        </div>
       </div>
     </div>
   );
