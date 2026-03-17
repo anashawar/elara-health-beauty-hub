@@ -43,6 +43,7 @@ const OrdersPage = () => {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const formatPrice = useFormatPrice();
+  const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [cancelDialogId, setCancelDialogId] = useState<string | null>(null);
