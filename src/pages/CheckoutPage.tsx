@@ -20,7 +20,7 @@ const FIRST_ORDER_DISCOUNT_PERCENT = 15;
 const FIRST_ORDER_MIN_AMOUNT = 20000;
 
 const CheckoutPage = () => {
-  const { cart, cartTotal, clearCart } = useApp();
+  const { cart, cartTotal, clearCart, appliedCoupon } = useApp();
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const formatPrice = useFormatPrice();
@@ -54,6 +54,15 @@ const CheckoutPage = () => {
     ? Math.round((cartTotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250
     : 0;
 
+  // Coupon discount from cart
+  const couponDiscount = appliedCoupon
+    ? appliedCoupon.discount_type === "percentage"
+      ? Math.round(cartTotal * (appliedCoupon.discount_value / 100))
+      : appliedCoupon.discount_value
+    : 0;
+
+  const totalDiscount = firstOrderDiscount + couponDiscount;
+
   const { data: addresses = [], isLoading: addressesLoading } = useQuery({
     queryKey: ["addresses", user?.id],
     queryFn: async () => {
@@ -73,8 +82,9 @@ const CheckoutPage = () => {
     || addresses[0]
     || null;
 
-  const deliveryFee = getDeliveryFee(selectedAddress?.city, cartTotal);
-  const finalTotal = cartTotal - firstOrderDiscount + deliveryFee;
+  const subtotalAfterDiscount = Math.max(cartTotal - totalDiscount, 0);
+  const deliveryFee = getDeliveryFee(selectedAddress?.city, subtotalAfterDiscount);
+  const finalTotal = subtotalAfterDiscount + deliveryFee;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,22 +97,31 @@ const CheckoutPage = () => {
         .eq("user_id", user.id);
 
       const confirmedFirstOrder = (freshCount ?? 0) === 0;
-      const confirmedDiscount = confirmedFirstOrder && meetsMinimum
+      const confirmedFirstDiscount = confirmedFirstOrder && meetsMinimum
         ? Math.round((cartTotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250
         : 0;
+      const confirmedCouponDiscount = couponDiscount; // already calculated from context
+      const confirmedTotalDiscount = confirmedFirstDiscount + confirmedCouponDiscount;
+
+      // Build notes and coupon_code
+      const notesParts: string[] = [];
+      if (notes) notesParts.push(notes);
+      if (confirmedFirstDiscount > 0) notesParts.push(`[First Order -${FIRST_ORDER_DISCOUNT_PERCENT}%]`);
+      if (appliedCoupon) notesParts.push(`[Coupon: ${appliedCoupon.code}]`);
+
+      const couponCode = appliedCoupon?.code
+        || (confirmedFirstDiscount > 0 ? `FIRST_ORDER_${FIRST_ORDER_DISCOUNT_PERCENT}` : null);
 
       const { data: order, error: orderError } = await supabase.from("orders").insert({
         user_id: user.id,
         address_id: selectedAddress.id,
         subtotal: cartTotal,
         delivery_fee: deliveryFee,
-        discount: confirmedDiscount,
-        total: cartTotal - confirmedDiscount + deliveryFee,
+        discount: confirmedTotalDiscount,
+        total: Math.max(cartTotal - confirmedTotalDiscount, 0) + deliveryFee,
         payment_method: paymentMethod,
-        notes: confirmedDiscount > 0
-          ? [notes, `[First Order -${FIRST_ORDER_DISCOUNT_PERCENT}%]`].filter(Boolean).join(" | ")
-          : (notes || null),
-        coupon_code: confirmedDiscount > 0 ? `FIRST_ORDER_${FIRST_ORDER_DISCOUNT_PERCENT}` : null,
+        notes: notesParts.length > 0 ? notesParts.join(" | ") : null,
+        coupon_code: couponCode,
         status: "pending",
       }).select().single();
 
@@ -116,6 +135,21 @@ const CheckoutPage = () => {
           price: item.product.price,
         }));
         await supabase.from("order_items").insert(items);
+
+        // Increment coupon usage if a real coupon was used
+        if (appliedCoupon?.code) {
+          const { data: couponRow } = await supabase
+            .from("coupons")
+            .select("current_uses")
+            .eq("code", appliedCoupon.code)
+            .maybeSingle();
+          if (couponRow) {
+            await supabase
+              .from("coupons")
+              .update({ current_uses: (couponRow.current_uses || 0) + 1 })
+              .eq("code", appliedCoupon.code);
+          }
+        }
 
         // Send order confirmation email (fire-and-forget)
         const addressParts = [
@@ -134,15 +168,15 @@ const CheckoutPage = () => {
             })),
             subtotal: cartTotal,
             delivery_fee: deliveryFee,
-            discount: confirmedDiscount,
-            total: cartTotal - confirmedDiscount + deliveryFee,
+            discount: confirmedTotalDiscount,
+            total: Math.max(cartTotal - confirmedTotalDiscount, 0) + deliveryFee,
             delivery_address: addressParts,
             payment_method: paymentMethod,
           },
         }).catch(e => console.error("Order email failed:", e));
 
         // Award loyalty points (1 point per 1,000 IQD)
-        const orderTotal = cartTotal - confirmedDiscount + deliveryFee;
+        const orderTotal = Math.max(cartTotal - confirmedTotalDiscount, 0) + deliveryFee;
         const pts = calculatePoints(orderTotal);
         if (pts > 0) {
           setEarnedPoints(pts);
@@ -463,7 +497,21 @@ const CheckoutPage = () => {
               </motion.div>
             )}
 
-            <div className={`border-t border-border pt-2 ${firstOrderDiscount === 0 ? "mt-2" : ""} flex justify-between text-sm`}>
+            {/* Coupon discount line */}
+            {couponDiscount > 0 && appliedCoupon && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="border-t border-border pt-2 mt-2 flex justify-between text-sm"
+              >
+                <span className="text-primary font-medium flex items-center gap-1">
+                  🏷️ {t("cart.coupon")} ({appliedCoupon.code})
+                </span>
+                <span className="text-primary font-bold">-{formatPrice(couponDiscount)}</span>
+              </motion.div>
+            )}
+
+            <div className={`border-t border-border pt-2 ${totalDiscount === 0 ? "mt-2" : ""} flex justify-between text-sm`}>
               <span className="text-muted-foreground">{t("cart.delivery")}</span>
               <span className={deliveryFee === 0 ? "text-sage font-medium" : "text-foreground font-medium"}>
                 {deliveryFee === 0 ? t("common.free") : formatPrice(deliveryFee)}
@@ -472,7 +520,7 @@ const CheckoutPage = () => {
             <div className="border-t border-border pt-2 flex justify-between">
               <span className="font-bold text-foreground">{t("cart.total")}</span>
               <div className="text-right">
-                {firstOrderDiscount > 0 && (
+                {totalDiscount > 0 && (
                   <span className="text-xs text-muted-foreground line-through mr-2">{formatPrice(cartTotal + deliveryFee)}</span>
                 )}
                 <span className="font-bold text-foreground text-lg">{formatPrice(finalTotal)}</span>
