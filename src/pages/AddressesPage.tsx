@@ -243,11 +243,14 @@ const AddressesPage = () => {
                   </button>
                 </div>
                 <div className="space-y-3">
-                  <div className="flex gap-2">
-                    {["Home", "Work", "Other"].map(l => (
-                      <button key={l} onClick={() => setForm(f => ({ ...f, label: l }))}
-                        className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${form.label === l ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border"}`}
-                      >{labelMap[l] || l}</button>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["House", "Apartment", "Office"] as AddressType[]).map(l => (
+                      <button key={l} onClick={() => setForm(f => ({ ...f, label: l, floor: l === "House" ? "" : f.floor, apartment: l !== "Apartment" ? "" : f.apartment }))}
+                        className={`flex flex-col items-center gap-1 py-3 rounded-xl text-xs font-semibold border-2 transition-all ${form.label === l ? "bg-primary/10 text-primary border-primary" : "bg-card text-foreground border-border hover:border-primary/30"}`}
+                      >
+                        <span className="text-lg">{addressTypeConfig[l].icon}</span>
+                        {labelMap[l] || l}
+                      </button>
                     ))}
                   </div>
                   <div>
