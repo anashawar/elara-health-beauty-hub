@@ -1,27 +1,58 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Package } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Package, ChevronDown, ChevronUp, X, Clock, AlertTriangle } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useFormatPrice } from "@/hooks/useProducts";
 import BottomNav from "@/components/layout/BottomNav";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import SearchOverlay from "@/components/SearchOverlay";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { toast } from "@/components/ui/sonner";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const ONE_HOUR_MS = 60 * 60 * 1000;
+
+const canModifyOrder = (createdAt: string, status: string) => {
+  if (status === "cancelled" || status === "delivered" || status === "shipped" || status === "on_the_way") return false;
+  const elapsed = Date.now() - new Date(createdAt).getTime();
+  return elapsed < ONE_HOUR_MS;
+};
+
+const getTimeRemaining = (createdAt: string) => {
+  const elapsed = Date.now() - new Date(createdAt).getTime();
+  const remaining = ONE_HOUR_MS - elapsed;
+  if (remaining <= 0) return null;
+  const mins = Math.ceil(remaining / 60000);
+  return mins;
+};
 
 const OrdersPage = () => {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const formatPrice = useFormatPrice();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [cancelDialogId, setCancelDialogId] = useState<string | null>(null);
+  const [, setTick] = useState(0); // force re-render for countdown
   const qc = useQueryClient();
 
   const statusConfig: Record<string, { label: string; color: string; step: number }> = {
     pending: { label: t("cart.pending"), color: "bg-amber-400", step: 0 },
     in_progress: { label: t("cart.processing"), color: "bg-violet-400", step: 1 },
-    shipped: { label: t("cart.onTheWay"), color: "bg-cyan-400", step: 2 },
+    shipped: { label: t("cart.shipped"), color: "bg-cyan-400", step: 2 },
     on_the_way: { label: t("cart.onTheWay"), color: "bg-blue-400", step: 3 },
     delivered: { label: t("cart.delivered"), color: "bg-sage", step: 4 },
     cancelled: { label: t("cart.cancelled"), color: "bg-destructive", step: -1 },
@@ -34,7 +65,7 @@ const OrdersPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, order_items(*, products(title, slug, product_images(image_url)))")
+        .select("*, order_items(*, products(title, title_ar, title_ku, slug, price, product_images(image_url))), addresses(*)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -42,7 +73,13 @@ const OrdersPage = () => {
     enabled: !!user,
   });
 
-  // Realtime subscription so user sees status changes immediately
+  // Tick every 30s to update countdown timers
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Realtime subscription
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -53,6 +90,27 @@ const OrdersPage = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user, qc]);
+
+  const cancelMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      const order = orders.find(o => o.id === orderId);
+      if (!order || !canModifyOrder(order.created_at, order.status)) {
+        throw new Error(t("orders.cannotCancel") || "Cannot cancel this order");
+      }
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: "cancelled" })
+        .eq("id", orderId)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      toast.success(t("orders.orderCancelled") || "Order cancelled successfully");
+      setCancelDialogId(null);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   if (authLoading) return null;
 
@@ -95,60 +153,169 @@ const OrdersPage = () => {
         {orders.map((order, idx) => {
           const config = statusConfig[order.status] || statusConfig.pending;
           const items = (order as any).order_items || [];
+          const isExpanded = expandedId === order.id;
+          const modifiable = canModifyOrder(order.created_at, order.status);
+          const minsLeft = getTimeRemaining(order.created_at);
+          const address = (order as any).addresses;
+
           return (
             <motion.div
               key={order.id}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-              className="bg-card rounded-2xl p-4 shadow-premium active:scale-[0.99] transition-transform"
+              className="bg-card rounded-2xl shadow-premium overflow-hidden"
             >
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <p className="text-[10px] text-muted-foreground">
-                    {new Date(order.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                  </p>
-                  <p className="text-xs font-mono text-muted-foreground mt-0.5">#{order.id.slice(0, 8).toUpperCase()}</p>
+              {/* Tappable header */}
+              <button
+                onClick={() => setExpandedId(isExpanded ? null : order.id)}
+                className="w-full p-4 text-left active:bg-secondary/50 transition-colors"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">
+                      {new Date(order.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </p>
+                    <p className="text-xs font-mono text-muted-foreground mt-0.5">#{order.id.slice(0, 8).toUpperCase()}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold text-primary-foreground ${config.color}`}>
+                      {config.label}
+                    </span>
+                    {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                  </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-[10px] font-bold text-primary-foreground ${config.color}`}>
-                  {config.label}
-                </span>
-              </div>
 
-              <div className="flex items-center gap-1 mb-4">
-                {steps.map((step, i) => (
-                  <div key={step} className="flex-1 flex flex-col items-center gap-1">
-                    <div className={`w-full h-1.5 rounded-full transition-colors ${i <= config.step ? config.color : "bg-muted"}`} />
-                    <span className={`text-[8px] ${i <= config.step ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
-                      {step}
+                {/* Progress steps */}
+                {order.status !== "cancelled" && (
+                  <div className="flex items-center gap-1 mb-3">
+                    {steps.map((step, i) => (
+                      <div key={step} className="flex-1 flex flex-col items-center gap-1">
+                        <div className={`w-full h-1.5 rounded-full transition-colors ${i <= config.step ? config.color : "bg-muted"}`} />
+                        <span className={`text-[8px] ${i <= config.step ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
+                          {step}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Summary: item count + total */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {items.length} {items.length === 1 ? t("common.item") || "item" : t("common.items") || "items"}
+                  </span>
+                  <span className="text-sm font-bold text-foreground">{formatPrice(Number(order.total))}</span>
+                </div>
+
+                {/* Modifiable timer badge */}
+                {modifiable && minsLeft && (
+                  <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg w-fit">
+                    <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                    <span className="text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                      {t("orders.editableFor") || "Editable for"} {minsLeft} {t("orders.minutes") || "min"}
                     </span>
                   </div>
-                ))}
-              </div>
-
-              <div className="space-y-2 mb-3">
-                {items.slice(0, 3).map((item: any) => {
-                  const img = item.products?.product_images?.[0]?.image_url;
-                  return (
-                    <div key={item.id} className="flex items-center gap-3">
-                      {img && <img src={img} alt="" className="w-10 h-10 rounded-lg object-cover bg-secondary" />}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">{item.products?.title}</p>
-                        <p className="text-[10px] text-muted-foreground">{t("orders.qty")}: {item.quantity}</p>
-                      </div>
-                      <p className="text-xs font-semibold text-foreground">{formatPrice(item.price * item.quantity)}</p>
-                    </div>
-                  );
-                })}
-                {items.length > 3 && (
-                  <p className="text-[10px] text-muted-foreground">{t("orders.moreItems", { count: items.length - 3 })}</p>
                 )}
-              </div>
+              </button>
 
-              <div className="flex items-center justify-between pt-3 border-t border-border/50">
-                <span className="text-xs text-muted-foreground">{t("cart.total")}</span>
-                <span className="text-sm font-bold text-foreground">{formatPrice(Number(order.total))}</span>
-              </div>
+              {/* Expanded details */}
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 pb-4 space-y-3 border-t border-border/50">
+                      {/* All items */}
+                      <div className="pt-3 space-y-2.5">
+                        <p className="text-xs font-bold text-foreground">{t("orders.orderItems") || "Order Items"}</p>
+                        {items.map((item: any) => {
+                          const img = item.products?.product_images?.[0]?.image_url;
+                          return (
+                            <Link
+                              key={item.id}
+                              to={`/product/${item.products?.slug || item.product_id}`}
+                              className="flex items-center gap-3 p-2 rounded-xl hover:bg-secondary/50 transition-colors"
+                            >
+                              <div className="w-14 h-14 rounded-xl bg-secondary overflow-hidden flex-shrink-0">
+                                {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <Package className="w-6 h-6 m-auto text-muted-foreground/30 mt-4" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate">{item.products?.title}</p>
+                                <p className="text-xs text-muted-foreground">{t("orders.qty")}: {item.quantity} × {formatPrice(item.price)}</p>
+                              </div>
+                              <p className="text-sm font-semibold text-foreground">{formatPrice(item.price * item.quantity)}</p>
+                            </Link>
+                          );
+                        })}
+                      </div>
+
+                      {/* Price breakdown */}
+                      <div className="space-y-1.5 pt-3 border-t border-border/50">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">{t("cart.subtotal") || "Subtotal"}</span>
+                          <span className="text-foreground">{formatPrice(Number(order.subtotal))}</span>
+                        </div>
+                        {Number(order.discount) > 0 && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">{t("cart.discount") || "Discount"}</span>
+                            <span className="text-green-600">-{formatPrice(Number(order.discount))}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">{t("cart.deliveryFee") || "Delivery"}</span>
+                          <span className="text-foreground">{Number(order.delivery_fee) === 0 ? (t("common.free") || "FREE") : formatPrice(Number(order.delivery_fee))}</span>
+                        </div>
+                        {order.coupon_code && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">{t("cart.coupon") || "Coupon"}</span>
+                            <span className="text-primary font-medium">{order.coupon_code}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm font-bold pt-1.5 border-t border-border/50">
+                          <span className="text-foreground">{t("cart.total")}</span>
+                          <span className="text-foreground">{formatPrice(Number(order.total))}</span>
+                        </div>
+                      </div>
+
+                      {/* Delivery address */}
+                      {address && (
+                        <div className="pt-3 border-t border-border/50">
+                          <p className="text-xs font-bold text-foreground mb-1">{t("checkout.deliveryAddress") || "Delivery Address"}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {[address.city, address.area, address.street, address.building].filter(Boolean).join(", ")}
+                          </p>
+                          {address.phone && <p className="text-xs text-muted-foreground mt-0.5">📞 {address.phone}</p>}
+                        </div>
+                      )}
+
+                      {/* Payment method */}
+                      <div className="pt-3 border-t border-border/50">
+                        <p className="text-xs font-bold text-foreground mb-1">{t("checkout.paymentMethod") || "Payment"}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{order.payment_method === "cod" ? (t("checkout.cashOnDelivery") || "Cash on Delivery") : order.payment_method}</p>
+                      </div>
+
+                      {/* Cancel button */}
+                      {modifiable && (
+                        <div className="pt-3 border-t border-border/50">
+                          <Button
+                            variant="outline"
+                            onClick={(e) => { e.stopPropagation(); setCancelDialogId(order.id); }}
+                            className="w-full border-destructive/30 text-destructive hover:bg-destructive/10 rounded-xl h-11"
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            {t("orders.cancelOrder") || "Cancel Order"}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           );
         })}
@@ -178,6 +345,31 @@ const OrdersPage = () => {
       </div>
 
       <BottomNav />
+
+      {/* Cancel confirmation dialog */}
+      <AlertDialog open={!!cancelDialogId} onOpenChange={(open) => !open && setCancelDialogId(null)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              {t("orders.cancelOrderTitle") || "Cancel Order?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("orders.cancelOrderDesc") || "Are you sure you want to cancel this order? This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">{t("common.cancel") || "No, Keep It"}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => cancelDialogId && cancelMutation.mutate(cancelDialogId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
+              disabled={cancelMutation.isPending}
+            >
+              {cancelMutation.isPending ? (t("auth.saving") || "...") : (t("orders.confirmCancel") || "Yes, Cancel")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
