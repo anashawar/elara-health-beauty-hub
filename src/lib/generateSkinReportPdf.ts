@@ -154,7 +154,7 @@ export async function generateSkinReportPdf(
     doc.roundedRect(14, y - 1, 3, 6, 1, 1, "F");
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(...brandDark);
+    doc.setTextColor(50, 30, 70);
     doc.text(title, 20, y + 3.5);
     y += 9;
   };
