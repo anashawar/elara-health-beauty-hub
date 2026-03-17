@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CameraPreview } from "@capgo/camera-preview";
+import { Camera as CapCamera } from "@capacitor/camera";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
-import { Camera, ArrowLeft, RotateCcw } from "lucide-react";
+import { Camera, ArrowLeft, RotateCcw, ShieldAlert } from "lucide-react";
 
 // Key landmark groups
 const FACE_OVAL = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109,10];
@@ -25,6 +26,8 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
   const [faceDetected, setFaceDetected] = useState(false);
   const [modelLoading, setModelLoading] = useState(true);
   const [useFront, setUseFront] = useState(true);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const landmarkerRef = useRef<FaceLandmarker | null>(null);
   const rafRef = useRef<number>(0);
@@ -32,9 +35,19 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
   const hiddenImgRef = useRef<HTMLImageElement | null>(null);
   const activeRef = useRef(true);
 
-  // Start native camera preview
+  // Request camera permission first, then start native camera preview
   const startCamera = useCallback(async () => {
     try {
+      // Check/request camera permission via Capacitor Camera plugin
+      const permStatus = await CapCamera.checkPermissions();
+      if (permStatus.camera === "denied") {
+        const reqResult = await CapCamera.requestPermissions({ permissions: ["camera"] });
+        if (reqResult.camera === "denied") {
+          setPermissionDenied(true);
+          return;
+        }
+      }
+
       await CameraPreview.start({
         parent: "camera-preview-container",
         position: useFront ? "front" : "rear",
@@ -45,8 +58,15 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
         height: Math.round(window.innerWidth * (4 / 3)),
       });
       setCameraReady(true);
-    } catch (err) {
+      setCameraError(null);
+    } catch (err: any) {
       console.error("[NativeScanner] Camera start failed:", err);
+      const msg = err?.message || String(err);
+      if (msg.toLowerCase().includes("permission") || msg.toLowerCase().includes("denied")) {
+        setPermissionDenied(true);
+      } else {
+        setCameraError(msg);
+      }
     }
   }, [useFront]);
 
@@ -275,17 +295,23 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
     };
   }, [cameraReady, processFrame]);
 
-  // Init everything
+  // Init everything — stagger to prevent simultaneous heavy work
   useEffect(() => {
     activeRef.current = true;
-    startCamera();
-    initLandmarker();
+    
+    // Small delay to let the component mount before accessing camera
+    const initTimer = setTimeout(() => {
+      if (!activeRef.current) return;
+      startCamera();
+      initLandmarker();
+    }, 300);
 
     return () => {
       activeRef.current = false;
+      clearTimeout(initTimer);
       if (captureIntervalRef.current) clearInterval(captureIntervalRef.current);
       cancelAnimationFrame(rafRef.current);
-      landmarkerRef.current?.close();
+      try { landmarkerRef.current?.close(); } catch {}
       landmarkerRef.current = null;
       CameraPreview.stop().catch(() => {});
     };
@@ -314,6 +340,30 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
       console.error("[NativeScanner] Flip failed:", err);
     }
   }, []);
+
+  // Permission denied or error state
+  if (permissionDenied || cameraError) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-8 text-center">
+        <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+          <ShieldAlert className="w-8 h-8 text-destructive" />
+        </div>
+        <h2 className="text-lg font-display font-bold text-foreground mb-2">
+          {permissionDenied
+            ? (language === "ar" ? "يرجى السماح بالوصول للكاميرا" : "Camera Permission Required")
+            : (language === "ar" ? "تعذر فتح الكاميرا" : "Camera Error")}
+        </h2>
+        <p className="text-sm text-muted-foreground mb-6">
+          {permissionDenied
+            ? (language === "ar" ? "افتح إعدادات التطبيق وفعّل إذن الكاميرا" : "Please enable camera access in your device settings for this app.")
+            : cameraError}
+        </p>
+        <button onClick={onClose} className="px-6 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-semibold">
+          {language === "ar" ? "رجوع" : "Go Back"}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-transparent">
@@ -376,7 +426,10 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
       <div className="absolute bottom-0 left-0 right-0 z-30 pb-safe">
         <div className="flex items-center justify-center gap-6 pb-8 pt-4 pointer-events-auto">
           <button
-            onClick={onClose}
+            onClick={() => {
+              CameraPreview.stop().catch(() => {});
+              onClose();
+            }}
             className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-lg"
           >
             <ArrowLeft className="w-5 h-5 text-foreground" />
