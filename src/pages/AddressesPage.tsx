@@ -16,8 +16,10 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { iraqCities } from "@/data/iraqCities";
 import MapPicker from "@/components/MapPicker";
 
+type AddressType = "House" | "Apartment" | "Office";
+
 interface AddressForm {
-  label: string;
+  label: AddressType;
   city: string;
   area: string;
   street: string;
@@ -29,7 +31,13 @@ interface AddressForm {
   longitude: number | null;
 }
 
-const emptyForm: AddressForm = { label: "Home", city: "", area: "", street: "", building: "", floor: "", apartment: "", phone: "", latitude: null, longitude: null };
+const emptyForm: AddressForm = { label: "House", city: "", area: "", street: "", building: "", floor: "", apartment: "", phone: "", latitude: null, longitude: null };
+
+const addressTypeConfig: Record<AddressType, { icon: string; needsFloor: boolean; needsApartment: boolean; needsBuilding: boolean }> = {
+  House: { icon: "🏠", needsFloor: false, needsApartment: false, needsBuilding: true },
+  Apartment: { icon: "🏢", needsFloor: true, needsApartment: true, needsBuilding: true },
+  Office: { icon: "🏬", needsFloor: true, needsApartment: false, needsBuilding: true },
+};
 
 const AddressesPage = () => {
   const { user, loading: authLoading } = useAuth();
@@ -121,7 +129,7 @@ const AddressesPage = () => {
 
   const handleEdit = (addr: any) => {
     setForm({
-      label: addr.label || "Home",
+      label: (["House", "Apartment", "Office"].includes(addr.label) ? addr.label : "House") as AddressType,
       city: addr.city,
       area: addr.area || "",
       street: addr.street || "",
@@ -136,21 +144,23 @@ const AddressesPage = () => {
     setShowForm(true);
   };
 
+  const currentConfig = addressTypeConfig[form.label];
+
   const handleSave = () => {
     if (!form.city) { toast(t("auth.selectCity")); return; }
     if (!form.area.trim()) { toast(t("addresses.areaRequired") || "Area/Neighborhood is required"); return; }
     if (!form.street.trim()) { toast(t("addresses.streetRequired") || "Street is required"); return; }
-    if (!form.building.trim()) { toast(t("addresses.buildingRequired") || "Building is required"); return; }
-    if (!form.floor.trim()) { toast(t("addresses.floorRequired") || "Floor is required"); return; }
-    if (!form.apartment.trim()) { toast(t("addresses.aptRequired") || "Apartment is required"); return; }
+    if (currentConfig.needsBuilding && !form.building.trim()) { toast(t("addresses.buildingRequired") || "Building is required"); return; }
+    if (currentConfig.needsFloor && !form.floor.trim()) { toast(t("addresses.floorRequired") || "Floor is required"); return; }
+    if (currentConfig.needsApartment && !form.apartment.trim()) { toast(t("addresses.aptRequired") || "Apartment is required"); return; }
     if (!form.phone.trim()) { toast(t("addresses.phoneRequired") || "WhatsApp number is required"); return; }
     saveMutation.mutate({ ...form, id: editingId || undefined });
   };
 
   const labelMap: Record<string, string> = {
-    Home: t("addresses.home"),
-    Work: t("addresses.work"),
-    Other: t("addresses.other"),
+    House: t("addresses.house") || "🏠 House",
+    Apartment: t("addresses.apartment") || "🏢 Apartment",
+    Office: t("addresses.office") || "🏬 Office",
   };
 
   if (authLoading) return null;
@@ -233,11 +243,14 @@ const AddressesPage = () => {
                   </button>
                 </div>
                 <div className="space-y-3">
-                  <div className="flex gap-2">
-                    {["Home", "Work", "Other"].map(l => (
-                      <button key={l} onClick={() => setForm(f => ({ ...f, label: l }))}
-                        className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${form.label === l ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border"}`}
-                      >{labelMap[l] || l}</button>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["House", "Apartment", "Office"] as AddressType[]).map(l => (
+                      <button key={l} onClick={() => setForm(f => ({ ...f, label: l, floor: l === "House" ? "" : f.floor, apartment: l !== "Apartment" ? "" : f.apartment }))}
+                        className={`flex flex-col items-center gap-1 py-3 rounded-xl text-xs font-semibold border-2 transition-all ${form.label === l ? "bg-primary/10 text-primary border-primary" : "bg-card text-foreground border-border hover:border-primary/30"}`}
+                      >
+                        <span className="text-lg">{addressTypeConfig[l].icon}</span>
+                        {labelMap[l] || l}
+                      </button>
                     ))}
                   </div>
                   <div>
@@ -288,19 +301,26 @@ const AddressesPage = () => {
                     <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.streetPlaceholder")} *</label>
                     <Input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder={t("auth.streetPlaceholder")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.building")} *</label>
-                      <Input value={form.building} onChange={e => setForm(f => ({ ...f, building: e.target.value }))} placeholder={t("auth.building")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.floor")} *</label>
-                      <Input value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} placeholder={t("auth.floor")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.apartment") || "Apt"} *</label>
-                      <Input value={form.apartment} onChange={e => setForm(f => ({ ...f, apartment: e.target.value }))} placeholder={t("auth.apartment") || "Apt"} className="h-11 rounded-xl bg-secondary border-border text-sm" />
-                    </div>
+                  {/* Conditional fields based on address type */}
+                  <div className={`grid gap-2 ${currentConfig.needsFloor && currentConfig.needsApartment ? "grid-cols-3" : currentConfig.needsFloor ? "grid-cols-2" : "grid-cols-1"}`}>
+                    {currentConfig.needsBuilding && (
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.building")} *</label>
+                        <Input value={form.building} onChange={e => setForm(f => ({ ...f, building: e.target.value }))} placeholder={form.label === "House" ? (t("addresses.houseNumber") || "House no.") : t("auth.building")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                      </div>
+                    )}
+                    {currentConfig.needsFloor && (
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.floor")} *</label>
+                        <Input value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} placeholder={t("auth.floor")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                      </div>
+                    )}
+                    {currentConfig.needsApartment && (
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.apartment") || "Apt"} *</label>
+                        <Input value={form.apartment} onChange={e => setForm(f => ({ ...f, apartment: e.target.value }))} placeholder={t("auth.apartment") || "Apt"} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.phoneNumber")} (WhatsApp) *</label>
@@ -340,7 +360,7 @@ const AddressesPage = () => {
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-foreground bg-secondary px-2.5 py-1 rounded-lg">
-                        {labelMap[addr.label || ""] || addr.label || t("addresses.title")}
+                        {addressTypeConfig[addr.label as AddressType]?.icon || "📍"} {labelMap[addr.label || ""] || addr.label || t("addresses.title")}
                       </span>
                       {addr.is_default && (
                         <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{t("addresses.default")}</span>
