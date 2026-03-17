@@ -335,6 +335,30 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
     }
   }, []);
 
+  // Permission denied or error state
+  if (permissionDenied || cameraError) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-8 text-center">
+        <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+          <ShieldAlert className="w-8 h-8 text-destructive" />
+        </div>
+        <h2 className="text-lg font-display font-bold text-foreground mb-2">
+          {permissionDenied
+            ? (language === "ar" ? "يرجى السماح بالوصول للكاميرا" : "Camera Permission Required")
+            : (language === "ar" ? "تعذر فتح الكاميرا" : "Camera Error")}
+        </h2>
+        <p className="text-sm text-muted-foreground mb-6">
+          {permissionDenied
+            ? (language === "ar" ? "افتح إعدادات التطبيق وفعّل إذن الكاميرا" : "Please enable camera access in your device settings for this app.")
+            : cameraError}
+        </p>
+        <button onClick={onClose} className="px-6 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-semibold">
+          {language === "ar" ? "رجوع" : "Go Back"}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-transparent">
       {/* Native camera renders behind webview into this container */}
@@ -396,7 +420,10 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
       <div className="absolute bottom-0 left-0 right-0 z-30 pb-safe">
         <div className="flex items-center justify-center gap-6 pb-8 pt-4 pointer-events-auto">
           <button
-            onClick={onClose}
+            onClick={() => {
+              CameraPreview.stop().catch(() => {});
+              onClose();
+            }}
             className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-lg"
           >
             <ArrowLeft className="w-5 h-5 text-foreground" />
