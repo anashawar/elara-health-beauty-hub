@@ -36,7 +36,7 @@ const CartPage = () => {
         const { data, error } = await supabase
           .from("coupons")
           .select("*")
-          .eq("code", pendingCoupon.toUpperCase())
+          .ilike("code", pendingCoupon.trim())
           .eq("is_active", true)
           .maybeSingle();
         setCouponLoading(false);
