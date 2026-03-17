@@ -82,8 +82,9 @@ const CheckoutPage = () => {
     || addresses[0]
     || null;
 
-  const deliveryFee = getDeliveryFee(selectedAddress?.city, cartTotal);
-  const finalTotal = cartTotal - firstOrderDiscount + deliveryFee;
+  const subtotalAfterDiscount = Math.max(cartTotal - totalDiscount, 0);
+  const deliveryFee = getDeliveryFee(selectedAddress?.city, subtotalAfterDiscount);
+  const finalTotal = subtotalAfterDiscount + deliveryFee;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
