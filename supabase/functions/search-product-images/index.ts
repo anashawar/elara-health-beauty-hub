@@ -385,6 +385,26 @@ Deno.serve(async (req) => {
       totalProducts = discovery.totalProducts;
       nextOffset = discovery.nextOffset;
       done = discovery.done;
+
+      // Count products that actually have NO images
+      try {
+        const { count: totalProductCount } = await withRetry("count all products", () =>
+          supabase.from("products").select("id", { count: "exact", head: true }),
+        );
+        const { count: productsWithImages } = await withRetry("count products with images", () =>
+          supabase.from("product_images").select("product_id", { count: "exact", head: true }),
+        );
+        // product_images can have multiple rows per product, so we need distinct count
+        const { data: distinctWithImages } = await withRetry("count distinct products with images", () =>
+          supabase.rpc("count_products_with_images").single(),
+        );
+        if (distinctWithImages && typeof distinctWithImages === "object" && "count" in distinctWithImages) {
+          totalMissing = (totalProductCount || 0) - Number(distinctWithImages.count);
+        }
+      } catch (e) {
+        // Fallback: just don't set totalMissing, UI will use totalProducts
+        console.warn("Could not count missing images:", e);
+      }
     }
 
     if (products.length === 0) {
