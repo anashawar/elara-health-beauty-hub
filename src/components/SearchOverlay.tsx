@@ -112,7 +112,7 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4" style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }}>
           {!isSearching && (
             <div className="space-y-6">
               <div>
