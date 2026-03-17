@@ -130,7 +130,7 @@ export async function generateSkinReportPdf(
   doc.text("/100", cx, cy + 7, { align: "center" });
 
   // Labels
-  doc.setTextColor(...brandDark);
+  doc.setTextColor(50, 30, 70);
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text("Overall Skin Health", 58, y + 13);
