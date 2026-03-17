@@ -171,14 +171,14 @@ const HeroBanner = memo(() => {
   };
 
   return (
-    <div className="relative w-full overflow-hidden h-[248px] md:h-[320px] lg:h-[380px] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none touch-pan-x md:touch-auto">
+    <div className="relative w-full overflow-hidden h-[248px] md:h-[320px] lg:h-[380px] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none touch-auto">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden no-scrollbar h-full touch-pan-x md:touch-auto md:overflow-x-hidden"
-        style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch", overscrollBehaviorY: "none" }}
+        className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden no-scrollbar h-full touch-auto md:overflow-x-hidden"
+        style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch", overscrollBehaviorX: "auto", touchAction: "pan-y pan-x" }}
       >
         {banners.map((banner, idx) => (
           <div
