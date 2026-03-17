@@ -161,7 +161,7 @@ const CheckoutPage = () => {
         }).catch(e => console.error("Order email failed:", e));
 
         // Award loyalty points (1 point per 1,000 IQD)
-        const orderTotal = cartTotal - confirmedDiscount + deliveryFee;
+        const orderTotal = Math.max(cartTotal - confirmedTotalDiscount, 0) + deliveryFee;
         const pts = calculatePoints(orderTotal);
         if (pts > 0) {
           setEarnedPoints(pts);
