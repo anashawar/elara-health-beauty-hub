@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Camera, Upload, Sparkles, ArrowLeft, RotateCcw, Droplets, Zap, Eye, Fingerprint, AlertTriangle, Sun, Moon, Calendar, ShoppingBag, ArrowRight, ChevronDown, ChevronUp, Scan, Clock, History, Share2, FileDown } from "lucide-react";
 import FaceTrackingOverlay from "@/components/skin-scan/FaceTrackingOverlay";
+import NativeFaceScanner from "@/components/skin-scan/NativeFaceScanner";
 import { Capacitor } from "@capacitor/core";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -116,6 +117,8 @@ function SkinScanContent() {
   const [expandedRoutine, setExpandedRoutine] = useState<string | null>("morning");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [useFrontCamera, setUseFrontCamera] = useState(true);
+  const [showNativeScanner, setShowNativeScanner] = useState(false);
+  const isNative = Capacitor.isNativePlatform();
 
   const scanSteps = [
     { label: language === "ar" ? "تحليل البشرة..." : language === "ku" ? "شیکردنەوەی پێست..." : "Mapping skin texture...", icon: Fingerprint },
@@ -141,43 +144,9 @@ function SkinScanContent() {
 
   // Start camera
   const startCamera = useCallback(async () => {
-    // On native iOS/Android, use Capacitor Camera plugin directly
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const { Camera: CapCamera, CameraResultType, CameraSource, CameraDirection } = await import("@capacitor/camera");
-        console.log("[SkinScan] Opening native camera...");
-        const photo = await CapCamera.getPhoto({
-          quality: 85,
-          resultType: CameraResultType.Base64,
-          source: CameraSource.Camera,
-          direction: useFrontCamera ? CameraDirection.Front : CameraDirection.Rear,
-          width: 1280,
-          height: 960,
-          correctOrientation: true,
-        });
-        console.log("[SkinScan] Photo result:", { 
-          hasBase64: !!photo.base64String, 
-          format: photo.format,
-          base64Length: photo.base64String?.length 
-        });
-        const base64 = photo.base64String;
-        if (base64) {
-          const mimeType = photo.format === "png" ? "image/png" : "image/jpeg";
-          const dataUrl = `data:${mimeType};base64,${base64}`;
-          console.log("[SkinScan] Constructed dataUrl, length:", dataUrl.length);
-          setCapturedImage(dataUrl);
-          analyzeSkin(dataUrl);
-        } else {
-          console.error("[SkinScan] No base64String in photo result. Full photo keys:", Object.keys(photo));
-          toast.error("Failed to capture photo. Please try uploading an image instead.");
-        }
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error("[SkinScan] Capacitor camera error:", JSON.stringify(err));
-        if (!msg.includes("cancelled") && !msg.includes("User cancelled")) {
-          toast.error(language === "ar" ? "تعذر فتح الكاميرا" : "Could not open camera");
-        }
-      }
+    // On native iOS/Android, open the NativeFaceScanner with live tracking
+    if (isNative) {
+      setShowNativeScanner(true);
       return;
     }
 
@@ -381,6 +350,18 @@ function SkinScanContent() {
   if (phase === "capture") {
     return (
       <div className="min-h-screen bg-background" dir={isRtl ? "rtl" : "ltr"}>
+        {/* Native Face Scanner (full-screen overlay on iOS/Android) */}
+        {showNativeScanner && isNative && (
+          <NativeFaceScanner
+            language={language}
+            onCapture={(dataUrl) => {
+              setShowNativeScanner(false);
+              setCapturedImage(dataUrl);
+              analyzeSkin(dataUrl);
+            }}
+            onClose={() => setShowNativeScanner(false)}
+          />
+        )}
         <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/30" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
