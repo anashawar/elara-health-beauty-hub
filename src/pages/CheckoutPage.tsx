@@ -53,7 +53,6 @@ const CheckoutPage = () => {
   const firstOrderDiscount = isFirstOrder && meetsMinimum
     ? Math.round((cartTotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250
     : 0;
-  const finalTotal = cartTotal - firstOrderDiscount + deliveryFee;
 
   const { data: addresses = [], isLoading: addressesLoading } = useQuery({
     queryKey: ["addresses", user?.id],
