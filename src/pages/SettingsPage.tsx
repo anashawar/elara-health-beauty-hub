@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Phone, Save, LogOut, Globe, Calendar, Camera, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, User, Phone, Save, LogOut, Globe, Calendar, Camera, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
