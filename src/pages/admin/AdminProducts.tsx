@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon, Languages, FileSpreadsheet, Sparkles, Wand2, ImagePlus, CheckSquare } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, ImageIcon, Languages, FileSpreadsheet, Sparkles, Wand2, ImagePlus, CheckSquare, Filter } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatPrice, useCategories, useBrands, useSubcategories } from "@/hooks/useProducts";
 import { toast } from "sonner";
@@ -58,6 +58,7 @@ function getPublicUrl(path: string) {
 export default function AdminProducts() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [dataFilter, setDataFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 50;
   const [open, setOpen] = useState(false);
@@ -303,9 +304,30 @@ export default function AdminProducts() {
     setAdditionalPreviews(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const filtered = products.filter((p: any) =>
-    p.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+    let list = products.filter((p: any) =>
+      p.title.toLowerCase().includes(search.toLowerCase())
+    );
+    if (dataFilter === "no_images") {
+      list = list.filter((p: any) => !p.product_images || p.product_images.length === 0);
+    } else if (dataFilter === "missing_data") {
+      list = list.filter((p: any) => {
+        const noDesc = !p.description || p.description.trim() === "";
+        const noBrand = !p.brand_id;
+        const noCategory = !p.category_id;
+        const noPrice = !p.price || p.price <= 0;
+        const noImages = !p.product_images || p.product_images.length === 0;
+        return noDesc || noBrand || noCategory || noPrice || noImages;
+      });
+    } else if (dataFilter === "no_description") {
+      list = list.filter((p: any) => !p.description || p.description.trim() === "");
+    } else if (dataFilter === "no_brand") {
+      list = list.filter((p: any) => !p.brand_id);
+    } else if (dataFilter === "no_category") {
+      list = list.filter((p: any) => !p.category_id);
+    }
+    return list;
+  }, [products, search, dataFilter]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginatedProducts = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -1241,10 +1263,26 @@ export default function AdminProducts() {
         </div>
       )}
 
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Search products..." value={search} onChange={(e) => handleSearch(e.target.value)} />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{filtered.length} products</span>
+      <div className="flex gap-2 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Search products..." value={search} onChange={(e) => handleSearch(e.target.value)} />
+        </div>
+        <Select value={dataFilter} onValueChange={(v) => { setDataFilter(v); setPage(1); }}>
+          <SelectTrigger className="w-[180px]">
+            <Filter className="h-4 w-4 mr-1.5 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Products</SelectItem>
+            <SelectItem value="no_images">No Images</SelectItem>
+            <SelectItem value="missing_data">Missing Any Data</SelectItem>
+            <SelectItem value="no_description">No Description</SelectItem>
+            <SelectItem value="no_brand">No Brand</SelectItem>
+            <SelectItem value="no_category">No Category</SelectItem>
+          </SelectContent>
+        </Select>
+        <span className="text-xs text-muted-foreground self-center whitespace-nowrap">{filtered.length} products</span>
       </div>
 
       {isLoading ? (
