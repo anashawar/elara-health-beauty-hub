@@ -6,6 +6,12 @@ interface CartItem {
   quantity: number;
 }
 
+export interface AppliedCoupon {
+  code: string;
+  discount_type: string;
+  discount_value: number;
+}
+
 interface AppContextType {
   cart: CartItem[];
   wishlist: string[];
@@ -19,6 +25,8 @@ interface AppContextType {
   clearCart: () => void;
   pendingCoupon: string | null;
   setPendingCoupon: (code: string | null) => void;
+  appliedCoupon: AppliedCoupon | null;
+  setAppliedCoupon: (coupon: AppliedCoupon | null) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -33,6 +41,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [pendingCoupon, setPendingCoupon] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
   const addToCart = useCallback((product: ProductWithRelations) => {
     setCart(prev => {
@@ -66,13 +75,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const cartTotal = useMemo(() => cart.reduce((sum, i) => sum + i.product.price * i.quantity, 0), [cart]);
   const cartCount = useMemo(() => cart.reduce((sum, i) => sum + i.quantity, 0), [cart]);
 
-  const clearCart = useCallback(() => setCart([]), []);
+  const clearCart = useCallback(() => {
+    setCart([]);
+    setAppliedCoupon(null);
+  }, []);
 
   const value = useMemo(() => ({
     cart, wishlist, addToCart, removeFromCart, updateQuantity,
     toggleWishlist, isInWishlist, cartTotal, cartCount, clearCart,
     pendingCoupon, setPendingCoupon,
-  }), [cart, wishlist, addToCart, removeFromCart, updateQuantity, toggleWishlist, isInWishlist, cartTotal, cartCount, clearCart, pendingCoupon]);
+    appliedCoupon, setAppliedCoupon,
+  }), [cart, wishlist, addToCart, removeFromCart, updateQuantity, toggleWishlist, isInWishlist, cartTotal, cartCount, clearCart, pendingCoupon, appliedCoupon]);
 
   return (
     <AppContext.Provider value={value}>
