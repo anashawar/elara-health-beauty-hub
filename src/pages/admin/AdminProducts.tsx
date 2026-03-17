@@ -304,9 +304,30 @@ export default function AdminProducts() {
     setAdditionalPreviews(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const filtered = products.filter((p: any) =>
-    p.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+    let list = products.filter((p: any) =>
+      p.title.toLowerCase().includes(search.toLowerCase())
+    );
+    if (dataFilter === "no_images") {
+      list = list.filter((p: any) => !p.product_images || p.product_images.length === 0);
+    } else if (dataFilter === "missing_data") {
+      list = list.filter((p: any) => {
+        const noDesc = !p.description || p.description.trim() === "";
+        const noBrand = !p.brand_id;
+        const noCategory = !p.category_id;
+        const noPrice = !p.price || p.price <= 0;
+        const noImages = !p.product_images || p.product_images.length === 0;
+        return noDesc || noBrand || noCategory || noPrice || noImages;
+      });
+    } else if (dataFilter === "no_description") {
+      list = list.filter((p: any) => !p.description || p.description.trim() === "");
+    } else if (dataFilter === "no_brand") {
+      list = list.filter((p: any) => !p.brand_id);
+    } else if (dataFilter === "no_category") {
+      list = list.filter((p: any) => !p.category_id);
+    }
+    return list;
+  }, [products, search, dataFilter]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginatedProducts = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
