@@ -144,43 +144,9 @@ function SkinScanContent() {
 
   // Start camera
   const startCamera = useCallback(async () => {
-    // On native iOS/Android, use Capacitor Camera plugin directly
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const { Camera: CapCamera, CameraResultType, CameraSource, CameraDirection } = await import("@capacitor/camera");
-        console.log("[SkinScan] Opening native camera...");
-        const photo = await CapCamera.getPhoto({
-          quality: 85,
-          resultType: CameraResultType.Base64,
-          source: CameraSource.Camera,
-          direction: useFrontCamera ? CameraDirection.Front : CameraDirection.Rear,
-          width: 1280,
-          height: 960,
-          correctOrientation: true,
-        });
-        console.log("[SkinScan] Photo result:", { 
-          hasBase64: !!photo.base64String, 
-          format: photo.format,
-          base64Length: photo.base64String?.length 
-        });
-        const base64 = photo.base64String;
-        if (base64) {
-          const mimeType = photo.format === "png" ? "image/png" : "image/jpeg";
-          const dataUrl = `data:${mimeType};base64,${base64}`;
-          console.log("[SkinScan] Constructed dataUrl, length:", dataUrl.length);
-          setCapturedImage(dataUrl);
-          analyzeSkin(dataUrl);
-        } else {
-          console.error("[SkinScan] No base64String in photo result. Full photo keys:", Object.keys(photo));
-          toast.error("Failed to capture photo. Please try uploading an image instead.");
-        }
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error("[SkinScan] Capacitor camera error:", JSON.stringify(err));
-        if (!msg.includes("cancelled") && !msg.includes("User cancelled")) {
-          toast.error(language === "ar" ? "تعذر فتح الكاميرا" : "Could not open camera");
-        }
-      }
+    // On native iOS/Android, open the NativeFaceScanner with live tracking
+    if (isNative) {
+      setShowNativeScanner(true);
       return;
     }
 
