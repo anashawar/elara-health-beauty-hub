@@ -1074,11 +1074,16 @@ export default function AdminProducts() {
                     {mainImagePreview ? (
                       <div className="relative w-full h-36 rounded-xl overflow-hidden border border-border bg-muted">
                         <img src={mainImagePreview} className="w-full h-full object-cover" alt="Main" />
-                        {!editing || mainImage ? (
-                          <button onClick={() => { setMainImage(null); setMainImagePreview(null); }} className="absolute top-2 right-2 bg-background/80 rounded-full p-1 hover:bg-destructive hover:text-destructive-foreground transition-colors">
-                            <X className="h-4 w-4" />
-                          </button>
-                        ) : null}
+                        <button onClick={async () => {
+                          // If editing and showing an existing DB image (not a new upload), delete from DB
+                          if (editing && !mainImage && existingImages.length > 0) {
+                            await deleteExistingImage(existingImages[0].id);
+                          }
+                          setMainImage(null);
+                          setMainImagePreview(null);
+                        }} className="absolute top-2 right-2 bg-background/80 rounded-full p-1 hover:bg-destructive hover:text-destructive-foreground transition-colors">
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
                     ) : (
                       <label className="flex flex-col items-center justify-center w-full h-28 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
