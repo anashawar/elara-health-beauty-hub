@@ -60,7 +60,7 @@ export default function AdminOrders() {
       if (missingAddrIds.length > 0) {
         const { data: addrs } = await supabase
           .from("addresses")
-          .select("id, city, area, street, phone")
+          .select("id, city, area, street, phone, building, floor, apartment, label")
           .in("id", missingAddrIds);
         if (addrs) addrs.forEach((a: any) => { addressMap[a.id] = a; });
       }
