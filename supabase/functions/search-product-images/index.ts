@@ -35,12 +35,7 @@ function sleep(ms: number) {
 }
 
 function normalizeText(input: string): string {
-  return input
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return input.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function normalizeCompact(input: string): string {
@@ -75,7 +70,6 @@ function isJunkImage(url: string): boolean {
   return reject.some((pattern) => lower.includes(pattern));
 }
 
-// Trusted beauty/product domains get bonus scores
 const TRUSTED_DOMAINS = [
   "sephora.com", "ulta.com", "lookfantastic.com", "notino.com",
   "iherb.com", "boots.com", "superdrug.com", "beautybay.com",
@@ -112,12 +106,10 @@ function scoreCandidate(
 
   let score = 0;
 
-  // Brand match
   if (brandSlug && (normalizeCompact(imgTitle).includes(brandSlug) || normalizeCompact(url).includes(brandSlug))) {
     score += 8;
   }
 
-  // Title word matching in image title
   const normalizedTitle = normalizeText(imgTitle);
   const matchedInTitle = titleWords.filter((w) => normalizedTitle.includes(w));
   score += matchedInTitle.length * 3;
@@ -125,16 +117,13 @@ function scoreCandidate(
   else if (matchedInTitle.length >= 3) score += 6;
   else if (matchedInTitle.length >= 2) score += 3;
 
-  // Full name match in title
   const normalizedFullName = normalizeText(fullName);
   if (normalizedTitle.includes(normalizedFullName)) score += 12;
 
-  // Title word matching in URL path
   const urlPath = normalizeCompact(stripQueryAndHash(url));
   const matchedInUrl = titleWords.filter((w) => urlPath.includes(w));
   score += matchedInUrl.length * 2;
 
-  // Volume match
   if (volumeStr) {
     const compactVolume = normalizeCompact(volumeStr);
     if (normalizeCompact(imgTitle).includes(compactVolume) || urlPath.includes(compactVolume)) {
@@ -142,34 +131,27 @@ function scoreCandidate(
     }
   }
 
-  // Trusted domain bonus
   if (TRUSTED_DOMAINS.some((d) => domain.includes(d) || pageUrl.includes(d))) {
     score += 6;
   }
 
-  // Trusted CDN bonus
   if (TRUSTED_CDNS.some((cdn) => url.includes(cdn))) {
     score += 4;
   }
 
-  // Product page indicators
   if (/\/product|\/products|\/p\/|\/dp\/|sku|item/i.test(pageUrl)) score += 4;
   if (/\/product|\/products|\/catalog|\/media|\/image/i.test(url)) score += 3;
 
-  // Image quality indicators
   if (/white|clean|studio|packshot|front|primary|main|hero|default/i.test(url)) score += 2;
 
-  // Prefer square-ish product images (aspect ratio close to 1:1)
   if (image.imageWidth > 0 && image.imageHeight > 0) {
     const ratio = image.imageWidth / image.imageHeight;
-    if (ratio >= 0.7 && ratio <= 1.4) score += 3; // Square-ish = product shot
-    if (image.imageWidth >= 400) score += 2; // Good resolution
-    if (image.imageWidth >= 800) score += 2; // Great resolution
+    if (ratio >= 0.7 && ratio <= 1.4) score += 3;
+    if (image.imageWidth >= 400) score += 2;
+    if (image.imageWidth >= 800) score += 2;
   }
 
-  // Penalty for thumbnails
   if (/(_thumb|_xs\.|_sm\.|\/thumb\/|\/small\/|_50x|_75x|_100x|_150x)/i.test(url)) score -= 6;
-  // Penalty for non-product pages
   if (/blog|article|review|compare|best|top|collection|category|search|wishlist|news/i.test(pageUrl)) score -= 5;
 
   return score;
@@ -182,21 +164,14 @@ function buildSearchQueries(brandName: string, title: string, volumeStr?: string
     fullName,
     volumeStr ? `${fullName} ${volumeStr}` : `${brandName} ${title.split(/\s+/).slice(0, 4).join(" ")}`,
   ].filter(Boolean);
-
   return Array.from(new Set(queries)).slice(0, MAX_QUERIES);
 }
 
 async function searchImages(apiKey: string, query: string): Promise<any[]> {
   const resp = await fetch(SERPER_API_URL, {
     method: "POST",
-    headers: {
-      "X-API-KEY": apiKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      q: query,
-      num: MAX_IMAGES_PER_QUERY,
-    }),
+    headers: { "X-API-KEY": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ q: query, num: MAX_IMAGES_PER_QUERY }),
   });
 
   if (!resp.ok) {
@@ -225,17 +200,13 @@ async function fetchImageBytes(url: string, refererUrl?: string): Promise<{ byte
     if (refererUrl) {
       try { headers.set("Referer", `${new URL(refererUrl).origin}/`); } catch { /* ignore */ }
     }
-
     const response = await fetch(url, { method: "GET", redirect: "follow", headers });
     if (!response.ok) return null;
-
     const contentType = (response.headers.get("content-type") || "").toLowerCase();
     const bytes = new Uint8Array(await response.arrayBuffer());
-
     if ((!contentType.startsWith("image/") && !isProbablyImageUrl(url)) || bytes.byteLength < 5000) {
       return null;
     }
-
     return { bytes, contentType: contentType.split(";")[0] || "image/jpeg" };
   } catch {
     return null;
@@ -253,28 +224,53 @@ async function persistImage(
   if (download) {
     const ext = inferExtension(download.contentType, candidate.url);
     const path = `${productId}/${rank}-${Date.now()}.${ext}`;
-
     const { error: uploadError } = await supabase.storage
       .from("product-images")
-      .upload(path, download.bytes, {
-        contentType: download.contentType,
-        upsert: true,
-      });
+      .upload(path, download.bytes, { contentType: download.contentType, upsert: true });
 
     if (!uploadError) {
       const { data } = supabase.storage.from("product-images").getPublicUrl(path);
       return { finalUrl: data.publicUrl, persisted: "storage" };
     }
-
     console.error(`[${productId.slice(0, 8)}] Storage upload failed:`, uploadError.message);
   }
 
-  // Fallback: use remote URL directly for high-confidence matches from trusted sources
   if (candidate.score >= 20 && TRUSTED_CDNS.some((cdn) => candidate.url.toLowerCase().includes(cdn))) {
     return { finalUrl: candidate.url, persisted: "remote" };
   }
 
   return null;
+}
+
+// Fetch missing product IDs server-side to avoid client REST API timeouts
+async function fetchMissingProductIds(supabase: ReturnType<typeof createClient>, limit: number): Promise<string[]> {
+  const PAGE = 1000;
+
+  // Get all product IDs
+  let allProductIds: string[] = [];
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase.from("products").select("id").range(from, from + PAGE - 1);
+    if (error) throw error;
+    allProductIds = allProductIds.concat((data || []).map((r: any) => r.id));
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+
+  // Get all product IDs that have images
+  let imageProductIds: string[] = [];
+  from = 0;
+  while (true) {
+    const { data, error } = await supabase.from("product_images").select("product_id").range(from, from + PAGE - 1);
+    if (error) throw error;
+    imageProductIds = imageProductIds.concat((data || []).map((r: any) => r.product_id));
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+
+  const hasImage = new Set(imageProductIds);
+  const missing = allProductIds.filter((id) => !hasImage.has(id));
+  return missing.slice(0, limit);
 }
 
 Deno.serve(async (req) => {
@@ -288,19 +284,39 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { product_ids } = await req.json();
-    if (!product_ids?.length) throw new Error("product_ids array is required");
+    const body = await req.json();
+    const batchSize = body.batch_size || 5;
+
+    // If product_ids provided, use those; otherwise auto-find missing ones
+    let productIds: string[] = body.product_ids || [];
+    let totalMissing = 0;
+
+    if (productIds.length === 0) {
+      // Auto-discover missing products server-side
+      const missing = await fetchMissingProductIds(supabase, batchSize);
+      productIds = missing;
+      // Also get total count for progress reporting
+      const allMissing = await fetchMissingProductIds(supabase, 99999);
+      totalMissing = allMissing.length;
+    }
+
+    if (productIds.length === 0) {
+      return new Response(
+        JSON.stringify({ success: true, processed: 0, succeeded: 0, skipped: 0, failed: 0, results: [], totalMissing: 0, done: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const { data: products, error: productsError } = await supabase
       .from("products")
       .select("id, title, brands(name), volume_ml, volume_unit")
-      .in("id", product_ids);
+      .in("id", productIds);
     if (productsError) throw productsError;
 
     const { data: existingImages } = await supabase
       .from("product_images")
       .select("product_id")
-      .in("product_id", product_ids);
+      .in("product_id", productIds);
     const hasImageSet = new Set((existingImages || []).map((item: any) => item.product_id));
 
     const results: any[] = [];
@@ -332,28 +348,21 @@ Deno.serve(async (req) => {
         const candidates: CandidateImage[] = [];
 
         for (const query of searchQueries) {
-          // Stop early if we already have a great match
           if (candidates.some((c) => c.score >= 30)) break;
 
           console.log(`[${product.id.slice(0, 8)}] Query: "${query}"`);
 
           try {
             const images = await searchImages(apiKey, query);
-
             for (const img of images) {
               if (!img.imageUrl) continue;
               const score = scoreCandidate(img, titleWords, brandSlug, fullName, volumeStr);
               if (score >= MIN_SCORE) {
                 candidates.push({
-                  url: img.imageUrl,
-                  thumbnailUrl: img.thumbnailUrl || "",
-                  source: img.source || "",
-                  domain: img.domain || "",
-                  title: img.title || "",
-                  width: img.imageWidth || 0,
-                  height: img.imageHeight || 0,
-                  score,
-                  link: img.link || "",
+                  url: img.imageUrl, thumbnailUrl: img.thumbnailUrl || "",
+                  source: img.source || "", domain: img.domain || "",
+                  title: img.title || "", width: img.imageWidth || 0,
+                  height: img.imageHeight || 0, score, link: img.link || "",
                 });
               }
             }
@@ -369,40 +378,30 @@ Deno.serve(async (req) => {
           await sleep(200);
         }
 
-        // If we broke out due to payment error
         if (results.some((r) => r.id === product.id)) continue;
 
-        // Dedupe by URL and sort by score
         const deduped = new Map<string, CandidateImage>();
         for (const c of candidates.sort((a, b) => b.score - a.score)) {
           const key = stripQueryAndHash(c.url).toLowerCase();
           if (!deduped.has(key)) deduped.set(key, c);
         }
 
-        const uniqueCandidates = Array.from(deduped.values())
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 8);
-
+        const uniqueCandidates = Array.from(deduped.values()).sort((a, b) => b.score - a.score).slice(0, 8);
         const topScore = uniqueCandidates[0]?.score || 0;
-        console.log(
-          `[${product.id.slice(0, 8)}] "${fullName}" → ${uniqueCandidates.length} candidates, top score: ${topScore}`,
-        );
+        console.log(`[${product.id.slice(0, 8)}] "${fullName}" → ${uniqueCandidates.length} candidates, top score: ${topScore}`);
 
         if (topScore < MIN_SCORE) {
           results.push({ id: product.id, status: "no_confident_match", topScore, title: fullName });
           continue;
         }
 
-        // Try to persist the best candidate
         let saved: { finalUrl: string; persisted: string; candidate: CandidateImage } | null = null;
         for (let i = 0; i < uniqueCandidates.length; i++) {
           const candidate = uniqueCandidates[i];
           const persisted = await persistImage(supabase, product.id, candidate, i);
           if (persisted) {
             saved = { ...persisted, candidate };
-            console.log(
-              `[${product.id.slice(0, 8)}] ✓ Saved: ${persisted.finalUrl} (score: ${candidate.score}, domain: ${candidate.domain}, mode: ${persisted.persisted})`,
-            );
+            console.log(`[${product.id.slice(0, 8)}] ✓ Saved: ${persisted.finalUrl} (score: ${candidate.score}, domain: ${candidate.domain}, mode: ${persisted.persisted})`);
             break;
           }
           console.log(`[${product.id.slice(0, 8)}] ✗ Rejected: ${candidate.url} (score: ${candidate.score})`);
@@ -422,14 +421,9 @@ Deno.serve(async (req) => {
         if (insertError) throw insertError;
 
         results.push({
-          id: product.id,
-          status: "success",
-          images: 1,
-          url: saved.finalUrl,
-          domain: saved.candidate.domain,
-          persisted: saved.persisted,
-          score: saved.candidate.score,
-          title: fullName,
+          id: product.id, status: "success", images: 1,
+          url: saved.finalUrl, domain: saved.candidate.domain,
+          persisted: saved.persisted, score: saved.candidate.score, title: fullName,
         });
 
         await sleep(150);
@@ -444,7 +438,7 @@ Deno.serve(async (req) => {
     const failed = results.filter((r) => r.status !== "success" && r.status !== "skipped").length;
 
     return new Response(
-      JSON.stringify({ success: true, processed: results.length, succeeded, skipped, failed, results }),
+      JSON.stringify({ success: true, processed: results.length, succeeded, skipped, failed, results, totalMissing }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
