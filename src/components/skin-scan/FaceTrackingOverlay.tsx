@@ -37,17 +37,33 @@ export default function FaceTrackingOverlay({ videoRef, mirrored = false }: Face
       const vision = await FilesetResolver.forVisionTasks(
         "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
       );
-      const landmarker = await FaceLandmarker.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
-          delegate: "GPU",
-        },
-        runningMode: "VIDEO",
-        numFaces: 1,
-        outputFaceBlendshapes: false,
-        outputFacialTransformationMatrixes: false,
-      });
-      landmarkerRef.current = landmarker;
+
+      // Try GPU first, fall back to CPU (needed for iOS Safari)
+      let landmarker: FaceLandmarker | null = null;
+      for (const delegate of ["GPU", "CPU"] as const) {
+        try {
+          landmarker = await FaceLandmarker.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+              delegate,
+            },
+            runningMode: "VIDEO",
+            numFaces: 1,
+            outputFaceBlendshapes: false,
+            outputFacialTransformationMatrixes: false,
+          });
+          console.log(`[FaceTracking] Initialized with ${delegate} delegate`);
+          break;
+        } catch (e) {
+          console.warn(`[FaceTracking] ${delegate} delegate failed, trying fallback...`, e);
+        }
+      }
+
+      if (landmarker) {
+        landmarkerRef.current = landmarker;
+      } else {
+        console.error("[FaceTracking] All delegates failed");
+      }
     } catch (err) {
       console.error("[FaceTracking] Failed to init:", err);
     } finally {
