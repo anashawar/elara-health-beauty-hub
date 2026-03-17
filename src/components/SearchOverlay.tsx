@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Search, X, ArrowRight, Sparkles } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import BottomNav from "@/components/layout/BottomNav";
 import { Link } from "react-router-dom";
 import { useProducts, useCategories, useBrands, useFormatPrice, concerns } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
