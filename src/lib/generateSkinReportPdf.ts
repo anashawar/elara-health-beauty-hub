@@ -65,11 +65,11 @@ export async function generateSkinReportPdf(
   } catch { /* fallback to text */ }
 
   // ── Brand colors ──
+  const brandPurple: [number, number, number] = [139, 92, 246];
   const brandRose: [number, number, number] = [219, 39, 119];
-  const brandDark: [number, number, number] = [30, 20, 35];
 
   // ── HEADER ──
-  doc.setFillColor(...brandDark);
+  doc.setFillColor(...brandPurple);
   doc.rect(0, 0, w, 40, "F");
   // Accent line
   doc.setFillColor(...brandRose);
