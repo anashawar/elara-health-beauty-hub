@@ -117,7 +117,7 @@ export default function AdminOrders() {
         </div>
       </DialogHeader>
 
-      <div className="flex flex-col md:grid md:grid-cols-[320px_minmax(0,1fr)] md:h-[82vh] md:max-h-[760px]">
+      <div className="flex min-h-0 flex-1 flex-col md:grid md:grid-cols-[320px_minmax(0,1fr)]">
         <aside className="border-b border-border bg-secondary/20 p-5 md:border-b-0 md:border-r md:overflow-y-auto">
           <div className="space-y-5">
             <section className="rounded-2xl bg-card p-4 shadow-sm">
