@@ -350,6 +350,18 @@ function SkinScanContent() {
   if (phase === "capture") {
     return (
       <div className="min-h-screen bg-background" dir={isRtl ? "rtl" : "ltr"}>
+        {/* Native Face Scanner (full-screen overlay on iOS/Android) */}
+        {showNativeScanner && isNative && (
+          <NativeFaceScanner
+            language={language}
+            onCapture={(dataUrl) => {
+              setShowNativeScanner(false);
+              setCapturedImage(dataUrl);
+              analyzeSkin(dataUrl);
+            }}
+            onClose={() => setShowNativeScanner(false)}
+          />
+        )}
         <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/30" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
