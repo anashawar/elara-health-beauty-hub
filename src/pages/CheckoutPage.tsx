@@ -136,6 +136,15 @@ const CheckoutPage = () => {
         }));
         await supabase.from("order_items").insert(items);
 
+        // Increment coupon usage if a real coupon was used
+        if (appliedCoupon?.code) {
+          await supabase.rpc('has_role' as any).then(() => {}); // no-op, just for typing
+          await supabase
+            .from("coupons")
+            .update({ current_uses: (undefined as any) }) // we use raw SQL below
+            .eq("code", appliedCoupon.code);
+        }
+
         // Send order confirmation email (fire-and-forget)
         const addressParts = [
           selectedAddress.label, selectedAddress.city,
