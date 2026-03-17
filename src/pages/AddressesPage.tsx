@@ -158,9 +158,9 @@ const AddressesPage = () => {
   };
 
   const labelMap: Record<string, string> = {
-    House: t("addresses.house") || "🏠 House",
-    Apartment: t("addresses.apartment") || "🏢 Apartment",
-    Office: t("addresses.office") || "🏬 Office",
+    House: t("addresses.house") || "House",
+    Apartment: t("addresses.apartment") || "Apartment",
+    Office: t("addresses.office") || "Office",
   };
 
   if (authLoading) return null;
