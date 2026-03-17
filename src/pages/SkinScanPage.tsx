@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Camera, Upload, Sparkles, ArrowLeft, RotateCcw, Droplets, Zap, Eye, Fingerprint, AlertTriangle, Sun, Moon, Calendar, ShoppingBag, ArrowRight, ChevronDown, ChevronUp, Scan, Clock, History, Share2, FileDown } from "lucide-react";
+import FaceTrackingOverlay from "@/components/skin-scan/FaceTrackingOverlay";
 import { Capacitor } from "@capacitor/core";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -404,15 +405,11 @@ function SkinScanContent() {
             <div className="relative rounded-3xl overflow-hidden bg-foreground/5 aspect-[3/4]">
               <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" style={useFrontCamera ? { transform: "scaleX(-1)" } : {}} />
               
-              {/* Scanning overlay */}
-              <div className="absolute inset-0 pointer-events-none">
-                {/* Face guide oval */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-56 h-72 border-2 border-primary/40 rounded-[50%] relative">
-                    <motion.div animate={{ opacity: [0.3, 0.8, 0.3] }} transition={{ duration: 2, repeat: Infinity }} className="absolute inset-0 border-2 border-primary rounded-[50%]" />
-                  </div>
-                </div>
-                {/* Corner brackets */}
+              {/* Live face tracking overlay */}
+              <FaceTrackingOverlay videoRef={videoRef as React.RefObject<HTMLVideoElement>} mirrored={useFrontCamera} />
+
+              {/* Corner brackets + branding (always visible) */}
+              <div className="absolute inset-0 pointer-events-none z-20">
                 <div className="absolute top-8 left-8 w-8 h-8 border-t-2 border-l-2 border-primary/60 rounded-tl-lg" />
                 <div className="absolute top-8 right-8 w-8 h-8 border-t-2 border-r-2 border-primary/60 rounded-tr-lg" />
                 <div className="absolute bottom-8 left-8 w-8 h-8 border-b-2 border-l-2 border-primary/60 rounded-bl-lg" />
@@ -426,7 +423,7 @@ function SkinScanContent() {
                 {/* ELARA branding */}
                 <div className="absolute top-4 left-0 right-0 text-center">
                   <span className="text-[10px] font-bold tracking-widest text-white/60 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full">
-                    ELARA AI SCANNING
+                    ELARA AI • LIVE TRACKING
                   </span>
                 </div>
               </div>
