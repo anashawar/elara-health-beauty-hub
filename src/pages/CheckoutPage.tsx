@@ -97,22 +97,31 @@ const CheckoutPage = () => {
         .eq("user_id", user.id);
 
       const confirmedFirstOrder = (freshCount ?? 0) === 0;
-      const confirmedDiscount = confirmedFirstOrder && meetsMinimum
+      const confirmedFirstDiscount = confirmedFirstOrder && meetsMinimum
         ? Math.round((cartTotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250
         : 0;
+      const confirmedCouponDiscount = couponDiscount; // already calculated from context
+      const confirmedTotalDiscount = confirmedFirstDiscount + confirmedCouponDiscount;
+
+      // Build notes and coupon_code
+      const notesParts: string[] = [];
+      if (notes) notesParts.push(notes);
+      if (confirmedFirstDiscount > 0) notesParts.push(`[First Order -${FIRST_ORDER_DISCOUNT_PERCENT}%]`);
+      if (appliedCoupon) notesParts.push(`[Coupon: ${appliedCoupon.code}]`);
+
+      const couponCode = appliedCoupon?.code
+        || (confirmedFirstDiscount > 0 ? `FIRST_ORDER_${FIRST_ORDER_DISCOUNT_PERCENT}` : null);
 
       const { data: order, error: orderError } = await supabase.from("orders").insert({
         user_id: user.id,
         address_id: selectedAddress.id,
         subtotal: cartTotal,
         delivery_fee: deliveryFee,
-        discount: confirmedDiscount,
-        total: cartTotal - confirmedDiscount + deliveryFee,
+        discount: confirmedTotalDiscount,
+        total: Math.max(cartTotal - confirmedTotalDiscount, 0) + deliveryFee,
         payment_method: paymentMethod,
-        notes: confirmedDiscount > 0
-          ? [notes, `[First Order -${FIRST_ORDER_DISCOUNT_PERCENT}%]`].filter(Boolean).join(" | ")
-          : (notes || null),
-        coupon_code: confirmedDiscount > 0 ? `FIRST_ORDER_${FIRST_ORDER_DISCOUNT_PERCENT}` : null,
+        notes: notesParts.length > 0 ? notesParts.join(" | ") : null,
+        coupon_code: couponCode,
         status: "pending",
       }).select().single();
 
