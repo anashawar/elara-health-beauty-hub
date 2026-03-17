@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CameraPreview } from "@capgo/camera-preview";
+import { Camera as CapCamera } from "@capacitor/camera";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
-import { Camera, ArrowLeft, RotateCcw } from "lucide-react";
+import { Camera, ArrowLeft, RotateCcw, ShieldAlert } from "lucide-react";
 
 // Key landmark groups
 const FACE_OVAL = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109,10];
@@ -25,6 +26,8 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
   const [faceDetected, setFaceDetected] = useState(false);
   const [modelLoading, setModelLoading] = useState(true);
   const [useFront, setUseFront] = useState(true);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const landmarkerRef = useRef<FaceLandmarker | null>(null);
   const rafRef = useRef<number>(0);
@@ -32,9 +35,19 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
   const hiddenImgRef = useRef<HTMLImageElement | null>(null);
   const activeRef = useRef(true);
 
-  // Start native camera preview
+  // Request camera permission first, then start native camera preview
   const startCamera = useCallback(async () => {
     try {
+      // Check/request camera permission via Capacitor Camera plugin
+      const permStatus = await CapCamera.checkPermissions();
+      if (permStatus.camera === "denied") {
+        const reqResult = await CapCamera.requestPermissions({ permissions: ["camera"] });
+        if (reqResult.camera === "denied") {
+          setPermissionDenied(true);
+          return;
+        }
+      }
+
       await CameraPreview.start({
         parent: "camera-preview-container",
         position: useFront ? "front" : "rear",
@@ -45,8 +58,15 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
         height: Math.round(window.innerWidth * (4 / 3)),
       });
       setCameraReady(true);
-    } catch (err) {
+      setCameraError(null);
+    } catch (err: any) {
       console.error("[NativeScanner] Camera start failed:", err);
+      const msg = err?.message || String(err);
+      if (msg.toLowerCase().includes("permission") || msg.toLowerCase().includes("denied")) {
+        setPermissionDenied(true);
+      } else {
+        setCameraError(msg);
+      }
     }
   }, [useFront]);
 
