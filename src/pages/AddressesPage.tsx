@@ -150,17 +150,17 @@ const AddressesPage = () => {
     if (!form.city) { toast(t("auth.selectCity")); return; }
     if (!form.area.trim()) { toast(t("addresses.areaRequired") || "Area/Neighborhood is required"); return; }
     if (!form.street.trim()) { toast(t("addresses.streetRequired") || "Street is required"); return; }
-    if (!form.building.trim()) { toast(t("addresses.buildingRequired") || "Building is required"); return; }
-    if (!form.floor.trim()) { toast(t("addresses.floorRequired") || "Floor is required"); return; }
-    if (!form.apartment.trim()) { toast(t("addresses.aptRequired") || "Apartment is required"); return; }
+    if (currentConfig.needsBuilding && !form.building.trim()) { toast(t("addresses.buildingRequired") || "Building is required"); return; }
+    if (currentConfig.needsFloor && !form.floor.trim()) { toast(t("addresses.floorRequired") || "Floor is required"); return; }
+    if (currentConfig.needsApartment && !form.apartment.trim()) { toast(t("addresses.aptRequired") || "Apartment is required"); return; }
     if (!form.phone.trim()) { toast(t("addresses.phoneRequired") || "WhatsApp number is required"); return; }
     saveMutation.mutate({ ...form, id: editingId || undefined });
   };
 
   const labelMap: Record<string, string> = {
-    Home: t("addresses.home"),
-    Work: t("addresses.work"),
-    Other: t("addresses.other"),
+    House: t("addresses.house") || "🏠 House",
+    Apartment: t("addresses.apartment") || "🏢 Apartment",
+    Office: t("addresses.office") || "🏬 Office",
   };
 
   if (authLoading) return null;
