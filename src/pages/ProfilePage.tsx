@@ -95,9 +95,14 @@ const ProfilePage = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-base font-bold text-foreground">
-                    {user.user_metadata?.full_name || t("profile.elaraUser")}
+                    {profile?.full_name || user.user_metadata?.full_name || t("profile.elaraUser")}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-0.5">{user.email}</p>
+                  {(profile?.gender || user.user_metadata?.gender) && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">
+                      {profile?.gender || user.user_metadata?.gender}
+                    </p>
+                  )}
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground/50 rtl:rotate-180 group-hover:translate-x-1 transition-transform" />
               </Link>
