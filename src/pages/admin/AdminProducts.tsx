@@ -58,6 +58,7 @@ function getPublicUrl(path: string) {
 export default function AdminProducts() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [dataFilter, setDataFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 50;
   const [open, setOpen] = useState(false);
