@@ -36,7 +36,7 @@ const CartPage = () => {
         const { data, error } = await supabase
           .from("coupons")
           .select("*")
-          .eq("code", pendingCoupon.toUpperCase())
+          .ilike("code", pendingCoupon.trim())
           .eq("is_active", true)
           .maybeSingle();
         setCouponLoading(false);
@@ -109,16 +109,21 @@ const CartPage = () => {
     if (!coupon.trim()) return;
     setCouponLoading(true);
 
+    const trimmedCode = coupon.trim().toUpperCase();
+    console.log("[Coupon] Searching for code:", trimmedCode);
+
     const { data, error } = await supabase
       .from("coupons")
       .select("*")
-      .eq("code", coupon.trim().toUpperCase())
+      .ilike("code", trimmedCode)
       .eq("is_active", true)
       .maybeSingle();
 
+    console.log("[Coupon] Result:", { data, error });
     setCouponLoading(false);
 
     if (error || !data) {
+      console.warn("[Coupon] Invalid - error:", error, "data:", data);
       toast(t("cart.invalidCoupon"));
       return;
     }
