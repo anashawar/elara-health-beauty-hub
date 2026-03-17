@@ -117,6 +117,8 @@ function SkinScanContent() {
   const [expandedRoutine, setExpandedRoutine] = useState<string | null>("morning");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [useFrontCamera, setUseFrontCamera] = useState(true);
+  const [showNativeScanner, setShowNativeScanner] = useState(false);
+  const isNative = Capacitor.isNativePlatform();
 
   const scanSteps = [
     { label: language === "ar" ? "تحليل البشرة..." : language === "ku" ? "شیکردنەوەی پێست..." : "Mapping skin texture...", icon: Fingerprint },
