@@ -314,32 +314,37 @@ export async function generateSkinReportPdf(
     const ph = doc.internal.pageSize.getHeight();
 
     // Footer bar
-    doc.setFillColor(...brandDark);
-    doc.rect(0, ph - 16, w, 16, "F");
+    doc.setFillColor(...brandPurple);
+    doc.rect(0, ph - 20, w, 20, "F");
     doc.setFillColor(...brandRose);
-    doc.rect(0, ph - 16, w, 0.8, "F");
+    doc.rect(0, ph - 20, w, 0.8, "F");
 
     // Logo in footer
     if (logoData) {
-      doc.addImage(logoData, "PNG", 14, ph - 13, 18, 6.5);
+      doc.addImage(logoData, "PNG", 14, ph - 17, 18, 6.5);
     } else {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
-      doc.text("ELARA", 14, ph - 7);
+      doc.text("ELARA", 14, ph - 11);
     }
 
     // App CTA
     doc.setFontSize(7);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(255, 255, 255);
-    doc.text("Get ELARA app on iOS & Android", w / 2, ph - 10, { align: "center" });
+    doc.text("Get ELARA app on iOS & Android", w / 2, ph - 14, { align: "center" });
 
     // Disclaimer
     doc.setFontSize(5.5);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(160, 160, 170);
-    doc.text("AI-generated analysis · Not a medical diagnosis", w / 2, ph - 5, { align: "center" });
+    doc.setTextColor(230, 220, 255);
+    doc.text("AI-generated analysis · Not a medical diagnosis", w / 2, ph - 9, { align: "center" });
+
+    // All rights reserved
+    doc.setFontSize(5);
+    doc.setTextColor(200, 190, 230);
+    doc.text(`© ${new Date().getFullYear()} ELARA. All rights reserved.`, w / 2, ph - 4.5, { align: "center" });
 
     // Page number
     doc.setFontSize(6);
