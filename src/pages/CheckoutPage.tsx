@@ -14,6 +14,7 @@ import SearchOverlay from "@/components/SearchOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { calculatePoints, useAwardPoints } from "@/hooks/useLoyalty";
+import { getDeliveryFee } from "@/lib/deliveryFee";
 
 const FIRST_ORDER_DISCOUNT_PERCENT = 15;
 const FIRST_ORDER_MIN_AMOUNT = 20000;
@@ -31,7 +32,6 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [searchOpen, setSearchOpen] = useState(false);
   const awardPoints = useAwardPoints();
-  const deliveryFee = cartTotal >= 40000 ? 0 : 5000;
 
   // Check if user has any previous orders (for first-order discount)
   const { data: existingOrderCount, isLoading: ordersCountLoading } = useQuery({
