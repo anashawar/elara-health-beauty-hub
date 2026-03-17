@@ -38,7 +38,7 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
       await CameraPreview.start({
         parent: "camera-preview-container",
         position: useFront ? "front" : "rear",
-        toBack: true, // camera renders behind webview
+        toBack: false,
         disableAudio: true,
         storeToFile: false,
         width: window.innerWidth,
