@@ -1,10 +1,12 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { ImagePlus, Play, Pause, CheckCircle2, Loader2, RotateCcw, XCircle, Image, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
-const BATCH_SIZE = 5; // Serper.dev is fast — each query returns multiple image results in one call
+const BATCH_SIZE = 5;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 3000;
 
 interface ResultEntry {
   id: string;
@@ -23,65 +25,30 @@ const AdminImageSearch = () => {
   const [failed, setFailed] = useState(0);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [recentResults, setRecentResults] = useState<ResultEntry[]>([]);
+  const [retryCount, setRetryCount] = useState(0);
   const stopRef = useRef(false);
 
-  const fetchMissingCount = useCallback(async () => {
-    setLoading(true);
+  const invokeBatch = async (attempt = 0): Promise<any> => {
     try {
-      const { count: totalProducts } = await supabase
-        .from("products")
-        .select("id", { count: "exact", head: true });
+      const resp = await supabase.functions.invoke("search-product-images", {
+        body: { batch_size: BATCH_SIZE },
+      });
 
-      const { data: withImages } = await supabase
-        .from("product_images")
-        .select("product_id");
+      if (resp.error) {
+        throw new Error(resp.error.message || "Edge function failed");
+      }
 
-      const uniqueWithImages = new Set((withImages || []).map(r => r.product_id));
-      const missing = (totalProducts || 0) - uniqueWithImages.size;
-      setTotalMissing(Math.max(0, missing));
-    } catch (e: any) {
-      setError(e.message);
+      return resp.data;
+    } catch (err: any) {
+      if (attempt < MAX_RETRIES && !stopRef.current) {
+        setRetryCount(attempt + 1);
+        setError(`Request failed, retrying (${attempt + 1}/${MAX_RETRIES})...`);
+        await new Promise((r) => setTimeout(r, RETRY_DELAY * (attempt + 1)));
+        return invokeBatch(attempt + 1);
+      }
+      throw err;
     }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    fetchMissingCount();
-  }, [fetchMissingCount]);
-
-  const fetchMissingProductIds = async (limit: number): Promise<string[]> => {
-    let allProductIds: string[] = [];
-    let from = 0;
-    const PAGE = 1000;
-    while (true) {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id")
-        .range(from, from + PAGE - 1);
-      if (error) throw error;
-      allProductIds = allProductIds.concat((data || []).map(r => r.id));
-      if (!data || data.length < PAGE) break;
-      from += PAGE;
-    }
-
-    let imageProductIds: string[] = [];
-    from = 0;
-    while (true) {
-      const { data, error } = await supabase
-        .from("product_images")
-        .select("product_id")
-        .range(from, from + PAGE - 1);
-      if (error) throw error;
-      imageProductIds = imageProductIds.concat((data || []).map(r => r.product_id));
-      if (!data || data.length < PAGE) break;
-      from += PAGE;
-    }
-
-    const hasImage = new Set(imageProductIds);
-    const missing = allProductIds.filter(id => !hasImage.has(id));
-    return missing.slice(0, limit);
   };
 
   const runBatch = useCallback(async () => {
@@ -92,53 +59,61 @@ const AdminImageSearch = () => {
 
     while (!stopRef.current) {
       try {
-        const ids = await fetchMissingProductIds(BATCH_SIZE);
+        setRetryCount(0);
+        const result = await invokeBatch();
 
-        if (ids.length === 0) {
+        if (!result) {
+          setError("No response from server");
+          break;
+        }
+
+        // Update total missing from server
+        if (typeof result.totalMissing === "number") {
+          setTotalMissing(result.totalMissing);
+        }
+
+        // Check if done
+        if (result.done || result.processed === 0) {
+          setTotalMissing(0);
           setDone(true);
           break;
         }
 
-        const resp = await supabase.functions.invoke("search-product-images", {
-          body: { product_ids: ids },
-        });
-
-        if (resp.error) {
-          setError(`Search failed: ${resp.error.message}`);
-          break;
-        }
-
-        const result = resp.data;
         const batchFound = result.succeeded || 0;
         const batchFailed = result.failed || 0;
         const batchProcessed = batchFound + batchFailed + (result.skipped || 0);
 
-        setProcessed(prev => prev + batchProcessed);
-        setFound(prev => prev + batchFound);
-        setFailed(prev => prev + batchFailed);
+        setProcessed((prev) => prev + batchProcessed);
+        setFound((prev) => prev + batchFound);
+        setFailed((prev) => prev + batchFailed);
+        setError(null);
 
-        // Add results to log
+        // Add results to log (skip "skipped" entries)
         if (result.results) {
-          setRecentResults(prev => [...(result.results as ResultEntry[]).filter(r => r.status !== "skipped"), ...prev].slice(0, 50));
+          setRecentResults((prev) =>
+            [...(result.results as ResultEntry[]).filter((r) => r.status !== "skipped"), ...prev].slice(0, 50)
+          );
         }
 
-        await fetchMissingCount();
-
-        if (totalMissing !== null && totalMissing <= batchProcessed) {
-          setDone(true);
+        // Check if payment required (API credits exhausted)
+        if (result.results?.some((r: any) => r.status === "payment_required")) {
+          setError("Serper API credits exhausted. Please top up your account.");
           break;
         }
 
-        // Delay between batches
-        await new Promise(r => setTimeout(r, 1500));
+        // Small delay between batches
+        await new Promise((r) => setTimeout(r, 1000));
       } catch (e: any) {
-        setError(e.message);
+        if (!stopRef.current) {
+          setError(`Failed after ${MAX_RETRIES} retries: ${e.message}`);
+        }
         break;
       }
     }
 
     setRunning(false);
-  }, [fetchMissingCount, totalMissing]);
+    setRetryCount(0);
+  }, []);
 
   const stop = () => {
     stopRef.current = true;
@@ -151,12 +126,13 @@ const AdminImageSearch = () => {
     setDone(false);
     setError(null);
     setRecentResults([]);
-    fetchMissingCount();
+    setTotalMissing(null);
   };
 
-  const progress = totalMissing !== null && totalMissing > 0
-    ? Math.min(100, (processed / (processed + totalMissing)) * 100)
-    : 0;
+  const progress =
+    totalMissing !== null && totalMissing + processed > 0
+      ? Math.min(100, (processed / (processed + totalMissing)) * 100)
+      : 0;
 
   const successRate = processed > 0 ? Math.round((found / processed) * 100) : 0;
 
@@ -197,13 +173,10 @@ const AdminImageSearch = () => {
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-sm font-medium">Progress</p>
-            {loading ? (
-              <p className="text-xs text-muted-foreground">Loading...</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                {processed > 0 && `${processed} processed this session`}
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              {processed > 0 && `${processed} processed this session`}
+              {retryCount > 0 && ` · Retry ${retryCount}/${MAX_RETRIES}`}
+            </p>
           </div>
           {done && (
             <div className="flex items-center gap-2 text-emerald-600">
@@ -223,7 +196,7 @@ const AdminImageSearch = () => {
 
         <div className="flex gap-3 flex-wrap">
           {!running ? (
-            <Button onClick={runBatch} disabled={done || loading || totalMissing === 0} className="gap-2">
+            <Button onClick={runBatch} disabled={done} className="gap-2">
               <Play className="w-4 h-4" />
               {processed > 0 ? "Resume Search" : "Start Search"}
             </Button>
@@ -242,7 +215,7 @@ const AdminImageSearch = () => {
           {running && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Searching images for batch of {BATCH_SIZE}...
+              {retryCount > 0 ? `Retrying...` : `Searching images for batch of ${BATCH_SIZE}...`}
             </div>
           )}
         </div>
@@ -289,13 +262,13 @@ const AdminImageSearch = () => {
       <div className="bg-card rounded-xl p-6 border">
         <h3 className="font-semibold mb-2">How it works</h3>
         <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
+          <li>Automatically finds products without images — no manual selection needed</li>
           <li>Uses multiple search strategies per product — retailer sites, CDNs, and general web</li>
-          <li>Tries up to 4 query variations per product for maximum coverage</li>
           <li>Scores images by brand match, title match, trusted CDN, and resolution</li>
           <li>Verifies each image exists and meets minimum quality (5KB+)</li>
-          <li>Only saves the single best-scoring verified image per product</li>
+          <li>Images are saved immediately — pause and resume anytime without losing progress</li>
+          <li>Auto-retries up to {MAX_RETRIES} times on connection failures</li>
           <li>Processes {BATCH_SIZE} products per batch to stay within API limits</li>
-          <li>You can pause and resume at any time</li>
         </ul>
       </div>
     </div>
