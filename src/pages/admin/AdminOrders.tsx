@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Eye, User, Phone, MapPin, Package, Filter, Calendar, CreditCard, Tag, StickyNote, Users } from "lucide-react";
 import { formatPrice } from "@/hooks/useProducts";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
