@@ -335,31 +335,6 @@ const SettingsPage = () => {
                 </Button>
               </div>
 
-              {/* App Icon Picker */}
-              <div className="bg-card rounded-2xl p-4 shadow-premium">
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  <h3 className="text-sm font-bold text-foreground">App Icon</h3>
-                </div>
-                <p className="text-[11px] text-muted-foreground mb-3">Choose a seasonal app icon for your home screen</p>
-                <div className="grid grid-cols-5 gap-2">
-                  {APP_ICON_OPTIONS.map(opt => (
-                    <button
-                      key={opt.id}
-                      onClick={() => switchIcon(opt.id)}
-                      disabled={switching}
-                      className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border transition-all ${
-                        currentIcon === opt.id
-                          ? "border-primary bg-primary/5 ring-2 ring-primary/30"
-                          : "border-border hover:border-primary/40"
-                      }`}
-                    >
-                      <img src={opt.preview} alt={opt.label} className="w-12 h-12 rounded-xl object-cover" />
-                      <span className="text-[9px] font-medium text-foreground leading-tight">{opt.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               <div className="bg-card rounded-2xl shadow-premium overflow-hidden">
                 <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-4 hover:bg-destructive/5 transition-colors text-destructive">
