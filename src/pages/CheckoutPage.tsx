@@ -54,6 +54,15 @@ const CheckoutPage = () => {
     ? Math.round((cartTotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250
     : 0;
 
+  // Coupon discount from cart
+  const couponDiscount = appliedCoupon
+    ? appliedCoupon.discount_type === "percentage"
+      ? Math.round(cartTotal * (appliedCoupon.discount_value / 100))
+      : appliedCoupon.discount_value
+    : 0;
+
+  const totalDiscount = firstOrderDiscount + couponDiscount;
+
   const { data: addresses = [], isLoading: addressesLoading } = useQuery({
     queryKey: ["addresses", user?.id],
     queryFn: async () => {
