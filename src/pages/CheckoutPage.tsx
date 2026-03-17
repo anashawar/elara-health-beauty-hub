@@ -138,11 +138,17 @@ const CheckoutPage = () => {
 
         // Increment coupon usage if a real coupon was used
         if (appliedCoupon?.code) {
-          await supabase.rpc('has_role' as any).then(() => {}); // no-op, just for typing
-          await supabase
+          const { data: couponRow } = await supabase
             .from("coupons")
-            .update({ current_uses: (undefined as any) }) // we use raw SQL below
-            .eq("code", appliedCoupon.code);
+            .select("current_uses")
+            .eq("code", appliedCoupon.code)
+            .maybeSingle();
+          if (couponRow) {
+            await supabase
+              .from("coupons")
+              .update({ current_uses: (couponRow.current_uses || 0) + 1 })
+              .eq("code", appliedCoupon.code);
+          }
         }
 
         // Send order confirmation email (fire-and-forget)
