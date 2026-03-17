@@ -26,6 +26,7 @@ const WishlistPage = lazy(() => import("./pages/WishlistPage"));
 const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const OrdersPage = lazy(() => import("./pages/OrdersPage"));
+const ModifyOrderPage = lazy(() => import("./pages/ModifyOrderPage"));
 const AddressesPage = lazy(() => import("./pages/AddressesPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const BrandPage = lazy(() => import("./pages/BrandPage"));
