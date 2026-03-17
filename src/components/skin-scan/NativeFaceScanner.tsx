@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CameraPreview } from "@capacitor-community/camera-preview";
+import { CameraPreview } from "@capgo/camera-preview";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { Camera, ArrowLeft, RotateCcw } from "lucide-react";
 
