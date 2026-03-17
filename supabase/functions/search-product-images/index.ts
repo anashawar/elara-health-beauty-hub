@@ -386,23 +386,15 @@ Deno.serve(async (req) => {
       nextOffset = discovery.nextOffset;
       done = discovery.done;
 
-      // Count products that actually have NO images
+      // Count products that have NO images using a left join approach
       try {
-        const { count: totalProductCount } = await withRetry("count all products", () =>
-          supabase.from("products").select("id", { count: "exact", head: true }),
+        // Get all distinct product_ids that have at least one image
+        const { data: withImagesData } = await withRetry("count products with images", () =>
+          supabase.from("product_images").select("product_id"),
         );
-        const { count: productsWithImages } = await withRetry("count products with images", () =>
-          supabase.from("product_images").select("product_id", { count: "exact", head: true }),
-        );
-        // product_images can have multiple rows per product, so we need distinct count
-        const { data: distinctWithImages } = await withRetry("count distinct products with images", () =>
-          supabase.rpc("count_products_with_images").single(),
-        );
-        if (distinctWithImages && typeof distinctWithImages === "object" && "count" in distinctWithImages) {
-          totalMissing = (totalProductCount || 0) - Number(distinctWithImages.count);
-        }
+        const distinctProductIds = new Set((withImagesData || []).map((r: any) => r.product_id));
+        totalMissing = Math.max(0, (totalProducts || 0) - distinctProductIds.size);
       } catch (e) {
-        // Fallback: just don't set totalMissing, UI will use totalProducts
         console.warn("Could not count missing images:", e);
       }
     }
