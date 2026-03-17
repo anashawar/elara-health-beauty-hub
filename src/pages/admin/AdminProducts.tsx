@@ -985,7 +985,7 @@ export default function AdminProducts() {
           <DialogTrigger asChild>
             <Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1.5" />Manual Add</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0" onCloseAutoFocus={(e) => e.preventDefault()}>
+          <DialogContent className="max-w-4xl max-h-[90vh] !overflow-hidden flex flex-col p-0" onCloseAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
               <DialogTitle>{editing ? "Edit Product" : "Add Product"}</DialogTitle>
             </DialogHeader>
