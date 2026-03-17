@@ -1075,12 +1075,19 @@ export default function AdminProducts() {
                       <div className="relative w-full h-36 rounded-xl overflow-hidden border border-border bg-muted">
                         <img src={mainImagePreview} className="w-full h-full object-cover" alt="Main" />
                         <button onClick={async () => {
-                          // If editing and showing an existing DB image (not a new upload), delete from DB
                           if (editing && !mainImage && existingImages.length > 0) {
                             await deleteExistingImage(existingImages[0].id);
+                            // After deleting, promote next image as main preview if available
+                            const remaining = existingImages.slice(1);
+                            if (remaining.length > 0) {
+                              setMainImagePreview(remaining[0].image_url);
+                            } else {
+                              setMainImagePreview(null);
+                            }
+                          } else {
+                            setMainImage(null);
+                            setMainImagePreview(null);
                           }
-                          setMainImage(null);
-                          setMainImagePreview(null);
                         }} className="absolute top-2 right-2 bg-background/80 rounded-full p-1 hover:bg-destructive hover:text-destructive-foreground transition-colors">
                           <X className="h-4 w-4" />
                         </button>
