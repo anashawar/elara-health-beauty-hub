@@ -385,6 +385,18 @@ Deno.serve(async (req) => {
       totalProducts = discovery.totalProducts;
       nextOffset = discovery.nextOffset;
       done = discovery.done;
+
+      // Count products that have NO images using a left join approach
+      try {
+        // Get all distinct product_ids that have at least one image
+        const { data: withImagesData } = await withRetry("count products with images", () =>
+          supabase.from("product_images").select("product_id"),
+        );
+        const distinctProductIds = new Set((withImagesData || []).map((r: any) => r.product_id));
+        totalMissing = Math.max(0, (totalProducts || 0) - distinctProductIds.size);
+      } catch (e) {
+        console.warn("Could not count missing images:", e);
+      }
     }
 
     if (products.length === 0) {
