@@ -1105,7 +1105,7 @@ export default function AdminProducts() {
                   <div>
                     <Label className="mb-2 block">More Images <span className="text-muted-foreground font-normal">(up to 10)</span></Label>
                     <div className="grid grid-cols-3 gap-1.5">
-                      {existingImages.slice(editing ? 1 : 0).map((img) => (
+                      {existingImages.slice(mainImagePreview && editing && !mainImage && existingImages.length > 0 ? 1 : 0).map((img) => (
                         <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
                           <img src={img.image_url} className="w-full h-full object-cover" alt="" />
                           <button onClick={() => deleteExistingImage(img.id)} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground transition-all">
