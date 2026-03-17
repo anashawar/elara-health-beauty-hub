@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
-const BATCH_SIZE = 2; // Keep batches small because each product now performs deeper image extraction
+const BATCH_SIZE = 5; // Serper.dev is fast — each query returns multiple image results in one call
 
 interface ResultEntry {
   id: string;
