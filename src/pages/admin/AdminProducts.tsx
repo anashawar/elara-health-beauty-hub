@@ -1075,12 +1075,19 @@ export default function AdminProducts() {
                       <div className="relative w-full h-36 rounded-xl overflow-hidden border border-border bg-muted">
                         <img src={mainImagePreview} className="w-full h-full object-cover" alt="Main" />
                         <button onClick={async () => {
-                          // If editing and showing an existing DB image (not a new upload), delete from DB
                           if (editing && !mainImage && existingImages.length > 0) {
                             await deleteExistingImage(existingImages[0].id);
+                            // After deleting, promote next image as main preview if available
+                            const remaining = existingImages.slice(1);
+                            if (remaining.length > 0) {
+                              setMainImagePreview(remaining[0].image_url);
+                            } else {
+                              setMainImagePreview(null);
+                            }
+                          } else {
+                            setMainImage(null);
+                            setMainImagePreview(null);
                           }
-                          setMainImage(null);
-                          setMainImagePreview(null);
                         }} className="absolute top-2 right-2 bg-background/80 rounded-full p-1 hover:bg-destructive hover:text-destructive-foreground transition-colors">
                           <X className="h-4 w-4" />
                         </button>
@@ -1098,7 +1105,7 @@ export default function AdminProducts() {
                   <div>
                     <Label className="mb-2 block">More Images <span className="text-muted-foreground font-normal">(up to 10)</span></Label>
                     <div className="grid grid-cols-3 gap-1.5">
-                      {existingImages.slice(editing ? 1 : 0).map((img) => (
+                      {existingImages.slice(mainImagePreview && editing && !mainImage && existingImages.length > 0 ? 1 : 0).map((img) => (
                         <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
                           <img src={img.image_url} className="w-full h-full object-cover" alt="" />
                           <button onClick={() => deleteExistingImage(img.id)} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground transition-all">
@@ -1114,7 +1121,7 @@ export default function AdminProducts() {
                           </button>
                         </div>
                       ))}
-                      {(existingImages.length - (editing ? 1 : 0) + additionalImages.length) < 10 && (
+                      {(existingImages.length - (mainImagePreview && editing && !mainImage && existingImages.length > 0 ? 1 : 0) + additionalImages.length) < 10 && (
                         <label className="aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
                           <ImageIcon className="h-4 w-4 text-muted-foreground" />
                           <span className="text-[10px] text-muted-foreground mt-0.5">Add</span>
