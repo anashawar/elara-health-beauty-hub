@@ -102,7 +102,7 @@ export default function AdminOrders() {
   statuses.forEach(s => { statusCounts[s] = orders.filter((o: any) => o.status === s).length; });
 
   const renderOrderDialog = (o: any) => (
-    <DialogContent className="w-[min(96vw,1120px)] max-w-none overflow-hidden p-0">
+    <DialogContent className="flex h-[92vh] max-h-[92vh] w-[min(96vw,1120px)] max-w-none flex-col overflow-hidden p-0 md:h-[min(92vh,820px)] md:max-h-[min(92vh,820px)]">
       <DialogHeader className="border-b border-border px-6 py-5">
         <div className="flex items-start justify-between gap-4 pr-8">
           <div className="space-y-1">
