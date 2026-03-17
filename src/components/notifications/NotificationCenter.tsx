@@ -142,7 +142,7 @@ export default function NotificationCenter() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="absolute inset-0 bg-black/40"
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
               onClick={() => setOpen(false)}
             />
             <motion.div
@@ -150,8 +150,11 @@ export default function NotificationCenter() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 350 }}
-              className="absolute inset-x-0 bottom-0 top-10 bg-background rounded-t-[20px] flex flex-col overflow-hidden"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+              className="absolute inset-x-0 bottom-0 bg-background rounded-t-[20px] flex flex-col overflow-hidden"
+              style={{
+                top: 'calc(env(safe-area-inset-top, 0px) + 10px)',
+                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              }}
             >
               {/* Drag handle */}
               <div className="flex justify-center pt-2.5 pb-1">
