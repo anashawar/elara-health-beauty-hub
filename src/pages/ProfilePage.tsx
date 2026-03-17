@@ -95,9 +95,9 @@ const ProfilePage = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-base font-bold text-foreground">
-                    {profile?.full_name || user.user_metadata?.full_name || t("profile.elaraUser")}
+                    {profile?.full_name || user.user_metadata?.full_name || user.phone || t("profile.elaraUser")}
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">{user.email}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{user.email || user.phone}</p>
                   {(profile?.gender || user.user_metadata?.gender) && (
                     <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">
                       {profile?.gender || user.user_metadata?.gender}
@@ -123,6 +123,43 @@ const ProfilePage = () => {
               </>
             )}
           </div>
+
+          {/* ELARA AI Skin Analyzer Hero Banner */}
+          <Link to="/skin-scan" className="block mx-4 md:mx-6 mt-4">
+            <div className="relative rounded-2xl overflow-hidden shadow-premium group active:scale-[0.98] transition-transform duration-200">
+              <div className="absolute inset-0 bg-gradient-to-br from-rose-500 via-primary to-violet-500" />
+              <div className="absolute inset-0 opacity-20" style={{
+                background: 'radial-gradient(circle at 85% 15%, hsl(352 80% 70% / 0.5) 0%, transparent 40%), radial-gradient(circle at 15% 85%, hsl(280 60% 60% / 0.4) 0%, transparent 40%)'
+              }} />
+              <div className="absolute top-0 right-0 w-28 h-28 rounded-full bg-white/10 blur-3xl" />
+              <div className="absolute inset-0 opacity-[0.05]" style={{
+                backgroundImage: 'linear-gradient(0deg, white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)',
+                backgroundSize: '18px 18px'
+              }} />
+              <div className="relative p-4 flex gap-3.5 items-center z-10">
+                <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg">
+                  <Scan className="w-7 h-7 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <Sparkles className="w-3 h-3 text-white/70" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/60">
+                      {language === "ar" ? "ميزة متقدمة" : language === "ku" ? "تایبەتمەندی پێشکەوتوو" : "AI-Powered"}
+                    </span>
+                  </div>
+                  <h3 className="text-[15px] font-display font-bold text-white leading-tight">
+                    {language === "ar" ? "محلل البشرة ELARA AI" : language === "ku" ? "شیکەری پێست ELARA AI" : "ELARA AI Skin Analyzer"}
+                  </h3>
+                  <p className="text-[11px] text-white/60 leading-snug mt-0.5">
+                    {language === "ar" ? "امسح وجهك واحصل على تحليل مفصل" : language === "ku" ? "دەموچاوت بسکان بکە و شیکردنەوە وەربگرە" : "Scan your face & get a detailed skin report"}
+                  </p>
+                </div>
+                <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                  <ArrowRight className="w-4 h-4 text-rose-500 rtl:rotate-180" />
+                </div>
+              </div>
+            </div>
+          </Link>
 
           {/* ELARA AI Section */}
           <Link to="/elara-ai" className="block mx-4 md:mx-6 mt-4">
