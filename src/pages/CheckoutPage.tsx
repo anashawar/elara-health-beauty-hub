@@ -20,7 +20,7 @@ const FIRST_ORDER_DISCOUNT_PERCENT = 15;
 const FIRST_ORDER_MIN_AMOUNT = 20000;
 
 const CheckoutPage = () => {
-  const { cart, cartTotal, clearCart } = useApp();
+  const { cart, cartTotal, clearCart, appliedCoupon } = useApp();
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const formatPrice = useFormatPrice();

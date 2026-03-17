@@ -15,19 +15,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { getDeliveryFee, FREE_DELIVERY_MIN } from "@/lib/deliveryFee";
 
-interface AppliedCoupon {
-  code: string;
-  discount_type: string;
-  discount_value: number;
-}
-
 const CartPage = () => {
-  const { cart, updateQuantity, removeFromCart, cartTotal, cartCount, clearCart, pendingCoupon, setPendingCoupon } = useApp();
+  const { cart, updateQuantity, removeFromCart, cartTotal, cartCount, clearCart, pendingCoupon, setPendingCoupon, appliedCoupon, setAppliedCoupon } = useApp();
   const { user } = useAuth();
   const { t } = useLanguage();
   const formatPrice = useFormatPrice();
-  const [coupon, setCoupon] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [coupon, setCoupon] = useState(appliedCoupon?.code || "");
   const [couponLoading, setCouponLoading] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const autoApplied = useRef(false);
