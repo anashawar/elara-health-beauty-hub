@@ -65,11 +65,11 @@ export async function generateSkinReportPdf(
   } catch { /* fallback to text */ }
 
   // ── Brand colors ──
+  const brandPurple: [number, number, number] = [139, 92, 246];
   const brandRose: [number, number, number] = [219, 39, 119];
-  const brandDark: [number, number, number] = [30, 20, 35];
 
   // ── HEADER ──
-  doc.setFillColor(...brandDark);
+  doc.setFillColor(...brandPurple);
   doc.rect(0, 0, w, 40, "F");
   // Accent line
   doc.setFillColor(...brandRose);
@@ -130,7 +130,7 @@ export async function generateSkinReportPdf(
   doc.text("/100", cx, cy + 7, { align: "center" });
 
   // Labels
-  doc.setTextColor(...brandDark);
+  doc.setTextColor(50, 30, 70);
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text("Overall Skin Health", 58, y + 13);
@@ -154,7 +154,7 @@ export async function generateSkinReportPdf(
     doc.roundedRect(14, y - 1, 3, 6, 1, 1, "F");
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(...brandDark);
+    doc.setTextColor(50, 30, 70);
     doc.text(title, 20, y + 3.5);
     y += 9;
   };
@@ -314,32 +314,37 @@ export async function generateSkinReportPdf(
     const ph = doc.internal.pageSize.getHeight();
 
     // Footer bar
-    doc.setFillColor(...brandDark);
-    doc.rect(0, ph - 16, w, 16, "F");
+    doc.setFillColor(...brandPurple);
+    doc.rect(0, ph - 20, w, 20, "F");
     doc.setFillColor(...brandRose);
-    doc.rect(0, ph - 16, w, 0.8, "F");
+    doc.rect(0, ph - 20, w, 0.8, "F");
 
     // Logo in footer
     if (logoData) {
-      doc.addImage(logoData, "PNG", 14, ph - 13, 18, 6.5);
+      doc.addImage(logoData, "PNG", 14, ph - 17, 18, 6.5);
     } else {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
-      doc.text("ELARA", 14, ph - 7);
+      doc.text("ELARA", 14, ph - 11);
     }
 
     // App CTA
     doc.setFontSize(7);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(255, 255, 255);
-    doc.text("Get ELARA app on iOS & Android", w / 2, ph - 10, { align: "center" });
+    doc.text("Get ELARA app on iOS & Android", w / 2, ph - 14, { align: "center" });
 
     // Disclaimer
     doc.setFontSize(5.5);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(160, 160, 170);
-    doc.text("AI-generated analysis · Not a medical diagnosis", w / 2, ph - 5, { align: "center" });
+    doc.setTextColor(230, 220, 255);
+    doc.text("AI-generated analysis · Not a medical diagnosis", w / 2, ph - 9, { align: "center" });
+
+    // All rights reserved
+    doc.setFontSize(5);
+    doc.setTextColor(200, 190, 230);
+    doc.text(`© ${new Date().getFullYear()} ELARA. All rights reserved.`, w / 2, ph - 4.5, { align: "center" });
 
     // Page number
     doc.setFontSize(6);
