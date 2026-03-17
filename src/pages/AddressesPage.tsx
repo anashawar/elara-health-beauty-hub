@@ -129,7 +129,7 @@ const AddressesPage = () => {
 
   const handleEdit = (addr: any) => {
     setForm({
-      label: addr.label || "Home",
+      label: (["House", "Apartment", "Office"].includes(addr.label) ? addr.label : "House") as AddressType,
       city: addr.city,
       area: addr.area || "",
       street: addr.street || "",
@@ -143,6 +143,8 @@ const AddressesPage = () => {
     setEditingId(addr.id);
     setShowForm(true);
   };
+
+  const currentConfig = addressTypeConfig[form.label];
 
   const handleSave = () => {
     if (!form.city) { toast(t("auth.selectCity")); return; }
