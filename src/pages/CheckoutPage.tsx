@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import fibLogo from "@/assets/fib-logo.png";
 import qiLogo from "@/assets/qi-logo.svg";
-import { ArrowLeft, Check, MapPin, ChevronDown, Sparkles, PartyPopper, Star } from "lucide-react";
+import { ArrowLeft, Check, MapPin, ChevronDown, Sparkles, PartyPopper, Star, Clock, Info } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useApp } from "@/context/AppContext";
 import { useFormatPrice } from "@/hooks/useProducts";
@@ -416,6 +416,27 @@ const CheckoutPage = () => {
           </div>
         </div>
 
+        {/* Estimated Delivery Time */}
+        <div className="bg-card rounded-2xl p-4 shadow-premium">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-bold text-foreground">{language === "ar" ? "وقت التوصيل المتوقع" : language === "ku" ? "کاتی گەیاندنی چاوەڕوانکراو" : "Estimated Delivery Time"}</h3>
+          </div>
+          <p className="text-sm text-foreground font-semibold">
+            {language === "ar" ? "خلال 24 ساعة 🚀" : language === "ku" ? "لە ماوەی ٢٤ کاتژمێردا 🚀" : "Within 24 hours 🚀"}
+          </p>
+          <div className="flex items-start gap-1.5 mt-2">
+            <Info className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              {language === "ar"
+                ? "قد يحدث تأخير بسيط في أوقات الطلبات الكثيرة أو المناسبات. لكن بشكل عام، التوصيل خلال 24 ساعة إلى باب منزلك!"
+                : language === "ku"
+                  ? "لەوانەیە لە کاتی داواکاری زۆر یان بۆنەکاندا دواکەوتنی کەمێک ڕووبدات. بەڵام بە گشتی، گەیاندن لە ماوەی ٢٤ کاتژمێردا بۆ دەرگای ماڵتان!"
+                  : "Delivery might have slight delays during high-order periods or occasions. But overall, delivery is within 24 hours straight to your door!"}
+            </p>
+          </div>
+        </div>
+
         {/* Order Summary */}
         <div className="bg-card rounded-2xl p-4 shadow-premium">
           <h3 className="text-sm font-bold text-foreground mb-3">{t("cart.orderSummary")}</h3>
@@ -463,7 +484,7 @@ const CheckoutPage = () => {
               <div className="border-t border-border pt-2 flex items-center justify-between">
                 <span className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
                   <Star className="w-3.5 h-3.5 fill-current" />
-                  {t("rewards.youEarned")}
+                  {language === "ar" ? "ستكسب" : language === "ku" ? "بەدەست دەهێنیت" : "You will earn"}
                 </span>
                 <span className="text-xs font-bold text-amber-600 dark:text-amber-400">+{calculatePoints(finalTotal)} pts</span>
               </div>
