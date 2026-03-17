@@ -301,19 +301,26 @@ const AddressesPage = () => {
                     <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.streetPlaceholder")} *</label>
                     <Input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder={t("auth.streetPlaceholder")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.building")} *</label>
-                      <Input value={form.building} onChange={e => setForm(f => ({ ...f, building: e.target.value }))} placeholder={t("auth.building")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.floor")} *</label>
-                      <Input value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} placeholder={t("auth.floor")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.apartment") || "Apt"} *</label>
-                      <Input value={form.apartment} onChange={e => setForm(f => ({ ...f, apartment: e.target.value }))} placeholder={t("auth.apartment") || "Apt"} className="h-11 rounded-xl bg-secondary border-border text-sm" />
-                    </div>
+                  {/* Conditional fields based on address type */}
+                  <div className={`grid gap-2 ${currentConfig.needsFloor && currentConfig.needsApartment ? "grid-cols-3" : currentConfig.needsFloor ? "grid-cols-2" : "grid-cols-1"}`}>
+                    {currentConfig.needsBuilding && (
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.building")} *</label>
+                        <Input value={form.building} onChange={e => setForm(f => ({ ...f, building: e.target.value }))} placeholder={form.label === "House" ? (t("addresses.houseNumber") || "House no.") : t("auth.building")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                      </div>
+                    )}
+                    {currentConfig.needsFloor && (
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.floor")} *</label>
+                        <Input value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} placeholder={t("auth.floor")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                      </div>
+                    )}
+                    {currentConfig.needsApartment && (
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.apartment") || "Apt"} *</label>
+                        <Input value={form.apartment} onChange={e => setForm(f => ({ ...f, apartment: e.target.value }))} placeholder={t("auth.apartment") || "Apt"} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.phoneNumber")} (WhatsApp) *</label>
