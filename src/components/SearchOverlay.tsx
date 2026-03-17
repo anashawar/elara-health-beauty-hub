@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Search, X, ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
+import BottomNav from "@/components/layout/BottomNav";
 import { useProducts, useCategories, useBrands, useFormatPrice, concerns } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 
@@ -159,6 +160,10 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
               </Link>
             </div>
           )}
+        </div>
+        {/* Show bottom nav so users can tap Home to leave search */}
+        <div className="md:hidden" onClick={onClose}>
+          <BottomNav />
         </div>
       </div>
     </div>
