@@ -41,7 +41,6 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
         toBack: true, // camera renders behind webview
         disableAudio: true,
         storeToFile: false,
-        enableZoom: false,
         width: window.innerWidth,
         height: Math.round(window.innerWidth * (4 / 3)),
       });
