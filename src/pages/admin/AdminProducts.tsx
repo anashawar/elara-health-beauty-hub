@@ -923,7 +923,7 @@ export default function AdminProducts() {
               <Sparkles className="h-4 w-4 mr-1.5" />Quick Add + AI
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[min(96vw,920px)] max-w-none max-h-[92vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
