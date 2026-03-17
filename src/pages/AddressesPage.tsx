@@ -158,9 +158,9 @@ const AddressesPage = () => {
   };
 
   const labelMap: Record<string, string> = {
-    House: t("addresses.house") || "🏠 House",
-    Apartment: t("addresses.apartment") || "🏢 Apartment",
-    Office: t("addresses.office") || "🏬 Office",
+    House: t("addresses.house") || "House",
+    Apartment: t("addresses.apartment") || "Apartment",
+    Office: t("addresses.office") || "Office",
   };
 
   if (authLoading) return null;
@@ -294,36 +294,36 @@ const AddressesPage = () => {
                   </div>
 
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.area")} *</label>
-                    <Input value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))} placeholder={t("auth.area")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("addresses.areaLabel") || "Area / Neighborhood"} *</label>
+                    <Input value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))} placeholder={t("auth.areaPlaceholder") || "e.g. Mansour, Ankawa"} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.streetPlaceholder")} *</label>
-                    <Input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder={t("auth.streetPlaceholder")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("addresses.streetLabel") || "Street Name"} *</label>
+                    <Input value={form.street} onChange={e => setForm(f => ({ ...f, street: e.target.value }))} placeholder={t("auth.streetPlaceholder") || "Street name or number"} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                   </div>
                   {/* Conditional fields based on address type */}
                   <div className={`grid gap-2 ${currentConfig.needsFloor && currentConfig.needsApartment ? "grid-cols-3" : currentConfig.needsFloor ? "grid-cols-2" : "grid-cols-1"}`}>
                     {currentConfig.needsBuilding && (
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.building")} *</label>
-                        <Input value={form.building} onChange={e => setForm(f => ({ ...f, building: e.target.value }))} placeholder={form.label === "House" ? (t("addresses.houseNumber") || "House no.") : t("auth.building")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{form.label === "House" ? (t("addresses.houseNumber") || "House number") : (t("addresses.buildingLabel") || "Building Name / No.")} *</label>
+                        <Input value={form.building} onChange={e => setForm(f => ({ ...f, building: e.target.value }))} placeholder={form.label === "House" ? (t("addresses.houseNumber") || "House no.") : (t("addresses.buildingLabel") || "Building")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                       </div>
                     )}
                     {currentConfig.needsFloor && (
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.floor")} *</label>
-                        <Input value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} placeholder={t("auth.floor")} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("addresses.floorLabel") || "Floor No."} *</label>
+                        <Input value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} placeholder={t("addresses.floorLabel") || "Floor No."} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                       </div>
                     )}
                     {currentConfig.needsApartment && (
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.apartment") || "Apt"} *</label>
-                        <Input value={form.apartment} onChange={e => setForm(f => ({ ...f, apartment: e.target.value }))} placeholder={t("auth.apartment") || "Apt"} className="h-11 rounded-xl bg-secondary border-border text-sm" />
+                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("addresses.apartmentLabel") || "Apartment No."} *</label>
+                        <Input value={form.apartment} onChange={e => setForm(f => ({ ...f, apartment: e.target.value }))} placeholder={t("addresses.apartmentLabel") || "Apt No."} className="h-11 rounded-xl bg-secondary border-border text-sm" />
                       </div>
                     )}
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("auth.phoneNumber")} (WhatsApp) *</label>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("addresses.phoneLabel") || "Phone (WhatsApp)"} *</label>
                     <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder={t("auth.phoneNumber")} type="tel" className="h-11 rounded-xl bg-secondary border-border text-sm" />
                   </div>
                   <Button onClick={handleSave} disabled={saveMutation.isPending} className="w-full h-11 rounded-xl text-sm font-semibold">
@@ -378,9 +378,14 @@ const AddressesPage = () => {
                       </button>
                     </div>
                   </div>
-                  <p className="text-sm text-foreground">{addr.city}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {[addr.area, addr.street, addr.building, addr.floor, (addr as any).apartment].filter(Boolean).join(", ")}
+                  <p className="text-sm text-foreground font-medium">{addr.city}{addr.area ? ` — ${addr.area}` : ""}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {[
+                      addr.street,
+                      addr.building && (addr.label === "House" ? `${t("addresses.houseNumber") || "House"} ${addr.building}` : `${t("addresses.buildingLabel") || "Bldg."} ${addr.building}`),
+                      addr.floor && `${t("addresses.floorLabel") || "Floor"} ${addr.floor}`,
+                      (addr as any).apartment && `${t("addresses.apartmentLabel") || "Apt."} ${(addr as any).apartment}`,
+                    ].filter(Boolean).join(" · ")}
                   </p>
                   {addr.phone && <p className="text-xs text-muted-foreground mt-1">📞 {addr.phone}</p>}
                   {!addr.is_default && (
