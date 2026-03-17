@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Eye, User, Phone, MapPin, Package, Filter, Calendar, CreditCard, Tag, StickyNote, Users } from "lucide-react";
 import { formatPrice } from "@/hooks/useProducts";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -102,138 +102,156 @@ export default function AdminOrders() {
   statuses.forEach(s => { statusCounts[s] = orders.filter((o: any) => o.status === s).length; });
 
   const renderOrderDialog = (o: any) => (
-    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto top-[50%] translate-y-[-50%] p-6">
-      <DialogHeader>
-        <div className="flex items-center justify-between">
-          <DialogTitle className="text-lg">Order #{o.id.slice(0, 8).toUpperCase()}</DialogTitle>
+    <DialogContent className="flex h-[92vh] max-h-[92vh] w-[min(96vw,1120px)] max-w-none flex-col overflow-hidden p-0 md:h-[min(92vh,820px)] md:max-h-[min(92vh,820px)]">
+      <DialogHeader className="border-b border-border px-6 py-5">
+        <div className="flex items-start justify-between gap-4 pr-8">
+          <div className="space-y-1">
+            <DialogTitle className="text-2xl font-display">Order #{o.id.slice(0, 8).toUpperCase()}</DialogTitle>
+            <DialogDescription>
+              Full order details for {o.profile?.full_name || "Guest"}, created on {format(new Date(o.created_at), "PPP p")}.
+            </DialogDescription>
+          </div>
           <Badge className={`${statusColors[o.status] || ""} text-xs border px-3 py-1`}>
             {statusLabels[o.status] || o.status}
           </Badge>
         </div>
       </DialogHeader>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-        {/* Customer Info */}
-        <div className="bg-secondary/50 rounded-xl p-4 space-y-3">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Customer</p>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm">
-              <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-              <span className="font-medium">{o.profile?.full_name || "Guest"}</span>
-            </div>
-            {o.profile?.gender && (
-              <div className="flex items-center gap-2 text-sm">
-                <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <span className="capitalize">{o.profile.gender}</span>
-              </div>
-            )}
-            {(o.profile?.phone || o.addresses?.phone) && (
-              <div className="flex items-center gap-2 text-sm">
-                <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <span dir="ltr">{o.profile?.phone || o.addresses?.phone}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Address Info */}
-        <div className="bg-secondary/50 rounded-xl p-4 space-y-3">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Delivery Address</p>
-          {o.addresses ? (
-            <div className="space-y-2">
-              {o.addresses.label && (
-                <p className="text-xs font-semibold text-primary">{o.addresses.label}</p>
-              )}
-              <div className="flex items-start gap-2 text-sm">
-                <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                <div className="space-y-0.5">
-                  {o.addresses.city && <p className="font-medium">{o.addresses.city}</p>}
-                  {o.addresses.area && <p className="text-muted-foreground">{o.addresses.area}</p>}
-                  {o.addresses.street && <p className="text-muted-foreground">{o.addresses.street}</p>}
-                  {(o.addresses.building || o.addresses.floor || o.addresses.apartment) && (
-                    <p className="text-muted-foreground">
-                      {[
-                        o.addresses.building && `Bldg: ${o.addresses.building}`,
-                        o.addresses.floor && `Floor: ${o.addresses.floor}`,
-                        o.addresses.apartment && `Apt: ${o.addresses.apartment}`,
-                      ].filter(Boolean).join(", ")}
-                    </p>
-                  )}
+      <div className="flex min-h-0 flex-1 flex-col md:grid md:grid-cols-[320px_minmax(0,1fr)]">
+        <aside className="border-b border-border bg-secondary/20 p-5 md:border-b-0 md:border-r md:overflow-y-auto">
+          <div className="space-y-5">
+            <section className="rounded-2xl bg-card p-4 shadow-sm">
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">Customer</p>
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-2 text-sm">
+                  <User className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                  <span className="font-medium text-foreground">{o.profile?.full_name || "Guest"}</span>
                 </div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No address provided</p>
-          )}
-        </div>
-      </div>
-
-      {/* Order Details */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-1">
-        <div className="bg-secondary/30 rounded-lg p-3 text-center">
-          <Calendar className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-          <p className="text-[10px] text-muted-foreground">Date</p>
-          <p className="text-xs font-semibold">{format(new Date(o.created_at), "MMM d, yyyy")}</p>
-          <p className="text-[10px] text-muted-foreground">{format(new Date(o.created_at), "h:mm a")}</p>
-        </div>
-        <div className="bg-secondary/30 rounded-lg p-3 text-center">
-          <CreditCard className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-          <p className="text-[10px] text-muted-foreground">Payment</p>
-          <p className="text-xs font-semibold uppercase">{o.payment_method || "COD"}</p>
-        </div>
-        {o.coupon_code && (
-          <div className="bg-secondary/30 rounded-lg p-3 text-center">
-            <Tag className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-            <p className="text-[10px] text-muted-foreground">Coupon</p>
-            <p className="text-xs font-semibold">{o.coupon_code}</p>
-          </div>
-        )}
-        <div className="bg-secondary/30 rounded-lg p-3 text-center">
-          <Package className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-          <p className="text-[10px] text-muted-foreground">Items</p>
-          <p className="text-xs font-semibold">{o.order_items?.length || 0}</p>
-        </div>
-      </div>
-
-      {o.notes && (
-        <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 mt-1">
-          <StickyNote className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase">Customer Notes</p>
-            <p className="text-sm text-amber-900 dark:text-amber-200 mt-0.5">{o.notes}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Items List */}
-      <div className="border-t border-border pt-3 mt-1">
-        <p className="text-sm font-bold mb-3">Order Items</p>
-        <div className="space-y-2">
-          {o.order_items?.map((item: any) => (
-            <div key={item.id} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-secondary/30 transition-colors">
-              <div className="w-12 h-12 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
-                {item.products?.product_images?.[0]?.image_url ? (
-                  <img src={item.products.product_images[0].image_url} className="w-full h-full object-cover" alt="" />
-                ) : (
-                  <Package className="w-5 h-5 text-muted-foreground m-auto mt-3.5" />
+                {o.profile?.gender && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Users className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                    <span className="capitalize text-foreground">{o.profile.gender}</span>
+                  </div>
+                )}
+                {(o.profile?.phone || o.addresses?.phone) && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                    <span className="text-foreground" dir="ltr">{o.profile?.phone || o.addresses?.phone}</span>
+                  </div>
                 )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium line-clamp-1">{item.products?.title || "Unknown Product"}</p>
-                <p className="text-xs text-muted-foreground">Qty: {item.quantity} × {formatPrice(item.price)}</p>
-              </div>
-              <p className="text-sm font-semibold flex-shrink-0">{formatPrice(item.price * item.quantity)}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+            </section>
 
-      {/* Totals */}
-      <div className="border-t border-border pt-3 space-y-1.5 text-sm">
-        <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatPrice(o.subtotal)}</span></div>
-        {o.discount > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Discount</span><span className="text-destructive">-{formatPrice(o.discount)}</span></div>}
-        <div className="flex justify-between"><span className="text-muted-foreground">Delivery Fee</span><span>{formatPrice(o.delivery_fee)}</span></div>
-        <div className="flex justify-between font-bold text-base pt-2 border-t border-border"><span>Total</span><span>{formatPrice(o.total)}</span></div>
+            <section className="rounded-2xl bg-card p-4 shadow-sm">
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">Delivery Address</p>
+              {o.addresses ? (
+                <div className="space-y-2.5 text-sm">
+                  {o.addresses.label && <p className="font-semibold text-primary">{o.addresses.label}</p>}
+                  <div className="flex items-start gap-2">
+                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                    <div className="space-y-1 text-foreground">
+                      {o.addresses.city && <p className="font-medium">{o.addresses.city}</p>}
+                      {o.addresses.area && <p className="text-muted-foreground">{o.addresses.area}</p>}
+                      {o.addresses.street && <p className="text-muted-foreground">{o.addresses.street}</p>}
+                      {(o.addresses.building || o.addresses.floor || o.addresses.apartment) && (
+                        <p className="text-muted-foreground">
+                          {[
+                            o.addresses.building && `Bldg: ${o.addresses.building}`,
+                            o.addresses.floor && `Floor: ${o.addresses.floor}`,
+                            o.addresses.apartment && `Apt: ${o.addresses.apartment}`,
+                          ].filter(Boolean).join(", ")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No address provided</p>
+              )}
+            </section>
+
+            <section className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-card p-4 text-center shadow-sm">
+                <Calendar className="mx-auto mb-2 h-4 w-4 text-muted-foreground" />
+                <p className="text-[10px] text-muted-foreground">Date</p>
+                <p className="text-sm font-semibold text-foreground">{format(new Date(o.created_at), "MMM d, yyyy")}</p>
+                <p className="text-xs text-muted-foreground">{format(new Date(o.created_at), "h:mm a")}</p>
+              </div>
+              <div className="rounded-2xl bg-card p-4 text-center shadow-sm">
+                <CreditCard className="mx-auto mb-2 h-4 w-4 text-muted-foreground" />
+                <p className="text-[10px] text-muted-foreground">Payment</p>
+                <p className="text-sm font-semibold uppercase text-foreground">{o.payment_method || "COD"}</p>
+              </div>
+              <div className="rounded-2xl bg-card p-4 text-center shadow-sm">
+                <Package className="mx-auto mb-2 h-4 w-4 text-muted-foreground" />
+                <p className="text-[10px] text-muted-foreground">Items</p>
+                <p className="text-sm font-semibold text-foreground">{o.order_items?.length || 0}</p>
+              </div>
+              <div className="rounded-2xl bg-card p-4 text-center shadow-sm">
+                <Tag className="mx-auto mb-2 h-4 w-4 text-muted-foreground" />
+                <p className="text-[10px] text-muted-foreground">Coupon</p>
+                <p className="truncate text-sm font-semibold text-foreground">{o.coupon_code || "—"}</p>
+              </div>
+            </section>
+
+            {o.notes && (
+              <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                <div className="flex items-start gap-2">
+                  <StickyNote className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Customer Notes</p>
+                    <p className="mt-1 text-sm text-foreground">{o.notes}</p>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">Totals</p>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="text-foreground">{formatPrice(o.subtotal)}</span></div>
+                {o.discount > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Discount</span><span className="text-destructive">-{formatPrice(o.discount)}</span></div>}
+                <div className="flex justify-between"><span className="text-muted-foreground">Delivery Fee</span><span className="text-foreground">{formatPrice(o.delivery_fee)}</span></div>
+                <div className="flex justify-between border-t border-border pt-2 text-base font-bold"><span className="text-foreground">Total</span><span className="text-foreground">{formatPrice(o.total)}</span></div>
+              </div>
+            </section>
+          </div>
+        </aside>
+
+        <div className="min-h-0 overflow-y-auto p-5">
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <div className="mb-4 flex items-center justify-between gap-3 border-b border-border pb-3">
+              <div>
+                <h3 className="text-base font-semibold text-foreground">Order Items</h3>
+                <p className="text-sm text-muted-foreground">Review every product included in this order.</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Grand Total</p>
+                <p className="text-lg font-bold text-foreground">{formatPrice(o.total)}</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {o.order_items?.map((item: any, index: number) => (
+                <div key={item.id} className="grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-4 rounded-2xl border border-border bg-background px-3 py-3">
+                  <div className="h-16 w-16 overflow-hidden rounded-xl bg-secondary">
+                    {item.products?.product_images?.[0]?.image_url ? (
+                      <img src={item.products.product_images[0].image_url} className="h-full w-full object-cover" alt="" />
+                    ) : (
+                      <Package className="m-auto mt-5 h-6 w-6 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Item {index + 1}</p>
+                    <p className="line-clamp-2 text-sm font-semibold text-foreground">{item.products?.title || "Unknown Product"}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Qty: {item.quantity} × {formatPrice(item.price)}</p>
+                  </div>
+                  <p className="whitespace-nowrap text-sm font-bold text-foreground">{formatPrice(item.price * item.quantity)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </DialogContent>
   );
