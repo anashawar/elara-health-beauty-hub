@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Package, ChevronDown, ChevronUp, X, Clock, AlertTriangle } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Package, ChevronDown, ChevronUp, X, Clock, AlertTriangle, Pencil } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,6 +43,7 @@ const OrdersPage = () => {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const formatPrice = useFormatPrice();
+  const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [cancelDialogId, setCancelDialogId] = useState<string | null>(null);
@@ -257,22 +258,22 @@ const OrdersPage = () => {
                       {/* Price breakdown */}
                       <div className="space-y-1.5 pt-3 border-t border-border/50">
                         <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">{t("cart.subtotal") || "Subtotal"}</span>
+                          <span className="text-muted-foreground">{t("cart.subtotal")}</span>
                           <span className="text-foreground">{formatPrice(Number(order.subtotal))}</span>
                         </div>
                         {Number(order.discount) > 0 && (
                           <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">{t("cart.discount") || "Discount"}</span>
+                            <span className="text-muted-foreground">{t("orders.discount") || "Discount"}</span>
                             <span className="text-green-600">-{formatPrice(Number(order.discount))}</span>
                           </div>
                         )}
                         <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">{t("cart.deliveryFee") || "Delivery"}</span>
+                          <span className="text-muted-foreground">{t("cart.delivery")}</span>
                           <span className="text-foreground">{Number(order.delivery_fee) === 0 ? (t("common.free") || "FREE") : formatPrice(Number(order.delivery_fee))}</span>
                         </div>
                         {order.coupon_code && (
                           <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">{t("cart.coupon") || "Coupon"}</span>
+                            <span className="text-muted-foreground">{t("cart.coupon")}</span>
                             <span className="text-primary font-medium">{order.coupon_code}</span>
                           </div>
                         )}
@@ -285,7 +286,7 @@ const OrdersPage = () => {
                       {/* Delivery address */}
                       {address && (
                         <div className="pt-3 border-t border-border/50">
-                          <p className="text-xs font-bold text-foreground mb-1">{t("checkout.deliveryAddress") || "Delivery Address"}</p>
+                          <p className="text-xs font-bold text-foreground mb-1">{t("checkout.deliveryAddress")}</p>
                           <p className="text-xs text-muted-foreground">
                             {[address.city, address.area, address.street, address.building].filter(Boolean).join(", ")}
                           </p>
@@ -295,19 +296,29 @@ const OrdersPage = () => {
 
                       {/* Payment method */}
                       <div className="pt-3 border-t border-border/50">
-                        <p className="text-xs font-bold text-foreground mb-1">{t("checkout.paymentMethod") || "Payment"}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{order.payment_method === "cod" ? (t("checkout.cashOnDelivery") || "Cash on Delivery") : order.payment_method}</p>
+                        <p className="text-xs font-bold text-foreground mb-1">{t("checkout.paymentMethod")}</p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {order.payment_method === "cod" ? (t("checkout.cod")) : order.payment_method}
+                        </p>
                       </div>
 
-                      {/* Cancel button */}
+                      {/* Action buttons */}
                       {modifiable && (
-                        <div className="pt-3 border-t border-border/50">
+                        <div className="pt-3 border-t border-border/50 flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={(e) => { e.stopPropagation(); navigate(`/orders/${order.id}/modify`); }}
+                            className="flex-1 border-primary/30 text-primary hover:bg-primary/10 rounded-xl h-11"
+                          >
+                            <Pencil className="w-4 h-4 ltr:mr-2 rtl:ml-2" />
+                            {t("orders.modifyOrder") || "Modify Order"}
+                          </Button>
                           <Button
                             variant="outline"
                             onClick={(e) => { e.stopPropagation(); setCancelDialogId(order.id); }}
-                            className="w-full border-destructive/30 text-destructive hover:bg-destructive/10 rounded-xl h-11"
+                            className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 rounded-xl h-11"
                           >
-                            <X className="w-4 h-4 mr-2" />
+                            <X className="w-4 h-4 ltr:mr-2 rtl:ml-2" />
                             {t("orders.cancelOrder") || "Cancel Order"}
                           </Button>
                         </div>

@@ -129,12 +129,14 @@ export function useProducts() {
  */
 export function useProduct(id: string | undefined) {
   const { language } = useLanguage();
+  // Detect if the param is a UUID or a slug
+  const isUuid = !!id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
   return useQuery<ProductWithRelations | null>({
     queryKey: ["product", id, language],
     queryFn: async () => {
       if (!id) return null;
-      const { data, error } = await supabase
+      const query = supabase
         .from("products")
         .select(`
           *,
@@ -142,9 +144,11 @@ export function useProduct(id: string | undefined) {
           categories ( slug ),
           product_images ( image_url, sort_order ),
           product_tags ( tag )
-        `)
-        .eq("id", id)
-        .maybeSingle();
+        `);
+      const { data, error } = await (isUuid
+        ? query.eq("id", id)
+        : query.eq("slug", id)
+      ).maybeSingle();
       if (error) throw error;
       if (!data) return null;
       return mapRawProduct(data, language);
