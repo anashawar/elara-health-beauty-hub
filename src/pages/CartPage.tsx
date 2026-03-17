@@ -85,6 +85,21 @@ const CartPage = () => {
     enabled: !!user,
   });
 
+  const { data: defaultAddress } = useQuery({
+    queryKey: ["default-address-city", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("addresses")
+        .select("city")
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const discount = appliedCoupon
     ? appliedCoupon.discount_type === "percentage"
       ? Math.round(cartTotal * (appliedCoupon.discount_value / 100))
@@ -92,7 +107,7 @@ const CartPage = () => {
     : 0;
 
   const subtotalAfterDiscount = Math.max(cartTotal - discount, 0);
-  const deliveryFee = getDeliveryFee(null, subtotalAfterDiscount);
+  const deliveryFee = getDeliveryFee(defaultAddress?.city, subtotalAfterDiscount);
   const freeDeliveryLeft = FREE_DELIVERY_MIN - subtotalAfterDiscount;
   const freeDeliveryProgress = Math.min((subtotalAfterDiscount / FREE_DELIVERY_MIN) * 100, 100);
   const total = subtotalAfterDiscount + deliveryFee;
