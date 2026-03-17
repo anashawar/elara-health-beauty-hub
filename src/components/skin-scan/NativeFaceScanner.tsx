@@ -30,15 +30,16 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
   const [cameraError, setCameraError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const landmarkerRef = useRef<FaceLandmarker | null>(null);
-  const rafRef = useRef<number>(0);
   const captureIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hiddenImgRef = useRef<HTMLImageElement | null>(null);
   const activeRef = useRef(true);
 
+  // Camera preview area height (4:3 aspect ratio based on screen width)
+  const cameraHeight = Math.round(window.innerWidth * (4 / 3));
+
   // Request camera permission first, then start native camera preview
   const startCamera = useCallback(async () => {
     try {
-      // Check/request camera permission via Capacitor Camera plugin
       const permStatus = await CapCamera.checkPermissions();
       if (permStatus.camera === "denied") {
         const reqResult = await CapCamera.requestPermissions({ permissions: ["camera"] });
@@ -55,7 +56,7 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
         disableAudio: true,
         storeToFile: false,
         width: window.innerWidth,
-        height: Math.round(window.innerWidth * (4 / 3)),
+        height: cameraHeight,
       });
       setCameraReady(true);
       setCameraError(null);
@@ -68,7 +69,7 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
         setCameraError(msg);
       }
     }
-  }, [useFront]);
+  }, [useFront, cameraHeight]);
 
   // Init MediaPipe
   const initLandmarker = useCallback(async () => {
@@ -103,18 +104,19 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
     }
   }, []);
 
-  // Draw futuristic overlay
+  // Draw futuristic overlay — normalized to the DISPLAY size (not image size)
   const drawOverlay = useCallback(
-    (ctx: CanvasRenderingContext2D, landmarks: { x: number; y: number; z: number }[], w: number, h: number) => {
+    (ctx: CanvasRenderingContext2D, landmarks: { x: number; y: number; z: number }[], imgW: number, imgH: number, displayW: number, displayH: number) => {
       const time = Date.now() / 1000;
-      const pt = (idx: number) => ({ x: landmarks[idx].x * w, y: landmarks[idx].y * h });
+      // Map landmark coordinates (0–1 normalized) to display dimensions
+      const pt = (idx: number) => ({ x: landmarks[idx].x * displayW, y: landmarks[idx].y * displayH });
 
-      ctx.clearRect(0, 0, w, h);
+      ctx.clearRect(0, 0, displayW, displayH);
 
       // Mirror for front camera
       if (useFront) {
         ctx.save();
-        ctx.translate(w, 0);
+        ctx.translate(displayW, 0);
         ctx.scale(-1, 1);
       }
 
@@ -254,7 +256,6 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
       const base64 = result.value;
       if (!base64) return;
 
-      // Load into hidden image for MediaPipe
       const img = hiddenImgRef.current || new Image();
       hiddenImgRef.current = img;
 
@@ -265,15 +266,21 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
       });
 
       const canvas = canvasRef.current;
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
+      const displayW = canvas.clientWidth;
+      const displayH = canvas.clientHeight;
+      
+      // Set canvas resolution to match display size (for crisp rendering)
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = displayW * dpr;
+      canvas.height = displayH * dpr;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
+      ctx.scale(dpr, dpr);
 
       const results = landmarkerRef.current.detect(img);
       if (results.faceLandmarks && results.faceLandmarks.length > 0) {
         setFaceDetected(true);
-        drawOverlay(ctx, results.faceLandmarks[0], canvas.width, canvas.height);
+        drawOverlay(ctx, results.faceLandmarks[0], img.naturalWidth, img.naturalHeight, displayW, displayH);
       } else {
         setFaceDetected(false);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -286,20 +293,15 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
   // Start frame capture loop
   useEffect(() => {
     if (!cameraReady) return;
-
-    // Process at ~12fps
     captureIntervalRef.current = setInterval(processFrame, 83);
-
     return () => {
       if (captureIntervalRef.current) clearInterval(captureIntervalRef.current);
     };
   }, [cameraReady, processFrame]);
 
-  // Init everything — stagger to prevent simultaneous heavy work
+  // Init everything
   useEffect(() => {
     activeRef.current = true;
-    
-    // Small delay to let the component mount before accessing camera
     const initTimer = setTimeout(() => {
       if (!activeRef.current) return;
       startCamera();
@@ -310,7 +312,6 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
       activeRef.current = false;
       clearTimeout(initTimer);
       if (captureIntervalRef.current) clearInterval(captureIntervalRef.current);
-      cancelAnimationFrame(rafRef.current);
       try { landmarkerRef.current?.close(); } catch {}
       landmarkerRef.current = null;
       CameraPreview.stop().catch(() => {});
@@ -344,7 +345,7 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
   // Permission denied or error state
   if (permissionDenied || cameraError) {
     return (
-      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-8 text-center">
+      <div className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center px-8 text-center">
         <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
           <ShieldAlert className="w-8 h-8 text-destructive" />
         </div>
@@ -366,88 +367,103 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-transparent">
-      {/* Native camera renders behind webview into this container */}
-      <div id="camera-preview-container" className="absolute inset-0" />
+    <div className="fixed inset-0 z-[100] bg-black flex flex-col">
+      {/* Camera area */}
+      <div className="relative flex-shrink-0" style={{ height: cameraHeight }}>
+        {/* Native camera renders into this container */}
+        <div id="camera-preview-container" className="absolute inset-0" />
 
-      {/* Face tracking canvas overlay */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full pointer-events-none z-10"
-        style={{ height: `${Math.round(window.innerWidth * (4 / 3))}px` }}
-      />
-
-      {/* UI Overlay */}
-      <div className="absolute inset-0 pointer-events-none z-20">
-        {/* Corner brackets */}
-        <div className="absolute top-20 left-8 w-10 h-10 border-t-2 border-l-2 border-primary/60 rounded-tl-lg" />
-        <div className="absolute top-20 right-8 w-10 h-10 border-t-2 border-r-2 border-primary/60 rounded-tr-lg" />
-        <div className="absolute left-8 w-10 h-10 border-b-2 border-l-2 border-primary/60 rounded-bl-lg" style={{ top: `${Math.round(window.innerWidth * (4 / 3)) - 40}px` }} />
-        <div className="absolute right-8 w-10 h-10 border-b-2 border-r-2 border-primary/60 rounded-br-lg" style={{ top: `${Math.round(window.innerWidth * (4 / 3)) - 40}px` }} />
-
-        {/* Scan line */}
-        <motion.div
-          animate={{ y: [80, Math.round(window.innerWidth * (4 / 3)) - 40, 80] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent"
+        {/* Face tracking canvas overlay — matches camera area exactly */}
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 w-full h-full pointer-events-none z-10"
         />
 
-        {/* Top branding */}
-        <div className="absolute top-12 left-0 right-0 text-center pointer-events-none">
-          <span className="text-[10px] font-bold tracking-widest text-white/70 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full">
-            ELARA AI • LIVE TRACKING
-          </span>
-        </div>
+        {/* Corner brackets */}
+        <div className="absolute inset-0 pointer-events-none z-20">
+          <div className="absolute top-6 left-6 w-10 h-10 border-t-2 border-l-2 border-primary/60 rounded-tl-lg" />
+          <div className="absolute top-6 right-6 w-10 h-10 border-t-2 border-r-2 border-primary/60 rounded-tr-lg" />
+          <div className="absolute bottom-6 left-6 w-10 h-10 border-b-2 border-l-2 border-primary/60 rounded-bl-lg" />
+          <div className="absolute bottom-6 right-6 w-10 h-10 border-b-2 border-r-2 border-primary/60 rounded-br-lg" />
 
+          {/* Scan line */}
+          <motion.div
+            animate={{ y: [24, cameraHeight - 40, 24] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent"
+          />
+
+          {/* Top branding */}
+          <div className="absolute left-0 right-0 text-center" style={{ top: "env(safe-area-inset-top, 12px)", paddingTop: 12 }}>
+            <span className="text-[10px] font-bold tracking-widest text-white/70 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full">
+              ELARA AI • LIVE TRACKING
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom section — opaque background so page content doesn't bleed through */}
+      <div className="flex-1 bg-black flex flex-col items-center justify-between pt-3 pb-safe">
         {/* Face detection status */}
-        <div className="absolute left-0 right-0 text-center" style={{ top: `${Math.round(window.innerWidth * (4 / 3)) + 8}px` }}>
+        <div className="text-center">
           {modelLoading ? (
-            <span className="text-xs text-muted-foreground animate-pulse">
+            <span className="text-xs text-white/50 animate-pulse">
               {language === "ar" ? "جاري تحميل الذكاء الاصطناعي..." : language === "ku" ? "AI بارکردنی..." : "Loading AI model..."}
             </span>
           ) : faceDetected ? (
             <motion.span
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-xs font-semibold text-green-500 flex items-center justify-center gap-1.5"
+              className="text-xs font-semibold text-green-400 flex items-center justify-center gap-1.5"
             >
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
               {language === "ar" ? "تم اكتشاف الوجه" : language === "ku" ? "دەموچاو دۆزرایەوە" : "Face detected"}
             </motion.span>
           ) : (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-white/50">
               {language === "ar" ? "وجّه وجهك للكاميرا" : language === "ku" ? "دەموچاوت بکە بەرەو کامێرا" : "Position your face in view"}
             </span>
           )}
         </div>
-      </div>
 
-      {/* Controls */}
-      <div className="absolute bottom-0 left-0 right-0 z-30 pb-safe">
-        <div className="flex items-center justify-center gap-6 pb-8 pt-4 pointer-events-auto">
+        {/* Controls */}
+        <div className="flex items-center justify-center gap-8 pb-6">
           <button
             onClick={() => {
               CameraPreview.stop().catch(() => {});
               onClose();
             }}
-            className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-lg"
+            className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center"
           >
-            <ArrowLeft className="w-5 h-5 text-foreground" />
+            <ArrowLeft className="w-5 h-5 text-white" />
           </button>
+
+          {/* Main capture button */}
           <button
             onClick={handleCapture}
-            className="w-18 h-18 rounded-full bg-primary flex items-center justify-center shadow-xl border-4 border-background/50"
-            style={{ width: 72, height: 72 }}
+            disabled={!faceDetected && !modelLoading}
+            className="relative w-20 h-20 rounded-full flex items-center justify-center disabled:opacity-40"
           >
-            <Camera className="w-8 h-8 text-primary-foreground" />
+            {/* Outer ring */}
+            <div className="absolute inset-0 rounded-full border-4 border-white/30" />
+            {/* Inner filled circle */}
+            <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/40">
+              <Camera className="w-7 h-7 text-primary-foreground" />
+            </div>
           </button>
+
           <button
             onClick={flipCamera}
-            className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-lg"
+            className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center"
           >
-            <RotateCcw className="w-5 h-5 text-foreground" />
+            <RotateCcw className="w-5 h-5 text-white" />
           </button>
         </div>
+
+        {/* Hint text */}
+        <p className="text-[10px] text-white/30 text-center pb-2">
+          {language === "ar" ? "التقط صورة لتحليل بشرتك" : language === "ku" ? "وێنە بگرە بۆ شیکردنەوەی پێستت" : "Capture a photo to analyze your skin"}
+        </p>
       </div>
     </div>
   );
