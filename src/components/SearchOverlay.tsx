@@ -93,8 +93,8 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background md:bg-background/80 md:backdrop-blur-sm" style={{ height: '100%', minHeight: '-webkit-fill-available' }}>
-      <div className="max-w-lg md:max-w-4xl mx-auto flex flex-col h-full md:h-auto md:max-h-[85vh] md:mt-8 md:rounded-2xl md:border md:border-border md:shadow-premium md:bg-card" style={{ height: '100%', minHeight: '-webkit-fill-available' }}>
+    <div className="fixed inset-0 z-50 bg-background md:bg-background/80 md:backdrop-blur-sm" style={{ height: '100dvh' }}>
+      <div className="max-w-lg md:max-w-4xl mx-auto flex flex-col h-full md:h-auto md:max-h-[85vh] md:mt-8 md:rounded-2xl md:border md:border-border md:shadow-premium md:bg-card" style={{ height: '100dvh' }}>
         <div className="border-b border-border flex-shrink-0 sticky top-0 z-10 bg-background md:bg-card md:rounded-t-2xl" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div className="flex items-center gap-3 px-4 md:px-6 py-3 md:py-4">
             <Search className="w-5 h-5 text-muted-foreground flex-shrink-0" />
