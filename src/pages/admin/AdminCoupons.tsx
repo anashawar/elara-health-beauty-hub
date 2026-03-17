@@ -115,7 +115,7 @@ export default function AdminCoupons() {
           <DialogTrigger asChild>
             <Button size="sm" className="rounded-xl"><Plus className="h-4 w-4 mr-1.5" />Add</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-sm">
+          <DialogContent className="w-[min(96vw,880px)] max-w-none max-h-[92vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{editing ? "Edit Coupon" : "Add Coupon"}</DialogTitle></DialogHeader>
             <div className="grid gap-3 mt-2">
               <div><Label>Code *</Label><Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} className="uppercase" /></div>

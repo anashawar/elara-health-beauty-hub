@@ -57,7 +57,7 @@ export default function AdminBanners() {
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setForm(emptyForm); setEditing(false); } }}>
           <DialogTrigger asChild><Button size="sm" className="rounded-xl"><Plus className="h-4 w-4 mr-1.5" />Add</Button></DialogTrigger>
-          <DialogContent className="max-w-sm">
+          <DialogContent className="w-[min(96vw,760px)] max-w-none max-h-[92vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{editing ? "Edit Banner" : "Add Banner"}</DialogTitle></DialogHeader>
             <div className="grid gap-3 mt-2">
               <div><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>

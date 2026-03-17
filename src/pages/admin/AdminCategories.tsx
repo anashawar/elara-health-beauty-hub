@@ -178,7 +178,7 @@ export default function AdminCategories() {
           <BulkImportDialog open={bulkSubOpen} onOpenChange={setBulkSubOpen} title="Subcategories" columns={subBulkColumns} onImport={handleBulkSubImport} />
           <Dialog open={subOpen} onOpenChange={(v) => { setSubOpen(v); if (!v) { setSubForm(emptySubForm); setSubEditing(false); } }}>
             <DialogTrigger asChild><Button size="sm" variant="outline" className="rounded-xl"><Plus className="h-4 w-4 mr-1.5" />Subcategory</Button></DialogTrigger>
-            <DialogContent className="max-w-sm">
+            <DialogContent className="w-[min(96vw,760px)] max-w-none max-h-[92vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{subEditing ? "Edit Subcategory" : "Add Subcategory"}</DialogTitle></DialogHeader>
               <div className="grid gap-3 mt-2">
                 <div>
