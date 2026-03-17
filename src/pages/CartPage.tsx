@@ -13,6 +13,7 @@ import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { getDeliveryFee, FREE_DELIVERY_MIN } from "@/lib/deliveryFee";
 
 interface AppliedCoupon {
   code: string;
@@ -91,9 +92,9 @@ const CartPage = () => {
     : 0;
 
   const subtotalAfterDiscount = Math.max(cartTotal - discount, 0);
-  const deliveryFee = subtotalAfterDiscount >= 40000 ? 0 : 5000;
-  const freeDeliveryLeft = 40000 - subtotalAfterDiscount;
-  const freeDeliveryProgress = Math.min((subtotalAfterDiscount / 40000) * 100, 100);
+  const deliveryFee = getDeliveryFee(null, subtotalAfterDiscount);
+  const freeDeliveryLeft = FREE_DELIVERY_MIN - subtotalAfterDiscount;
+  const freeDeliveryProgress = Math.min((subtotalAfterDiscount / FREE_DELIVERY_MIN) * 100, 100);
   const total = subtotalAfterDiscount + deliveryFee;
 
   const handleApplyCoupon = async () => {
