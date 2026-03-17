@@ -482,7 +482,21 @@ const CheckoutPage = () => {
               </motion.div>
             )}
 
-            <div className={`border-t border-border pt-2 ${firstOrderDiscount === 0 ? "mt-2" : ""} flex justify-between text-sm`}>
+            {/* Coupon discount line */}
+            {couponDiscount > 0 && appliedCoupon && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="border-t border-border pt-2 mt-2 flex justify-between text-sm"
+              >
+                <span className="text-primary font-medium flex items-center gap-1">
+                  🏷️ {t("cart.coupon")} ({appliedCoupon.code})
+                </span>
+                <span className="text-primary font-bold">-{formatPrice(couponDiscount)}</span>
+              </motion.div>
+            )}
+
+            <div className={`border-t border-border pt-2 ${totalDiscount === 0 ? "mt-2" : ""} flex justify-between text-sm`}>
               <span className="text-muted-foreground">{t("cart.delivery")}</span>
               <span className={deliveryFee === 0 ? "text-sage font-medium" : "text-foreground font-medium"}>
                 {deliveryFee === 0 ? t("common.free") : formatPrice(deliveryFee)}
@@ -491,7 +505,7 @@ const CheckoutPage = () => {
             <div className="border-t border-border pt-2 flex justify-between">
               <span className="font-bold text-foreground">{t("cart.total")}</span>
               <div className="text-right">
-                {firstOrderDiscount > 0 && (
+                {totalDiscount > 0 && (
                   <span className="text-xs text-muted-foreground line-through mr-2">{formatPrice(cartTotal + deliveryFee)}</span>
                 )}
                 <span className="font-bold text-foreground text-lg">{formatPrice(finalTotal)}</span>
