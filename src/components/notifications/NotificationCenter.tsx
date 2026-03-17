@@ -133,36 +133,36 @@ export default function NotificationCenter() {
         </SheetContent>
       </Sheet>
 
-      {/* Mobile: custom full-screen overlay */}
+      {/* Mobile: native sheet approach */}
       <AnimatePresence>
         {open && (
-          <div className="md:hidden fixed inset-0 z-50">
+          <div className="md:hidden fixed inset-0 z-[9999]" style={{ WebkitTransform: 'translateZ(0)' }}>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              transition={{ duration: 0.15 }}
+              className="absolute inset-0 bg-black/30"
               onClick={() => setOpen(false)}
             />
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 28, stiffness: 350 }}
-              className="absolute inset-x-0 bottom-0 bg-background rounded-t-[20px] flex flex-col overflow-hidden"
+              transition={{ type: "spring", damping: 30, stiffness: 400 }}
+              className="absolute inset-x-0 bottom-0 bg-background rounded-t-[20px] flex flex-col"
               style={{
-                top: 'calc(env(safe-area-inset-top, 0px) + 10px)',
+                maxHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - 10px)',
                 paddingBottom: 'env(safe-area-inset-bottom, 0px)',
               }}
             >
               {/* Drag handle */}
-              <div className="flex justify-center pt-2.5 pb-1">
+              <div className="flex justify-center pt-2.5 pb-1 flex-shrink-0">
                 <div className="w-9 h-1 rounded-full bg-muted-foreground/20" />
               </div>
 
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-3">
+              <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
                 <div>
                   <h2 className="text-[17px] font-display font-bold text-foreground">Notifications</h2>
                   {unreadCount > 0 && (
@@ -189,10 +189,10 @@ export default function NotificationCenter() {
               </div>
 
               {/* Separator */}
-              <div className="h-px bg-border/40 mx-4" />
+              <div className="h-px bg-border/40 mx-4 flex-shrink-0" />
 
               {/* Notification list */}
-              <div className="flex-1 overflow-y-auto overscroll-contain divide-y divide-border/20">
+              <div className="flex-1 overflow-y-auto overscroll-contain divide-y divide-border/20 -webkit-overflow-scrolling-touch">
                 {notifications.length === 0 ? (
                   <EmptyState />
                 ) : (
