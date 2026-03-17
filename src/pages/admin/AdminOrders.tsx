@@ -238,6 +238,7 @@ export default function AdminOrders() {
     </DialogContent>
   );
 
+  return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
