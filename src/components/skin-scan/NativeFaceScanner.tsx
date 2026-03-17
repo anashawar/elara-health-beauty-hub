@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CameraPreview } from "@capacitor-community/camera-preview";
+import { CameraPreview } from "@capgo/camera-preview";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { Camera, ArrowLeft, RotateCcw } from "lucide-react";
 
@@ -41,7 +41,6 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
         toBack: true, // camera renders behind webview
         disableAudio: true,
         storeToFile: false,
-        enableZoom: false,
         width: window.innerWidth,
         height: Math.round(window.innerWidth * (4 / 3)),
       });
