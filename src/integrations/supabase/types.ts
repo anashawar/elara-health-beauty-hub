@@ -1274,27 +1274,39 @@ export type Database = {
       }
       support_conversations: {
         Row: {
+          closed_at: string | null
           created_at: string
+          feedback: string | null
           id: string
           last_message_at: string
+          rating: number | null
+          resolution: string | null
           status: string
           subject: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          closed_at?: string | null
           created_at?: string
+          feedback?: string | null
           id?: string
           last_message_at?: string
+          rating?: number | null
+          resolution?: string | null
           status?: string
           subject?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          closed_at?: string | null
           created_at?: string
+          feedback?: string | null
           id?: string
           last_message_at?: string
+          rating?: number | null
+          resolution?: string | null
           status?: string
           subject?: string
           updated_at?: string
