@@ -295,17 +295,23 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
     };
   }, [cameraReady, processFrame]);
 
-  // Init everything
+  // Init everything — stagger to prevent simultaneous heavy work
   useEffect(() => {
     activeRef.current = true;
-    startCamera();
-    initLandmarker();
+    
+    // Small delay to let the component mount before accessing camera
+    const initTimer = setTimeout(() => {
+      if (!activeRef.current) return;
+      startCamera();
+      initLandmarker();
+    }, 300);
 
     return () => {
       activeRef.current = false;
+      clearTimeout(initTimer);
       if (captureIntervalRef.current) clearInterval(captureIntervalRef.current);
       cancelAnimationFrame(rafRef.current);
-      landmarkerRef.current?.close();
+      try { landmarkerRef.current?.close(); } catch {}
       landmarkerRef.current = null;
       CameraPreview.stop().catch(() => {});
     };
