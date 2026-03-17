@@ -13,6 +13,7 @@ import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { getDeliveryFee, FREE_DELIVERY_MIN } from "@/lib/deliveryFee";
 
 interface AppliedCoupon {
   code: string;
