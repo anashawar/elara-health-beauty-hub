@@ -16,8 +16,10 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { iraqCities } from "@/data/iraqCities";
 import MapPicker from "@/components/MapPicker";
 
+type AddressType = "House" | "Apartment" | "Office";
+
 interface AddressForm {
-  label: string;
+  label: AddressType;
   city: string;
   area: string;
   street: string;
@@ -29,7 +31,13 @@ interface AddressForm {
   longitude: number | null;
 }
 
-const emptyForm: AddressForm = { label: "Home", city: "", area: "", street: "", building: "", floor: "", apartment: "", phone: "", latitude: null, longitude: null };
+const emptyForm: AddressForm = { label: "House", city: "", area: "", street: "", building: "", floor: "", apartment: "", phone: "", latitude: null, longitude: null };
+
+const addressTypeConfig: Record<AddressType, { icon: string; needsFloor: boolean; needsApartment: boolean; needsBuilding: boolean }> = {
+  House: { icon: "🏠", needsFloor: false, needsApartment: false, needsBuilding: true },
+  Apartment: { icon: "🏢", needsFloor: true, needsApartment: true, needsBuilding: true },
+  Office: { icon: "🏬", needsFloor: true, needsApartment: false, needsBuilding: true },
+};
 
 const AddressesPage = () => {
   const { user, loading: authLoading } = useAuth();
