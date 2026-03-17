@@ -360,7 +360,7 @@ const AddressesPage = () => {
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-foreground bg-secondary px-2.5 py-1 rounded-lg">
-                        {labelMap[addr.label || ""] || addr.label || t("addresses.title")}
+                        {addressTypeConfig[addr.label as AddressType]?.icon || "📍"} {labelMap[addr.label || ""] || addr.label || t("addresses.title")}
                       </span>
                       {addr.is_default && (
                         <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{t("addresses.default")}</span>
