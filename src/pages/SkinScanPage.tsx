@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Camera, Upload, Sparkles, ArrowLeft, RotateCcw, Droplets, Zap, Eye, Fingerprint, AlertTriangle, Sun, Moon, Calendar, ShoppingBag, ArrowRight, ChevronDown, ChevronUp, Scan, Clock, History, Share2, FileDown } from "lucide-react";
 import FaceTrackingOverlay from "@/components/skin-scan/FaceTrackingOverlay";
+import NativeFaceScanner from "@/components/skin-scan/NativeFaceScanner";
 import { Capacitor } from "@capacitor/core";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
