@@ -10,6 +10,8 @@ const SERPER_API_URL = "https://google.serper.dev/images";
 const MAX_QUERIES = 3;
 const MAX_IMAGES_PER_QUERY = 10;
 const MIN_SCORE = 8;
+const DISCOVERY_PAGE_SIZE = 40;
+const QUERY_RETRIES = 3;
 
 const BROWSER_HEADERS = {
   "User-Agent":
@@ -30,8 +32,34 @@ type CandidateImage = {
   link: string;
 };
 
+type ProductRecord = {
+  id: string;
+  title: string;
+  volume_ml?: string | null;
+  volume_unit?: string | null;
+  brands?: { name?: string | null } | Array<{ name?: string | null }> | null;
+};
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withRetry<T>(label: string, fn: () => Promise<T>, retries = QUERY_RETRIES): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      console.error(`${label} failed (attempt ${attempt + 1}/${retries}):`, error);
+      if (attempt < retries - 1) {
+        await sleep(300 * (attempt + 1));
+      }
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(`${label} failed`);
 }
 
 function normalizeText(input: string): string {
@@ -198,7 +226,11 @@ async function fetchImageBytes(url: string, refererUrl?: string): Promise<{ byte
   try {
     const headers = new Headers(BROWSER_HEADERS);
     if (refererUrl) {
-      try { headers.set("Referer", `${new URL(refererUrl).origin}/`); } catch { /* ignore */ }
+      try {
+        headers.set("Referer", `${new URL(refererUrl).origin}/`);
+      } catch {
+        // Ignore invalid referers
+      }
     }
     const response = await fetch(url, { method: "GET", redirect: "follow", headers });
     if (!response.ok) return null;
@@ -242,39 +274,76 @@ async function persistImage(
   return null;
 }
 
-// Fetch missing product IDs server-side to avoid client REST API timeouts
-async function fetchMissingProductIds(supabase: ReturnType<typeof createClient>, limit: number): Promise<string[]> {
-  const PAGE = 1000;
+async function discoverMissingProducts(
+  supabase: ReturnType<typeof createClient>,
+  batchSize: number,
+  startOffset: number,
+): Promise<{ products: ProductRecord[]; nextOffset: number; totalProducts: number; done: boolean }> {
+  let currentOffset = startOffset;
+  let totalProducts = 0;
+  let done = false;
+  const selected: ProductRecord[] = [];
 
-  // Get all product IDs
-  let allProductIds: string[] = [];
-  let from = 0;
-  while (true) {
-    const { data, error } = await supabase.from("products").select("id").range(from, from + PAGE - 1);
-    if (error) throw error;
-    allProductIds = allProductIds.concat((data || []).map((r: any) => r.id));
-    if (!data || data.length < PAGE) break;
-    from += PAGE;
+  while (selected.length < batchSize) {
+    const { data: pageProducts, error: pageError, count } = await withRetry(`fetch products page ${currentOffset}`, () =>
+      supabase
+        .from("products")
+        .select("id, title, brands(name), volume_ml, volume_unit", { count: "exact" })
+        .order("id", { ascending: true })
+        .range(currentOffset, currentOffset + DISCOVERY_PAGE_SIZE - 1),
+    );
+
+    if (pageError) throw pageError;
+    totalProducts = count ?? totalProducts;
+
+    if (!pageProducts || pageProducts.length === 0) {
+      done = true;
+      break;
+    }
+
+    const pageIds = pageProducts.map((product: any) => product.id);
+    const { data: pageImages, error: pageImagesError } = await withRetry(`fetch page images ${currentOffset}`, () =>
+      supabase.from("product_images").select("product_id").in("product_id", pageIds),
+    );
+
+    if (pageImagesError) throw pageImagesError;
+
+    const hasImageSet = new Set((pageImages || []).map((item: any) => item.product_id));
+
+    for (const product of pageProducts as ProductRecord[]) {
+      if (!hasImageSet.has(product.id)) {
+        selected.push(product);
+        if (selected.length >= batchSize) break;
+      }
+    }
+
+    currentOffset += pageProducts.length;
+
+    if (pageProducts.length < DISCOVERY_PAGE_SIZE || (totalProducts > 0 && currentOffset >= totalProducts)) {
+      done = true;
+      break;
+    }
   }
 
-  // Get all product IDs that have images
-  let imageProductIds: string[] = [];
-  from = 0;
-  while (true) {
-    const { data, error } = await supabase.from("product_images").select("product_id").range(from, from + PAGE - 1);
-    if (error) throw error;
-    imageProductIds = imageProductIds.concat((data || []).map((r: any) => r.product_id));
-    if (!data || data.length < PAGE) break;
-    from += PAGE;
-  }
+  return {
+    products: selected,
+    nextOffset: currentOffset,
+    totalProducts,
+    done,
+  };
+}
 
-  const hasImage = new Set(imageProductIds);
-  const missing = allProductIds.filter((id) => !hasImage.has(id));
-  return missing.slice(0, limit);
+function getBrandName(product: ProductRecord): string {
+  if (Array.isArray(product.brands)) {
+    return product.brands[0]?.name || "";
+  }
+  return product.brands?.name || "";
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
 
   try {
     const apiKey = Deno.env.get("SERPER_API_KEY");
@@ -284,50 +353,74 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const body = await req.json();
-    const batchSize = body.batch_size || 5;
+    const body = await req.json().catch(() => ({}));
+    const batchSize = Math.max(1, Math.min(Number(body.batch_size) || 5, 10));
+    const requestedIds = Array.isArray(body.product_ids)
+      ? body.product_ids.filter((id: unknown): id is string => typeof id === "string")
+      : [];
+    const scanOffset = Math.max(0, Number(body.scan_offset) || 0);
 
-    // If product_ids provided, use those; otherwise auto-find missing ones
-    let productIds: string[] = body.product_ids || [];
-    let totalMissing = 0;
+    let products: ProductRecord[] = [];
+    let totalProducts: number | null = null;
+    let totalMissing: number | null = null;
+    let nextOffset = scanOffset;
+    let done = false;
 
-    if (productIds.length === 0) {
-      // Auto-discover missing products server-side
-      const missing = await fetchMissingProductIds(supabase, batchSize);
-      productIds = missing;
-      // Also get total count for progress reporting
-      const allMissing = await fetchMissingProductIds(supabase, 99999);
-      totalMissing = allMissing.length;
+    if (requestedIds.length > 0) {
+      const { data, error } = await withRetry("fetch requested products", () =>
+        supabase
+          .from("products")
+          .select("id, title, brands(name), volume_ml, volume_unit")
+          .in("id", requestedIds),
+      );
+
+      if (error) throw error;
+      products = (data || []) as ProductRecord[];
+      totalProducts = requestedIds.length;
+      nextOffset = scanOffset + products.length;
+      done = true;
+    } else {
+      const discovery = await discoverMissingProducts(supabase, batchSize, scanOffset);
+      products = discovery.products;
+      totalProducts = discovery.totalProducts;
+      nextOffset = discovery.nextOffset;
+      done = discovery.done;
     }
 
-    if (productIds.length === 0) {
+    if (products.length === 0) {
       return new Response(
-        JSON.stringify({ success: true, processed: 0, succeeded: 0, skipped: 0, failed: 0, results: [], totalMissing: 0, done: true }),
+        JSON.stringify({
+          success: true,
+          processed: 0,
+          succeeded: 0,
+          skipped: 0,
+          failed: 0,
+          results: [],
+          totalMissing,
+          totalProducts,
+          nextOffset,
+          done: true,
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const { data: products, error: productsError } = await supabase
-      .from("products")
-      .select("id, title, brands(name), volume_ml, volume_unit")
-      .in("id", productIds);
-    if (productsError) throw productsError;
+    const { data: existingImages, error: existingImagesError } = await withRetry("fetch existing images for batch", () =>
+      supabase.from("product_images").select("product_id").in("product_id", products.map((product) => product.id)),
+    );
 
-    const { data: existingImages } = await supabase
-      .from("product_images")
-      .select("product_id")
-      .in("product_id", productIds);
+    if (existingImagesError) throw existingImagesError;
+
     const hasImageSet = new Set((existingImages || []).map((item: any) => item.product_id));
-
     const results: any[] = [];
 
-    for (const product of products || []) {
+    for (const product of products) {
       if (hasImageSet.has(product.id)) {
         results.push({ id: product.id, status: "skipped", reason: "already has images" });
         continue;
       }
 
-      const brandName = (product as any).brands?.name || "";
+      const brandName = getBrandName(product);
       let cleanTitle = product.title;
       if (brandName && cleanTitle.toLowerCase().startsWith(brandName.toLowerCase())) {
         cleanTitle = cleanTitle.slice(brandName.length).trim();
@@ -338,8 +431,8 @@ Deno.serve(async (req) => {
       const titleWords = Array.from(
         new Set(normalizeText(`${brandName} ${cleanTitle}`).split(" ").filter((w) => w.length > 2)),
       );
-      const volumeStr = (product as any).volume_ml
-        ? `${(product as any).volume_ml}${(product as any).volume_unit || "ml"}`
+      const volumeStr = product.volume_ml
+        ? `${product.volume_ml}${product.volume_unit || "ml"}`
         : undefined;
 
       const searchQueries = buildSearchQueries(brandName, cleanTitle, volumeStr);
@@ -348,7 +441,7 @@ Deno.serve(async (req) => {
         const candidates: CandidateImage[] = [];
 
         for (const query of searchQueries) {
-          if (candidates.some((c) => c.score >= 30)) break;
+          if (candidates.some((candidate) => candidate.score >= 30)) break;
 
           console.log(`[${product.id.slice(0, 8)}] Query: "${query}"`);
 
@@ -359,10 +452,15 @@ Deno.serve(async (req) => {
               const score = scoreCandidate(img, titleWords, brandSlug, fullName, volumeStr);
               if (score >= MIN_SCORE) {
                 candidates.push({
-                  url: img.imageUrl, thumbnailUrl: img.thumbnailUrl || "",
-                  source: img.source || "", domain: img.domain || "",
-                  title: img.title || "", width: img.imageWidth || 0,
-                  height: img.imageHeight || 0, score, link: img.link || "",
+                  url: img.imageUrl,
+                  thumbnailUrl: img.thumbnailUrl || "",
+                  source: img.source || "",
+                  domain: img.domain || "",
+                  title: img.title || "",
+                  width: img.imageWidth || 0,
+                  height: img.imageHeight || 0,
+                  score,
+                  link: img.link || "",
                 });
               }
             }
@@ -378,12 +476,12 @@ Deno.serve(async (req) => {
           await sleep(200);
         }
 
-        if (results.some((r) => r.id === product.id)) continue;
+        if (results.some((result) => result.id === product.id)) continue;
 
         const deduped = new Map<string, CandidateImage>();
-        for (const c of candidates.sort((a, b) => b.score - a.score)) {
-          const key = stripQueryAndHash(c.url).toLowerCase();
-          if (!deduped.has(key)) deduped.set(key, c);
+        for (const candidate of candidates.sort((a, b) => b.score - a.score)) {
+          const key = stripQueryAndHash(candidate.url).toLowerCase();
+          if (!deduped.has(key)) deduped.set(key, candidate);
         }
 
         const uniqueCandidates = Array.from(deduped.values()).sort((a, b) => b.score - a.score).slice(0, 8);
@@ -412,18 +510,25 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        const { error: insertError } = await supabase.from("product_images").insert({
-          product_id: product.id,
-          image_url: saved.finalUrl,
-          sort_order: 0,
-        });
+        const { error: insertError } = await withRetry(`insert image row ${product.id}`, () =>
+          supabase.from("product_images").insert({
+            product_id: product.id,
+            image_url: saved!.finalUrl,
+            sort_order: 0,
+          }),
+        );
 
         if (insertError) throw insertError;
 
         results.push({
-          id: product.id, status: "success", images: 1,
-          url: saved.finalUrl, domain: saved.candidate.domain,
-          persisted: saved.persisted, score: saved.candidate.score, title: fullName,
+          id: product.id,
+          status: "success",
+          images: 1,
+          url: saved.finalUrl,
+          domain: saved.candidate.domain,
+          persisted: saved.persisted,
+          score: saved.candidate.score,
+          title: fullName,
         });
 
         await sleep(150);
@@ -433,12 +538,23 @@ Deno.serve(async (req) => {
       }
     }
 
-    const succeeded = results.filter((r) => r.status === "success").length;
-    const skipped = results.filter((r) => r.status === "skipped").length;
-    const failed = results.filter((r) => r.status !== "success" && r.status !== "skipped").length;
+    const succeeded = results.filter((result) => result.status === "success").length;
+    const skipped = results.filter((result) => result.status === "skipped").length;
+    const failed = results.filter((result) => result.status !== "success" && result.status !== "skipped").length;
 
     return new Response(
-      JSON.stringify({ success: true, processed: results.length, succeeded, skipped, failed, results, totalMissing }),
+      JSON.stringify({
+        success: true,
+        processed: results.length,
+        succeeded,
+        skipped,
+        failed,
+        results,
+        totalMissing,
+        totalProducts,
+        nextOffset,
+        done,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {

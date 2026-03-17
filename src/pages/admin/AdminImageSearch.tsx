@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { ImagePlus, Play, Pause, CheckCircle2, Loader2, RotateCcw, XCircle, Image, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { Progress } from "@/components/ui/progress";
 const BATCH_SIZE = 5;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 3000;
+const MAX_CONSECUTIVE_BATCH_FAILURES = 5;
+const STORAGE_KEY = "admin-image-search-session-v2";
 
 interface ResultEntry {
   id: string;
@@ -17,22 +19,94 @@ interface ResultEntry {
   error?: string;
 }
 
+interface PersistedSession {
+  scanOffset: number;
+  totalProducts: number | null;
+  totalMissing: number | null;
+  processed: number;
+  found: number;
+  failed: number;
+  done: boolean;
+  recentResults: ResultEntry[];
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function loadSession(): PersistedSession | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as PersistedSession;
+  } catch {
+    return null;
+  }
+}
+
+function saveSession(session: PersistedSession) {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  } catch {
+    // Ignore persistence failures
+  }
+}
+
+function clearSession() {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Ignore persistence failures
+  }
+}
+
 const AdminImageSearch = () => {
+  const initialSession = useRef(loadSession()).current;
   const [running, setRunning] = useState(false);
-  const [totalMissing, setTotalMissing] = useState<number | null>(null);
-  const [processed, setProcessed] = useState(0);
-  const [found, setFound] = useState(0);
-  const [failed, setFailed] = useState(0);
-  const [done, setDone] = useState(false);
+  const [totalMissing, setTotalMissing] = useState<number | null>(initialSession?.totalMissing ?? null);
+  const [totalProducts, setTotalProducts] = useState<number | null>(initialSession?.totalProducts ?? null);
+  const [scanOffset, setScanOffset] = useState(initialSession?.scanOffset ?? 0);
+  const [processed, setProcessed] = useState(initialSession?.processed ?? 0);
+  const [found, setFound] = useState(initialSession?.found ?? 0);
+  const [failed, setFailed] = useState(initialSession?.failed ?? 0);
+  const [done, setDone] = useState(initialSession?.done ?? false);
   const [error, setError] = useState<string | null>(null);
-  const [recentResults, setRecentResults] = useState<ResultEntry[]>([]);
+  const [recentResults, setRecentResults] = useState<ResultEntry[]>(initialSession?.recentResults ?? []);
   const [retryCount, setRetryCount] = useState(0);
   const stopRef = useRef(false);
+  const offsetRef = useRef(scanOffset);
+  const consecutiveFailureRef = useRef(0);
+
+  useEffect(() => {
+    offsetRef.current = scanOffset;
+  }, [scanOffset]);
+
+  useEffect(() => {
+    saveSession({
+      scanOffset,
+      totalProducts,
+      totalMissing,
+      processed,
+      found,
+      failed,
+      done,
+      recentResults,
+    });
+  }, [scanOffset, totalProducts, totalMissing, processed, found, failed, done, recentResults]);
 
   const invokeBatch = async (attempt = 0): Promise<any> => {
     try {
       const resp = await supabase.functions.invoke("search-product-images", {
-        body: { batch_size: BATCH_SIZE },
+        body: {
+          batch_size: BATCH_SIZE,
+          scan_offset: offsetRef.current,
+        },
       });
 
       if (resp.error) {
@@ -44,7 +118,7 @@ const AdminImageSearch = () => {
       if (attempt < MAX_RETRIES && !stopRef.current) {
         setRetryCount(attempt + 1);
         setError(`Request failed, retrying (${attempt + 1}/${MAX_RETRIES})...`);
-        await new Promise((r) => setTimeout(r, RETRY_DELAY * (attempt + 1)));
+        await sleep(RETRY_DELAY * (attempt + 1));
         return invokeBatch(attempt + 1);
       }
       throw err;
@@ -61,53 +135,69 @@ const AdminImageSearch = () => {
       try {
         setRetryCount(0);
         const result = await invokeBatch();
+        consecutiveFailureRef.current = 0;
 
         if (!result) {
-          setError("No response from server");
-          break;
+          throw new Error("No response from server");
         }
 
-        // Update total missing from server
         if (typeof result.totalMissing === "number") {
           setTotalMissing(result.totalMissing);
         }
 
-        // Check if done
-        if (result.done || result.processed === 0) {
-          setTotalMissing(0);
-          setDone(true);
-          break;
+        if (typeof result.totalProducts === "number") {
+          setTotalProducts(result.totalProducts);
+        }
+
+        if (typeof result.nextOffset === "number") {
+          offsetRef.current = result.nextOffset;
+          setScanOffset(result.nextOffset);
         }
 
         const batchFound = result.succeeded || 0;
         const batchFailed = result.failed || 0;
         const batchProcessed = batchFound + batchFailed + (result.skipped || 0);
 
-        setProcessed((prev) => prev + batchProcessed);
-        setFound((prev) => prev + batchFound);
-        setFailed((prev) => prev + batchFailed);
-        setError(null);
+        if (batchProcessed > 0) {
+          setProcessed((prev) => prev + batchProcessed);
+          setFound((prev) => prev + batchFound);
+          setFailed((prev) => prev + batchFailed);
+        }
 
-        // Add results to log (skip "skipped" entries)
         if (result.results) {
           setRecentResults((prev) =>
             [...(result.results as ResultEntry[]).filter((r) => r.status !== "skipped"), ...prev].slice(0, 50)
           );
         }
 
-        // Check if payment required (API credits exhausted)
         if (result.results?.some((r: any) => r.status === "payment_required")) {
           setError("Serper API credits exhausted. Please top up your account.");
           break;
         }
 
-        // Small delay between batches
-        await new Promise((r) => setTimeout(r, 1000));
-      } catch (e: any) {
-        if (!stopRef.current) {
-          setError(`Failed after ${MAX_RETRIES} retries: ${e.message}`);
+        if (result.done || batchProcessed === 0) {
+          setDone(true);
+          setError(null);
+          break;
         }
-        break;
+
+        setError(null);
+        await sleep(800);
+      } catch (e: any) {
+        if (stopRef.current) {
+          break;
+        }
+
+        consecutiveFailureRef.current += 1;
+        const failureCount = consecutiveFailureRef.current;
+
+        if (failureCount >= MAX_CONSECUTIVE_BATCH_FAILURES) {
+          setError(`Stopped after ${failureCount} consecutive batch failures: ${e.message}`);
+          break;
+        }
+
+        setError(`Batch failed (${failureCount}/${MAX_CONSECUTIVE_BATCH_FAILURES}). Waiting a few seconds, then continuing...`);
+        await sleep(8000);
       }
     }
 
@@ -120,6 +210,9 @@ const AdminImageSearch = () => {
   };
 
   const resetSession = () => {
+    stopRef.current = true;
+    offsetRef.current = 0;
+    consecutiveFailureRef.current = 0;
     setProcessed(0);
     setFound(0);
     setFailed(0);
@@ -127,14 +220,26 @@ const AdminImageSearch = () => {
     setError(null);
     setRecentResults([]);
     setTotalMissing(null);
+    setTotalProducts(null);
+    setScanOffset(0);
+    clearSession();
   };
 
   const progress =
-    totalMissing !== null && totalMissing + processed > 0
-      ? Math.min(100, (processed / (processed + totalMissing)) * 100)
-      : 0;
+    totalProducts && totalProducts > 0
+      ? Math.min(100, (scanOffset / totalProducts) * 100)
+      : totalMissing !== null && totalMissing + processed > 0
+        ? Math.min(100, (processed / (processed + totalMissing)) * 100)
+        : 0;
 
   const successRate = processed > 0 ? Math.round((found / processed) * 100) : 0;
+  const remainingLabel = totalMissing !== null ? "Missing Images" : "Products Left to Scan";
+  const remainingValue =
+    totalMissing !== null
+      ? totalMissing
+      : totalProducts !== null
+        ? Math.max(totalProducts - scanOffset, 0)
+        : "—";
 
   return (
     <div className="space-y-6">
@@ -148,11 +253,10 @@ const AdminImageSearch = () => {
         </p>
       </div>
 
-      {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-card rounded-xl p-4 border text-center">
-          <p className="text-2xl font-bold text-foreground">{totalMissing ?? "—"}</p>
-          <p className="text-xs text-muted-foreground">Missing Images</p>
+          <p className="text-2xl font-bold text-foreground">{remainingValue}</p>
+          <p className="text-xs text-muted-foreground">{remainingLabel}</p>
         </div>
         <div className="bg-card rounded-xl p-4 border text-center">
           <p className="text-2xl font-bold text-emerald-600">{found}</p>
@@ -168,13 +272,13 @@ const AdminImageSearch = () => {
         </div>
       </div>
 
-      {/* Progress & Controls */}
       <div className="bg-card rounded-xl p-6 border">
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-sm font-medium">Progress</p>
             <p className="text-xs text-muted-foreground">
               {processed > 0 && `${processed} processed this session`}
+              {totalProducts !== null && ` · Scan position ${Math.min(scanOffset, totalProducts)}/${totalProducts}`}
               {retryCount > 0 && ` · Retry ${retryCount}/${MAX_RETRIES}`}
             </p>
           </div>
@@ -198,7 +302,7 @@ const AdminImageSearch = () => {
           {!running ? (
             <Button onClick={runBatch} disabled={done} className="gap-2">
               <Play className="w-4 h-4" />
-              {processed > 0 ? "Resume Search" : "Start Search"}
+              {processed > 0 || scanOffset > 0 ? "Resume Search" : "Start Search"}
             </Button>
           ) : (
             <Button onClick={stop} variant="outline" className="gap-2">
@@ -206,7 +310,7 @@ const AdminImageSearch = () => {
               Pause
             </Button>
           )}
-          {processed > 0 && !running && (
+          {(processed > 0 || scanOffset > 0) && !running && (
             <Button onClick={resetSession} variant="ghost" className="gap-2">
               <RotateCcw className="w-4 h-4" />
               Reset Session
@@ -215,13 +319,12 @@ const AdminImageSearch = () => {
           {running && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="w-4 h-4 animate-spin" />
-              {retryCount > 0 ? `Retrying...` : `Searching images for batch of ${BATCH_SIZE}...`}
+              {retryCount > 0 ? "Retrying..." : `Searching images for batch of ${BATCH_SIZE}...`}
             </div>
           )}
         </div>
       </div>
 
-      {/* Recent Results Log */}
       {recentResults.length > 0 && (
         <div className="bg-card rounded-xl p-6 border">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -262,12 +365,12 @@ const AdminImageSearch = () => {
       <div className="bg-card rounded-xl p-6 border">
         <h3 className="font-semibold mb-2">How it works</h3>
         <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
-          <li>Automatically finds products without images — no manual selection needed</li>
+          <li>Scans the catalog progressively instead of rescanning the full database every batch</li>
           <li>Uses multiple search strategies per product — retailer sites, CDNs, and general web</li>
           <li>Scores images by brand match, title match, trusted CDN, and resolution</li>
           <li>Verifies each image exists and meets minimum quality (5KB+)</li>
           <li>Images are saved immediately — pause and resume anytime without losing progress</li>
-          <li>Auto-retries up to {MAX_RETRIES} times on connection failures</li>
+          <li>Auto-retries failed requests and keeps going after transient batch errors</li>
           <li>Processes {BATCH_SIZE} products per batch to stay within API limits</li>
         </ul>
       </div>
