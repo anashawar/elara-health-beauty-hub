@@ -48,7 +48,7 @@ export default function AdminOrders() {
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
           .from("profiles")
-          .select("user_id, full_name, phone")
+          .select("user_id, full_name, phone, gender")
           .in("user_id", userIds);
         if (profiles) profiles.forEach((p: any) => { profilesMap[p.user_id] = p; });
       }
