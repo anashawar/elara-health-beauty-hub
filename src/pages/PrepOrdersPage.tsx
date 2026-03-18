@@ -30,6 +30,12 @@ import {
   Calendar,
   CreditCard,
   UserCircle,
+  DollarSign,
+  BarChart3,
+  TrendingUp,
+  CalendarDays,
+  ChevronDown,
+  FileText,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import elaraLogo from "@/assets/elara-logo.png";
@@ -46,6 +52,8 @@ interface PrepItem {
   id: string;
   quantity: number;
   price?: number;
+  cost?: number;
+  total_cost?: number;
   product: PrepProduct | null;
 }
 
@@ -67,12 +75,38 @@ interface PrepOrder {
   notes: string | null;
   customer_name?: string;
   payment_method?: string;
+  total_cost?: number;
   items: PrepItem[];
   address: PrepAddress | null;
 }
 
+interface CostOrder {
+  id: string;
+  created_at: string;
+  status: string;
+  total_cost: number;
+  item_count: number;
+  items: {
+    product_id: string;
+    title: string;
+    quantity: number;
+    unit_cost: number;
+    total_cost: number;
+    sale_price: number;
+  }[];
+}
+
+interface AnalyticsData {
+  total_orders: number;
+  total_items: number;
+  status_breakdown: Record<string, number>;
+  orders_by_day: { date: string; count: number }[];
+}
+
 const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 const FUNC_URL = `https://${PROJECT_ID}.supabase.co/functions/v1/prep-orders`;
+
+type TabType = "pending" | "prepared" | "costs" | "analytics";
 
 function formatOrderTime(dateStr: string): string {
   const d = new Date(dateStr);
@@ -105,6 +139,33 @@ function getTimeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+function formatIQD(amount: number): string {
+  return amount.toLocaleString("en-US") + " IQD";
+}
+
+function getDateRange(preset: string): { from: string; to: string } {
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
+  
+  switch (preset) {
+    case "today": {
+      return { from: today, to: today };
+    }
+    case "week": {
+      const weekAgo = new Date(now);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return { from: weekAgo.toISOString().split("T")[0], to: today };
+    }
+    case "month": {
+      const monthAgo = new Date(now);
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
+      return { from: monthAgo.toISOString().split("T")[0], to: today };
+    }
+    default:
+      return { from: "", to: "" };
+  }
+}
+
 export default function PrepOrdersPage() {
   const { token: urlToken } = useParams<{ token: string }>();
   const [token, setToken] = useState<string | null>(urlToken || null);
@@ -120,11 +181,27 @@ export default function PrepOrdersPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preparingId, setPreparingId] = useState<string | null>(null);
-  const [tab, setTab] = useState<"pending" | "prepared">("pending");
+  const [tab, setTab] = useState<TabType>("pending");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
+
+  // Costs state
+  const [costOrders, setCostOrders] = useState<CostOrder[]>([]);
+  const [costSummary, setCostSummary] = useState({ total_cost: 0, total_orders: 0, total_items: 0 });
+  const [costLoading, setCostLoading] = useState(false);
+  const [costDatePreset, setCostDatePreset] = useState("week");
+  const [costDateFrom, setCostDateFrom] = useState("");
+  const [costDateTo, setCostDateTo] = useState("");
+  const [expandedCostOrder, setExpandedCostOrder] = useState<string | null>(null);
+
+  // Analytics state
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsDatePreset, setAnalyticsDatePreset] = useState("month");
+  const [analyticsDateFrom, setAnalyticsDateFrom] = useState("");
+  const [analyticsDateTo, setAnalyticsDateTo] = useState("");
 
   useEffect(() => {
     if (urlToken) {
@@ -202,13 +279,74 @@ export default function PrepOrdersPage() {
     }
   }, [token, tab]);
 
-  useEffect(() => {
-    if (authenticated) fetchOrders();
-  }, [fetchOrders, authenticated]);
+  const fetchCosts = useCallback(async () => {
+    if (!token) return;
+    setCostLoading(true);
+    try {
+      let from = costDateFrom;
+      let to = costDateTo;
+      if (costDatePreset !== "custom") {
+        const range = getDateRange(costDatePreset);
+        from = range.from;
+        to = range.to;
+      }
+      const params = new URLSearchParams({ token, action: "costs-summary" });
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
 
-  // Live sync: poll every 15s + realtime channel for instant updates
+      const res = await fetch(`${FUNC_URL}?${params}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load costs");
+      setCostOrders(data.orders || []);
+      setCostSummary(data.summary || { total_cost: 0, total_orders: 0, total_items: 0 });
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setCostLoading(false);
+    }
+  }, [token, costDatePreset, costDateFrom, costDateTo]);
+
+  const fetchAnalytics = useCallback(async () => {
+    if (!token) return;
+    setAnalyticsLoading(true);
+    try {
+      let from = analyticsDateFrom;
+      let to = analyticsDateTo;
+      if (analyticsDatePreset !== "custom") {
+        const range = getDateRange(analyticsDatePreset);
+        from = range.from;
+        to = range.to;
+      }
+      const params = new URLSearchParams({ token, action: "analytics" });
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+
+      const res = await fetch(`${FUNC_URL}?${params}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load analytics");
+      setAnalytics(data);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }, [token, analyticsDatePreset, analyticsDateFrom, analyticsDateTo]);
+
   useEffect(() => {
-    if (!authenticated) return;
+    if (authenticated && (tab === "pending" || tab === "prepared")) fetchOrders();
+  }, [fetchOrders, authenticated, tab]);
+
+  useEffect(() => {
+    if (authenticated && tab === "costs") fetchCosts();
+  }, [fetchCosts, authenticated, tab]);
+
+  useEffect(() => {
+    if (authenticated && tab === "analytics") fetchAnalytics();
+  }, [fetchAnalytics, authenticated, tab]);
+
+  // Live sync for orders tabs
+  useEffect(() => {
+    if (!authenticated || (tab !== "pending" && tab !== "prepared")) return;
     const channel = supabase
       .channel("prep-orders-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
@@ -220,7 +358,7 @@ export default function PrepOrdersPage() {
       supabase.removeChannel(channel);
       clearInterval(interval);
     };
-  }, [fetchOrders, authenticated]);
+  }, [fetchOrders, authenticated, tab]);
 
   const markPrepared = async (orderId: string) => {
     setPreparingId(orderId);
@@ -264,30 +402,24 @@ export default function PrepOrdersPage() {
         {/* Left branding panel */}
         <div className="hidden lg:flex lg:w-[520px] xl:w-[600px] bg-gradient-to-br from-primary/10 via-primary/5 to-background border-r border-border/50 flex-col justify-between p-12">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-xl shadow-primary/10 border border-primary/10">
-              <img src={elaraLogo} alt="ELARA" className="h-10 w-10 object-contain" />
-            </div>
-            <div>
-              <h3 className="text-xl font-display font-bold text-foreground tracking-tight">ELARA</h3>
-              <p className="text-xs text-muted-foreground">Warehouse Portal</p>
-            </div>
+            <img src={elaraLogo} alt="ELARA" className="h-20 w-auto object-contain drop-shadow-lg" />
           </div>
           <div className="space-y-6">
             <h2 className="text-5xl font-display font-bold text-foreground tracking-tight leading-[1.1]">
               Warehouse<br />Operations<br /><span className="text-primary">Hub</span>
             </h2>
             <p className="text-base text-muted-foreground max-w-sm leading-relaxed">
-              Prepare orders, track items, and keep your warehouse running at peak efficiency.
+              Prepare orders, track costs, and keep your warehouse running at peak efficiency.
             </p>
             <div className="flex items-center gap-4 pt-2">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/10">
                 <Package className="w-6 h-6 text-primary" />
               </div>
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/10">
-                <CheckCircle2 className="w-6 h-6 text-primary" />
+                <DollarSign className="w-6 h-6 text-primary" />
               </div>
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/10">
-                <Warehouse className="w-6 h-6 text-primary" />
+                <BarChart3 className="w-6 h-6 text-primary" />
               </div>
             </div>
           </div>
@@ -305,8 +437,8 @@ export default function PrepOrdersPage() {
             className="w-full max-w-sm space-y-8"
           >
             <div className="text-center space-y-4 lg:text-left">
-              <div className="w-20 h-20 mx-auto lg:mx-0 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-xl shadow-primary/10 border border-primary/10 lg:hidden">
-                <img src={elaraLogo} alt="ELARA" className="h-12 w-12 object-contain" />
+              <div className="mx-auto lg:mx-0 lg:hidden">
+                <img src={elaraLogo} alt="ELARA" className="h-24 w-auto object-contain mx-auto lg:mx-0 drop-shadow-lg" />
               </div>
               <div>
                 <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">Sign In</h1>
@@ -412,9 +544,7 @@ export default function PrepOrdersPage() {
         <div className="px-4 lg:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10 shadow-md shadow-primary/10">
-                <img src={elaraLogo} alt="ELARA" className="h-7 w-7 object-contain" />
-              </div>
+              <img src={elaraLogo} alt="ELARA" className="h-10 w-auto object-contain drop-shadow-md" />
               <div className="hidden sm:block">
                 <div className="flex items-center gap-2">
                   <h1 className="text-base font-display font-bold text-foreground tracking-tight">ELARA Warehouse</h1>
@@ -430,42 +560,50 @@ export default function PrepOrdersPage() {
               </div>
             </div>
 
-            {/* Search — desktop */}
-            <div className="hidden md:block relative w-64 lg:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search orders, products, customers..."
-                className="pl-10 h-9 rounded-xl bg-muted/40 border-border/40 text-sm"
-              />
-            </div>
+            {/* Search — desktop (only for order tabs) */}
+            {(tab === "pending" || tab === "prepared") && (
+              <div className="hidden md:block relative w-64 lg:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search orders, products, customers..."
+                  className="pl-10 h-9 rounded-xl bg-muted/40 border-border/40 text-sm"
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-1 bg-muted/40 p-0.5 rounded-lg border border-border/30">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-md transition-colors ${viewMode === "grid" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-1.5 rounded-md transition-colors ${viewMode === "list" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                <List className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            {(tab === "pending" || tab === "prepared") && (
+              <div className="hidden md:flex items-center gap-1 bg-muted/40 p-0.5 rounded-lg border border-border/30">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-1.5 rounded-md transition-colors ${viewMode === "grid" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`p-1.5 rounded-md transition-colors ${viewMode === "list" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  <List className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
 
             <Button
               variant="outline"
               size="sm"
-              onClick={() => fetchOrders()}
-              disabled={loading}
+              onClick={() => {
+                if (tab === "costs") fetchCosts();
+                else if (tab === "analytics") fetchAnalytics();
+                else fetchOrders();
+              }}
+              disabled={loading || costLoading || analyticsLoading}
               className="rounded-xl h-9 gap-1.5 border-border/60 text-xs"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${(loading || costLoading || analyticsLoading) ? "animate-spin" : ""}`} />
               <span className="hidden sm:inline">Refresh</span>
             </Button>
             <Button
@@ -481,17 +619,19 @@ export default function PrepOrdersPage() {
         </div>
 
         {/* Mobile search */}
-        <div className="px-4 pb-3 md:hidden">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search orders..."
-              className="pl-10 h-9 rounded-xl bg-muted/40 border-border/40 text-sm"
-            />
+        {(tab === "pending" || tab === "prepared") && (
+          <div className="px-4 pb-3 md:hidden">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search orders..."
+                className="pl-10 h-9 rounded-xl bg-muted/40 border-border/40 text-sm"
+              />
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
       <div className="flex-1 flex">
@@ -503,7 +643,7 @@ export default function PrepOrdersPage() {
               <div className="rounded-xl bg-muted/40 border border-border/40 p-3">
                 <p className="text-2xl font-bold text-foreground">{orders.length}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  {tab === "pending" ? "To Prepare" : "Prepared"}
+                  {tab === "pending" ? "To Prepare" : tab === "prepared" ? "Prepared" : "Orders"}
                 </p>
               </div>
               <div className="rounded-xl bg-muted/40 border border-border/40 p-3">
@@ -514,7 +654,7 @@ export default function PrepOrdersPage() {
           </div>
 
           <div className="space-y-1.5">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Status</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Orders</p>
             <button
               onClick={() => { setTab("pending"); setSelectedOrder(null); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
@@ -544,139 +684,567 @@ export default function PrepOrdersPage() {
             </button>
           </div>
 
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Finance</p>
+            <button
+              onClick={() => { setTab("costs"); setSelectedOrder(null); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                tab === "costs"
+                  ? "bg-primary/10 text-primary border border-primary/20"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              }`}
+            >
+              <DollarSign className="w-4 h-4" />
+              Costs & Payments
+            </button>
+            <button
+              onClick={() => { setTab("analytics"); setSelectedOrder(null); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                tab === "analytics"
+                  ? "bg-primary/10 text-primary border border-primary/20"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              Analytics
+            </button>
+          </div>
+
           <div className="mt-auto pt-4 border-t border-border/30">
             <p className="text-[10px] text-muted-foreground/50 text-center">
-              Powered by ELARA · v2.0
+              Powered by ELARA · v3.0
             </p>
           </div>
         </aside>
 
-        {/* Mobile tabs */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-xl border-t border-border/60 px-4 py-2 flex gap-2">
-          <button
-            onClick={() => { setTab("pending"); setSelectedOrder(null); }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-xl transition-all ${
-              tab === "pending"
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "text-muted-foreground"
-            }`}
-          >
-            <Package className="w-4 h-4" />
-            To Prepare
-            {tab === "pending" && orders.length > 0 && (
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary-foreground text-primary text-[10px] font-bold">
-                {orders.length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => { setTab("prepared"); setSelectedOrder(null); }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-xl transition-all ${
-              tab === "prepared"
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "text-muted-foreground"
-            }`}
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            Prepared
-          </button>
+        {/* Mobile bottom tabs */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-xl border-t border-border/60 px-2 py-1.5 flex gap-1">
+          {[
+            { key: "pending" as TabType, icon: Package, label: "Prepare" },
+            { key: "prepared" as TabType, icon: CheckCircle2, label: "Done" },
+            { key: "costs" as TabType, icon: DollarSign, label: "Costs" },
+            { key: "analytics" as TabType, icon: BarChart3, label: "Stats" },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => { setTab(t.key); setSelectedOrder(null); }}
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-semibold rounded-xl transition-all ${
+                tab === t.key
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "text-muted-foreground"
+              }`}
+            >
+              <t.icon className="w-4 h-4" />
+              {t.label}
+            </button>
+          ))}
         </div>
 
         {/* Main content */}
         <main className="flex-1 flex flex-col min-w-0">
           <div className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6 overflow-auto">
-            {loading && (
-              <div className="py-20 flex flex-col items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground">Loading orders...</p>
-              </div>
-            )}
-
-            {error && !loading && (
-              <div className="py-20 text-center">
-                <p className="text-sm text-destructive">{error}</p>
-                <Button variant="outline" size="sm" onClick={() => fetchOrders()} className="mt-3 rounded-xl">
-                  Try Again
-                </Button>
-              </div>
-            )}
-
-            {!loading && !error && filteredOrders.length === 0 && (
-              <div className="py-20 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-3xl bg-muted/50 flex items-center justify-center">
-                  <Box className="w-7 h-7 text-muted-foreground/30" />
-                </div>
-                <p className="text-sm font-semibold text-foreground">
-                  {searchQuery ? "No matching orders" : tab === "pending" ? "All clear! No orders to prepare" : "No prepared orders yet"}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {searchQuery ? "Try a different search term." : tab === "pending" ? "New orders will appear here in real-time." : "Orders you prepare will show up here."}
-                </p>
-              </div>
-            )}
-
-            {!loading && !error && filteredOrders.length > 0 && (
-              <div className="flex gap-6">
-                <div className={`flex-1 min-w-0 ${
-                  selectedOrder && viewMode === "grid" ? "hidden xl:block" : ""
-                }`}>
-                  <AnimatePresence mode="popLayout">
-                    <div className={
-                      viewMode === "grid"
-                        ? "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4"
-                        : "space-y-3"
-                    }>
-                      {filteredOrders.map((order, i) => (
-                        <motion.div
-                          key={order.id}
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, x: -100 }}
-                          transition={{ duration: 0.25, delay: i * 0.03 }}
-                        >
-                          {viewMode === "grid" ? (
-                            <OrderCardGrid
-                              order={order}
-                              isPreparing={preparingId === order.id}
-                              isSelected={selectedOrder === order.id}
-                              onSelect={() => setSelectedOrder(selectedOrder === order.id ? null : order.id)}
-                              onPrepare={tab === "pending" ? () => markPrepared(order.id) : undefined}
-                            />
-                          ) : (
-                            <OrderCardList
-                              order={order}
-                              isPreparing={preparingId === order.id}
-                              isSelected={selectedOrder === order.id}
-                              onSelect={() => setSelectedOrder(selectedOrder === order.id ? null : order.id)}
-                              onPrepare={tab === "pending" ? () => markPrepared(order.id) : undefined}
-                            />
-                          )}
-                        </motion.div>
-                      ))}
+            {/* ORDERS TABS (pending/prepared) */}
+            {(tab === "pending" || tab === "prepared") && (
+              <>
+                {loading && (
+                  <div className="py-20 flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
                     </div>
-                  </AnimatePresence>
-                </div>
-
-                {selectedOrderData && (
-                  <div className={`${viewMode === "grid" ? "w-full xl:w-[420px] xl:flex-shrink-0" : "hidden xl:block xl:w-[420px] xl:flex-shrink-0"}`}>
-                    <div className="sticky top-[73px]">
-                      <OrderDetailPanel
-                        order={selectedOrderData}
-                        isPreparing={preparingId === selectedOrderData.id}
-                        onPrepare={tab === "pending" ? () => markPrepared(selectedOrderData.id) : undefined}
-                        onClose={() => setSelectedOrder(null)}
-                        onZoomImage={setZoomImage}
-                      />
-                    </div>
+                    <p className="text-sm text-muted-foreground">Loading orders...</p>
                   </div>
                 )}
-              </div>
+
+                {error && !loading && (
+                  <div className="py-20 text-center">
+                    <p className="text-sm text-destructive">{error}</p>
+                    <Button variant="outline" size="sm" onClick={() => fetchOrders()} className="mt-3 rounded-xl">
+                      Try Again
+                    </Button>
+                  </div>
+                )}
+
+                {!loading && !error && filteredOrders.length === 0 && (
+                  <div className="py-20 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-3xl bg-muted/50 flex items-center justify-center">
+                      <Box className="w-7 h-7 text-muted-foreground/30" />
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {searchQuery ? "No matching orders" : tab === "pending" ? "All clear! No orders to prepare" : "No prepared orders yet"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {searchQuery ? "Try a different search term." : tab === "pending" ? "New orders will appear here in real-time." : "Orders you prepare will show up here."}
+                    </p>
+                  </div>
+                )}
+
+                {!loading && !error && filteredOrders.length > 0 && (
+                  <div className="flex gap-6">
+                    <div className={`flex-1 min-w-0 ${
+                      selectedOrder && viewMode === "grid" ? "hidden xl:block" : ""
+                    }`}>
+                      <AnimatePresence mode="popLayout">
+                        <div className={
+                          viewMode === "grid"
+                            ? "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4"
+                            : "space-y-3"
+                        }>
+                          {filteredOrders.map((order, i) => (
+                            <motion.div
+                              key={order.id}
+                              initial={{ opacity: 0, y: 12 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, x: -100 }}
+                              transition={{ duration: 0.25, delay: i * 0.03 }}
+                            >
+                              {viewMode === "grid" ? (
+                                <OrderCardGrid
+                                  order={order}
+                                  isPreparing={preparingId === order.id}
+                                  isSelected={selectedOrder === order.id}
+                                  onSelect={() => setSelectedOrder(selectedOrder === order.id ? null : order.id)}
+                                  onPrepare={tab === "pending" ? () => markPrepared(order.id) : undefined}
+                                />
+                              ) : (
+                                <OrderCardList
+                                  order={order}
+                                  isPreparing={preparingId === order.id}
+                                  isSelected={selectedOrder === order.id}
+                                  onSelect={() => setSelectedOrder(selectedOrder === order.id ? null : order.id)}
+                                  onPrepare={tab === "pending" ? () => markPrepared(order.id) : undefined}
+                                />
+                              )}
+                            </motion.div>
+                          ))}
+                        </div>
+                      </AnimatePresence>
+                    </div>
+
+                    {selectedOrderData && (
+                      <div className={`${viewMode === "grid" ? "w-full xl:w-[420px] xl:flex-shrink-0" : "hidden xl:block xl:w-[420px] xl:flex-shrink-0"}`}>
+                        <div className="sticky top-[73px]">
+                          <OrderDetailPanel
+                            order={selectedOrderData}
+                            isPreparing={preparingId === selectedOrderData.id}
+                            onPrepare={tab === "pending" ? () => markPrepared(selectedOrderData.id) : undefined}
+                            onClose={() => setSelectedOrder(null)}
+                            onZoomImage={setZoomImage}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* COSTS TAB */}
+            {tab === "costs" && (
+              <CostsTab
+                loading={costLoading}
+                orders={costOrders}
+                summary={costSummary}
+                datePreset={costDatePreset}
+                setDatePreset={setCostDatePreset}
+                dateFrom={costDateFrom}
+                setDateFrom={setCostDateFrom}
+                dateTo={costDateTo}
+                setDateTo={setCostDateTo}
+                expandedOrder={expandedCostOrder}
+                setExpandedOrder={setExpandedCostOrder}
+                onRefresh={fetchCosts}
+              />
+            )}
+
+            {/* ANALYTICS TAB */}
+            {tab === "analytics" && (
+              <AnalyticsTab
+                loading={analyticsLoading}
+                data={analytics}
+                datePreset={analyticsDatePreset}
+                setDatePreset={setAnalyticsDatePreset}
+                dateFrom={analyticsDateFrom}
+                setDateFrom={setAnalyticsDateFrom}
+                dateTo={analyticsDateTo}
+                setDateTo={setAnalyticsDateTo}
+                onRefresh={fetchAnalytics}
+              />
             )}
           </div>
         </main>
       </div>
+    </div>
+  );
+}
+
+/* ─── Date Range Picker Component ─── */
+function DateRangeFilter({
+  preset,
+  setPreset,
+  dateFrom,
+  setDateFrom,
+  dateTo,
+  setDateTo,
+}: {
+  preset: string;
+  setPreset: (v: string) => void;
+  dateFrom: string;
+  setDateFrom: (v: string) => void;
+  dateTo: string;
+  setDateTo: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {[
+        { key: "today", label: "Today" },
+        { key: "week", label: "This Week" },
+        { key: "month", label: "This Month" },
+        { key: "custom", label: "Custom" },
+      ].map((p) => (
+        <button
+          key={p.key}
+          onClick={() => setPreset(p.key)}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            preset === p.key
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/40"
+          }`}
+        >
+          {p.label}
+        </button>
+      ))}
+      {preset === "custom" && (
+        <div className="flex items-center gap-2 ml-2">
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="h-8 text-xs rounded-lg w-36"
+          />
+          <span className="text-xs text-muted-foreground">to</span>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="h-8 text-xs rounded-lg w-36"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Costs Tab ─── */
+function CostsTab({
+  loading,
+  orders,
+  summary,
+  datePreset,
+  setDatePreset,
+  dateFrom,
+  setDateFrom,
+  dateTo,
+  setDateTo,
+  expandedOrder,
+  setExpandedOrder,
+  onRefresh,
+}: {
+  loading: boolean;
+  orders: CostOrder[];
+  summary: { total_cost: number; total_orders: number; total_items: number };
+  datePreset: string;
+  setDatePreset: (v: string) => void;
+  dateFrom: string;
+  setDateFrom: (v: string) => void;
+  dateTo: string;
+  setDateTo: (v: string) => void;
+  expandedOrder: string | null;
+  setExpandedOrder: (v: string | null) => void;
+  onRefresh: () => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-display font-bold text-foreground">Costs & Payments</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Track cost of goods for warehouse settlement</p>
+        </div>
+        <DateRangeFilter
+          preset={datePreset}
+          setPreset={setDatePreset}
+          dateFrom={dateFrom}
+          setDateFrom={setDateFrom}
+          dateTo={dateTo}
+          setDateTo={setDateTo}
+        />
+      </div>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl bg-gradient-to-br from-primary/10 via-card to-primary/5 border border-primary/20 p-5"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-primary" />
+            </div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Cost</p>
+          </div>
+          <p className="text-2xl font-bold text-foreground">{formatIQD(summary.total_cost)}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Amount to settle with warehouse</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="rounded-2xl bg-card border border-border/50 p-5"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-muted/60 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Orders</p>
+          </div>
+          <p className="text-2xl font-bold text-foreground">{summary.total_orders}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Orders in selected period</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="rounded-2xl bg-card border border-border/50 p-5"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-muted/60 flex items-center justify-center">
+              <Package className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Items</p>
+          </div>
+          <p className="text-2xl font-bold text-foreground">{summary.total_items}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Total products handled</p>
+        </motion.div>
+      </div>
+
+      {loading ? (
+        <div className="py-16 flex flex-col items-center gap-3">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading cost data...</p>
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="py-16 text-center">
+          <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-muted/50 flex items-center justify-center">
+            <DollarSign className="w-6 h-6 text-muted-foreground/30" />
+          </div>
+          <p className="text-sm font-semibold text-foreground">No orders found</p>
+          <p className="text-xs text-muted-foreground mt-1">Try adjusting the date range</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+            Order Breakdown ({orders.length} orders)
+          </p>
+          {orders.map((order) => (
+            <motion.div
+              key={order.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-xl border border-border/50 bg-card overflow-hidden"
+            >
+              <button
+                onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted/20 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-bold font-mono text-foreground">#{order.id.slice(0, 8).toUpperCase()}</span>
+                  <Badge variant="outline" className={`text-[9px] font-bold uppercase ${
+                    order.status === "delivered" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" :
+                    order.status === "prepared" ? "bg-blue-500/10 text-blue-600 border-blue-500/20" :
+                    "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                  }`}>
+                    {order.status}
+                  </Badge>
+                  <span className="text-[11px] text-muted-foreground">{order.item_count} items</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-bold text-primary">{formatIQD(order.total_cost)}</span>
+                  <span className="text-[11px] text-muted-foreground">{new Date(order.created_at).toLocaleDateString()}</span>
+                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${expandedOrder === order.id ? "rotate-180" : ""}`} />
+                </div>
+              </button>
+
+              <AnimatePresence>
+                {expandedOrder === order.id && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-t border-border/30 divide-y divide-border/20">
+                      <div className="grid grid-cols-5 px-4 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider bg-muted/20">
+                        <span className="col-span-2">Product</span>
+                        <span className="text-center">Qty</span>
+                        <span className="text-right">Unit Cost</span>
+                        <span className="text-right">Total Cost</span>
+                      </div>
+                      {order.items.map((item, idx) => (
+                        <div key={idx} className="grid grid-cols-5 px-4 py-2.5 items-center text-sm">
+                          <span className="col-span-2 text-xs text-foreground truncate pr-2">{item.title}</span>
+                          <span className="text-center text-xs text-muted-foreground">{item.quantity}</span>
+                          <span className="text-right text-xs text-muted-foreground">{item.unit_cost.toLocaleString()}</span>
+                          <span className="text-right text-xs font-semibold text-foreground">{formatIQD(item.total_cost)}</span>
+                        </div>
+                      ))}
+                      <div className="grid grid-cols-5 px-4 py-2.5 bg-primary/5">
+                        <span className="col-span-4 text-xs font-bold text-foreground text-right pr-4">Order Total:</span>
+                        <span className="text-right text-sm font-bold text-primary">{formatIQD(order.total_cost)}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Analytics Tab ─── */
+function AnalyticsTab({
+  loading,
+  data,
+  datePreset,
+  setDatePreset,
+  dateFrom,
+  setDateFrom,
+  dateTo,
+  setDateTo,
+  onRefresh,
+}: {
+  loading: boolean;
+  data: AnalyticsData | null;
+  datePreset: string;
+  setDatePreset: (v: string) => void;
+  dateFrom: string;
+  setDateFrom: (v: string) => void;
+  dateTo: string;
+  setDateTo: (v: string) => void;
+  onRefresh: () => void;
+}) {
+  const maxDayCount = data?.orders_by_day?.reduce((max, d) => Math.max(max, d.count), 0) || 1;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-display font-bold text-foreground">Analytics</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Order statistics and performance overview</p>
+        </div>
+        <DateRangeFilter
+          preset={datePreset}
+          setPreset={setDatePreset}
+          dateFrom={dateFrom}
+          setDateFrom={setDateFrom}
+          dateTo={dateTo}
+          setDateTo={setDateTo}
+        />
+      </div>
+
+      {loading ? (
+        <div className="py-16 flex flex-col items-center gap-3">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading analytics...</p>
+        </div>
+      ) : !data ? (
+        <div className="py-16 text-center">
+          <p className="text-sm text-muted-foreground">No data available</p>
+        </div>
+      ) : (
+        <>
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-gradient-to-br from-primary/10 via-card to-primary/5 border border-primary/20 p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="w-4 h-4 text-primary" />
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Orders</p>
+              </div>
+              <p className="text-3xl font-bold text-foreground">{data.total_orders}</p>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl bg-card border border-border/50 p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <Package className="w-4 h-4 text-muted-foreground" />
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Items</p>
+              </div>
+              <p className="text-3xl font-bold text-foreground">{data.total_items}</p>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl bg-card border border-border/50 p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Avg/Day</p>
+              </div>
+              <p className="text-3xl font-bold text-foreground">
+                {data.orders_by_day.length > 0 ? (data.total_orders / data.orders_by_day.length).toFixed(1) : "0"}
+              </p>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-2xl bg-card border border-border/50 p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <CalendarDays className="w-4 h-4 text-muted-foreground" />
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Active Days</p>
+              </div>
+              <p className="text-3xl font-bold text-foreground">{data.orders_by_day.length}</p>
+            </motion.div>
+          </div>
+
+          {/* Status Breakdown */}
+          <div className="rounded-2xl border border-border/50 bg-card p-5">
+            <h3 className="text-sm font-bold text-foreground mb-4">Status Breakdown</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {Object.entries(data.status_breakdown).map(([status, count]) => (
+                <div key={status} className="rounded-xl bg-muted/30 border border-border/30 p-3 text-center">
+                  <p className="text-lg font-bold text-foreground">{count}</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase mt-0.5 capitalize">{status}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Orders by Day Chart */}
+          {data.orders_by_day.length > 0 && (
+            <div className="rounded-2xl border border-border/50 bg-card p-5">
+              <h3 className="text-sm font-bold text-foreground mb-4">Orders by Day</h3>
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {data.orders_by_day.map((day) => (
+                  <div key={day.date} className="flex items-center gap-3">
+                    <span className="text-[11px] text-muted-foreground w-20 flex-shrink-0 font-mono">
+                      {new Date(day.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                    <div className="flex-1 h-7 bg-muted/20 rounded-lg overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(day.count / maxDayCount) * 100}%` }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                        className="h-full bg-gradient-to-r from-primary/60 to-primary rounded-lg flex items-center justify-end px-2"
+                      >
+                        <span className="text-[10px] font-bold text-primary-foreground">{day.count}</span>
+                      </motion.div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -751,7 +1319,12 @@ function OrderCardGrid({
                 </div>
               )}
             </div>
-            <p className="text-xs text-foreground truncate flex-1">{item.product?.title || "Unknown"}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-foreground truncate">{item.product?.title || "Unknown"}</p>
+              {item.cost != null && item.cost > 0 && (
+                <p className="text-[10px] text-muted-foreground">Cost: {formatIQD(item.cost)}</p>
+              )}
+            </div>
             <span className="text-xs font-bold text-primary flex-shrink-0">×{item.quantity}</span>
           </div>
         ))}
@@ -766,6 +1339,11 @@ function OrderCardGrid({
           <span className="text-[11px] font-medium text-muted-foreground">
             {totalItems} item{totalItems !== 1 ? "s" : ""}
           </span>
+          {order.total_cost != null && order.total_cost > 0 && (
+            <span className="text-[11px] font-semibold text-primary">
+              Cost: {formatIQD(order.total_cost)}
+            </span>
+          )}
           {order.address?.city && (
             <span className="text-[11px] text-muted-foreground flex items-center gap-1">
               <MapPin className="w-2.5 h-2.5" />
@@ -835,6 +1413,9 @@ function OrderCardList({
         </div>
         <div className="flex items-center gap-3 mt-0.5">
           <span className="text-[11px] text-muted-foreground">{totalItems} items</span>
+          {order.total_cost != null && order.total_cost > 0 && (
+            <span className="text-[11px] font-semibold text-primary">Cost: {formatIQD(order.total_cost)}</span>
+          )}
           <span className="text-[11px] text-muted-foreground">{timeAgo} · {formatOrderTimeShort(order.created_at)}</span>
           {order.address?.city && (
             <span className="text-[11px] text-muted-foreground flex items-center gap-1">
@@ -928,6 +1509,12 @@ function OrderDetailPanel({
                 </span>
               </div>
             )}
+            {order.total_cost != null && order.total_cost > 0 && (
+              <div className="flex items-center gap-1">
+                <DollarSign className="w-3 h-3 text-primary" />
+                <span className="text-xs font-semibold text-primary">Cost: {formatIQD(order.total_cost)}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -965,6 +1552,11 @@ function OrderDetailPanel({
               {item.product?.volume && (
                 <p className="text-[11px] text-muted-foreground mt-0.5">{item.product.volume}</p>
               )}
+              {item.cost != null && item.cost > 0 && (
+                <p className="text-[10px] text-primary font-medium mt-0.5">
+                  Cost: {formatIQD(item.cost)} × {item.quantity} = {formatIQD(item.total_cost || 0)}
+                </p>
+              )}
               {/* Show all images thumbnails if multiple */}
               {item.product?.all_images && item.product.all_images.length > 1 && (
                 <div className="flex items-center gap-1 mt-1.5">
@@ -989,6 +1581,14 @@ function OrderDetailPanel({
           </div>
         ))}
       </div>
+
+      {/* Order cost summary */}
+      {order.total_cost != null && order.total_cost > 0 && (
+        <div className="px-5 py-3 bg-primary/5 border-t border-primary/10 flex items-center justify-between">
+          <span className="text-xs font-bold text-foreground">Total Order Cost</span>
+          <span className="text-sm font-bold text-primary">{formatIQD(order.total_cost)}</span>
+        </div>
+      )}
 
       {/* Notes */}
       {order.notes && (
