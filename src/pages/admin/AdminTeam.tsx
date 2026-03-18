@@ -440,8 +440,8 @@ function PrepLinksSection() {
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-foreground truncate">{link.label}</p>
-                  <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5">
-                    /prep/{link.token.slice(0, 12)}...
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    Username: <span className="font-mono">{link.username}</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
