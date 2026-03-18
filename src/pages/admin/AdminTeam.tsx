@@ -302,9 +302,9 @@ function PrepLinksSection() {
   const { data: links = [], isLoading } = useQuery({
     queryKey: ["prep-links"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("prep_access_tokens")
-        .select("*")
+      const { data, error } = await (supabase
+        .from("prep_access_tokens" as any)
+        .select("*") as any)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
