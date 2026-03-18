@@ -20,6 +20,10 @@ import {
   User,
   LogOut,
   Warehouse,
+  LayoutGrid,
+  List,
+  Search,
+  ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import elaraLogo from "@/assets/elara-logo.png";
@@ -76,6 +80,9 @@ export default function PrepOrdersPage() {
   const [error, setError] = useState<string | null>(null);
   const [preparingId, setPreparingId] = useState<string | null>(null);
   const [tab, setTab] = useState<"pending" | "prepared">("pending");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
 
   useEffect(() => {
     if (urlToken) {
@@ -180,6 +187,7 @@ export default function PrepOrdersPage() {
       if (!res.ok) throw new Error(data.error || "Failed");
       toast.success(`Order #${orderId.slice(0, 8)} marked as prepared!`);
       setOrders((prev) => prev.filter((o) => o.id !== orderId));
+      if (selectedOrder === orderId) setSelectedOrder(null);
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -187,256 +195,448 @@ export default function PrepOrdersPage() {
     }
   };
 
-  const pendingCount = tab === "pending" ? orders.length : 0;
+  const filteredOrders = orders.filter((o) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      o.id.toLowerCase().includes(q) ||
+      o.items.some((i) => i.product?.title?.toLowerCase().includes(q)) ||
+      o.address?.city?.toLowerCase().includes(q) ||
+      o.address?.phone?.includes(q)
+    );
+  });
+
+  const selectedOrderData = selectedOrder ? orders.find((o) => o.id === selectedOrder) : null;
+  const totalItemsAll = orders.reduce((s, o) => s + o.items.reduce((ss, i) => ss + i.quantity, 0), 0);
 
   // ---- LOGIN SCREEN ----
   if (!authenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[hsl(var(--background))] via-[hsl(var(--muted)/0.3)] to-[hsl(var(--background))] flex items-center justify-center p-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-sm space-y-8"
-        >
-          <div className="text-center space-y-3">
-            <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-lg shadow-primary/10 border border-primary/10">
-              <img src={elaraLogo} alt="ELARA" className="h-10 w-10 object-contain" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">ELARA Logistics</h1>
-              <p className="text-sm text-muted-foreground mt-1">Sign in to your warehouse portal</p>
-            </div>
+      <div className="min-h-screen bg-background flex">
+        {/* Left branding panel — hidden on mobile */}
+        <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] bg-gradient-to-br from-primary/10 via-primary/5 to-background border-r border-border/50 flex-col justify-between p-10">
+          <div>
+            <img src={elaraLogo} alt="ELARA" className="h-12 w-12 object-contain" />
           </div>
-
-          <div className="rounded-3xl border border-border bg-card/80 backdrop-blur-sm p-6 space-y-5 shadow-xl shadow-black/5">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground uppercase tracking-wider">Username</label>
-              <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
-                <Input
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter username"
-                  className="pl-11 h-12 rounded-2xl border-border/60 bg-muted/30 text-sm focus:bg-background transition-colors"
-                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                />
+          <div className="space-y-4">
+            <h2 className="text-4xl font-display font-bold text-foreground tracking-tight leading-tight">
+              ELARA<br />Warehouse Portal
+            </h2>
+            <p className="text-base text-muted-foreground max-w-xs leading-relaxed">
+              Manage order preparation, track shipments, and keep your warehouse running smoothly.
+            </p>
+            <div className="flex items-center gap-3 pt-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Package className="w-5 h-5 text-primary" />
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-primary" />
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Warehouse className="w-5 h-5 text-primary" />
               </div>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground uppercase tracking-wider">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
-                  className="pl-11 h-12 rounded-2xl border-border/60 bg-muted/30 text-sm focus:bg-background transition-colors"
-                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                />
-              </div>
-            </div>
-
-            <AnimatePresence>
-              {loginError && (
-                <motion.p
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="text-xs text-destructive font-medium bg-destructive/10 px-3 py-2 rounded-xl"
-                >
-                  {loginError}
-                </motion.p>
-              )}
-            </AnimatePresence>
-
-            <Button
-              onClick={handleLogin}
-              disabled={loggingIn || !username.trim() || !password.trim()}
-              className="w-full h-12 rounded-2xl gap-2.5 text-sm font-semibold shadow-lg shadow-primary/20"
-            >
-              {loggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
-              Sign In
-            </Button>
           </div>
-
-          <p className="text-center text-[11px] text-muted-foreground/60">
-            elarastore.co/warehouse · Contact your admin for access
+          <p className="text-xs text-muted-foreground/50">
+            © {new Date().getFullYear()} ELARA · elarastore.co
           </p>
-        </motion.div>
+        </div>
+
+        {/* Right login form */}
+        <div className="flex-1 flex items-center justify-center p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full max-w-sm space-y-8"
+          >
+            <div className="text-center space-y-3 lg:text-left">
+              <div className="w-16 h-16 mx-auto lg:mx-0 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-lg shadow-primary/10 border border-primary/10 lg:hidden">
+                <img src={elaraLogo} alt="ELARA" className="h-8 w-8 object-contain" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">Sign In</h1>
+                <p className="text-sm text-muted-foreground mt-1">Access your warehouse dashboard</p>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground uppercase tracking-wider">Username</label>
+                <div className="relative">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+                  <Input
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter username"
+                    className="pl-11 h-12 rounded-xl border-border/60 bg-muted/30 text-sm focus:bg-background transition-colors"
+                    onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground uppercase tracking-wider">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter password"
+                    className="pl-11 h-12 rounded-xl border-border/60 bg-muted/30 text-sm focus:bg-background transition-colors"
+                    onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                  />
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {loginError && (
+                  <motion.p
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="text-xs text-destructive font-medium bg-destructive/10 px-3 py-2 rounded-xl"
+                  >
+                    {loginError}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+
+              <Button
+                onClick={handleLogin}
+                disabled={loggingIn || !username.trim() || !password.trim()}
+                className="w-full h-12 rounded-xl gap-2.5 text-sm font-semibold shadow-lg shadow-primary/20"
+              >
+                {loggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
+                Sign In
+              </Button>
+            </div>
+
+            <p className="text-center lg:text-left text-[11px] text-muted-foreground/60">
+              elarastore.co/warehouse · Contact admin for access
+            </p>
+          </motion.div>
+        </div>
       </div>
     );
   }
 
   // ---- MAIN DASHBOARD ----
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[hsl(var(--muted)/0.3)] to-[hsl(var(--background))]">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-card/90 backdrop-blur-xl border-b border-border/60 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10">
-              <img src={elaraLogo} alt="ELARA" className="h-5 w-5 object-contain" />
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Top header — full width */}
+      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-xl border-b border-border/60 shadow-sm">
+        <div className="px-4 lg:px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10">
+                <img src={elaraLogo} alt="ELARA" className="h-5 w-5 object-contain" />
+              </div>
+              <div className="hidden sm:block">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-sm font-bold text-foreground tracking-tight">ELARA Warehouse</h1>
+                  <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-600 border-emerald-500/20 px-1.5 py-0 gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    LIVE
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Warehouse className="w-3 h-3" />
+                  {warehouseLabel || "Warehouse"}
+                </div>
+              </div>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-bold text-foreground tracking-tight">ELARA Prep</h1>
-                <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest bg-primary/5 text-primary border-primary/20 px-1.5 py-0">
-                  LIVE
-                </Badge>
-              </div>
-              <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Warehouse className="w-3 h-3" />
-                {warehouseLabel || "Warehouse"}
-              </div>
+
+            {/* Search — desktop */}
+            <div className="hidden md:block relative w-64 lg:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search orders, products, cities..."
+                className="pl-10 h-9 rounded-xl bg-muted/40 border-border/40 text-sm"
+              />
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
+
+          <div className="flex items-center gap-2">
+            {/* View toggle — desktop */}
+            <div className="hidden md:flex items-center gap-1 bg-muted/40 p-0.5 rounded-lg border border-border/30">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === "grid" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === "list" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <List className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
             <Button
               variant="outline"
-              size="icon"
+              size="sm"
               onClick={fetchOrders}
               disabled={loading}
-              className="rounded-xl h-9 w-9 border-border/60"
+              className="rounded-xl h-9 gap-1.5 border-border/60 text-xs"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">Refresh</span>
             </Button>
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               onClick={handleLogout}
-              className="rounded-xl h-9 w-9 text-muted-foreground hover:text-destructive"
+              className="rounded-xl h-9 gap-1.5 text-muted-foreground hover:text-destructive text-xs"
             >
               <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sign Out</span>
             </Button>
+          </div>
+        </div>
+
+        {/* Mobile search */}
+        <div className="px-4 pb-3 md:hidden">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search orders..."
+              className="pl-10 h-9 rounded-xl bg-muted/40 border-border/40 text-sm"
+            />
           </div>
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto p-4 space-y-4">
-        {/* Tabs */}
-        <div className="flex gap-1.5 bg-muted/40 p-1 rounded-2xl border border-border/40">
+      <div className="flex-1 flex">
+        {/* Left sidebar — stats & tabs (desktop) */}
+        <aside className="hidden lg:flex w-64 xl:w-72 border-r border-border/50 flex-col bg-card/50 p-5 gap-5">
+          {/* Stats */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Overview</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-xl bg-muted/40 border border-border/40 p-3">
+                <p className="text-2xl font-bold text-foreground">{orders.length}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {tab === "pending" ? "To Prepare" : "Prepared"}
+                </p>
+              </div>
+              <div className="rounded-xl bg-muted/40 border border-border/40 p-3">
+                <p className="text-2xl font-bold text-foreground">{totalItemsAll}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Total Items</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation tabs */}
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Status</p>
+            <button
+              onClick={() => { setTab("pending"); setSelectedOrder(null); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                tab === "pending"
+                  ? "bg-primary/10 text-primary border border-primary/20"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              }`}
+            >
+              <Package className="w-4 h-4" />
+              To Prepare
+              {tab === "pending" && orders.length > 0 && (
+                <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-1.5">
+                  {orders.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => { setTab("prepared"); setSelectedOrder(null); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                tab === "prepared"
+                  ? "bg-primary/10 text-primary border border-primary/20"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              }`}
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              Prepared
+            </button>
+          </div>
+
+          <div className="mt-auto pt-4 border-t border-border/30">
+            <p className="text-[10px] text-muted-foreground/50 text-center">
+              Powered by ELARA · v2.0
+            </p>
+          </div>
+        </aside>
+
+        {/* Mobile tabs */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-xl border-t border-border/60 px-4 py-2 flex gap-2">
           <button
-            onClick={() => setTab("pending")}
-            className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
+            onClick={() => { setTab("pending"); setSelectedOrder(null); }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-xl transition-all ${
               tab === "pending"
-                ? "bg-card text-foreground shadow-md shadow-black/5 border border-border/40"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "text-muted-foreground"
             }`}
           >
-            <Package className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+            <Package className="w-4 h-4" />
             To Prepare
             {tab === "pending" && orders.length > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary-foreground text-primary text-[10px] font-bold">
                 {orders.length}
               </span>
             )}
           </button>
           <button
-            onClick={() => setTab("prepared")}
-            className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
+            onClick={() => { setTab("prepared"); setSelectedOrder(null); }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-xl transition-all ${
               tab === "prepared"
-                ? "bg-card text-foreground shadow-md shadow-black/5 border border-border/40"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "text-muted-foreground"
             }`}
           >
-            <CheckCircle2 className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+            <CheckCircle2 className="w-4 h-4" />
             Prepared
           </button>
         </div>
 
-        {/* Loading */}
-        {loading && (
-          <div className="py-20 flex flex-col items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <Loader2 className="w-5 h-5 animate-spin text-primary" />
-            </div>
-            <p className="text-sm text-muted-foreground">Loading orders...</p>
+        {/* Main content */}
+        <main className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6 overflow-auto">
+            {/* Loading */}
+            {loading && (
+              <div className="py-20 flex flex-col items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground">Loading orders...</p>
+              </div>
+            )}
+
+            {/* Error */}
+            {error && !loading && (
+              <div className="py-20 text-center">
+                <p className="text-sm text-destructive">{error}</p>
+                <Button variant="outline" size="sm" onClick={fetchOrders} className="mt-3 rounded-xl">
+                  Try Again
+                </Button>
+              </div>
+            )}
+
+            {/* Empty */}
+            {!loading && !error && filteredOrders.length === 0 && (
+              <div className="py-20 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-3xl bg-muted/50 flex items-center justify-center">
+                  <Box className="w-7 h-7 text-muted-foreground/30" />
+                </div>
+                <p className="text-sm font-semibold text-foreground">
+                  {searchQuery ? "No matching orders" : tab === "pending" ? "All clear! No orders to prepare" : "No prepared orders yet"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {searchQuery ? "Try a different search term." : tab === "pending" ? "New orders will appear here in real-time." : "Orders you prepare will show up here."}
+                </p>
+              </div>
+            )}
+
+            {/* Orders — grid or list */}
+            {!loading && !error && filteredOrders.length > 0 && (
+              <div className="flex gap-6">
+                {/* Order list/grid */}
+                <div className={`flex-1 min-w-0 ${
+                  selectedOrder && viewMode === "grid" ? "hidden xl:block" : ""
+                }`}>
+                  <AnimatePresence mode="popLayout">
+                    <div className={
+                      viewMode === "grid"
+                        ? "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4"
+                        : "space-y-3"
+                    }>
+                      {filteredOrders.map((order, i) => (
+                        <motion.div
+                          key={order.id}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, x: -100 }}
+                          transition={{ duration: 0.25, delay: i * 0.03 }}
+                        >
+                          {viewMode === "grid" ? (
+                            <OrderCardGrid
+                              order={order}
+                              isPreparing={preparingId === order.id}
+                              isSelected={selectedOrder === order.id}
+                              onSelect={() => setSelectedOrder(selectedOrder === order.id ? null : order.id)}
+                              onPrepare={tab === "pending" ? () => markPrepared(order.id) : undefined}
+                            />
+                          ) : (
+                            <OrderCardList
+                              order={order}
+                              isPreparing={preparingId === order.id}
+                              isSelected={selectedOrder === order.id}
+                              onSelect={() => setSelectedOrder(selectedOrder === order.id ? null : order.id)}
+                              onPrepare={tab === "pending" ? () => markPrepared(order.id) : undefined}
+                            />
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </AnimatePresence>
+                </div>
+
+                {/* Detail panel — desktop */}
+                {selectedOrderData && (
+                  <div className={`${viewMode === "grid" ? "w-full xl:w-[400px] xl:flex-shrink-0" : "hidden xl:block xl:w-[400px] xl:flex-shrink-0"}`}>
+                    <div className="sticky top-[73px]">
+                      <OrderDetailPanel
+                        order={selectedOrderData}
+                        isPreparing={preparingId === selectedOrderData.id}
+                        onPrepare={tab === "pending" ? () => markPrepared(selectedOrderData.id) : undefined}
+                        onClose={() => setSelectedOrder(null)}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        )}
-
-        {/* Error */}
-        {error && !loading && (
-          <div className="py-20 text-center">
-            <p className="text-sm text-destructive">{error}</p>
-            <Button variant="outline" size="sm" onClick={fetchOrders} className="mt-3 rounded-xl">
-              Try Again
-            </Button>
-          </div>
-        )}
-
-        {/* Empty */}
-        {!loading && !error && orders.length === 0 && (
-          <div className="py-20 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-3xl bg-muted/50 flex items-center justify-center">
-              <Box className="w-7 h-7 text-muted-foreground/30" />
-            </div>
-            <p className="text-sm font-semibold text-foreground">
-              {tab === "pending" ? "All clear! No orders to prepare" : "No prepared orders yet"}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {tab === "pending"
-                ? "New orders will appear here in real-time."
-                : "Orders you prepare will show up here."}
-            </p>
-          </div>
-        )}
-
-        {/* Orders list */}
-        <AnimatePresence mode="popLayout">
-          {!loading &&
-            !error &&
-            orders.map((order, i) => (
-              <motion.div
-                key={order.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
-              >
-                <OrderCard
-                  order={order}
-                  isPreparing={preparingId === order.id}
-                  onPrepare={tab === "pending" ? () => markPrepared(order.id) : undefined}
-                />
-              </motion.div>
-            ))}
-        </AnimatePresence>
-      </div>
-
-      {/* Bottom branding */}
-      <div className="text-center py-8 text-[10px] text-muted-foreground/40 font-medium tracking-wider uppercase">
-        Powered by ELARA
+        </main>
       </div>
     </div>
   );
 }
 
-function OrderCard({
+/* ─── Grid Card ─── */
+function OrderCardGrid({
   order,
   isPreparing,
+  isSelected,
+  onSelect,
   onPrepare,
 }: {
   order: PrepOrder;
   isPreparing: boolean;
+  isSelected: boolean;
+  onSelect: () => void;
   onPrepare?: () => void;
 }) {
   const totalItems = order.items.reduce((s, i) => s + i.quantity, 0);
   const timeAgo = getTimeAgo(order.created_at);
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-      {/* Header */}
-      <div className="px-4 py-3 bg-gradient-to-r from-muted/40 to-transparent border-b border-border/40 flex items-center justify-between">
+    <div
+      onClick={onSelect}
+      className={`rounded-xl border bg-card overflow-hidden cursor-pointer transition-all hover:shadow-md ${
+        isSelected ? "border-primary ring-1 ring-primary/20 shadow-md" : "border-border/60 hover:border-border"
+      }`}
+    >
+      <div className="px-4 py-3 flex items-center justify-between border-b border-border/30">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
             <Package className="w-4 h-4 text-primary" />
           </div>
           <div>
-            <span className="text-sm font-bold text-foreground font-mono tracking-wide">
-              #{order.id.slice(0, 8).toUpperCase()}
-            </span>
+            <span className="text-sm font-bold text-foreground font-mono">#{order.id.slice(0, 8).toUpperCase()}</span>
             <div className="flex items-center gap-1.5 mt-0.5">
               <Clock className="w-2.5 h-2.5 text-muted-foreground" />
               <span className="text-[10px] text-muted-foreground">{timeAgo}</span>
@@ -445,22 +645,189 @@ function OrderCard({
         </div>
         <Badge
           variant="outline"
-          className={`text-[10px] font-bold uppercase tracking-wider ${
+          className={`text-[10px] font-bold uppercase ${
             order.status === "prepared"
               ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
               : "bg-amber-500/10 text-amber-600 border-amber-500/20"
           }`}
         >
-          {order.status === "prepared" ? "✓ Prepared" : "Awaiting"}
+          {order.status === "prepared" ? "✓ Done" : "Awaiting"}
         </Badge>
       </div>
 
+      {/* Compact item preview */}
+      <div className="px-4 py-3 space-y-2">
+        {order.items.slice(0, 3).map((item) => (
+          <div key={item.id} className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-muted/50 overflow-hidden border border-border/30 flex-shrink-0">
+              {item.product?.image_url ? (
+                <img src={item.product.image_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Package className="w-3.5 h-3.5 text-muted-foreground/20" />
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-foreground truncate flex-1">{item.product?.title || "Unknown"}</p>
+            <span className="text-xs font-bold text-primary flex-shrink-0">×{item.quantity}</span>
+          </div>
+        ))}
+        {order.items.length > 3 && (
+          <p className="text-[10px] text-muted-foreground">+{order.items.length - 3} more items</p>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="px-4 py-2.5 border-t border-border/30 flex items-center justify-between bg-muted/5">
+        <div className="flex items-center gap-3">
+          <span className="text-[11px] font-medium text-muted-foreground">
+            {totalItems} item{totalItems !== 1 ? "s" : ""}
+          </span>
+          {order.address?.city && (
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+              <MapPin className="w-2.5 h-2.5" />
+              {order.address.city}
+            </span>
+          )}
+        </div>
+        {onPrepare && (
+          <Button
+            onClick={(e) => { e.stopPropagation(); onPrepare(); }}
+            disabled={isPreparing}
+            size="sm"
+            className="rounded-lg gap-1.5 h-7 px-3 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+          >
+            {isPreparing ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+            Prepared
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── List Card ─── */
+function OrderCardList({
+  order,
+  isPreparing,
+  isSelected,
+  onSelect,
+  onPrepare,
+}: {
+  order: PrepOrder;
+  isPreparing: boolean;
+  isSelected: boolean;
+  onSelect: () => void;
+  onPrepare?: () => void;
+}) {
+  const totalItems = order.items.reduce((s, i) => s + i.quantity, 0);
+  const timeAgo = getTimeAgo(order.created_at);
+
+  return (
+    <div
+      onClick={onSelect}
+      className={`rounded-xl border bg-card px-4 py-3 flex items-center gap-4 cursor-pointer transition-all hover:shadow-sm ${
+        isSelected ? "border-primary ring-1 ring-primary/20" : "border-border/60 hover:border-border"
+      }`}
+    >
+      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <Package className="w-4 h-4 text-primary" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-foreground font-mono">#{order.id.slice(0, 8).toUpperCase()}</span>
+          <Badge
+            variant="outline"
+            className={`text-[9px] font-bold uppercase ${
+              order.status === "prepared"
+                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+            }`}
+          >
+            {order.status === "prepared" ? "✓ Done" : "Awaiting"}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-3 mt-0.5">
+          <span className="text-[11px] text-muted-foreground">{totalItems} items</span>
+          <span className="text-[11px] text-muted-foreground">{timeAgo}</span>
+          {order.address?.city && (
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+              <MapPin className="w-2.5 h-2.5" /> {order.address.city}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {onPrepare && (
+          <Button
+            onClick={(e) => { e.stopPropagation(); onPrepare(); }}
+            disabled={isPreparing}
+            size="sm"
+            className="rounded-lg gap-1.5 h-8 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+          >
+            {isPreparing ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+            Prepared
+          </Button>
+        )}
+        <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Detail Panel ─── */
+function OrderDetailPanel({
+  order,
+  isPreparing,
+  onPrepare,
+  onClose,
+}: {
+  order: PrepOrder;
+  isPreparing: boolean;
+  onPrepare?: () => void;
+  onClose: () => void;
+}) {
+  const totalItems = order.items.reduce((s, i) => s + i.quantity, 0);
+  const timeAgo = getTimeAgo(order.created_at);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-lg"
+    >
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-border/40 flex items-center justify-between bg-gradient-to-r from-muted/30 to-transparent">
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-base font-bold text-foreground font-mono">#{order.id.slice(0, 8).toUpperCase()}</h3>
+            <Badge
+              variant="outline"
+              className={`text-[10px] font-bold uppercase ${
+                order.status === "prepared"
+                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                  : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+              }`}
+            >
+              {order.status === "prepared" ? "✓ Prepared" : "Awaiting Prep"}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <Clock className="w-3 h-3 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">{timeAgo} · {totalItems} items</span>
+          </div>
+        </div>
+        <Button variant="ghost" size="sm" onClick={onClose} className="rounded-lg text-xs text-muted-foreground">
+          Close
+        </Button>
+      </div>
+
       {/* Items */}
-      <div className="divide-y divide-border/30">
+      <div className="divide-y divide-border/30 max-h-[50vh] overflow-y-auto">
         {order.items.map((item, idx) => (
-          <div key={item.id} className="flex items-center gap-3 px-4 py-3">
+          <div key={item.id} className="flex items-center gap-3 px-5 py-3">
             <div className="relative">
-              <div className="w-14 h-14 rounded-xl bg-muted/50 flex-shrink-0 overflow-hidden border border-border/30">
+              <div className="w-14 h-14 rounded-xl bg-muted/50 overflow-hidden border border-border/30 flex-shrink-0">
                 {item.product?.image_url ? (
                   <img src={item.product.image_url} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -469,7 +836,7 @@ function OrderCard({
                   </div>
                 )}
               </div>
-              <div className="absolute -top-1 -left-1 w-5 h-5 rounded-md bg-foreground text-background text-[10px] font-bold flex items-center justify-center shadow-sm">
+              <div className="absolute -top-1 -left-1 w-5 h-5 rounded-md bg-foreground text-background text-[10px] font-bold flex items-center justify-center">
                 {idx + 1}
               </div>
             </div>
@@ -481,7 +848,7 @@ function OrderCard({
                 <p className="text-[11px] text-muted-foreground mt-0.5">{item.product.volume}</p>
               )}
             </div>
-            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/10 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/10 flex items-center justify-center flex-shrink-0">
               <span className="text-sm font-bold text-primary">×{item.quantity}</span>
             </div>
           </div>
@@ -490,7 +857,7 @@ function OrderCard({
 
       {/* Notes */}
       {order.notes && (
-        <div className="px-4 py-2.5 bg-amber-500/5 border-t border-amber-500/10 flex items-start gap-2">
+        <div className="px-5 py-3 bg-amber-500/5 border-t border-amber-500/10 flex items-start gap-2">
           <StickyNote className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-amber-700 dark:text-amber-400">{order.notes}</p>
         </div>
@@ -498,7 +865,7 @@ function OrderCard({
 
       {/* Address */}
       {order.address && (
-        <div className="px-4 py-2.5 bg-muted/10 border-t border-border/30 space-y-1">
+        <div className="px-5 py-3 bg-muted/10 border-t border-border/30 space-y-1.5">
           <div className="flex items-start gap-2">
             <MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
             <p className="text-xs text-muted-foreground">
@@ -512,7 +879,7 @@ function OrderCard({
           {order.address.phone && (
             <div className="flex items-center gap-2">
               <Phone className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-              <a href={`tel:${order.address.phone}`} className="text-xs text-primary font-semibold">
+              <a href={`tel:${order.address.phone}`} className="text-xs text-primary font-semibold hover:underline">
                 {order.address.phone}
               </a>
             </div>
@@ -520,30 +887,20 @@ function OrderCard({
         </div>
       )}
 
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-border/40 flex items-center justify-between bg-muted/5">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">
-            {totalItems} item{totalItems !== 1 ? "s" : ""}
-          </span>
-        </div>
-        {onPrepare && (
+      {/* Action */}
+      {onPrepare && (
+        <div className="px-5 py-4 border-t border-border/40">
           <Button
             onClick={onPrepare}
             disabled={isPreparing}
-            size="sm"
-            className="rounded-xl gap-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 font-semibold"
+            className="w-full rounded-xl gap-2.5 h-11 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 font-semibold"
           >
-            {isPreparing ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <CheckCircle2 className="w-3.5 h-3.5" />
-            )}
-            Mark Prepared
+            {isPreparing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+            Mark as Prepared
           </Button>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </motion.div>
   );
 }
 
