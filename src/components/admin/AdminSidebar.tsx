@@ -51,6 +51,7 @@ const navItems: NavItem[] = [
   { title: "Orders", url: "/admin/orders", icon: ShoppingCart, roles: ["admin", "operations"] },
   { title: "Offers", url: "/admin/offers", icon: Percent, roles: ["admin", "operations"] },
   { title: "Revenue", url: "/admin/revenue", icon: BarChart3, roles: ["admin"] },
+  { title: "Warehouse Costs", url: "/admin/warehouse-costs", icon: Warehouse, roles: ["admin"] },
   { title: "Categories", url: "/admin/categories", icon: FolderTree, roles: ["admin", "operations", "data_entry"] },
   { title: "Brands", url: "/admin/brands", icon: Tag, roles: ["admin", "operations", "data_entry"] },
   { title: "Banners", url: "/admin/banners", icon: Image, roles: ["admin", "operations"] },
