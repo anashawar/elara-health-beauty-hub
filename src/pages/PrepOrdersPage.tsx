@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   Package,
@@ -15,6 +16,9 @@ import {
   StickyNote,
   ShieldX,
   Box,
+  LogIn,
+  Lock,
+  User,
 } from "lucide-react";
 import elaraLogo from "@/assets/elara-logo.png";
 
@@ -55,12 +59,79 @@ const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 const FUNC_URL = `https://${PROJECT_ID}.supabase.co/functions/v1/prep-orders`;
 
 export default function PrepOrdersPage() {
-  const { token } = useParams<{ token: string }>();
+  const { token: urlToken } = useParams<{ token: string }>();
+  const [token, setToken] = useState<string | null>(urlToken || null);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [warehouseLabel, setWarehouseLabel] = useState("");
+  
+  // Login state
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState("");
+
+  // Orders state
   const [orders, setOrders] = useState<PrepOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preparingId, setPreparingId] = useState<string | null>(null);
   const [tab, setTab] = useState<"pending" | "prepared">("pending");
+
+  // If URL has token, check if it's still valid (direct link with token)
+  useEffect(() => {
+    if (urlToken) {
+      // Token from URL — still need to authenticate via login
+      setToken(null);
+      setAuthenticated(false);
+    }
+  }, [urlToken]);
+
+  // Check sessionStorage for saved session
+  useEffect(() => {
+    const saved = sessionStorage.getItem("prep-session");
+    if (saved) {
+      try {
+        const { token: t, label } = JSON.parse(saved);
+        setToken(t);
+        setWarehouseLabel(label);
+        setAuthenticated(true);
+      } catch {
+        sessionStorage.removeItem("prep-session");
+      }
+    }
+  }, []);
+
+  const handleLogin = async () => {
+    setLoggingIn(true);
+    setLoginError("");
+    try {
+      const res = await fetch(FUNC_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "login", username, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setLoginError(data.error || "Login failed");
+        return;
+      }
+      setToken(data.token);
+      setWarehouseLabel(data.label || "");
+      setAuthenticated(true);
+      sessionStorage.setItem("prep-session", JSON.stringify({ token: data.token, label: data.label }));
+    } catch {
+      setLoginError("Connection error. Please try again.");
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setAuthenticated(false);
+    setToken(null);
+    setOrders([]);
+    sessionStorage.removeItem("prep-session");
+  };
 
   const fetchOrders = useCallback(async () => {
     if (!token) return;
@@ -70,7 +141,13 @@ export default function PrepOrdersPage() {
       const statuses = tab === "pending" ? "pending,processing" : "prepared";
       const res = await fetch(`${FUNC_URL}?token=${token}&status=${statuses}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load orders");
+      if (!res.ok) {
+        if (data.error === "Invalid or expired link") {
+          handleLogout();
+          return;
+        }
+        throw new Error(data.error || "Failed to load orders");
+      }
       setOrders(data.orders || []);
     } catch (err: any) {
       setError(err.message);
@@ -80,26 +157,20 @@ export default function PrepOrdersPage() {
   }, [token, tab]);
 
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    if (authenticated) fetchOrders();
+  }, [fetchOrders, authenticated]);
 
-  // Realtime: listen for new orders
+  // Realtime
   useEffect(() => {
+    if (!authenticated) return;
     const channel = supabase
       .channel("prep-orders-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
-        () => {
-          fetchOrders();
-        }
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
+        fetchOrders();
+      })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchOrders]);
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchOrders, authenticated]);
 
   const markPrepared = async (orderId: string) => {
     setPreparingId(orderId);
@@ -120,18 +191,69 @@ export default function PrepOrdersPage() {
     }
   };
 
-  if (error === "Invalid or expired link") {
+  // ---- LOGIN SCREEN ----
+  if (!authenticated) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
-        <ShieldX className="w-16 h-16 text-destructive/40 mb-4" />
-        <h1 className="text-xl font-bold text-foreground">Invalid Link</h1>
-        <p className="text-sm text-muted-foreground mt-2 max-w-sm">
-          This preparation link is invalid or has been deactivated. Please contact your admin for a new link.
-        </p>
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="text-center">
+            <img src={elaraLogo} alt="ELARA" className="h-10 mx-auto mb-4" />
+            <h1 className="text-xl font-bold text-foreground">Order Preparation</h1>
+            <p className="text-sm text-muted-foreground mt-1">Sign in with your warehouse credentials</p>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Username</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter username"
+                  className="pl-10 rounded-xl"
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  className="pl-10 rounded-xl"
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                />
+              </div>
+            </div>
+
+            {loginError && (
+              <p className="text-xs text-destructive font-medium">{loginError}</p>
+            )}
+
+            <Button
+              onClick={handleLogin}
+              disabled={loggingIn || !username.trim() || !password.trim()}
+              className="w-full rounded-xl gap-2"
+            >
+              {loggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
+              Sign In
+            </Button>
+          </div>
+
+          <p className="text-center text-[11px] text-muted-foreground">
+            Contact your admin if you don't have credentials.
+          </p>
+        </div>
       </div>
     );
   }
 
+  // ---- MAIN DASHBOARD ----
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -141,19 +263,29 @@ export default function PrepOrdersPage() {
             <img src={elaraLogo} alt="ELARA" className="h-7" />
             <div>
               <h1 className="text-sm font-bold text-foreground">Order Preparation</h1>
-              <p className="text-[10px] text-muted-foreground">Live orders dashboard</p>
+              <p className="text-[10px] text-muted-foreground">{warehouseLabel || "Live orders"}</p>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchOrders}
-            disabled={loading}
-            className="rounded-xl gap-1.5"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchOrders}
+              disabled={loading}
+              className="rounded-xl gap-1.5"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="rounded-xl text-muted-foreground"
+            >
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -184,7 +316,6 @@ export default function PrepOrdersPage() {
           </button>
         </div>
 
-        {/* Loading */}
         {loading && (
           <div className="py-16 flex flex-col items-center gap-3">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -192,7 +323,6 @@ export default function PrepOrdersPage() {
           </div>
         )}
 
-        {/* Error */}
         {error && !loading && (
           <div className="py-16 text-center">
             <p className="text-sm text-destructive">{error}</p>
@@ -202,7 +332,6 @@ export default function PrepOrdersPage() {
           </div>
         )}
 
-        {/* Empty */}
         {!loading && !error && orders.length === 0 && (
           <div className="py-16 text-center">
             <Box className="w-12 h-12 text-muted-foreground/20 mx-auto mb-3" />
@@ -217,7 +346,6 @@ export default function PrepOrdersPage() {
           </div>
         )}
 
-        {/* Orders */}
         {!loading &&
           !error &&
           orders.map((order) => (
@@ -247,7 +375,6 @@ function OrderCard({
 
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-      {/* Order header */}
       <div className="px-4 py-3 bg-muted/30 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-foreground">
@@ -270,38 +397,26 @@ function OrderCard({
         </div>
       </div>
 
-      {/* Items */}
       <div className="divide-y divide-border/50">
         {order.items.map((item) => (
           <div key={item.id} className="flex items-center gap-3 px-4 py-3">
-            {/* Product image */}
             <div className="w-14 h-14 rounded-xl bg-muted flex-shrink-0 overflow-hidden">
               {item.product?.image_url ? (
-                <img
-                  src={item.product.image_url}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
+                <img src={item.product.image_url} alt="" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <Package className="w-5 h-5 text-muted-foreground/30" />
                 </div>
               )}
             </div>
-
-            {/* Product info */}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground leading-tight line-clamp-2">
                 {item.product?.title || "Unknown product"}
               </p>
               {item.product?.volume && (
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {item.product.volume}
-                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{item.product.volume}</p>
               )}
             </div>
-
-            {/* Quantity */}
             <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
               <span className="text-sm font-bold text-primary">×{item.quantity}</span>
             </div>
@@ -309,7 +424,6 @@ function OrderCard({
         ))}
       </div>
 
-      {/* Notes */}
       {order.notes && (
         <div className="px-4 py-2.5 bg-amber-500/5 border-t border-amber-500/10 flex items-start gap-2">
           <StickyNote className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
@@ -317,7 +431,6 @@ function OrderCard({
         </div>
       )}
 
-      {/* Address */}
       {order.address && (
         <div className="px-4 py-2.5 bg-muted/20 border-t border-border/50 space-y-1">
           <div className="flex items-start gap-2">
@@ -341,7 +454,6 @@ function OrderCard({
         </div>
       )}
 
-      {/* Footer */}
       <div className="px-4 py-3 border-t border-border flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
           {totalItems} item{totalItems !== 1 ? "s" : ""} total
