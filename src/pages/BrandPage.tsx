@@ -1,22 +1,22 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Package, ChevronRight } from "lucide-react";
+import { ArrowLeft, Package } from "lucide-react";
 import { motion } from "framer-motion";
-import { useProducts, useBrands } from "@/hooks/useProducts";
+import { useBrands, useBrandProducts } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
 import FloatingSearch from "@/components/layout/FloatingSearch";
 import { useLanguage } from "@/i18n/LanguageContext";
 import SEOHead, { breadcrumbJsonLd } from "@/components/SEOHead";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const BrandPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { data: products = [] } = useProducts();
   const { data: brands = [] } = useBrands();
   const { t, language } = useLanguage();
 
   // Support both slug and id lookup
   const brand = brands.find((b) => b.slug === id) || brands.find((b) => b.id === id);
-  const brandProducts = products.filter((p) => p.brand_id === brand?.id);
+  const { data: brandProducts = [], isLoading } = useBrandProducts(brand?.id);
 
   // Get country from brand itself, fallback to product countries
   const brandCountry = brand?.country_of_origin;
@@ -97,7 +97,19 @@ const BrandPage = () => {
       </motion.div>
 
       {/* Products */}
-      {brandProducts.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4 mt-5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-2xl overflow-hidden bg-card border border-border/50">
+              <Skeleton className="aspect-square w-full" />
+              <div className="p-3 space-y-2">
+                <Skeleton className="h-3 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : brandProducts.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-16 px-4">
           <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
             <Package className="w-8 h-8 text-muted-foreground" />
@@ -114,7 +126,7 @@ const BrandPage = () => {
                 key={product.id}
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.04 }}
+                transition={{ delay: Math.min(idx * 0.03, 0.3) }}
               >
                 <ProductCard product={product} />
               </motion.div>
