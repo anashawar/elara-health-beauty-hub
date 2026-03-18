@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Eye, User, Phone, MapPin, Package, Calendar, CreditCard, Tag, StickyNote, Users, Trash2, Bell, Send } from "lucide-react";
+import { Loader2, Eye, User, Phone, MapPin, Package, Calendar, CreditCard, Tag, StickyNote, Users, Trash2, Bell, Send, Navigation } from "lucide-react";
 import { formatPrice } from "@/hooks/useProducts";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ export default function AdminOrders() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, order_items(*, products(title, product_images(image_url))), addresses(city, area, street, phone, building, floor, apartment, label)")
+        .select("*, order_items(*, products(title, product_images(image_url))), addresses(city, area, street, phone, building, floor, apartment, label, latitude, longitude)")
         .order("created_at", { ascending: false });
       if (error) throw error;
 
@@ -63,7 +63,7 @@ export default function AdminOrders() {
       if (missingAddrIds.length > 0) {
         const { data: addrs } = await supabase
           .from("addresses")
-          .select("id, city, area, street, phone, building, floor, apartment, label")
+          .select("id, city, area, street, phone, building, floor, apartment, label, latitude, longitude")
           .in("id", missingAddrIds);
         if (addrs) addrs.forEach((a: any) => { addressMap[a.id] = a; });
       }
@@ -211,6 +211,41 @@ export default function AdminOrders() {
               )}
             </section>
 
+            {/* GPS Location */}
+            {o.addresses?.latitude && o.addresses?.longitude && (
+              <section className="rounded-2xl bg-card shadow-sm overflow-hidden">
+                <a
+                  href={`https://www.google.com/maps?q=${o.addresses.latitude},${o.addresses.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <img
+                    src={`https://maps.googleapis.com/maps/api/staticmap?center=${o.addresses.latitude},${o.addresses.longitude}&zoom=15&size=320x140&scale=2&markers=color:red%7C${o.addresses.latitude},${o.addresses.longitude}&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8`}
+                    alt="Location map"
+                    className="w-full h-[120px] object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </a>
+                <div className="px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Navigation className="h-3.5 w-3.5 text-primary" />
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">GPS Location</p>
+                    </div>
+                    <a
+                      href={`https://www.google.com/maps?q=${o.addresses.latitude},${o.addresses.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] font-semibold text-primary hover:underline"
+                    >
+                      Open in Maps ↗
+                    </a>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1 font-mono">{o.addresses.latitude.toFixed(6)}, {o.addresses.longitude.toFixed(6)}</p>
+                </div>
+              </section>
+            )}
             <section className="grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-card p-4 text-center shadow-sm">
                 <Calendar className="mx-auto mb-2 h-4 w-4 text-muted-foreground" />
