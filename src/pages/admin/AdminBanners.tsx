@@ -62,7 +62,11 @@ export default function AdminBanners() {
             <div className="grid gap-3 mt-2">
               <div><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
               <div><Label>Subtitle</Label><Input value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} /></div>
-              <div><Label>Image URL *</Label><Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} /></div>
+              <div>
+                <Label>Image URL *</Label>
+                <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
+                <p className="text-[11px] text-muted-foreground mt-1">📐 Recommended: <strong>1200×400px</strong> (3:1 ratio) · PNG or WebP · Max 500KB · The entire banner is this image — include all text/CTAs in the design</p>
+              </div>
               <div><Label>Link URL</Label><Input value={form.link_url} onChange={(e) => setForm({ ...form, link_url: e.target.value })} /></div>
               <div className="grid grid-cols-2 gap-3 items-end">
                 <div><Label>Sort Order</Label><Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: +e.target.value })} /></div>
