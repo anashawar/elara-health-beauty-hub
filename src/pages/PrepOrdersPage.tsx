@@ -24,6 +24,12 @@ import {
   List,
   Search,
   ChevronRight,
+  X,
+  ZoomIn,
+  ChevronLeft,
+  Calendar,
+  CreditCard,
+  UserCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import elaraLogo from "@/assets/elara-logo.png";
@@ -33,11 +39,13 @@ interface PrepProduct {
   title: string;
   volume: string | null;
   image_url: string | null;
+  all_images?: string[];
 }
 
 interface PrepItem {
   id: string;
   quantity: number;
+  price?: number;
   product: PrepProduct | null;
 }
 
@@ -57,12 +65,45 @@ interface PrepOrder {
   status: string;
   created_at: string;
   notes: string | null;
+  customer_name?: string;
+  payment_method?: string;
   items: PrepItem[];
   address: PrepAddress | null;
 }
 
 const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 const FUNC_URL = `https://${PROJECT_ID}.supabase.co/functions/v1/prep-orders`;
+
+function formatOrderTime(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function formatOrderTimeShort(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function getTimeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
 
 export default function PrepOrdersPage() {
   const { token: urlToken } = useParams<{ token: string }>();
@@ -83,6 +124,7 @@ export default function PrepOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (urlToken) {
@@ -202,7 +244,8 @@ export default function PrepOrdersPage() {
       o.id.toLowerCase().includes(q) ||
       o.items.some((i) => i.product?.title?.toLowerCase().includes(q)) ||
       o.address?.city?.toLowerCase().includes(q) ||
-      o.address?.phone?.includes(q)
+      o.address?.phone?.includes(q) ||
+      o.customer_name?.toLowerCase().includes(q)
     );
   });
 
@@ -213,27 +256,33 @@ export default function PrepOrdersPage() {
   if (!authenticated) {
     return (
       <div className="min-h-screen bg-background flex">
-        {/* Left branding panel — hidden on mobile */}
-        <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] bg-gradient-to-br from-primary/10 via-primary/5 to-background border-r border-border/50 flex-col justify-between p-10">
-          <div>
-            <img src={elaraLogo} alt="ELARA" className="h-12 w-12 object-contain" />
+        {/* Left branding panel */}
+        <div className="hidden lg:flex lg:w-[520px] xl:w-[600px] bg-gradient-to-br from-primary/10 via-primary/5 to-background border-r border-border/50 flex-col justify-between p-12">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-xl shadow-primary/10 border border-primary/10">
+              <img src={elaraLogo} alt="ELARA" className="h-10 w-10 object-contain" />
+            </div>
+            <div>
+              <h3 className="text-xl font-display font-bold text-foreground tracking-tight">ELARA</h3>
+              <p className="text-xs text-muted-foreground">Warehouse Portal</p>
+            </div>
           </div>
-          <div className="space-y-4">
-            <h2 className="text-4xl font-display font-bold text-foreground tracking-tight leading-tight">
-              ELARA<br />Warehouse Portal
+          <div className="space-y-6">
+            <h2 className="text-5xl font-display font-bold text-foreground tracking-tight leading-[1.1]">
+              Warehouse<br />Operations<br /><span className="text-primary">Hub</span>
             </h2>
-            <p className="text-base text-muted-foreground max-w-xs leading-relaxed">
-              Manage order preparation, track shipments, and keep your warehouse running smoothly.
+            <p className="text-base text-muted-foreground max-w-sm leading-relaxed">
+              Prepare orders, track items, and keep your warehouse running at peak efficiency.
             </p>
-            <div className="flex items-center gap-3 pt-4">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Package className="w-5 h-5 text-primary" />
+            <div className="flex items-center gap-4 pt-2">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/10">
+                <Package className="w-6 h-6 text-primary" />
               </div>
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-primary" />
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/10">
+                <CheckCircle2 className="w-6 h-6 text-primary" />
               </div>
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Warehouse className="w-5 h-5 text-primary" />
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/10">
+                <Warehouse className="w-6 h-6 text-primary" />
               </div>
             </div>
           </div>
@@ -250,9 +299,9 @@ export default function PrepOrdersPage() {
             transition={{ duration: 0.5 }}
             className="w-full max-w-sm space-y-8"
           >
-            <div className="text-center space-y-3 lg:text-left">
-              <div className="w-16 h-16 mx-auto lg:mx-0 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-lg shadow-primary/10 border border-primary/10 lg:hidden">
-                <img src={elaraLogo} alt="ELARA" className="h-8 w-8 object-contain" />
+            <div className="text-center space-y-4 lg:text-left">
+              <div className="w-20 h-20 mx-auto lg:mx-0 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-xl shadow-primary/10 border border-primary/10 lg:hidden">
+                <img src={elaraLogo} alt="ELARA" className="h-12 w-12 object-contain" />
               </div>
               <div>
                 <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">Sign In</h1>
@@ -324,17 +373,46 @@ export default function PrepOrdersPage() {
   // ---- MAIN DASHBOARD ----
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Top header — full width */}
+      {/* Image zoom overlay */}
+      <AnimatePresence>
+        {zoomImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setZoomImage(null)}
+          >
+            <button
+              onClick={() => setZoomImage(null)}
+              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+            <motion.img
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              src={zoomImage}
+              alt=""
+              className="max-w-full max-h-[85vh] object-contain rounded-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Top header */}
       <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-xl border-b border-border/60 shadow-sm">
         <div className="px-4 lg:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10">
-                <img src={elaraLogo} alt="ELARA" className="h-5 w-5 object-contain" />
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10 shadow-md shadow-primary/10">
+                <img src={elaraLogo} alt="ELARA" className="h-7 w-7 object-contain" />
               </div>
               <div className="hidden sm:block">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-sm font-bold text-foreground tracking-tight">ELARA Warehouse</h1>
+                  <h1 className="text-base font-display font-bold text-foreground tracking-tight">ELARA Warehouse</h1>
                   <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-600 border-emerald-500/20 px-1.5 py-0 gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     LIVE
@@ -353,14 +431,13 @@ export default function PrepOrdersPage() {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search orders, products, cities..."
+                placeholder="Search orders, products, customers..."
                 className="pl-10 h-9 rounded-xl bg-muted/40 border-border/40 text-sm"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* View toggle — desktop */}
             <div className="hidden md:flex items-center gap-1 bg-muted/40 p-0.5 rounded-lg border border-border/30">
               <button
                 onClick={() => setViewMode("grid")}
@@ -413,9 +490,8 @@ export default function PrepOrdersPage() {
       </header>
 
       <div className="flex-1 flex">
-        {/* Left sidebar — stats & tabs (desktop) */}
+        {/* Left sidebar */}
         <aside className="hidden lg:flex w-64 xl:w-72 border-r border-border/50 flex-col bg-card/50 p-5 gap-5">
-          {/* Stats */}
           <div className="space-y-3">
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Overview</p>
             <div className="grid grid-cols-2 gap-2">
@@ -432,7 +508,6 @@ export default function PrepOrdersPage() {
             </div>
           </div>
 
-          {/* Navigation tabs */}
           <div className="space-y-1.5">
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Status</p>
             <button
@@ -505,7 +580,6 @@ export default function PrepOrdersPage() {
         {/* Main content */}
         <main className="flex-1 flex flex-col min-w-0">
           <div className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6 overflow-auto">
-            {/* Loading */}
             {loading && (
               <div className="py-20 flex flex-col items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -515,7 +589,6 @@ export default function PrepOrdersPage() {
               </div>
             )}
 
-            {/* Error */}
             {error && !loading && (
               <div className="py-20 text-center">
                 <p className="text-sm text-destructive">{error}</p>
@@ -525,7 +598,6 @@ export default function PrepOrdersPage() {
               </div>
             )}
 
-            {/* Empty */}
             {!loading && !error && filteredOrders.length === 0 && (
               <div className="py-20 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-3xl bg-muted/50 flex items-center justify-center">
@@ -540,10 +612,8 @@ export default function PrepOrdersPage() {
               </div>
             )}
 
-            {/* Orders — grid or list */}
             {!loading && !error && filteredOrders.length > 0 && (
               <div className="flex gap-6">
-                {/* Order list/grid */}
                 <div className={`flex-1 min-w-0 ${
                   selectedOrder && viewMode === "grid" ? "hidden xl:block" : ""
                 }`}>
@@ -584,15 +654,15 @@ export default function PrepOrdersPage() {
                   </AnimatePresence>
                 </div>
 
-                {/* Detail panel — desktop */}
                 {selectedOrderData && (
-                  <div className={`${viewMode === "grid" ? "w-full xl:w-[400px] xl:flex-shrink-0" : "hidden xl:block xl:w-[400px] xl:flex-shrink-0"}`}>
+                  <div className={`${viewMode === "grid" ? "w-full xl:w-[420px] xl:flex-shrink-0" : "hidden xl:block xl:w-[420px] xl:flex-shrink-0"}`}>
                     <div className="sticky top-[73px]">
                       <OrderDetailPanel
                         order={selectedOrderData}
                         isPreparing={preparingId === selectedOrderData.id}
                         onPrepare={tab === "pending" ? () => markPrepared(selectedOrderData.id) : undefined}
                         onClose={() => setSelectedOrder(null)}
+                        onZoomImage={setZoomImage}
                       />
                     </div>
                   </div>
@@ -639,7 +709,7 @@ function OrderCardGrid({
             <span className="text-sm font-bold text-foreground font-mono">#{order.id.slice(0, 8).toUpperCase()}</span>
             <div className="flex items-center gap-1.5 mt-0.5">
               <Clock className="w-2.5 h-2.5 text-muted-foreground" />
-              <span className="text-[10px] text-muted-foreground">{timeAgo}</span>
+              <span className="text-[10px] text-muted-foreground">{timeAgo} · {formatOrderTimeShort(order.created_at)}</span>
             </div>
           </div>
         </div>
@@ -655,8 +725,16 @@ function OrderCardGrid({
         </Badge>
       </div>
 
+      {/* Customer name */}
+      {order.customer_name && (
+        <div className="px-4 pt-2.5 flex items-center gap-1.5">
+          <UserCircle className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className="text-xs font-medium text-foreground truncate">{order.customer_name}</span>
+        </div>
+      )}
+
       {/* Compact item preview */}
-      <div className="px-4 py-3 space-y-2">
+      <div className="px-4 py-2.5 space-y-2">
         {order.items.slice(0, 3).map((item) => (
           <div key={item.id} className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-muted/50 overflow-hidden border border-border/30 flex-shrink-0">
@@ -736,6 +814,9 @@ function OrderCardList({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-foreground font-mono">#{order.id.slice(0, 8).toUpperCase()}</span>
+          {order.customer_name && (
+            <span className="text-xs text-muted-foreground truncate">· {order.customer_name}</span>
+          )}
           <Badge
             variant="outline"
             className={`text-[9px] font-bold uppercase ${
@@ -749,7 +830,7 @@ function OrderCardList({
         </div>
         <div className="flex items-center gap-3 mt-0.5">
           <span className="text-[11px] text-muted-foreground">{totalItems} items</span>
-          <span className="text-[11px] text-muted-foreground">{timeAgo}</span>
+          <span className="text-[11px] text-muted-foreground">{timeAgo} · {formatOrderTimeShort(order.created_at)}</span>
           {order.address?.city && (
             <span className="text-[11px] text-muted-foreground flex items-center gap-1">
               <MapPin className="w-2.5 h-2.5" /> {order.address.city}
@@ -781,14 +862,15 @@ function OrderDetailPanel({
   isPreparing,
   onPrepare,
   onClose,
+  onZoomImage,
 }: {
   order: PrepOrder;
   isPreparing: boolean;
   onPrepare?: () => void;
   onClose: () => void;
+  onZoomImage: (url: string) => void;
 }) {
   const totalItems = order.items.reduce((s, i) => s + i.quantity, 0);
-  const timeAgo = getTimeAgo(order.created_at);
 
   return (
     <motion.div
@@ -797,29 +879,52 @@ function OrderDetailPanel({
       className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-lg"
     >
       {/* Header */}
-      <div className="px-5 py-4 border-b border-border/40 flex items-center justify-between bg-gradient-to-r from-muted/30 to-transparent">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-bold text-foreground font-mono">#{order.id.slice(0, 8).toUpperCase()}</h3>
-            <Badge
-              variant="outline"
-              className={`text-[10px] font-bold uppercase ${
-                order.status === "prepared"
-                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                  : "bg-amber-500/10 text-amber-600 border-amber-500/20"
-              }`}
-            >
-              {order.status === "prepared" ? "✓ Prepared" : "Awaiting Prep"}
-            </Badge>
+      <div className="px-5 py-4 border-b border-border/40 bg-gradient-to-r from-muted/30 to-transparent">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-foreground font-mono">#{order.id.slice(0, 8).toUpperCase()}</h3>
+              <Badge
+                variant="outline"
+                className={`text-[10px] font-bold uppercase ${
+                  order.status === "prepared"
+                    ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                    : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                }`}
+              >
+                {order.status === "prepared" ? "✓ Prepared" : "Awaiting Prep"}
+              </Badge>
+            </div>
           </div>
-          <div className="flex items-center gap-2 mt-1">
-            <Clock className="w-3 h-3 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">{timeAgo} · {totalItems} items</span>
+          <Button variant="ghost" size="sm" onClick={onClose} className="rounded-lg text-xs text-muted-foreground">
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Order meta */}
+        <div className="mt-3 space-y-1.5">
+          {order.customer_name && (
+            <div className="flex items-center gap-2">
+              <UserCircle className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-sm font-semibold text-foreground">{order.customer_name}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">{formatOrderTime(order.created_at)}</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-muted-foreground">{totalItems} items</span>
+            {order.payment_method && (
+              <div className="flex items-center gap-1">
+                <CreditCard className="w-3 h-3 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground capitalize">
+                  {order.payment_method === "cod" ? "Cash on Delivery" : order.payment_method}
+                </span>
+              </div>
+            )}
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose} className="rounded-lg text-xs text-muted-foreground">
-          Close
-        </Button>
       </div>
 
       {/* Items */}
@@ -827,9 +932,17 @@ function OrderDetailPanel({
         {order.items.map((item, idx) => (
           <div key={item.id} className="flex items-center gap-3 px-5 py-3">
             <div className="relative">
-              <div className="w-14 h-14 rounded-xl bg-muted/50 overflow-hidden border border-border/30 flex-shrink-0">
+              <div
+                className="w-16 h-16 rounded-xl bg-muted/50 overflow-hidden border border-border/30 flex-shrink-0 cursor-pointer group relative"
+                onClick={() => item.product?.image_url && onZoomImage(item.product.image_url)}
+              >
                 {item.product?.image_url ? (
-                  <img src={item.product.image_url} alt="" className="w-full h-full object-cover" />
+                  <>
+                    <img src={item.product.image_url} alt="" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <ZoomIn className="w-4 h-4 text-white" />
+                    </div>
+                  </>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Package className="w-5 h-5 text-muted-foreground/20" />
@@ -846,6 +959,23 @@ function OrderDetailPanel({
               </p>
               {item.product?.volume && (
                 <p className="text-[11px] text-muted-foreground mt-0.5">{item.product.volume}</p>
+              )}
+              {/* Show all images thumbnails if multiple */}
+              {item.product?.all_images && item.product.all_images.length > 1 && (
+                <div className="flex items-center gap-1 mt-1.5">
+                  {item.product.all_images.slice(0, 4).map((img, imgIdx) => (
+                    <div
+                      key={imgIdx}
+                      className="w-7 h-7 rounded-md bg-muted/50 overflow-hidden border border-border/30 cursor-pointer hover:ring-1 hover:ring-primary/40 transition-all"
+                      onClick={() => onZoomImage(img)}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                  {item.product.all_images.length > 4 && (
+                    <span className="text-[9px] text-muted-foreground">+{item.product.all_images.length - 4}</span>
+                  )}
+                </div>
               )}
             </div>
             <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/10 flex items-center justify-center flex-shrink-0">
@@ -902,14 +1032,4 @@ function OrderDetailPanel({
       )}
     </motion.div>
   );
-}
-
-function getTimeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
 }
