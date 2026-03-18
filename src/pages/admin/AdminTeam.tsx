@@ -454,11 +454,17 @@ function WarehouseCard({
   const [editBrands, setEditBrands] = useState<string[]>(link.excluded_brand_ids || []);
   const [editProducts, setEditProducts] = useState<string[]>(link.excluded_product_ids || []);
   const [saving, setSaving] = useState(false);
+  const [editUsername, setEditUsername] = useState<string>(link.username || "");
+  const [editPassword, setEditPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [editLabel, setEditLabel] = useState<string>(link.label || "");
+  const [savingCreds, setSavingCreds] = useState(false);
 
   const exclusionCount = (link.excluded_brand_ids?.length || 0) + (link.excluded_product_ids?.length || 0);
-  const hasChanges =
+  const hasFilterChanges =
     JSON.stringify(editBrands.sort()) !== JSON.stringify((link.excluded_brand_ids || []).sort()) ||
     JSON.stringify(editProducts.sort()) !== JSON.stringify((link.excluded_product_ids || []).sort());
+  const hasCredChanges = editUsername !== link.username || editPassword !== "" || editLabel !== link.label;
 
   const saveFilters = async () => {
     setSaving(true);
@@ -474,6 +480,24 @@ function WarehouseCard({
       toast.error("Failed to save filters");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const saveCredentials = async () => {
+    if (!editUsername.trim()) { toast.error("Username is required"); return; }
+    setSavingCreds(true);
+    try {
+      const update: any = { username: editUsername.trim().toLowerCase(), label: editLabel.trim() };
+      if (editPassword) update.password_hash = editPassword;
+      const { error } = await (supabase.from("prep_access_tokens" as any).update(update) as any).eq("id", link.id);
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["prep-links"] });
+      setEditPassword("");
+      toast.success("Account updated!");
+    } catch {
+      toast.error("Failed to update account");
+    } finally {
+      setSavingCreds(false);
     }
   };
 
