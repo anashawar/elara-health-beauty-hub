@@ -297,7 +297,9 @@ export default function AdminTeam() {
 function PrepLinksSection() {
   const qc = useQueryClient();
   const { user } = useAdmin();
-  const [label, setLabel] = useState("Order Prep");
+  const [label, setLabel] = useState("Warehouse A");
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
 
   const { data: links = [], isLoading } = useQuery({
     queryKey: ["prep-links"],
@@ -313,18 +315,25 @@ function PrepLinksSection() {
 
   const createLink = useMutation({
     mutationFn: async () => {
+      if (!newUsername.trim() || !newPassword.trim()) throw new Error("Username and password required");
       const { error } = await (supabase
         .from("prep_access_tokens" as any)
-        .insert({ label, created_by: user!.id } as any) as any);
-
+        .insert({
+          label,
+          username: newUsername.trim().toLowerCase(),
+          password_hash: newPassword,
+          created_by: user!.id,
+        } as any) as any);
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["prep-links"] });
-      toast.success("Prep link created!");
-      setLabel("Order Prep");
+      toast.success("Prep account created!");
+      setLabel("Warehouse A");
+      setNewUsername("");
+      setNewPassword("");
     },
-    onError: () => toast.error("Failed to create link"),
+    onError: (e: any) => toast.error(e.message || "Failed to create"),
   });
 
   const toggleLink = useMutation({
@@ -348,14 +357,14 @@ function PrepLinksSection() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["prep-links"] });
-      toast.success("Link deleted");
+      toast.success("Account deleted");
     },
   });
 
-  const copyLink = (token: string) => {
-    const url = `${window.location.origin}/prep/${token}`;
+  const copyLink = () => {
+    const url = `${window.location.origin}/prep/login`;
     navigator.clipboard.writeText(url);
-    toast.success("Link copied to clipboard!");
+    toast.success("Prep page link copied!");
   };
 
   return (
@@ -363,31 +372,52 @@ function PrepLinksSection() {
       <div className="px-5 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Link2 className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground">Order Preparation Links</h3>
+          <h3 className="text-sm font-bold text-foreground">Order Preparation Accounts</h3>
         </div>
+        <Button variant="outline" size="sm" onClick={copyLink} className="rounded-xl gap-1.5 text-xs">
+          <Copy className="w-3 h-3" /> Copy Login Page Link
+        </Button>
       </div>
 
       <div className="p-5 space-y-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Generate shareable links for your logistics team. They can view orders, see product details (no prices), and mark them as prepared. No login needed.
+          Create username & password accounts for your logistics team. They'll log in at the prep page to view orders (no prices) and mark them as prepared.
         </p>
 
-        {/* Create new link */}
-        <div className="flex gap-2">
-          <Input
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            placeholder="Link label (e.g. Warehouse A)"
-            className="flex-1 rounded-xl"
-          />
-          <Button
-            onClick={() => createLink.mutate()}
-            disabled={createLink.isPending}
-            className="rounded-xl gap-1.5"
-          >
-            {createLink.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            Generate
-          </Button>
+        {/* Create new account */}
+        <div className="space-y-3 rounded-xl border border-border p-4 bg-muted/10">
+          <p className="text-xs font-bold text-foreground">Create New Account</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Input
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="Label (e.g. Warehouse A)"
+              className="rounded-xl"
+            />
+            <Input
+              value={newUsername}
+              onChange={(e) => setNewUsername(e.target.value)}
+              placeholder="Username"
+              className="rounded-xl"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Password"
+              className="flex-1 rounded-xl"
+            />
+            <Button
+              onClick={() => createLink.mutate()}
+              disabled={createLink.isPending || !newUsername.trim() || !newPassword.trim()}
+              className="rounded-xl gap-1.5"
+            >
+              {createLink.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              Create
+            </Button>
+          </div>
         </div>
 
         {/* Existing links */}
