@@ -9,8 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Loader2, ImageIcon, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
-interface BannerForm { id?: string; title: string; subtitle: string; image_url: string; link_url: string; is_active: boolean; sort_order: number; }
-const emptyForm: BannerForm = { title: "", subtitle: "", image_url: "", link_url: "", is_active: true, sort_order: 0 };
+interface BannerForm { id?: string; title: string; subtitle: string; image_url: string; image_url_ar: string; image_url_ku: string; link_url: string; is_active: boolean; sort_order: number; }
+const emptyForm: BannerForm = { title: "", subtitle: "", image_url: "", image_url_ar: "", image_url_ku: "", link_url: "", is_active: true, sort_order: 0 };
 
 export default function AdminBanners() {
   const qc = useQueryClient();
@@ -75,7 +75,7 @@ export default function AdminBanners() {
 
   const save = useMutation({
     mutationFn: async (f: BannerForm) => {
-      const payload = { title: f.title || null, subtitle: f.subtitle || null, image_url: f.image_url, link_url: f.link_url || null, is_active: f.is_active, sort_order: f.sort_order };
+      const payload = { title: f.title || null, subtitle: f.subtitle || null, image_url: f.image_url, image_url_ar: f.image_url_ar || null, image_url_ku: f.image_url_ku || null, link_url: f.link_url || null, is_active: f.is_active, sort_order: f.sort_order };
       if (f.id) {
         const { error } = await supabase.from("banners").update(payload).eq("id", f.id);
         if (error) throw error;
@@ -104,7 +104,7 @@ export default function AdminBanners() {
 
   const openDialog = (banner?: any) => {
     if (banner) {
-      setForm({ id: banner.id, title: banner.title || "", subtitle: banner.subtitle || "", image_url: banner.image_url, link_url: banner.link_url || "", is_active: banner.is_active ?? true, sort_order: banner.sort_order || 0 });
+      setForm({ id: banner.id, title: banner.title || "", subtitle: banner.subtitle || "", image_url: banner.image_url, image_url_ar: banner.image_url_ar || "", image_url_ku: banner.image_url_ku || "", link_url: banner.link_url || "", is_active: banner.is_active ?? true, sort_order: banner.sort_order || 0 });
       setPreviewUrl(banner.image_url);
       setEditing(true);
     } else {
@@ -130,14 +130,14 @@ export default function AdminBanners() {
               <Plus className="h-4 w-4 mr-1.5" />Add
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl !left-[50vw] !top-[50vh] !-translate-x-1/2 !-translate-y-1/2 !fixed max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editing ? "Edit Banner" : "Add Banner"}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 mt-2">
               {/* Image upload area */}
               <div>
-                <Label className="mb-2 block">Banner Image *</Label>
+                <Label className="mb-2 block">Banner Image — English 🇬🇧 *</Label>
                 {displayPreview ? (
                   <div className="relative rounded-xl overflow-hidden border border-border bg-muted">
                     <img src={displayPreview} alt="Preview" className="w-full h-48 object-cover" />
@@ -173,6 +173,29 @@ export default function AdminBanners() {
                   </button>
                 )}
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label className="mb-1 block">Banner Image — Arabic 🇮🇶</Label>
+                  <Input value={form.image_url_ar} onChange={(e) => setForm({ ...form, image_url_ar: e.target.value })} placeholder="Paste Arabic banner image URL" className="rounded-xl" />
+                  {form.image_url_ar && (
+                    <div className="relative mt-2 h-20 rounded-lg overflow-hidden border border-border">
+                      <img src={form.image_url_ar} className="w-full h-full object-cover" alt="AR" />
+                      <button onClick={() => setForm({ ...form, image_url_ar: "" })} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5"><X className="h-3 w-3" /></button>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <Label className="mb-1 block">Banner Image — Kurdish 🟢</Label>
+                  <Input value={form.image_url_ku} onChange={(e) => setForm({ ...form, image_url_ku: e.target.value })} placeholder="Paste Kurdish banner image URL" className="rounded-xl" />
+                  {form.image_url_ku && (
+                    <div className="relative mt-2 h-20 rounded-lg overflow-hidden border border-border">
+                      <img src={form.image_url_ku} className="w-full h-full object-cover" alt="KU" />
+                      <button onClick={() => setForm({ ...form, image_url_ku: "" })} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5"><X className="h-3 w-3" /></button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

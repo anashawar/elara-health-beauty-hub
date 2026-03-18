@@ -73,6 +73,8 @@ export type Database = {
           created_at: string
           id: string
           image_url: string
+          image_url_ar: string | null
+          image_url_ku: string | null
           is_active: boolean | null
           link_url: string | null
           sort_order: number | null
@@ -87,6 +89,8 @@ export type Database = {
           created_at?: string
           id?: string
           image_url: string
+          image_url_ar?: string | null
+          image_url_ku?: string | null
           is_active?: boolean | null
           link_url?: string | null
           sort_order?: number | null
@@ -101,6 +105,8 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string
+          image_url_ar?: string | null
+          image_url_ku?: string | null
           is_active?: boolean | null
           link_url?: string | null
           sort_order?: number | null
@@ -666,6 +672,8 @@ export type Database = {
           ends_at: string | null
           id: string
           image_url: string | null
+          image_url_ar: string | null
+          image_url_ku: string | null
           is_active: boolean
           link_url: string | null
           show_as_banner: boolean
@@ -687,6 +695,8 @@ export type Database = {
           ends_at?: string | null
           id?: string
           image_url?: string | null
+          image_url_ar?: string | null
+          image_url_ku?: string | null
           is_active?: boolean
           link_url?: string | null
           show_as_banner?: boolean
@@ -708,6 +718,8 @@ export type Database = {
           ends_at?: string | null
           id?: string
           image_url?: string | null
+          image_url_ar?: string | null
+          image_url_ku?: string | null
           is_active?: boolean
           link_url?: string | null
           show_as_banner?: boolean

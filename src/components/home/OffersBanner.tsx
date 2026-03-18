@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export default function OffersBanner() {
+  const { language } = useLanguage();
   const qc = useQueryClient();
 
   const { data: offers = [] } = useQuery({
@@ -52,6 +54,9 @@ export default function OffersBanner() {
 
   const offer = offers[current];
   const linkTo = offer.link_url || "/collection/offers";
+  const offerImgSrc = (language === "ar" && offer.image_url_ar) ? offer.image_url_ar
+    : (language === "ku" && offer.image_url_ku) ? offer.image_url_ku
+    : offer.image_url;
 
   return (
     <section className="px-4 mt-6">
@@ -66,7 +71,7 @@ export default function OffersBanner() {
           <Link to={linkTo} className="block relative overflow-hidden rounded-3xl shadow-float group">
             <div className="relative h-[160px] md:h-[200px]">
               <img
-                src={offer.image_url}
+                src={offerImgSrc}
                 alt={offer.title || ""}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
               />
