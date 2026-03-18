@@ -287,6 +287,185 @@ export default function AdminTeam() {
           </div>
         )}
       </div>
+
+      {/* Prep Links Section */}
+      <PrepLinksSection />
+    </div>
+  );
+}
+
+function PrepLinksSection() {
+  const qc = useQueryClient();
+  const { user } = useAdmin();
+  const [label, setLabel] = useState("Order Prep");
+
+  const { data: links = [], isLoading } = useQuery({
+    queryKey: ["prep-links"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prep_access_tokens")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const createLink = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("prep_access_tokens")
+        .insert({ label, created_by: user!.id } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["prep-links"] });
+      toast.success("Prep link created!");
+      setLabel("Order Prep");
+    },
+    onError: () => toast.error("Failed to create link"),
+  });
+
+  const toggleLink = useMutation({
+    mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
+      const { error } = await supabase
+        .from("prep_access_tokens")
+        .update({ is_active: active } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["prep-links"] });
+      toast.success("Link updated");
+    },
+  });
+
+  const deleteLink = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("prep_access_tokens").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["prep-links"] });
+      toast.success("Link deleted");
+    },
+  });
+
+  const copyLink = (token: string) => {
+    const url = `${window.location.origin}/prep/${token}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link copied to clipboard!");
+  };
+
+  return (
+    <div className="rounded-2xl border border-border bg-card overflow-hidden">
+      <div className="px-5 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Link2 className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-bold text-foreground">Order Preparation Links</h3>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-4">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Generate shareable links for your logistics team. They can view orders, see product details (no prices), and mark them as prepared. No login needed.
+        </p>
+
+        {/* Create new link */}
+        <div className="flex gap-2">
+          <Input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Link label (e.g. Warehouse A)"
+            className="flex-1 rounded-xl"
+          />
+          <Button
+            onClick={() => createLink.mutate()}
+            disabled={createLink.isPending}
+            className="rounded-xl gap-1.5"
+          >
+            {createLink.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            Generate
+          </Button>
+        </div>
+
+        {/* Existing links */}
+        {isLoading ? (
+          <div className="py-6 flex justify-center">
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : links.length === 0 ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            No prep links yet. Generate one above.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {links.map((link: any) => (
+              <div
+                key={link.id}
+                className={`flex items-center justify-between gap-3 p-3 rounded-xl border ${
+                  link.is_active ? "border-border bg-background" : "border-border/50 bg-muted/30 opacity-60"
+                }`}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground truncate">{link.label}</p>
+                  <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5">
+                    /prep/{link.token.slice(0, 12)}...
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] ${
+                      link.is_active
+                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {link.is_active ? "Active" : "Disabled"}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => copyLink(link.token)}
+                    title="Copy link"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => window.open(`/prep/${link.token}`, "_blank")}
+                    title="Open link"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => toggleLink.mutate({ id: link.id, active: !link.is_active })}
+                    title={link.is_active ? "Disable" : "Enable"}
+                  >
+                    <Power className={`w-3.5 h-3.5 ${link.is_active ? "text-emerald-600" : "text-muted-foreground"}`} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => deleteLink.mutate(link.id)}
+                    title="Delete"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
