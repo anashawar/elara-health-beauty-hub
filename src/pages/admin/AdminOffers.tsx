@@ -244,6 +244,7 @@ export default function AdminOffers() {
                   <label className="flex flex-col items-center justify-center w-full h-28 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
                     <Upload className="h-5 w-5 text-muted-foreground mb-1" />
                     <span className="text-xs text-muted-foreground">Upload banner image</span>
+                    <span className="text-[10px] text-muted-foreground/70 mt-0.5">📐 1200×400px · PNG/WebP · Max 500KB</span>
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                   </label>
                 )}
