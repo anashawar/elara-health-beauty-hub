@@ -459,7 +459,7 @@ function PrepLinksSection() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => copyLink(link.token)}
+                    onClick={() => copyLink()}
                     title="Copy link"
                   >
                     <Copy className="w-3.5 h-3.5" />
