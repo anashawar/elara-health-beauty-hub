@@ -179,12 +179,12 @@ export default function PrepOrdersPage() {
     sessionStorage.removeItem("prep-session");
   };
 
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async (silent = false) => {
     if (!token) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError(null);
     try {
-      const statuses = tab === "pending" ? "pending,processing" : "prepared";
+      const statuses = tab === "pending" ? "processing" : "prepared";
       const res = await fetch(`${FUNC_URL}?token=${token}&status=${statuses}`);
       const data = await res.json();
       if (!res.ok) {
@@ -206,15 +206,20 @@ export default function PrepOrdersPage() {
     if (authenticated) fetchOrders();
   }, [fetchOrders, authenticated]);
 
+  // Live sync: poll every 15s + realtime channel for instant updates
   useEffect(() => {
     if (!authenticated) return;
     const channel = supabase
       .channel("prep-orders-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
-        fetchOrders();
+        fetchOrders(true);
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    const interval = setInterval(() => fetchOrders(true), 15000);
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, [fetchOrders, authenticated]);
 
   const markPrepared = async (orderId: string) => {
@@ -456,7 +461,7 @@ export default function PrepOrdersPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={fetchOrders}
+              onClick={() => fetchOrders()}
               disabled={loading}
               className="rounded-xl h-9 gap-1.5 border-border/60 text-xs"
             >
@@ -592,7 +597,7 @@ export default function PrepOrdersPage() {
             {error && !loading && (
               <div className="py-20 text-center">
                 <p className="text-sm text-destructive">{error}</p>
-                <Button variant="outline" size="sm" onClick={fetchOrders} className="mt-3 rounded-xl">
+                <Button variant="outline" size="sm" onClick={() => fetchOrders()} className="mt-3 rounded-xl">
                   Try Again
                 </Button>
               </div>
