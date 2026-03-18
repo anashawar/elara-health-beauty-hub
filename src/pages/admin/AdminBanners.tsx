@@ -9,8 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Loader2, ImageIcon, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
-interface BannerForm { id?: string; title: string; subtitle: string; image_url: string; link_url: string; is_active: boolean; sort_order: number; }
-const emptyForm: BannerForm = { title: "", subtitle: "", image_url: "", link_url: "", is_active: true, sort_order: 0 };
+interface BannerForm { id?: string; title: string; subtitle: string; image_url: string; image_url_ar: string; image_url_ku: string; link_url: string; is_active: boolean; sort_order: number; }
+const emptyForm: BannerForm = { title: "", subtitle: "", image_url: "", image_url_ar: "", image_url_ku: "", link_url: "", is_active: true, sort_order: 0 };
 
 export default function AdminBanners() {
   const qc = useQueryClient();
