@@ -343,7 +343,7 @@ function PrepLinksSection() {
 
   const deleteLink = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("prep_access_tokens").delete().eq("id", id);
+      const { error } = await (supabase.from("prep_access_tokens" as any).delete() as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
