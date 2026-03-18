@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Users, Plus, Trash2, Shield, ShieldCheck, Database, Loader2, Link2, Copy, Power, Filter, X } from "lucide-react";
+import { Users, Plus, Trash2, Shield, ShieldCheck, Database, Loader2, Link2, Copy, Power, Filter, X, ChevronDown, ChevronUp, Settings2 } from "lucide-react";
 import { useAdmin, type AppRole } from "@/hooks/useAdmin";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -82,19 +82,15 @@ export default function AdminTeam() {
     mutationFn: async ({ identifier, role }: { identifier: string; role: string }) => {
       const trimmed = identifier.trim();
       let targetUserId: string | null = null;
-
       const { data: profileByPhone } = await supabase
         .from("profiles")
         .select("user_id")
         .eq("phone", trimmed)
         .maybeSingle();
-
-      if (profileByPhone) {
-        targetUserId = profileByPhone.user_id;
-      }
+      if (profileByPhone) targetUserId = profileByPhone.user_id;
 
       if (!targetUserId) {
-        toast.error("User not found. Make sure they have signed up first and have a phone number in their profile.");
+        toast.error("User not found. Make sure they have signed up first.");
         throw new Error("User not found");
       }
 
@@ -104,7 +100,6 @@ export default function AdminTeam() {
         .eq("user_id", targetUserId)
         .eq("role", role as any)
         .maybeSingle();
-
       if (existing) {
         toast.info("This user already has this role.");
         throw new Error("Already assigned");
@@ -191,16 +186,9 @@ export default function AdminTeam() {
           <Plus className="w-4 h-4" /> Add Team Member
         </h3>
         <div className="flex flex-col sm:flex-row gap-3">
-          <Input
-            value={emailOrPhone}
-            onChange={(e) => setEmailOrPhone(e.target.value)}
-            placeholder="Phone number (e.g. +964...)"
-            className="flex-1 rounded-xl"
-          />
+          <Input value={emailOrPhone} onChange={(e) => setEmailOrPhone(e.target.value)} placeholder="Phone number (e.g. +964...)" className="flex-1 rounded-xl" />
           <Select value={selectedRole} onValueChange={setSelectedRole}>
-            <SelectTrigger className="w-full sm:w-[180px] rounded-xl">
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[180px] rounded-xl"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="admin">Admin</SelectItem>
               <SelectItem value="operations">Operations</SelectItem>
@@ -211,31 +199,23 @@ export default function AdminTeam() {
             {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add"}
           </Button>
         </div>
-        <p className="text-[11px] text-muted-foreground mt-2">
-          The user must have signed up on ELARA first. Use their registered phone number.
-        </p>
+        <p className="text-[11px] text-muted-foreground mt-2">The user must have signed up on ELARA first.</p>
       </div>
 
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="px-5 py-3 border-b border-border bg-muted/30">
           <h3 className="text-sm font-bold text-foreground">Current Team ({members.length})</h3>
         </div>
-
         {isLoading ? (
-          <div className="py-10 flex justify-center">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          </div>
+          <div className="py-10 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
         ) : members.length === 0 ? (
-          <div className="py-10 text-center text-sm text-muted-foreground">
-            No team members yet.
-          </div>
+          <div className="py-10 text-center text-sm text-muted-foreground">No team members yet.</div>
         ) : (
           <div className="divide-y divide-border">
             {members.map((member) => {
               const config = ROLE_CONFIG[member.role] || ROLE_CONFIG.admin;
               const Icon = config.icon;
               const isCurrentUser = member.user_id === user?.id;
-
               return (
                 <div key={member.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-muted/20 transition-colors">
                   <div className="flex items-center gap-3 min-w-0">
@@ -247,22 +227,13 @@ export default function AdminTeam() {
                         {member.full_name || member.phone || member.user_id.slice(0, 8) + "..."}
                         {isCurrentUser && <span className="text-xs text-muted-foreground ml-1">(you)</span>}
                       </p>
-                      {member.phone && (
-                        <p className="text-[11px] text-muted-foreground">{member.phone}</p>
-                      )}
+                      {member.phone && <p className="text-[11px] text-muted-foreground">{member.phone}</p>}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={`text-[10px] font-bold uppercase tracking-wider ${config.color}`}>
-                      {config.label}
-                    </Badge>
+                    <Badge variant="outline" className={`text-[10px] font-bold uppercase tracking-wider ${config.color}`}>{config.label}</Badge>
                     {!isCurrentUser && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => removeMember.mutate(member.id)}
-                      >
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => removeMember.mutate(member.id)}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     )}
@@ -279,7 +250,7 @@ export default function AdminTeam() {
   );
 }
 
-/* ─── Prep Links Section with Exclusion Filters ─── */
+/* ─── Prep Links Section ─── */
 
 function PrepLinksSection() {
   const qc = useQueryClient();
@@ -287,23 +258,15 @@ function PrepLinksSection() {
   const [label, setLabel] = useState("Warehouse A");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [editingFilters, setEditingFilters] = useState<string | null>(null);
-  const [filterBrandIds, setFilterBrandIds] = useState<string[]>([]);
-  const [filterProductIds, setFilterProductIds] = useState<string[]>([]);
-  const [brandSearch, setBrandSearch] = useState("");
-  const [productSearch, setProductSearch] = useState("");
-  // For new account creation
   const [newExcludedBrands, setNewExcludedBrands] = useState<string[]>([]);
   const [newExcludedProducts, setNewExcludedProducts] = useState<string[]>([]);
   const [showNewFilters, setShowNewFilters] = useState(false);
+  const [expandedLink, setExpandedLink] = useState<string | null>(null);
 
   const { data: links = [], isLoading } = useQuery({
     queryKey: ["prep-links"],
     queryFn: async () => {
-      const { data, error } = await (supabase
-        .from("prep_access_tokens" as any)
-        .select("*") as any)
-        .order("created_at", { ascending: false });
+      const { data, error } = await (supabase.from("prep_access_tokens" as any).select("*") as any).order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
     },
@@ -328,16 +291,14 @@ function PrepLinksSection() {
   const createLink = useMutation({
     mutationFn: async () => {
       if (!newUsername.trim() || !newPassword.trim()) throw new Error("Username and password required");
-      const { error } = await (supabase
-        .from("prep_access_tokens" as any)
-        .insert({
-          label,
-          username: newUsername.trim().toLowerCase(),
-          password_hash: newPassword,
-          created_by: user!.id,
-          excluded_brand_ids: newExcludedBrands,
-          excluded_product_ids: newExcludedProducts,
-        } as any) as any);
+      const { error } = await (supabase.from("prep_access_tokens" as any).insert({
+        label,
+        username: newUsername.trim().toLowerCase(),
+        password_hash: newPassword,
+        created_by: user!.id,
+        excluded_brand_ids: newExcludedBrands,
+        excluded_product_ids: newExcludedProducts,
+      } as any) as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -353,32 +314,14 @@ function PrepLinksSection() {
     onError: (e: any) => toast.error(e.message || "Failed to create"),
   });
 
-  const updateFilters = useMutation({
-    mutationFn: async ({ id, brands, products }: { id: string; brands: string[]; products: string[] }) => {
-      const { error } = await (supabase
-        .from("prep_access_tokens" as any)
-        .update({ excluded_brand_ids: brands, excluded_product_ids: products } as any) as any)
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["prep-links"] });
-      toast.success("Filters updated!");
-      setEditingFilters(null);
-    },
-  });
-
   const toggleLink = useMutation({
     mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
-      const { error } = await (supabase
-        .from("prep_access_tokens" as any)
-        .update({ is_active: active } as any) as any)
-        .eq("id", id);
+      const { error } = await (supabase.from("prep_access_tokens" as any).update({ is_active: active } as any) as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["prep-links"] });
-      toast.success("Link updated");
+      toast.success("Updated");
     },
   });
 
@@ -394,74 +337,56 @@ function PrepLinksSection() {
   });
 
   const copyLink = () => {
-    const url = `${window.location.origin}/prep/login`;
-    navigator.clipboard.writeText(url);
-    toast.success("Prep page link copied!");
+    navigator.clipboard.writeText(`${window.location.origin}/prep/login`);
+    toast.success("Prep login link copied!");
   };
-
-  const openEditFilters = (link: any) => {
-    setEditingFilters(link.id);
-    setFilterBrandIds(link.excluded_brand_ids || []);
-    setFilterProductIds(link.excluded_product_ids || []);
-    setBrandSearch("");
-    setProductSearch("");
-  };
-
-  const getBrandName = (id: string) => allBrands.find((b: any) => b.id === id)?.name || id.slice(0, 8);
-  const getProductName = (id: string) => allProducts.find((p: any) => p.id === id)?.title || id.slice(0, 8);
-
-  const filteredBrands = allBrands.filter((b: any) =>
-    b.name.toLowerCase().includes(brandSearch.toLowerCase())
-  );
-  const filteredProducts = allProducts.filter((p: any) =>
-    p.title.toLowerCase().includes(productSearch.toLowerCase())
-  );
 
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden">
       <div className="px-5 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Link2 className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground">Order Preparation Accounts</h3>
+          <h3 className="text-sm font-bold text-foreground">Warehouse Accounts</h3>
         </div>
         <Button variant="outline" size="sm" onClick={copyLink} className="rounded-xl gap-1.5 text-xs">
-          <Copy className="w-3 h-3" /> Copy Login Page Link
+          <Copy className="w-3 h-3" /> Copy Login Link
         </Button>
       </div>
 
       <div className="p-5 space-y-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Create accounts for your logistics team. They'll see orders (no prices) and mark them as prepared.
-          Use <strong>exclusion filters</strong> to route specific brands/products away from a warehouse — excluded items go to Operations instead.
+          Create accounts for warehouse staff. Use <strong>exclusion filters</strong> to prevent specific brands/products from showing in a warehouse — those items will only appear to Operations.
         </p>
 
-        {/* Create new account */}
+        {/* Create new */}
         <div className="space-y-3 rounded-xl border border-border p-4 bg-muted/10">
-          <p className="text-xs font-bold text-foreground">Create New Account</p>
+          <p className="text-xs font-bold text-foreground">Create New Warehouse Account</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label (e.g. Warehouse A)" className="rounded-xl" />
+            <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Warehouse name" className="rounded-xl" />
             <Input value={newUsername} onChange={(e) => setNewUsername(e.target.value)} placeholder="Username" className="rounded-xl" />
           </div>
           <div className="flex gap-2">
             <Input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Password" className="flex-1 rounded-xl" />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowNewFilters(!showNewFilters)}
-              className="rounded-xl gap-1.5 text-xs"
-            >
-              <Filter className="w-3 h-3" />
-              Filters {(newExcludedBrands.length + newExcludedProducts.length) > 0 && `(${newExcludedBrands.length + newExcludedProducts.length})`}
-            </Button>
-            <Button
-              onClick={() => createLink.mutate()}
-              disabled={createLink.isPending || !newUsername.trim() || !newPassword.trim()}
-              className="rounded-xl gap-1.5"
-            >
+            <Button onClick={() => createLink.mutate()} disabled={createLink.isPending || !newUsername.trim() || !newPassword.trim()} className="rounded-xl gap-1.5">
               {createLink.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               Create
             </Button>
           </div>
+
+          {/* Filters toggle */}
+          <button
+            onClick={() => setShowNewFilters(!showNewFilters)}
+            className="flex items-center gap-2 text-xs font-medium text-primary hover:underline"
+          >
+            <Filter className="w-3 h-3" />
+            {showNewFilters ? "Hide" : "Set"} Exclusion Filters
+            {(newExcludedBrands.length + newExcludedProducts.length) > 0 && (
+              <Badge variant="outline" className="text-[9px] bg-amber-500/10 text-amber-600 border-amber-500/20">
+                {newExcludedBrands.length + newExcludedProducts.length} excluded
+              </Badge>
+            )}
+            {showNewFilters ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </button>
 
           {showNewFilters && (
             <ExclusionFilterEditor
@@ -475,82 +400,159 @@ function PrepLinksSection() {
           )}
         </div>
 
-        {/* Existing links */}
+        {/* Existing accounts */}
         {isLoading ? (
-          <div className="py-6 flex justify-center">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          </div>
+          <div className="py-6 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
         ) : links.length === 0 ? (
-          <div className="py-6 text-center text-sm text-muted-foreground">
-            No prep accounts yet. Create one above.
-          </div>
+          <div className="py-6 text-center text-sm text-muted-foreground">No warehouse accounts yet.</div>
         ) : (
-          <div className="space-y-2">
-            {links.map((link: any) => {
-              const exclusionCount = (link.excluded_brand_ids?.length || 0) + (link.excluded_product_ids?.length || 0);
-              const isEditing = editingFilters === link.id;
-
-              return (
-                <div key={link.id} className={`rounded-xl border ${link.is_active ? "border-border bg-background" : "border-border/50 bg-muted/30 opacity-60"}`}>
-                  <div className="flex items-center justify-between gap-3 p-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground truncate">{link.label}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Username: <span className="font-mono">{link.username}</span>
-                        {exclusionCount > 0 && (
-                          <span className="ml-2 text-amber-600">• {exclusionCount} exclusion{exclusionCount > 1 ? "s" : ""}</span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Badge variant="outline" className={`text-[10px] ${link.is_active ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-muted text-muted-foreground"}`}>
-                        {link.is_active ? "Active" : "Disabled"}
-                      </Badge>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => isEditing ? setEditingFilters(null) : openEditFilters(link)} title="Edit filters">
-                        <Filter className={`w-3.5 h-3.5 ${exclusionCount > 0 ? "text-amber-600" : ""}`} />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyLink()} title="Copy link">
-                        <Copy className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleLink.mutate({ id: link.id, active: !link.is_active })} title={link.is_active ? "Disable" : "Enable"}>
-                        <Power className={`w-3.5 h-3.5 ${link.is_active ? "text-emerald-600" : "text-muted-foreground"}`} />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => deleteLink.mutate(link.id)} title="Delete">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {isEditing && (
-                    <div className="border-t border-border p-4 bg-muted/10 space-y-3">
-                      <ExclusionFilterEditor
-                        brandIds={filterBrandIds}
-                        productIds={filterProductIds}
-                        onBrandsChange={setFilterBrandIds}
-                        onProductsChange={setFilterProductIds}
-                        allBrands={allBrands}
-                        allProducts={allProducts}
-                      />
-                      <div className="flex gap-2 justify-end">
-                        <Button variant="outline" size="sm" onClick={() => setEditingFilters(null)} className="rounded-xl text-xs">Cancel</Button>
-                        <Button
-                          size="sm"
-                          onClick={() => updateFilters.mutate({ id: link.id, brands: filterBrandIds, products: filterProductIds })}
-                          disabled={updateFilters.isPending}
-                          className="rounded-xl text-xs gap-1.5"
-                        >
-                          {updateFilters.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-                          Save Filters
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          <div className="space-y-3">
+            {links.map((link: any) => (
+              <WarehouseCard
+                key={link.id}
+                link={link}
+                expanded={expandedLink === link.id}
+                onToggleExpand={() => setExpandedLink(expandedLink === link.id ? null : link.id)}
+                onToggleActive={() => toggleLink.mutate({ id: link.id, active: !link.is_active })}
+                onDelete={() => deleteLink.mutate(link.id)}
+                onCopyLink={copyLink}
+                allBrands={allBrands}
+                allProducts={allProducts}
+                qc={qc}
+              />
+            ))}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ─── Individual Warehouse Card ─── */
+
+function WarehouseCard({
+  link,
+  expanded,
+  onToggleExpand,
+  onToggleActive,
+  onDelete,
+  onCopyLink,
+  allBrands,
+  allProducts,
+  qc,
+}: {
+  link: any;
+  expanded: boolean;
+  onToggleExpand: () => void;
+  onToggleActive: () => void;
+  onDelete: () => void;
+  onCopyLink: () => void;
+  allBrands: any[];
+  allProducts: any[];
+  qc: any;
+}) {
+  const [editBrands, setEditBrands] = useState<string[]>(link.excluded_brand_ids || []);
+  const [editProducts, setEditProducts] = useState<string[]>(link.excluded_product_ids || []);
+  const [saving, setSaving] = useState(false);
+
+  const exclusionCount = (link.excluded_brand_ids?.length || 0) + (link.excluded_product_ids?.length || 0);
+  const hasChanges =
+    JSON.stringify(editBrands.sort()) !== JSON.stringify((link.excluded_brand_ids || []).sort()) ||
+    JSON.stringify(editProducts.sort()) !== JSON.stringify((link.excluded_product_ids || []).sort());
+
+  const saveFilters = async () => {
+    setSaving(true);
+    try {
+      const { error } = await (supabase.from("prep_access_tokens" as any).update({
+        excluded_brand_ids: editBrands,
+        excluded_product_ids: editProducts,
+      } as any) as any).eq("id", link.id);
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["prep-links"] });
+      toast.success("Filters saved!");
+    } catch {
+      toast.error("Failed to save filters");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Reset local state when link data changes
+  const resetFilters = () => {
+    setEditBrands(link.excluded_brand_ids || []);
+    setEditProducts(link.excluded_product_ids || []);
+  };
+
+  return (
+    <div className={`rounded-xl border overflow-hidden transition-all ${link.is_active ? "border-border bg-background" : "border-border/50 bg-muted/20 opacity-70"}`}>
+      {/* Header row */}
+      <div className="flex items-center gap-3 p-3.5">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold text-foreground truncate">{link.label}</p>
+            <Badge variant="outline" className={`text-[9px] font-bold ${link.is_active ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-muted text-muted-foreground"}`}>
+              {link.is_active ? "Active" : "Disabled"}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-3 mt-0.5">
+            <p className="text-[10px] text-muted-foreground">
+              User: <span className="font-mono font-medium">{link.username}</span>
+            </p>
+            {exclusionCount > 0 && (
+              <Badge variant="outline" className="text-[9px] bg-amber-500/10 text-amber-600 border-amber-500/20 gap-1">
+                <Filter className="w-2.5 h-2.5" />
+                {exclusionCount} exclusion{exclusionCount > 1 ? "s" : ""}
+              </Badge>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onToggleExpand} title="Manage filters">
+            <Settings2 className={`w-3.5 h-3.5 ${expanded ? "text-primary" : ""}`} />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onCopyLink}>
+            <Copy className="w-3.5 h-3.5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onToggleActive}>
+            <Power className={`w-3.5 h-3.5 ${link.is_active ? "text-emerald-600" : "text-muted-foreground"}`} />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={onDelete}>
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Expanded filter editor */}
+      {expanded && (
+        <div className="border-t border-border p-4 bg-muted/5 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
+              <Filter className="w-3.5 h-3.5 text-amber-600" />
+              Exclusion Filters for {link.label}
+            </p>
+            {hasChanges && (
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={resetFilters} className="rounded-xl text-xs h-7">Cancel</Button>
+                <Button size="sm" onClick={saveFilters} disabled={saving} className="rounded-xl text-xs h-7 gap-1">
+                  {saving && <Loader2 className="w-3 h-3 animate-spin" />}
+                  Save
+                </Button>
+              </div>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Products/brands selected here will <strong>NOT</strong> appear in this warehouse's order view. They'll only be visible to Operations.
+          </p>
+          <ExclusionFilterEditor
+            brandIds={editBrands}
+            productIds={editProducts}
+            onBrandsChange={setEditBrands}
+            onProductsChange={setEditProducts}
+            allBrands={allBrands}
+            allProducts={allProducts}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -587,65 +589,62 @@ function ExclusionFilterEditor({
   const filteredProducts = allProducts.filter((p: any) => p.title.toLowerCase().includes(productSearch.toLowerCase()));
 
   return (
-    <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 space-y-2">
-      <div className="flex items-center gap-2">
-        <Filter className="w-3.5 h-3.5 text-amber-600" />
-        <p className="text-xs font-bold text-foreground">Exclusion Filters</p>
-        <p className="text-[10px] text-muted-foreground">— Items matching these filters will go to Operations instead</p>
-      </div>
-
+    <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 space-y-2.5">
       {/* Selected exclusions */}
       {(brandIds.length > 0 || productIds.length > 0) && (
-        <div className="flex flex-wrap gap-1.5">
-          {brandIds.map((id) => (
-            <Badge key={id} variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-500/20 gap-1 cursor-pointer" onClick={() => toggleBrand(id)}>
-              🏷 {allBrands.find((b: any) => b.id === id)?.name || id.slice(0, 8)}
-              <X className="w-2.5 h-2.5" />
-            </Badge>
-          ))}
-          {productIds.map((id) => (
-            <Badge key={id} variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-500/20 gap-1 cursor-pointer" onClick={() => toggleProduct(id)}>
-              📦 {allProducts.find((p: any) => p.id === id)?.title?.slice(0, 30) || id.slice(0, 8)}
-              <X className="w-2.5 h-2.5" />
-            </Badge>
-          ))}
+        <div>
+          <p className="text-[10px] font-semibold text-foreground mb-1.5">Currently excluded:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {brandIds.map((id) => (
+              <Badge key={id} variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-500/20 gap-1 cursor-pointer hover:bg-amber-500/20" onClick={() => toggleBrand(id)}>
+                🏷 {allBrands.find((b: any) => b.id === id)?.name || id.slice(0, 8)}
+                <X className="w-2.5 h-2.5" />
+              </Badge>
+            ))}
+            {productIds.map((id) => (
+              <Badge key={id} variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-500/20 gap-1 cursor-pointer hover:bg-amber-500/20" onClick={() => toggleProduct(id)}>
+                📦 {(allProducts.find((p: any) => p.id === id)?.title || id).slice(0, 35)}
+                <X className="w-2.5 h-2.5" />
+              </Badge>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-border pb-1">
-        <button onClick={() => setTab("brands")} className={`text-[11px] font-medium pb-1 border-b-2 ${tab === "brands" ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}>
-          Exclude Brands ({brandIds.length})
+      <div className="flex gap-3 border-b border-border/50 pb-1">
+        <button onClick={() => setTab("brands")} className={`text-[11px] font-semibold pb-1 border-b-2 transition-colors ${tab === "brands" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+          Brands ({brandIds.length})
         </button>
-        <button onClick={() => setTab("products")} className={`text-[11px] font-medium pb-1 border-b-2 ${tab === "products" ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}>
-          Exclude Products ({productIds.length})
+        <button onClick={() => setTab("products")} className={`text-[11px] font-semibold pb-1 border-b-2 transition-colors ${tab === "products" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+          Products ({productIds.length})
         </button>
       </div>
 
       {tab === "brands" ? (
         <div className="space-y-1.5">
-          <Input value={brandSearch} onChange={(e) => setBrandSearch(e.target.value)} placeholder="Search brands..." className="h-8 text-xs rounded-lg" />
-          <div className="max-h-36 overflow-y-auto space-y-0.5">
-            {filteredBrands.slice(0, 50).map((b: any) => (
-              <label key={b.id} className="flex items-center gap-2 px-2 py-1 hover:bg-muted/50 rounded cursor-pointer">
+          <Input value={brandSearch} onChange={(e) => setBrandSearch(e.target.value)} placeholder="Search brands to exclude..." className="h-8 text-xs rounded-lg" />
+          <div className="max-h-40 overflow-y-auto space-y-0.5 pr-1">
+            {filteredBrands.slice(0, 80).map((b: any) => (
+              <label key={b.id} className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded-lg cursor-pointer transition-colors">
                 <Checkbox checked={brandIds.includes(b.id)} onCheckedChange={() => toggleBrand(b.id)} className="h-3.5 w-3.5" />
                 <span className="text-xs text-foreground">{b.name}</span>
               </label>
             ))}
-            {filteredBrands.length === 0 && <p className="text-[10px] text-muted-foreground py-2 text-center">No brands found</p>}
+            {filteredBrands.length === 0 && <p className="text-[10px] text-muted-foreground py-3 text-center">No brands found</p>}
           </div>
         </div>
       ) : (
         <div className="space-y-1.5">
-          <Input value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Search products..." className="h-8 text-xs rounded-lg" />
-          <div className="max-h-36 overflow-y-auto space-y-0.5">
-            {filteredProducts.slice(0, 50).map((p: any) => (
-              <label key={p.id} className="flex items-center gap-2 px-2 py-1 hover:bg-muted/50 rounded cursor-pointer">
+          <Input value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Search products to exclude..." className="h-8 text-xs rounded-lg" />
+          <div className="max-h-40 overflow-y-auto space-y-0.5 pr-1">
+            {filteredProducts.slice(0, 80).map((p: any) => (
+              <label key={p.id} className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded-lg cursor-pointer transition-colors">
                 <Checkbox checked={productIds.includes(p.id)} onCheckedChange={() => toggleProduct(p.id)} className="h-3.5 w-3.5" />
                 <span className="text-xs text-foreground truncate">{p.title}</span>
               </label>
             ))}
-            {filteredProducts.length === 0 && <p className="text-[10px] text-muted-foreground py-2 text-center">No products found</p>}
+            {filteredProducts.length === 0 && <p className="text-[10px] text-muted-foreground py-3 text-center">No products found</p>}
           </div>
         </div>
       )}

@@ -165,13 +165,13 @@ Deno.serve(async (req) => {
       for (const order of orders || []) {
         const orderItems = (items || []).filter((i: any) => i.order_id === order.id);
         
-        // Split items into warehouse items vs excluded items
+        // Only include non-excluded items
         const warehouseItems: any[] = [];
-        const excludedItems: any[] = [];
 
         for (const item of orderItems) {
+          if (isExcludedItem(item.product_id)) continue;
           const product = productMap.get(item.product_id);
-          const mapped = {
+          warehouseItems.push({
             id: item.id,
             quantity: item.quantity,
             product: product
@@ -182,16 +182,10 @@ Deno.serve(async (req) => {
                   image_url: imageMap.get(product.id) || null,
                 }
               : null,
-          };
-
-          if (isExcludedItem(item.product_id)) {
-            excludedItems.push(mapped);
-          } else {
-            warehouseItems.push(mapped);
-          }
+          });
         }
 
-        // Only include order if it has items for this warehouse
+        // Skip order entirely if no items for this warehouse
         if (warehouseItems.length === 0) continue;
 
         const address = order.address_id ? addressMap.get(order.address_id) : null;
@@ -202,7 +196,6 @@ Deno.serve(async (req) => {
           created_at: order.created_at,
           notes: order.notes,
           items: warehouseItems,
-          excluded_item_count: excludedItems.length,
           address: address
             ? { city: address.city, area: address.area, street: address.street, building: address.building, floor: address.floor, apartment: address.apartment, phone: address.phone, label: address.label }
             : null,
