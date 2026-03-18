@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 export default function OffersBanner() {
+  const { language } = useLanguage();
   const qc = useQueryClient();
 
   const { data: offers = [] } = useQuery({

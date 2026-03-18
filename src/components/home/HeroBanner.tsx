@@ -71,43 +71,24 @@ const HeroBanner = memo(() => {
         style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch", overscrollBehaviorX: "auto", touchAction: "pan-y pan-x" }}
       >
         {banners.map((banner: any, idx: number) => {
-          const content = (
-            <div className="w-full flex-shrink-0 snap-center relative h-full" style={{ minWidth: "100%" }}>
-              <img
-                src={banner.image_url}
-                alt={banner.title || ""}
-                className="absolute inset-0 w-full h-full object-cover"
-                draggable={false}
-                loading={idx === 0 ? "eager" : "lazy"}
-                fetchPriority={idx === 0 ? "high" : "auto"}
-                decoding={idx === 0 ? "sync" : "async"}
-              />
-            </div>
-          );
+          const imgSrc = (language === "ar" && banner.image_url_ar) ? banner.image_url_ar
+            : (language === "ku" && banner.image_url_ku) ? banner.image_url_ku
+            : banner.image_url;
+          const imgProps = {
+            src: imgSrc,
+            alt: banner.title || "",
+            className: "absolute inset-0 w-full h-full object-cover",
+            draggable: false,
+            loading: (idx === 0 ? "eager" : "lazy") as "eager" | "lazy",
+          };
 
           return banner.link_url ? (
             <Link key={banner.id} to={banner.link_url} className="w-full flex-shrink-0 snap-center relative h-full block" style={{ minWidth: "100%" }}>
-              <img
-                src={banner.image_url}
-                alt={banner.title || ""}
-                className="absolute inset-0 w-full h-full object-cover"
-                draggable={false}
-                loading={idx === 0 ? "eager" : "lazy"}
-                fetchPriority={idx === 0 ? "high" : "auto"}
-                decoding={idx === 0 ? "sync" : "async"}
-              />
+              <img {...imgProps} />
             </Link>
           ) : (
             <div key={banner.id} className="w-full flex-shrink-0 snap-center relative h-full" style={{ minWidth: "100%" }}>
-              <img
-                src={banner.image_url}
-                alt={banner.title || ""}
-                className="absolute inset-0 w-full h-full object-cover"
-                draggable={false}
-                loading={idx === 0 ? "eager" : "lazy"}
-                fetchPriority={idx === 0 ? "high" : "auto"}
-                decoding={idx === 0 ? "sync" : "async"}
-              />
+              <img {...imgProps} />
             </div>
           );
         })}
