@@ -199,7 +199,7 @@ const ProductPage = () => {
         <div className="md:grid md:grid-cols-2 md:gap-8 md:px-6 md:mt-2">
           {/* Image Gallery */}
           <div className="relative md:sticky md:top-24 md:self-start">
-            <div ref={sliderRef} onScroll={handleScroll} className="flex snap-x snap-mandatory overflow-x-auto no-scrollbar md:rounded-2xl md:overflow-hidden" style={{ scrollbarWidth: "none" }}>
+            <div ref={sliderRef} onScroll={handleScroll} className="flex snap-x snap-mandatory overflow-x-auto no-scrollbar md:rounded-2xl md:overflow-hidden" style={{ scrollbarWidth: "none", touchAction: "pan-x" }}>
               {images.map((img, idx) => (
                 <div key={idx} className="w-full flex-shrink-0 snap-center aspect-square bg-gradient-to-br from-secondary to-muted cursor-zoom-in" onClick={() => { setZoomIndex(idx); setZoomOpen(true); }}>
                   <img src={img} alt={`${product.title} ${idx + 1}`} className="w-full h-full object-cover" />
