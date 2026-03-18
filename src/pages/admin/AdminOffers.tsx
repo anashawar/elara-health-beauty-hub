@@ -301,6 +301,9 @@ export default function AdminOffers() {
               </div>
 
               {/* Banner Images by Language */}
+              <p className="text-[10px] text-muted-foreground -mb-1">
+                📐 Recommended: 1200×400px (3:1 ratio) · WebP or PNG · Under 500KB for best performance
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {renderImageUpload("English 🇬🇧", "en", previewEn, "image_url", fileRefEn as any, setPreviewEn, true)}
                 {renderImageUpload("Arabic 🇮🇶", "ar", previewAr, "image_url_ar", fileRefAr as any, setPreviewAr)}
