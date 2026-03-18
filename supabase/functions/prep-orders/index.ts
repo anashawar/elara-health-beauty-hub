@@ -89,11 +89,11 @@ Deno.serve(async (req) => {
       return json({ error: "Invalid action" }, 400);
     }
 
-    // --- GET orders ---
+    // --- GET requests ---
     if (req.method === "GET") {
       const { data: tokenRow } = await supabase
         .from("prep_access_tokens")
-        .select("id, is_active, excluded_brand_ids, excluded_product_ids")
+        .select("id, is_active, excluded_brand_ids, excluded_product_ids, label")
         .eq("token", token)
         .eq("is_active", true)
         .maybeSingle();
@@ -103,6 +103,194 @@ Deno.serve(async (req) => {
       const excludedBrandIds: string[] = tokenRow.excluded_brand_ids || [];
       const excludedProductIds: string[] = tokenRow.excluded_product_ids || [];
 
+      const action = url.searchParams.get("action");
+
+      // --- COSTS SUMMARY endpoint ---
+      if (action === "costs-summary") {
+        const dateFrom = url.searchParams.get("from") || "";
+        const dateTo = url.searchParams.get("to") || "";
+
+        let query = supabase
+          .from("orders")
+          .select("id, status, created_at, user_id")
+          .not("status", "eq", "cancelled");
+
+        if (dateFrom) query = query.gte("created_at", dateFrom);
+        if (dateTo) query = query.lte("created_at", dateTo + "T23:59:59.999Z");
+
+        const { data: orders, error: ordersErr } = await query.order("created_at", { ascending: false });
+        if (ordersErr) throw ordersErr;
+
+        if (!orders || orders.length === 0) {
+          return json({ orders: [], summary: { total_cost: 0, total_orders: 0, total_items: 0 } });
+        }
+
+        const orderIds = orders.map((o: any) => o.id);
+
+        const { data: items } = await supabase
+          .from("order_items")
+          .select("id, order_id, product_id, quantity, price")
+          .in("order_id", orderIds);
+
+        const productIds = [...new Set((items || []).map((i: any) => i.product_id))];
+
+        const { data: products } = await supabase
+          .from("products")
+          .select("id, title, brand_id")
+          .in("id", productIds);
+
+        const { data: costs } = await supabase
+          .from("product_costs")
+          .select("product_id, cost")
+          .in("product_id", productIds);
+
+        const productMap = new Map((products || []).map((p: any) => [p.id, p]));
+        const costMap = new Map((costs || []).map((c: any) => [c.product_id, c.cost]));
+
+        const isExcludedItem = (productId: string): boolean => {
+          if (excludedProductIds.includes(productId)) return true;
+          const product = productMap.get(productId);
+          if (product && product.brand_id && excludedBrandIds.includes(product.brand_id)) return true;
+          return false;
+        };
+
+        let totalCost = 0;
+        let totalItems = 0;
+        let validOrderCount = 0;
+
+        const orderSummaries: any[] = [];
+
+        for (const order of orders) {
+          const orderItems = (items || []).filter((i: any) => i.order_id === order.id);
+          let orderCost = 0;
+          let orderItemCount = 0;
+          const itemDetails: any[] = [];
+
+          for (const item of orderItems) {
+            if (isExcludedItem(item.product_id)) continue;
+            const cost = costMap.get(item.product_id) || 0;
+            const itemTotalCost = cost * item.quantity;
+            orderCost += itemTotalCost;
+            orderItemCount += item.quantity;
+            const product = productMap.get(item.product_id);
+            itemDetails.push({
+              product_id: item.product_id,
+              title: product?.title || "Unknown",
+              quantity: item.quantity,
+              unit_cost: cost,
+              total_cost: itemTotalCost,
+              sale_price: item.price,
+            });
+          }
+
+          if (orderItemCount === 0) continue;
+
+          validOrderCount++;
+          totalCost += orderCost;
+          totalItems += orderItemCount;
+
+          orderSummaries.push({
+            id: order.id,
+            created_at: order.created_at,
+            status: order.status,
+            total_cost: orderCost,
+            item_count: orderItemCount,
+            items: itemDetails,
+          });
+        }
+
+        return json({
+          orders: orderSummaries,
+          summary: {
+            total_cost: totalCost,
+            total_orders: validOrderCount,
+            total_items: totalItems,
+          },
+        });
+      }
+
+      // --- ANALYTICS endpoint ---
+      if (action === "analytics") {
+        const dateFrom = url.searchParams.get("from") || "";
+        const dateTo = url.searchParams.get("to") || "";
+
+        let query = supabase
+          .from("orders")
+          .select("id, status, created_at")
+          .not("status", "eq", "cancelled");
+
+        if (dateFrom) query = query.gte("created_at", dateFrom);
+        if (dateTo) query = query.lte("created_at", dateTo + "T23:59:59.999Z");
+
+        const { data: orders, error: ordersErr } = await query.order("created_at", { ascending: false });
+        if (ordersErr) throw ordersErr;
+
+        if (!orders || orders.length === 0) {
+          return json({
+            total_orders: 0,
+            status_breakdown: {},
+            orders_by_day: [],
+          });
+        }
+
+        const orderIds = orders.map((o: any) => o.id);
+        const { data: items } = await supabase
+          .from("order_items")
+          .select("order_id, product_id, quantity")
+          .in("order_id", orderIds);
+
+        const productIds = [...new Set((items || []).map((i: any) => i.product_id))];
+        const { data: products } = await supabase
+          .from("products")
+          .select("id, brand_id")
+          .in("id", productIds);
+
+        const productMap = new Map((products || []).map((p: any) => [p.id, p]));
+
+        const isExcludedItem = (productId: string): boolean => {
+          if (excludedProductIds.includes(productId)) return true;
+          const product = productMap.get(productId);
+          if (product && product.brand_id && excludedBrandIds.includes(product.brand_id)) return true;
+          return false;
+        };
+
+        // Count valid orders (those with at least one non-excluded item)
+        const validOrderIds = new Set<string>();
+        let totalItems = 0;
+        for (const item of items || []) {
+          if (!isExcludedItem(item.product_id)) {
+            validOrderIds.add(item.order_id);
+            totalItems += item.quantity;
+          }
+        }
+
+        const validOrders = orders.filter((o: any) => validOrderIds.has(o.id));
+
+        // Status breakdown
+        const statusBreakdown: Record<string, number> = {};
+        for (const o of validOrders) {
+          statusBreakdown[o.status] = (statusBreakdown[o.status] || 0) + 1;
+        }
+
+        // Orders by day
+        const dayMap = new Map<string, number>();
+        for (const o of validOrders) {
+          const day = o.created_at.split("T")[0];
+          dayMap.set(day, (dayMap.get(day) || 0) + 1);
+        }
+        const ordersByDay = [...dayMap.entries()]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([date, count]) => ({ date, count }));
+
+        return json({
+          total_orders: validOrders.length,
+          total_items: totalItems,
+          status_breakdown: statusBreakdown,
+          orders_by_day: ordersByDay,
+        });
+      }
+
+      // --- DEFAULT: GET orders ---
       const statusFilter = url.searchParams.get("status") || "processing";
       const statuses = statusFilter.split(",").map((s) => s.trim());
 
@@ -147,7 +335,14 @@ Deno.serve(async (req) => {
         .in("product_id", productIds)
         .order("sort_order", { ascending: true });
 
+      // Fetch product costs
+      const { data: costs } = await supabase
+        .from("product_costs")
+        .select("product_id, cost")
+        .in("product_id", productIds);
+
       const productMap = new Map((products || []).map((p: any) => [p.id, p]));
+      const costMap = new Map((costs || []).map((c: any) => [c.product_id, c.cost]));
       const imageMap = new Map<string, string[]>();
       for (const img of images || []) {
         if (!imageMap.has(img.product_id)) imageMap.set(img.product_id, []);
@@ -181,10 +376,13 @@ Deno.serve(async (req) => {
         for (const item of orderItems) {
           if (isExcludedItem(item.product_id)) continue;
           const product = productMap.get(item.product_id);
+          const cost = costMap.get(item.product_id) || 0;
           warehouseItems.push({
             id: item.id,
             quantity: item.quantity,
             price: item.price,
+            cost: cost,
+            total_cost: cost * item.quantity,
             product: product
               ? {
                   id: product.id,
@@ -200,6 +398,7 @@ Deno.serve(async (req) => {
         if (warehouseItems.length === 0) continue;
 
         const address = order.address_id ? addressMap.get(order.address_id) : null;
+        const orderTotalCost = warehouseItems.reduce((s: number, i: any) => s + i.total_cost, 0);
 
         enrichedOrders.push({
           id: order.id,
@@ -208,6 +407,7 @@ Deno.serve(async (req) => {
           notes: order.notes,
           customer_name: profileMap.get(order.user_id) || "Customer",
           payment_method: order.payment_method || "cod",
+          total_cost: orderTotalCost,
           items: warehouseItems,
           address: address
             ? { city: address.city, area: address.area, street: address.street, building: address.building, floor: address.floor, apartment: address.apartment, phone: address.phone, label: address.label }
