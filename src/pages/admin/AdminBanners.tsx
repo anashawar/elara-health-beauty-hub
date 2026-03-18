@@ -130,7 +130,7 @@ export default function AdminBanners() {
               <Plus className="h-4 w-4 mr-1.5" />Add
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl !left-[50vw] !top-[50vh] !-translate-x-1/2 !-translate-y-1/2 !fixed max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editing ? "Edit Banner" : "Add Banner"}</DialogTitle>
             </DialogHeader>
