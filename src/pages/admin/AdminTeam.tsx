@@ -548,33 +548,78 @@ function WarehouseCard({
 
       {/* Expanded filter editor */}
       {expanded && (
-        <div className="border-t border-border p-4 bg-muted/5 space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="border-t border-border p-4 bg-muted/5 space-y-4">
+          {/* Account credentials */}
+          <div className="space-y-2.5">
             <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <Filter className="w-3.5 h-3.5 text-amber-600" />
-              Exclusion Filters for {link.label}
+              <Pencil className="w-3.5 h-3.5 text-primary" />
+              Account Settings
             </p>
-            {hasChanges && (
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={resetFilters} className="rounded-xl text-xs h-7">Cancel</Button>
-                <Button size="sm" onClick={saveFilters} disabled={saving} className="rounded-xl text-xs h-7 gap-1">
-                  {saving && <Loader2 className="w-3 h-3 animate-spin" />}
-                  Save
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Label</label>
+                <Input value={editLabel} onChange={(e) => setEditLabel(e.target.value)} className="h-8 text-xs rounded-lg" />
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Username</label>
+                <Input value={editUsername} onChange={(e) => setEditUsername(e.target.value)} className="h-8 text-xs rounded-lg font-mono" />
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">New Password</label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    placeholder="Leave empty to keep"
+                    className="h-8 text-xs rounded-lg pr-8"
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+            {hasCredChanges && (
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => { setEditUsername(link.username); setEditPassword(""); setEditLabel(link.label); }} className="rounded-xl text-xs h-7">Cancel</Button>
+                <Button size="sm" onClick={saveCredentials} disabled={savingCreds} className="rounded-xl text-xs h-7 gap-1">
+                  {savingCreds && <Loader2 className="w-3 h-3 animate-spin" />}
+                  Save Account
                 </Button>
               </div>
             )}
           </div>
-          <p className="text-[10px] text-muted-foreground">
-            Products/brands selected here will <strong>NOT</strong> appear in this warehouse's order view. They'll only be visible to Operations.
-          </p>
-          <ExclusionFilterEditor
-            brandIds={editBrands}
-            productIds={editProducts}
-            onBrandsChange={setEditBrands}
-            onProductsChange={setEditProducts}
-            allBrands={allBrands}
-            allProducts={allProducts}
-          />
+
+          {/* Exclusion filters */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <Filter className="w-3.5 h-3.5 text-amber-600" />
+                Exclusion Filters
+              </p>
+              {hasFilterChanges && (
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={resetFilters} className="rounded-xl text-xs h-7">Cancel</Button>
+                  <Button size="sm" onClick={saveFilters} disabled={saving} className="rounded-xl text-xs h-7 gap-1">
+                    {saving && <Loader2 className="w-3 h-3 animate-spin" />}
+                    Save Filters
+                  </Button>
+                </div>
+              )}
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Products/brands selected here will <strong>NOT</strong> appear in this warehouse's order view.
+            </p>
+            <ExclusionFilterEditor
+              brandIds={editBrands}
+              productIds={editProducts}
+              onBrandsChange={setEditBrands}
+              onProductsChange={setEditProducts}
+              allBrands={allBrands}
+              allProducts={allProducts}
+            />
+          </div>
         </div>
       )}
     </div>
