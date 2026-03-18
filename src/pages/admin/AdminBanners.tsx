@@ -181,7 +181,7 @@ export default function AdminBanners() {
               <Plus className="h-4 w-4 mr-1.5" />Add
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-h-[90vh] overflow-y-auto" style={{ maxWidth: '672px' }}>
+          <DialogContent className="w-[min(96vw,920px)] max-w-none max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editing ? "Edit Banner" : "Add Banner"}</DialogTitle>
             </DialogHeader>
