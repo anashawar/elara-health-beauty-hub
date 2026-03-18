@@ -10,10 +10,12 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-const statuses = ["pending", "in_progress", "shipped", "on_the_way", "delivered", "cancelled"];
+const statuses = ["pending", "processing", "prepared", "in_progress", "shipped", "on_the_way", "delivered", "cancelled"];
 
 const statusLabels: Record<string, string> = {
   pending: "Pending",
+  processing: "Processing",
+  prepared: "Prepared",
   in_progress: "In Progress",
   shipped: "Shipped",
   on_the_way: "On the Way",
@@ -23,10 +25,12 @@ const statusLabels: Record<string, string> = {
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800 border-amber-200",
-  in_progress: "bg-violet-100 text-violet-800 border-violet-200",
+  processing: "bg-violet-100 text-violet-800 border-violet-200",
+  prepared: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  in_progress: "bg-indigo-100 text-indigo-800 border-indigo-200",
   shipped: "bg-cyan-100 text-cyan-800 border-cyan-200",
   on_the_way: "bg-blue-100 text-blue-800 border-blue-200",
-  delivered: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  delivered: "bg-green-100 text-green-800 border-green-200",
   cancelled: "bg-red-100 text-red-800 border-red-200",
 };
 
