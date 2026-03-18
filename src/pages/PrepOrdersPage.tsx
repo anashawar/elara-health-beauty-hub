@@ -52,6 +52,7 @@ interface PrepOrder {
   created_at: string;
   notes: string | null;
   items: PrepItem[];
+  excluded_item_count?: number;
   address: PrepAddress | null;
 }
 
