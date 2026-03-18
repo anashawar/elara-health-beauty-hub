@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
 
       const { data: orders, error: ordersErr } = await supabase
         .from("orders")
-        .select("id, status, created_at, notes, address_id")
+        .select("id, status, created_at, notes, address_id, user_id, payment_method")
         .in("status", statuses)
         .order("created_at", { ascending: true });
       if (ordersErr) throw ordersErr;
@@ -116,14 +116,26 @@ Deno.serve(async (req) => {
       const orderIds = (orders || []).map((o: any) => o.id);
       if (orderIds.length === 0) return json({ orders: [] });
 
+      // Fetch user profiles for customer names
+      const userIds = [...new Set((orders || []).map((o: any) => o.user_id))];
+      let profileMap = new Map<string, string>();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, phone")
+          .in("user_id", userIds);
+        for (const p of profiles || []) {
+          profileMap.set(p.user_id, p.full_name || p.phone || "Customer");
+        }
+      }
+
       const { data: items } = await supabase
         .from("order_items")
-        .select("id, order_id, product_id, quantity")
+        .select("id, order_id, product_id, quantity, price")
         .in("order_id", orderIds);
 
       const productIds = [...new Set((items || []).map((i: any) => i.product_id))];
       
-      // Fetch products WITH brand_id so we can filter by brand
       const { data: products } = await supabase
         .from("products")
         .select("id, title, slug, volume_ml, volume_unit, brand_id")
@@ -136,9 +148,10 @@ Deno.serve(async (req) => {
         .order("sort_order", { ascending: true });
 
       const productMap = new Map((products || []).map((p: any) => [p.id, p]));
-      const imageMap = new Map<string, string>();
+      const imageMap = new Map<string, string[]>();
       for (const img of images || []) {
-        if (!imageMap.has(img.product_id)) imageMap.set(img.product_id, img.image_url);
+        if (!imageMap.has(img.product_id)) imageMap.set(img.product_id, []);
+        imageMap.get(img.product_id)!.push(img.image_url);
       }
 
       // Fetch addresses
@@ -152,7 +165,6 @@ Deno.serve(async (req) => {
         addressMap = new Map((addresses || []).map((a: any) => [a.id, a]));
       }
 
-      // Determine which items are excluded for this warehouse
       const isExcludedItem = (productId: string): boolean => {
         if (excludedProductIds.includes(productId)) return true;
         const product = productMap.get(productId);
@@ -164,8 +176,6 @@ Deno.serve(async (req) => {
 
       for (const order of orders || []) {
         const orderItems = (items || []).filter((i: any) => i.order_id === order.id);
-        
-        // Only include non-excluded items
         const warehouseItems: any[] = [];
 
         for (const item of orderItems) {
@@ -174,18 +184,19 @@ Deno.serve(async (req) => {
           warehouseItems.push({
             id: item.id,
             quantity: item.quantity,
+            price: item.price,
             product: product
               ? {
                   id: product.id,
                   title: product.title,
                   volume: product.volume_ml ? `${product.volume_ml}${product.volume_unit || "ml"}` : null,
-                  image_url: imageMap.get(product.id) || null,
+                  image_url: imageMap.get(product.id)?.[0] || null,
+                  all_images: imageMap.get(product.id) || [],
                 }
               : null,
           });
         }
 
-        // Skip order entirely if no items for this warehouse
         if (warehouseItems.length === 0) continue;
 
         const address = order.address_id ? addressMap.get(order.address_id) : null;
@@ -195,6 +206,8 @@ Deno.serve(async (req) => {
           status: order.status,
           created_at: order.created_at,
           notes: order.notes,
+          customer_name: profileMap.get(order.user_id) || "Customer",
+          payment_method: order.payment_method || "cod",
           items: warehouseItems,
           address: address
             ? { city: address.city, area: address.area, street: address.street, building: address.building, floor: address.floor, apartment: address.apartment, phone: address.phone, label: address.label }
