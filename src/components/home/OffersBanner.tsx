@@ -71,7 +71,7 @@ export default function OffersBanner() {
           <Link to={linkTo} className="block relative overflow-hidden rounded-3xl shadow-float group">
             <div className="relative h-[160px] md:h-[200px]">
               <img
-                src={offer.image_url}
+                src={offerImgSrc}
                 alt={offer.title || ""}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
               />
