@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Loader2, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ImageIcon, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface BannerForm { id?: string; title: string; subtitle: string; image_url: string; link_url: string; is_active: boolean; sort_order: number; }
@@ -17,6 +17,9 @@ export default function AdminBanners() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<BannerForm>(emptyForm);
   const [editing, setEditing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: banners = [], isLoading } = useQuery({
     queryKey: ["admin-banners"],
@@ -26,6 +29,49 @@ export default function AdminBanners() {
       return data;
     },
   });
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const ext = file.name.split(".").pop() || "webp";
+    const path = `banners/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("product-images").upload(path, file, { upsert: true });
+    if (error) throw error;
+    const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+
+    // Show local preview immediately
+    setPreviewUrl(URL.createObjectURL(file));
+    setUploading(true);
+
+    try {
+      const url = await uploadImage(file);
+      setForm((f) => ({ ...f, image_url: url }));
+      toast.success("Image uploaded!");
+    } catch (err: any) {
+      toast.error("Upload failed: " + err.message);
+      setPreviewUrl(null);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const clearImage = () => {
+    setForm((f) => ({ ...f, image_url: "" }));
+    setPreviewUrl(null);
+    if (fileRef.current) fileRef.current.value = "";
+  };
 
   const save = useMutation({
     mutationFn: async (f: BannerForm) => {
@@ -38,7 +84,15 @@ export default function AdminBanners() {
         if (error) throw error;
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-banners"] }); qc.invalidateQueries({ queryKey: ["banners"] }); toast.success("Saved"); setOpen(false); setForm(emptyForm); setEditing(false); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-banners"] });
+      qc.invalidateQueries({ queryKey: ["banners"] });
+      toast.success("Saved");
+      setOpen(false);
+      setForm(emptyForm);
+      setEditing(false);
+      setPreviewUrl(null);
+    },
     onError: (e) => toast.error(e.message),
   });
 
@@ -48,6 +102,21 @@ export default function AdminBanners() {
     onError: (e) => toast.error(e.message),
   });
 
+  const openDialog = (banner?: any) => {
+    if (banner) {
+      setForm({ id: banner.id, title: banner.title || "", subtitle: banner.subtitle || "", image_url: banner.image_url, link_url: banner.link_url || "", is_active: banner.is_active ?? true, sort_order: banner.sort_order || 0 });
+      setPreviewUrl(banner.image_url);
+      setEditing(true);
+    } else {
+      setForm(emptyForm);
+      setPreviewUrl(null);
+      setEditing(false);
+    }
+    setOpen(true);
+  };
+
+  const displayPreview = previewUrl || form.image_url;
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -55,27 +124,86 @@ export default function AdminBanners() {
           <h1 className="text-2xl font-display font-bold text-foreground">Banners</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{banners.length} banners</p>
         </div>
-        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setForm(emptyForm); setEditing(false); } }}>
-          <DialogTrigger asChild><Button size="sm" className="rounded-xl"><Plus className="h-4 w-4 mr-1.5" />Add</Button></DialogTrigger>
-          <DialogContent className="w-[min(96vw,760px)] max-w-none max-h-[92vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>{editing ? "Edit Banner" : "Add Banner"}</DialogTitle></DialogHeader>
-            <div className="grid gap-3 mt-2">
-              <div><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-              <div><Label>Subtitle</Label><Input value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} /></div>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setForm(emptyForm); setEditing(false); setPreviewUrl(null); } }}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="rounded-xl" onClick={() => openDialog()}>
+              <Plus className="h-4 w-4 mr-1.5" />Add
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{editing ? "Edit Banner" : "Add Banner"}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 mt-2">
+              {/* Image upload area */}
               <div>
-                <Label>Image URL *</Label>
-                <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
-                <p className="text-[11px] text-muted-foreground mt-1">📐 Recommended: <strong>1200×400px</strong> (3:1 ratio) · PNG or WebP · Max 500KB · The entire banner is this image — include all text/CTAs in the design</p>
+                <Label className="mb-2 block">Banner Image *</Label>
+                {displayPreview ? (
+                  <div className="relative rounded-xl overflow-hidden border border-border bg-muted">
+                    <img src={displayPreview} alt="Preview" className="w-full h-48 object-cover" />
+                    <div className="absolute top-2 right-2 flex gap-1.5">
+                      <Button size="icon" variant="secondary" className="h-8 w-8 rounded-lg shadow-md" onClick={() => fileRef.current?.click()}>
+                        <Upload className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button size="icon" variant="secondary" className="h-8 w-8 rounded-lg shadow-md" onClick={clearImage}>
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                    {uploading && (
+                      <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    className="w-full h-48 rounded-xl border-2 border-dashed border-border hover:border-primary/40 bg-muted/30 hover:bg-muted/50 transition-colors flex flex-col items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {uploading ? (
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 text-muted-foreground/40" />
+                        <p className="text-sm font-medium text-muted-foreground">Click to upload image</p>
+                        <p className="text-[10px] text-muted-foreground/60">PNG, JPG, WebP · Max 5MB · 1200×400px recommended</p>
+                      </>
+                    )}
+                  </button>
+                )}
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
               </div>
-              <div><Label>Link URL</Label><Input value={form.link_url} onChange={(e) => setForm({ ...form, link_url: e.target.value })} /></div>
-              <div className="grid grid-cols-2 gap-3 items-end">
-                <div><Label>Sort Order</Label><Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: +e.target.value })} /></div>
-                <label className="flex items-center gap-2 text-sm pb-2">
-                  <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} /> Active
-                </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label>Title</Label>
+                  <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="rounded-xl mt-1" />
+                </div>
+                <div>
+                  <Label>Subtitle</Label>
+                  <Input value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} className="rounded-xl mt-1" />
+                </div>
               </div>
-              <Button className="rounded-xl" onClick={() => save.mutate(form)} disabled={!form.image_url || save.isPending}>
-                {save.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}{editing ? "Update" : "Create"}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label>Link URL</Label>
+                  <Input value={form.link_url} onChange={(e) => setForm({ ...form, link_url: e.target.value })} placeholder="/category/skincare" className="rounded-xl mt-1" />
+                </div>
+                <div>
+                  <Label>Sort Order</Label>
+                  <Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: +e.target.value })} className="rounded-xl mt-1" />
+                </div>
+              </div>
+
+              <label className="flex items-center gap-2 text-sm">
+                <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} /> Active
+              </label>
+
+              <Button className="rounded-xl" onClick={() => save.mutate(form)} disabled={!form.image_url || save.isPending || uploading}>
+                {save.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}
+                {editing ? "Update Banner" : "Create Banner"}
               </Button>
             </div>
           </DialogContent>
@@ -104,13 +232,12 @@ export default function AdminBanners() {
                     <p className="text-[10px] text-muted-foreground mt-1">Order: {b.sort_order}</p>
                   </div>
                   <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-xl" onClick={() => {
-                      setForm({ id: b.id, title: b.title || "", subtitle: b.subtitle || "", image_url: b.image_url, link_url: b.link_url || "", is_active: b.is_active ?? true, sort_order: b.sort_order || 0 });
-                      setEditing(true); setOpen(true);
-                    }}><Pencil className="h-3.5 w-3.5" /></Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/5" onClick={() => {
-                      if (confirm("Delete?")) del.mutate(b.id);
-                    }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-xl" onClick={() => openDialog(b)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/5" onClick={() => { if (confirm("Delete?")) del.mutate(b.id); }}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               </div>
