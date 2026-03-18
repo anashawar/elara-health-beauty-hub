@@ -15,6 +15,7 @@ import {
   Languages,
   ImagePlus,
   Headphones,
+  Users,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -32,23 +33,32 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin, type AppRole } from "@/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import elaraLogo from "@/assets/elara-logo.png";
 
-const navItems = [
-  { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-  { title: "Products", url: "/admin/products", icon: Package },
-  { title: "Orders", url: "/admin/orders", icon: ShoppingCart },
-  { title: "Offers", url: "/admin/offers", icon: Percent },
-  { title: "Revenue", url: "/admin/revenue", icon: BarChart3 },
-  { title: "Categories", url: "/admin/categories", icon: FolderTree },
-  { title: "Brands", url: "/admin/brands", icon: Tag },
-  { title: "Banners", url: "/admin/banners", icon: Image },
-  { title: "Coupons", url: "/admin/coupons", icon: Ticket },
-  { title: "Notifications", url: "/admin/notifications", icon: Bell },
-  { title: "Translate", url: "/admin/translate", icon: Languages },
-  { title: "Image Finder", url: "/admin/images", icon: ImagePlus },
-  { title: "Support Chat", url: "/admin/support", icon: Headphones },
+interface NavItem {
+  title: string;
+  url: string;
+  icon: any;
+  roles: AppRole[]; // which roles can see this item
+}
+
+const navItems: NavItem[] = [
+  { title: "Dashboard", url: "/admin", icon: LayoutDashboard, roles: ["admin", "operations"] },
+  { title: "Products", url: "/admin/products", icon: Package, roles: ["admin", "operations", "data_entry"] },
+  { title: "Orders", url: "/admin/orders", icon: ShoppingCart, roles: ["admin", "operations"] },
+  { title: "Offers", url: "/admin/offers", icon: Percent, roles: ["admin", "operations"] },
+  { title: "Revenue", url: "/admin/revenue", icon: BarChart3, roles: ["admin"] },
+  { title: "Categories", url: "/admin/categories", icon: FolderTree, roles: ["admin", "operations", "data_entry"] },
+  { title: "Brands", url: "/admin/brands", icon: Tag, roles: ["admin", "operations", "data_entry"] },
+  { title: "Banners", url: "/admin/banners", icon: Image, roles: ["admin", "operations"] },
+  { title: "Coupons", url: "/admin/coupons", icon: Ticket, roles: ["admin", "operations"] },
+  { title: "Notifications", url: "/admin/notifications", icon: Bell, roles: ["admin", "operations"] },
+  { title: "Translate", url: "/admin/translate", icon: Languages, roles: ["admin", "operations", "data_entry"] },
+  { title: "Image Finder", url: "/admin/images", icon: ImagePlus, roles: ["admin", "operations", "data_entry"] },
+  { title: "Support Chat", url: "/admin/support", icon: Headphones, roles: ["admin", "operations"] },
+  { title: "Team", url: "/admin/team", icon: Users, roles: ["admin"] },
 ];
 
 export default function AdminSidebar() {
@@ -57,6 +67,9 @@ export default function AdminSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { role } = useAdmin();
+
+  const visibleItems = navItems.filter((item) => role && item.roles.includes(role));
 
   const isActive = (path: string) =>
     path === "/admin"
@@ -88,7 +101,7 @@ export default function AdminSidebar() {
           <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/70 font-bold">Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild

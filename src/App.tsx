@@ -145,6 +145,7 @@ const App = () => (
                 <Route path="translate" element={<AdminTranslate />} />
                 <Route path="images" element={<AdminImageSearch />} />
                 <Route path="support" element={<AdminSupport />} />
+                <Route path="team" element={<AdminTeam />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
