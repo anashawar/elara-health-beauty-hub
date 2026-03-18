@@ -461,7 +461,7 @@ export default function PrepOrdersPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={fetchOrders}
+              onClick={() => fetchOrders()}
               disabled={loading}
               className="rounded-xl h-9 gap-1.5 border-border/60 text-xs"
             >
