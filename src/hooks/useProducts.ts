@@ -194,6 +194,34 @@ export function useRelatedProducts(categoryId: string | null | undefined, exclud
   });
 }
 
+/**
+ * Fetch products by brand_id — direct DB query, no client-side filtering.
+ */
+export function useBrandProducts(brandId: string | undefined) {
+  const { language } = useLanguage();
+
+  return useQuery<ProductWithRelations[]>({
+    queryKey: ["brand-products", brandId, language],
+    queryFn: async () => {
+      if (!brandId) return [];
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          *,
+          brands ( name, name_ar, name_ku ),
+          categories ( slug ),
+          product_images ( image_url, sort_order ),
+          product_tags ( tag )
+        `)
+        .eq("brand_id", brandId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []).map((p: any) => mapRawProduct(p, language));
+    },
+    enabled: !!brandId,
+  });
+}
+
 export interface CategoryRow {
   id: string;
   name: string;
