@@ -3,32 +3,27 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Eye, User, Phone, MapPin, Package, Filter, Calendar, CreditCard, Tag, StickyNote, Users } from "lucide-react";
+import { Loader2, Eye, User, Phone, MapPin, Package, Calendar, CreditCard, Tag, StickyNote, Users, Trash2, Bell, Send } from "lucide-react";
 import { formatPrice } from "@/hooks/useProducts";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Textarea } from "@/components/ui/textarea";
 
-const statuses = ["pending", "processing", "prepared", "in_progress", "shipped", "on_the_way", "delivered", "cancelled"];
+const statuses = ["processing", "prepared", "on_the_way", "delivered", "cancelled"];
 
 const statusLabels: Record<string, string> = {
-  pending: "Pending",
   processing: "Processing",
   prepared: "Prepared",
-  in_progress: "In Progress",
-  shipped: "Shipped",
   on_the_way: "On the Way",
   delivered: "Delivered",
   cancelled: "Cancelled",
 };
 
 const statusColors: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800 border-amber-200",
   processing: "bg-violet-100 text-violet-800 border-violet-200",
   prepared: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  in_progress: "bg-indigo-100 text-indigo-800 border-indigo-200",
-  shipped: "bg-cyan-100 text-cyan-800 border-cyan-200",
   on_the_way: "bg-blue-100 text-blue-800 border-blue-200",
   delivered: "bg-green-100 text-green-800 border-green-200",
   cancelled: "bg-red-100 text-red-800 border-red-200",
@@ -37,6 +32,10 @@ const statusColors: Record<string, string> = {
 export default function AdminOrders() {
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [notifyOrderId, setNotifyOrderId] = useState<string | null>(null);
+  const [notifyMessage, setNotifyMessage] = useState("");
+  const [sendingNotify, setSendingNotify] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["admin-orders"],
@@ -99,9 +98,47 @@ export default function AdminOrders() {
     onError: (e) => toast.error(e.message),
   });
 
+  const deleteOrder = useMutation({
+    mutationFn: async (id: string) => {
+      // Delete order items first, then the order
+      const { error: itemsErr } = await supabase.from("order_items").delete().eq("order_id", id);
+      if (itemsErr) throw itemsErr;
+      const { error } = await supabase.from("orders").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-orders"] });
+      toast.success("Order deleted");
+      setDeleteConfirmId(null);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleNotifyUser = async (order: any) => {
+    if (!notifyMessage.trim()) return;
+    setSendingNotify(true);
+    try {
+      const { error } = await supabase.from("notifications").insert({
+        user_id: order.user_id,
+        title: `Update on Order #${order.id.slice(0, 8).toUpperCase()}`,
+        body: notifyMessage.trim(),
+        type: "order",
+        icon: "📦",
+        link_url: "/orders",
+      });
+      if (error) throw error;
+      toast.success("Notification sent to customer");
+      setNotifyOrderId(null);
+      setNotifyMessage("");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSendingNotify(false);
+    }
+  };
+
   const filteredOrders = statusFilter === "all" ? orders : orders.filter((o: any) => o.status === statusFilter);
 
-  // Count per status
   const statusCounts: Record<string, number> = { all: orders.length };
   statuses.forEach(s => { statusCounts[s] = orders.filter((o: any) => o.status === s).length; });
 
@@ -219,6 +256,27 @@ export default function AdminOrders() {
                 <div className="flex justify-between border-t border-border pt-2 text-base font-bold"><span className="text-foreground">Total</span><span className="text-foreground">{formatPrice(o.total)}</span></div>
               </div>
             </section>
+
+            {/* Notify User */}
+            <section className="rounded-2xl border border-primary/20 bg-primary/5 p-4 shadow-sm">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.24em] text-primary">Notify Customer</p>
+              <Textarea
+                placeholder="e.g. A product in your order is out of stock, we'll replace it with..."
+                className="text-xs min-h-[60px] bg-background"
+                value={notifyOrderId === o.id ? notifyMessage : ""}
+                onFocus={() => { if (notifyOrderId !== o.id) { setNotifyOrderId(o.id); setNotifyMessage(""); } }}
+                onChange={(e) => { setNotifyOrderId(o.id); setNotifyMessage(e.target.value); }}
+              />
+              <Button
+                size="sm"
+                className="mt-2 w-full rounded-xl gap-1.5 text-xs h-8"
+                disabled={sendingNotify || !notifyMessage.trim() || notifyOrderId !== o.id}
+                onClick={() => handleNotifyUser(o)}
+              >
+                {sendingNotify ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                Send Notification
+              </Button>
+            </section>
           </div>
         </aside>
 
@@ -285,6 +343,25 @@ export default function AdminOrders() {
           </button>
         ))}
       </div>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete Order</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to permanently delete order #{deleteConfirmId?.slice(0, 8).toUpperCase()}? This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end mt-2">
+            <Button variant="outline" size="sm" onClick={() => setDeleteConfirmId(null)}>Cancel</Button>
+            <Button variant="destructive" size="sm" disabled={deleteOrder.isPending} onClick={() => deleteConfirmId && deleteOrder.mutate(deleteConfirmId)}>
+              {deleteOrder.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Trash2 className="w-3 h-3 mr-1" />}
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
@@ -357,14 +434,24 @@ export default function AdminOrders() {
                       </Select>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button size="sm" variant="outline" className="h-7 rounded-lg text-xs">
-                            <Eye className="h-3.5 w-3.5 mr-1" /> View
-                          </Button>
-                        </DialogTrigger>
-                        {renderOrderDialog(o)}
-                      </Dialog>
+                      <div className="flex items-center justify-end gap-1">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline" className="h-7 rounded-lg text-xs">
+                              <Eye className="h-3.5 w-3.5 mr-1" /> View
+                            </Button>
+                          </DialogTrigger>
+                          {renderOrderDialog(o)}
+                        </Dialog>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg"
+                          onClick={() => setDeleteConfirmId(o.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -386,7 +473,7 @@ export default function AdminOrders() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-bold text-foreground">#{o.id.slice(0, 8)}</span>
-                      <Badge className={`${statusColors[o.status] || statusColors.pending} text-[10px] font-bold border px-2 py-0.5`}>
+                      <Badge className={`${statusColors[o.status] || statusColors.processing} text-[10px] font-bold border px-2 py-0.5`}>
                         {statusLabels[o.status] || o.status}
                       </Badge>
                     </div>
@@ -444,6 +531,15 @@ export default function AdminOrders() {
                     </DialogTrigger>
                     {renderOrderDialog(o)}
                   </Dialog>
+
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
+                    onClick={() => setDeleteConfirmId(o.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               </div>
             ))}

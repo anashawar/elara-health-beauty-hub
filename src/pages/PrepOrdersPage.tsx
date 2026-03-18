@@ -206,15 +206,20 @@ export default function PrepOrdersPage() {
     if (authenticated) fetchOrders();
   }, [fetchOrders, authenticated]);
 
+  // Live sync: poll every 15s + realtime channel for instant updates
   useEffect(() => {
     if (!authenticated) return;
     const channel = supabase
       .channel("prep-orders-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
-        fetchOrders();
+        fetchOrders(true);
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    const interval = setInterval(() => fetchOrders(true), 15000);
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, [fetchOrders, authenticated]);
 
   const markPrepared = async (orderId: string) => {

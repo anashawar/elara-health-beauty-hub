@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
       const excludedBrandIds: string[] = tokenRow.excluded_brand_ids || [];
       const excludedProductIds: string[] = tokenRow.excluded_product_ids || [];
 
-      const statusFilter = url.searchParams.get("status") || "pending,processing";
+      const statusFilter = url.searchParams.get("status") || "processing";
       const statuses = statusFilter.split(",").map((s) => s.trim());
 
       const { data: orders, error: ordersErr } = await supabase
