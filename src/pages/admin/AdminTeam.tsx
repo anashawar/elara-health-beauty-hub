@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Users, Plus, Trash2, Shield, ShieldCheck, Database, Loader2, Link2, Copy, Power, Filter, X, ChevronDown, ChevronUp, Settings2 } from "lucide-react";
+import { Users, Plus, Trash2, Shield, ShieldCheck, Database, Loader2, Link2, Copy, Power, Filter, X, ChevronDown, ChevronUp, Settings2, Pencil, Eye, EyeOff } from "lucide-react";
 import { useAdmin, type AppRole } from "@/hooks/useAdmin";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -454,11 +454,17 @@ function WarehouseCard({
   const [editBrands, setEditBrands] = useState<string[]>(link.excluded_brand_ids || []);
   const [editProducts, setEditProducts] = useState<string[]>(link.excluded_product_ids || []);
   const [saving, setSaving] = useState(false);
+  const [editUsername, setEditUsername] = useState<string>(link.username || "");
+  const [editPassword, setEditPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [editLabel, setEditLabel] = useState<string>(link.label || "");
+  const [savingCreds, setSavingCreds] = useState(false);
 
   const exclusionCount = (link.excluded_brand_ids?.length || 0) + (link.excluded_product_ids?.length || 0);
-  const hasChanges =
+  const hasFilterChanges =
     JSON.stringify(editBrands.sort()) !== JSON.stringify((link.excluded_brand_ids || []).sort()) ||
     JSON.stringify(editProducts.sort()) !== JSON.stringify((link.excluded_product_ids || []).sort());
+  const hasCredChanges = editUsername !== link.username || editPassword !== "" || editLabel !== link.label;
 
   const saveFilters = async () => {
     setSaving(true);
@@ -474,6 +480,24 @@ function WarehouseCard({
       toast.error("Failed to save filters");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const saveCredentials = async () => {
+    if (!editUsername.trim()) { toast.error("Username is required"); return; }
+    setSavingCreds(true);
+    try {
+      const update: any = { username: editUsername.trim().toLowerCase(), label: editLabel.trim() };
+      if (editPassword) update.password_hash = editPassword;
+      const { error } = await (supabase.from("prep_access_tokens" as any).update(update) as any).eq("id", link.id);
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["prep-links"] });
+      setEditPassword("");
+      toast.success("Account updated!");
+    } catch {
+      toast.error("Failed to update account");
+    } finally {
+      setSavingCreds(false);
     }
   };
 
@@ -524,33 +548,78 @@ function WarehouseCard({
 
       {/* Expanded filter editor */}
       {expanded && (
-        <div className="border-t border-border p-4 bg-muted/5 space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="border-t border-border p-4 bg-muted/5 space-y-4">
+          {/* Account credentials */}
+          <div className="space-y-2.5">
             <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <Filter className="w-3.5 h-3.5 text-amber-600" />
-              Exclusion Filters for {link.label}
+              <Pencil className="w-3.5 h-3.5 text-primary" />
+              Account Settings
             </p>
-            {hasChanges && (
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={resetFilters} className="rounded-xl text-xs h-7">Cancel</Button>
-                <Button size="sm" onClick={saveFilters} disabled={saving} className="rounded-xl text-xs h-7 gap-1">
-                  {saving && <Loader2 className="w-3 h-3 animate-spin" />}
-                  Save
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Label</label>
+                <Input value={editLabel} onChange={(e) => setEditLabel(e.target.value)} className="h-8 text-xs rounded-lg" />
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Username</label>
+                <Input value={editUsername} onChange={(e) => setEditUsername(e.target.value)} className="h-8 text-xs rounded-lg font-mono" />
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">New Password</label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    placeholder="Leave empty to keep"
+                    className="h-8 text-xs rounded-lg pr-8"
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+            {hasCredChanges && (
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => { setEditUsername(link.username); setEditPassword(""); setEditLabel(link.label); }} className="rounded-xl text-xs h-7">Cancel</Button>
+                <Button size="sm" onClick={saveCredentials} disabled={savingCreds} className="rounded-xl text-xs h-7 gap-1">
+                  {savingCreds && <Loader2 className="w-3 h-3 animate-spin" />}
+                  Save Account
                 </Button>
               </div>
             )}
           </div>
-          <p className="text-[10px] text-muted-foreground">
-            Products/brands selected here will <strong>NOT</strong> appear in this warehouse's order view. They'll only be visible to Operations.
-          </p>
-          <ExclusionFilterEditor
-            brandIds={editBrands}
-            productIds={editProducts}
-            onBrandsChange={setEditBrands}
-            onProductsChange={setEditProducts}
-            allBrands={allBrands}
-            allProducts={allProducts}
-          />
+
+          {/* Exclusion filters */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <Filter className="w-3.5 h-3.5 text-amber-600" />
+                Exclusion Filters
+              </p>
+              {hasFilterChanges && (
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={resetFilters} className="rounded-xl text-xs h-7">Cancel</Button>
+                  <Button size="sm" onClick={saveFilters} disabled={saving} className="rounded-xl text-xs h-7 gap-1">
+                    {saving && <Loader2 className="w-3 h-3 animate-spin" />}
+                    Save Filters
+                  </Button>
+                </div>
+              )}
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Products/brands selected here will <strong>NOT</strong> appear in this warehouse's order view.
+            </p>
+            <ExclusionFilterEditor
+              brandIds={editBrands}
+              productIds={editProducts}
+              onBrandsChange={setEditBrands}
+              onProductsChange={setEditProducts}
+              allBrands={allBrands}
+              allProducts={allProducts}
+            />
+          </div>
         </div>
       )}
     </div>
