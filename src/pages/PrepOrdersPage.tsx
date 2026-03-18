@@ -597,7 +597,7 @@ export default function PrepOrdersPage() {
             {error && !loading && (
               <div className="py-20 text-center">
                 <p className="text-sm text-destructive">{error}</p>
-                <Button variant="outline" size="sm" onClick={fetchOrders} className="mt-3 rounded-xl">
+                <Button variant="outline" size="sm" onClick={() => fetchOrders()} className="mt-3 rounded-xl">
                   Try Again
                 </Button>
               </div>
