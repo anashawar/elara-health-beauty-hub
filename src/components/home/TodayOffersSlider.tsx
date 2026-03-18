@@ -18,14 +18,6 @@ interface Offer {
   banner_style: string;
 }
 
-const GRADIENTS = [
-  "from-[hsl(268,84%,58%)] to-[hsl(300,60%,50%)]",
-  "from-[hsl(340,70%,55%)] to-[hsl(38,70%,55%)]",
-  "from-[hsl(200,80%,50%)] to-[hsl(268,84%,58%)]",
-  "from-[hsl(150,50%,45%)] to-[hsl(200,70%,50%)]",
-];
-
-const ICONS = [Flame, Gift, Tag, Percent];
 
 export default function TodayOffersSlider() {
   const { t } = useLanguage();
