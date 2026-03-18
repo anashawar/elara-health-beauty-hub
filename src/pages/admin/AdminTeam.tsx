@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Users, Plus, Trash2, Shield, ShieldCheck, Database, Loader2, Link2, Copy, ExternalLink, Power } from "lucide-react";
+import { Users, Plus, Trash2, Shield, ShieldCheck, Database, Loader2, Link2, Copy, Power } from "lucide-react";
 import { useAdmin, type AppRole } from "@/hooks/useAdmin";
 
 interface TeamMember {
