@@ -313,9 +313,10 @@ function PrepLinksSection() {
 
   const createLink = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from("prep_access_tokens")
-        .insert({ label, created_by: user!.id } as any);
+      const { error } = await (supabase
+        .from("prep_access_tokens" as any)
+        .insert({ label, created_by: user!.id } as any) as any);
+
       if (error) throw error;
     },
     onSuccess: () => {
