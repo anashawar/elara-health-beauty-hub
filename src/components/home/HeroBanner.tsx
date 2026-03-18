@@ -1,130 +1,26 @@
 import { useState, useEffect, useRef, useCallback, memo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Gift, Truck, ShieldCheck, ArrowRight, Copy, Sparkles, Zap } from "lucide-react";
-import bannerDiscount from "@/assets/banner-discount.jpg";
-import bannerDelivery from "@/assets/banner-delivery.jpg";
-import bannerOriginal from "@/assets/banner-original.jpg";
-import bannerFastDelivery from "@/assets/banner-fast-delivery.jpg";
-import { toast } from "sonner";
-import { useLanguage } from "@/i18n/LanguageContext";
-import { useApp } from "@/context/AppContext";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-interface HeroBannerItem {
-  id: string;
-  tag: string;
-  tagIcon?: any;
-  title: string;
-  subtitle: string;
-  coupon?: string;
-  cta: string;
-  ctaLink: string;
-  image: string;
-  overlay: string;
-  isOffer?: boolean;
-  discountLabel?: string;
-}
 
 const HeroBanner = memo(() => {
   const [current, setCurrent] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const autoPlayRef = useRef<ReturnType<typeof setInterval>>();
-  const { t } = useLanguage();
-  const { setPendingCoupon } = useApp();
-  const navigate = useNavigate();
 
-  const { data: heroOffers = [] } = useQuery({
-    queryKey: ["active-offers-hero"],
+  const { data: banners = [] } = useQuery({
+    queryKey: ["banners"],
     queryFn: async () => {
-      const { data, error } = await (supabase
-        .from("offers")
-        .select("*") as any)
+      const { data, error } = await supabase
+        .from("banners")
+        .select("*")
         .eq("is_active", true)
-        .eq("banner_style", "hero")
         .order("sort_order");
       if (error) throw error;
-      const now = new Date();
-      return (data || []).filter((o: any) => {
-        if (o.ends_at && new Date(o.ends_at) < now) return false;
-        if (o.starts_at && new Date(o.starts_at) > now) return false;
-        return true;
-      });
+      return data || [];
     },
+    staleTime: 5 * 60 * 1000,
   });
-
-  // Removed realtime subscription — offers don't change frequently enough to justify
-  // a persistent WebSocket connection. The 5-min staleTime handles freshness.
-
-  const staticBanners: HeroBannerItem[] = [
-    {
-      id: "1",
-      tag: t("banner.newUserOffer"),
-      tagIcon: Gift,
-      title: t("banner.title1"),
-      subtitle: t("banner.subtitle1"),
-      coupon: "ELARA15",
-      cta: t("banner.shopNow"),
-      ctaLink: "/categories",
-      image: bannerDiscount,
-      overlay: "from-black/80 via-black/50 to-black/20",
-    },
-    {
-      id: "2",
-      tag: t("banner.freeDelivery"),
-      tagIcon: Truck,
-      title: t("banner.title2"),
-      subtitle: t("banner.subtitle2"),
-      cta: t("banner.startShopping"),
-      ctaLink: "/categories",
-      image: bannerDelivery,
-      overlay: "from-black/80 via-black/50 to-black/20",
-    },
-    {
-      id: "4",
-      tag: t("banner.quickDelivery"),
-      tagIcon: Zap,
-      title: t("banner.title4"),
-      subtitle: t("banner.subtitle4"),
-      cta: t("banner.orderNow"),
-      ctaLink: "/categories",
-      image: bannerFastDelivery,
-      overlay: "from-black/80 via-black/50 to-black/20",
-    },
-    {
-      id: "3",
-      tag: t("banner.authentic"),
-      tagIcon: ShieldCheck,
-      title: t("banner.title3"),
-      subtitle: t("banner.subtitle3"),
-      cta: t("banner.exploreBrands"),
-      ctaLink: "/categories",
-      image: bannerOriginal,
-      overlay: "from-black/80 via-black/50 to-black/20",
-    },
-  ];
-
-  const offerBanners: HeroBannerItem[] = heroOffers.map((o: any) => {
-    const discountLabel = o.discount_type === "percentage"
-      ? `${o.discount_value}% ${t("common.off")}`
-      : o.discount_type === "fixed"
-        ? `${o.discount_value.toLocaleString()} ${t("common.iqd")} ${t("common.off")}`
-        : o.discount_type === "bogo" ? t("common.buyOneGetOne") : t("common.bundleDeal");
-    return {
-      id: `offer-${o.id}`,
-      tag: discountLabel,
-      title: o.title,
-      subtitle: o.subtitle || "",
-      cta: t("common.shopNow"),
-      ctaLink: o.link_url || "/collection/offers",
-      image: o.image_url || "",
-      overlay: "from-black/80 via-black/50 to-black/20",
-      isOffer: true,
-      discountLabel,
-    };
-  });
-
-  const banners = [...offerBanners, ...staticBanners];
 
   const handleScroll = useCallback(() => {
     if (scrollRef.current) {
@@ -134,23 +30,20 @@ const HeroBanner = memo(() => {
   }, []);
 
   useEffect(() => {
-    const startAutoPlay = () => {
-      autoPlayRef.current = setInterval(() => {
-        if (scrollRef.current) {
-          const next = (Math.round(scrollRef.current.scrollLeft / scrollRef.current.offsetWidth) + 1) % banners.length;
-          scrollRef.current.scrollTo({ left: next * scrollRef.current.offsetWidth, behavior: "smooth" });
-        }
-      }, 5000);
-    };
-    startAutoPlay();
+    if (banners.length <= 1) return;
+    autoPlayRef.current = setInterval(() => {
+      if (scrollRef.current) {
+        const next = (Math.round(scrollRef.current.scrollLeft / scrollRef.current.offsetWidth) + 1) % banners.length;
+        scrollRef.current.scrollTo({ left: next * scrollRef.current.offsetWidth, behavior: "smooth" });
+      }
+    }, 5000);
     return () => clearInterval(autoPlayRef.current);
   }, [banners.length]);
 
-  const handleTouchStart = () => {
-    clearInterval(autoPlayRef.current);
-  };
+  const handleTouchStart = () => clearInterval(autoPlayRef.current);
   const handleTouchEnd = () => {
     clearInterval(autoPlayRef.current);
+    if (banners.length <= 1) return;
     autoPlayRef.current = setInterval(() => {
       if (scrollRef.current) {
         const next = (Math.round(scrollRef.current.scrollLeft / scrollRef.current.offsetWidth) + 1) % banners.length;
@@ -160,15 +53,10 @@ const HeroBanner = memo(() => {
   };
 
   const goTo = (idx: number) => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ left: idx * scrollRef.current.offsetWidth, behavior: "smooth" });
-    }
+    scrollRef.current?.scrollTo({ left: idx * scrollRef.current.offsetWidth, behavior: "smooth" });
   };
 
-  const copyCoupon = (code: string) => {
-    navigator.clipboard.writeText(code);
-    toast.success(t("banner.couponCopied", { code }));
-  };
+  if (banners.length === 0) return null;
 
   return (
     <div className="relative w-full overflow-hidden h-[248px] md:h-[320px] lg:h-[380px] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none touch-auto">
@@ -180,90 +68,62 @@ const HeroBanner = memo(() => {
         className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden no-scrollbar h-full touch-auto md:overflow-x-hidden"
         style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch", overscrollBehaviorX: "auto", touchAction: "pan-y pan-x" }}
       >
-        {banners.map((banner, idx) => (
-          <div
-            key={banner.id}
-            className="w-full flex-shrink-0 snap-center relative h-full"
-            style={{ minWidth: "100%" }}
-          >
-            {banner.image ? (
+        {banners.map((banner: any, idx: number) => {
+          const content = (
+            <div className="w-full flex-shrink-0 snap-center relative h-full" style={{ minWidth: "100%" }}>
               <img
-                src={banner.image}
-                alt=""
+                src={banner.image_url}
+                alt={banner.title || ""}
                 className="absolute inset-0 w-full h-full object-cover"
                 draggable={false}
                 loading={idx === 0 ? "eager" : "lazy"}
                 fetchPriority={idx === 0 ? "high" : "auto"}
                 decoding={idx === 0 ? "sync" : "async"}
               />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-primary/60" />
-            )}
-            <div className={`absolute inset-0 bg-gradient-to-t rtl:bg-gradient-to-t ${banner.overlay}`} />
-
-            <div className="relative h-full flex flex-col justify-end px-4 pb-5 pt-8 z-10 max-w-[92%] md:max-w-[60%] md:px-10 md:pb-12 md:pt-12">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-md text-[10px] font-bold uppercase tracking-widest text-white w-fit mb-1.5 border border-white/10">
-                {banner.isOffer ? <Sparkles className="w-3 h-3" /> : banner.tagIcon && <banner.tagIcon className="w-3 h-3" />}
-                {banner.tag}
-              </span>
-
-              <h2 className="text-[17px] md:text-[34px] font-display font-bold text-white leading-[1.12] tracking-tight">
-                {banner.title}
-              </h2>
-              <p className="text-[11px] md:text-[14px] text-white/85 mt-1 leading-snug max-w-full break-words">
-                {banner.subtitle}
-              </p>
-
-              {banner.coupon && (
-                <button
-                  onClick={() => copyCoupon(banner.coupon!)}
-                  className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white text-[11px] font-mono font-bold w-fit hover:bg-white/20 active:scale-95 transition-all"
-                >
-                  <Copy className="w-3 h-3 opacity-70" />
-                  {banner.coupon}
-                </button>
-              )}
-
-              <div className="mt-2">
-                {banner.coupon ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPendingCoupon(banner.coupon!);
-                      navigate(banner.ctaLink);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-white text-foreground text-[12px] font-semibold rounded-full w-fit hover:bg-white/90 active:scale-95 transition-all shadow-lg"
-                  >
-                    {banner.cta}
-                    <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
-                  </button>
-                ) : (
-                  <Link
-                    to={banner.ctaLink}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-white text-foreground text-[12px] font-semibold rounded-full w-fit hover:bg-white/90 active:scale-95 transition-all shadow-lg"
-                  >
-                    {banner.cta}
-                    <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
-                  </Link>
-                )}
-              </div>
             </div>
-          </div>
-        ))}
+          );
+
+          return banner.link_url ? (
+            <Link key={banner.id} to={banner.link_url} className="w-full flex-shrink-0 snap-center relative h-full block" style={{ minWidth: "100%" }}>
+              <img
+                src={banner.image_url}
+                alt={banner.title || ""}
+                className="absolute inset-0 w-full h-full object-cover"
+                draggable={false}
+                loading={idx === 0 ? "eager" : "lazy"}
+                fetchPriority={idx === 0 ? "high" : "auto"}
+                decoding={idx === 0 ? "sync" : "async"}
+              />
+            </Link>
+          ) : (
+            <div key={banner.id} className="w-full flex-shrink-0 snap-center relative h-full" style={{ minWidth: "100%" }}>
+              <img
+                src={banner.image_url}
+                alt={banner.title || ""}
+                className="absolute inset-0 w-full h-full object-cover"
+                draggable={false}
+                loading={idx === 0 ? "eager" : "lazy"}
+                fetchPriority={idx === 0 ? "high" : "auto"}
+                decoding={idx === 0 ? "sync" : "async"}
+              />
+            </div>
+          );
+        })}
       </div>
 
-      {/* Dots */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-        {banners.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => goTo(idx)}
-            className={`rounded-full transition-all duration-300 ${
-              idx === current ? "w-6 h-2 bg-white" : "w-2 h-2 bg-white/40"
-            }`}
-          />
-        ))}
-      </div>
+      {banners.length > 1 && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+          {banners.map((_: any, idx: number) => (
+            <button
+              key={idx}
+              onClick={() => goTo(idx)}
+              className={`rounded-full transition-all duration-300 ${
+                idx === current ? "w-6 h-2 bg-white" : "w-2 h-2 bg-white/40"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 });
