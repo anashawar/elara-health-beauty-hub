@@ -19,6 +19,7 @@ const pageTitles: Record<string, string> = {
   "/admin/brands": "Brands",
   "/admin/banners": "Banners",
   "/admin/coupons": "Coupons",
+  "/admin/team": "Team Management",
 };
 
 interface OrderNotification {
