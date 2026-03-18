@@ -187,6 +187,9 @@ export default function AdminBanners() {
             </DialogHeader>
             <div className="grid gap-4 mt-2">
               {/* Language image uploads */}
+              <p className="text-[10px] text-muted-foreground col-span-full -mb-1">
+                📐 Recommended: 1200×400px (3:1 ratio) · WebP or PNG · Under 500KB for best performance
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {renderImageUpload("English 🇬🇧", "en", previewUrl, "image_url", fileRef as any, setPreviewUrl, true)}
                 {renderImageUpload("Arabic 🇮🇶", "ar", previewUrlAr, "image_url_ar", fileRefAr as any, setPreviewUrlAr)}
