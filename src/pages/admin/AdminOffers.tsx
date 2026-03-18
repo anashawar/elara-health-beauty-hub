@@ -237,9 +237,9 @@ export default function AdminOffers() {
                 <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Details about this offer..." />
               </div>
 
-              {/* Banner Image */}
+              {/* Banner Images by Language */}
               <div>
-                <Label className="mb-2 block">Banner Image</Label>
+                <Label className="mb-2 block">Banner Image — English 🇬🇧</Label>
                 {imagePreview ? (
                   <div className="relative w-full h-36 rounded-xl overflow-hidden border border-border bg-muted">
                     <img src={imagePreview} className="w-full h-full object-cover" alt="" />
@@ -250,11 +250,34 @@ export default function AdminOffers() {
                 ) : (
                   <label className="flex flex-col items-center justify-center w-full h-28 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
                     <Upload className="h-5 w-5 text-muted-foreground mb-1" />
-                    <span className="text-xs text-muted-foreground">Upload banner image</span>
+                    <span className="text-xs text-muted-foreground">Upload English banner</span>
                     <span className="text-[10px] text-muted-foreground/70 mt-0.5">📐 1200×400px · PNG/WebP · Max 500KB</span>
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                   </label>
                 )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label className="mb-1 block">Banner Image — Arabic 🇮🇶</Label>
+                  <Input value={form.image_url_ar} onChange={(e) => setForm({ ...form, image_url_ar: e.target.value })} placeholder="Paste Arabic banner image URL" />
+                  {form.image_url_ar && (
+                    <div className="relative mt-2 h-24 rounded-lg overflow-hidden border border-border">
+                      <img src={form.image_url_ar} className="w-full h-full object-cover" alt="AR" />
+                      <button onClick={() => setForm({ ...form, image_url_ar: "" })} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5"><Trash2 className="h-3 w-3" /></button>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <Label className="mb-1 block">Banner Image — Kurdish 🟢</Label>
+                  <Input value={form.image_url_ku} onChange={(e) => setForm({ ...form, image_url_ku: e.target.value })} placeholder="Paste Kurdish banner image URL" />
+                  {form.image_url_ku && (
+                    <div className="relative mt-2 h-24 rounded-lg overflow-hidden border border-border">
+                      <img src={form.image_url_ku} className="w-full h-full object-cover" alt="KU" />
+                      <button onClick={() => setForm({ ...form, image_url_ku: "" })} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5"><Trash2 className="h-3 w-3" /></button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Discount */}
