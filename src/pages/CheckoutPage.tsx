@@ -89,107 +89,118 @@ const CheckoutPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (user && selectedAddress) {
-      // Re-verify first order status at submit time to prevent race conditions
-      const { count: freshCount } = await supabase
-        .from("orders")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
+    if (!user || !selectedAddress) {
+      console.error("Missing user or address");
+      return;
+    }
 
-      const confirmedFirstOrder = (freshCount ?? 0) === 0;
-      const confirmedFirstDiscount = confirmedFirstOrder && meetsMinimum
-        ? Math.round((cartTotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250
-        : 0;
-      const confirmedCouponDiscount = couponDiscount; // already calculated from context
-      const confirmedTotalDiscount = confirmedFirstDiscount + confirmedCouponDiscount;
+    // Re-verify first order status at submit time to prevent race conditions
+    const { count: freshCount } = await supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id);
 
-      // Build notes and coupon_code
-      const notesParts: string[] = [];
-      if (notes) notesParts.push(notes);
-      if (confirmedFirstDiscount > 0) notesParts.push(`[First Order -${FIRST_ORDER_DISCOUNT_PERCENT}%]`);
-      if (appliedCoupon) notesParts.push(`[Coupon: ${appliedCoupon.code}]`);
+    const confirmedFirstOrder = (freshCount ?? 0) === 0;
+    const confirmedFirstDiscount = confirmedFirstOrder && meetsMinimum
+      ? Math.round((cartTotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250
+      : 0;
+    const confirmedCouponDiscount = couponDiscount; // already calculated from context
+    const confirmedTotalDiscount = confirmedFirstDiscount + confirmedCouponDiscount;
 
-      const couponCode = appliedCoupon?.code
-        || (confirmedFirstDiscount > 0 ? `FIRST_ORDER_${FIRST_ORDER_DISCOUNT_PERCENT}` : null);
+    // Build notes and coupon_code
+    const notesParts: string[] = [];
+    if (notes) notesParts.push(notes);
+    if (confirmedFirstDiscount > 0) notesParts.push(`[First Order -${FIRST_ORDER_DISCOUNT_PERCENT}%]`);
+    if (appliedCoupon) notesParts.push(`[Coupon: ${appliedCoupon.code}]`);
 
-      const { data: order, error: orderError } = await supabase.from("orders").insert({
-        user_id: user.id,
-        address_id: selectedAddress.id,
+    const couponCode = appliedCoupon?.code
+      || (confirmedFirstDiscount > 0 ? `FIRST_ORDER_${FIRST_ORDER_DISCOUNT_PERCENT}` : null);
+
+    const { data: order, error: orderError } = await supabase.from("orders").insert({
+      user_id: user.id,
+      address_id: selectedAddress.id,
+      subtotal: cartTotal,
+      delivery_fee: deliveryFee,
+      discount: confirmedTotalDiscount,
+      total: Math.max(cartTotal - confirmedTotalDiscount, 0) + deliveryFee,
+      payment_method: paymentMethod,
+      notes: notesParts.length > 0 ? notesParts.join(" | ") : null,
+      coupon_code: couponCode,
+      status: "pending",
+    }).select().single();
+
+    if (orderError) {
+      console.error("Order insert failed:", orderError);
+      alert(orderError.message || "Failed to place order. Please try again.");
+      return;
+    }
+
+    if (!order) {
+      console.error("No order returned after insert");
+      alert("Failed to place order. Please try again.");
+      return;
+    }
+
+    const items = cart.map(item => ({
+      order_id: order.id,
+      product_id: item.product.id,
+      quantity: item.quantity,
+      price: item.product.price,
+    }));
+    await supabase.from("order_items").insert(items);
+
+    // Increment coupon usage if a real coupon was used
+    if (appliedCoupon?.code) {
+      const { data: couponRow } = await supabase
+        .from("coupons")
+        .select("current_uses")
+        .eq("code", appliedCoupon.code)
+        .maybeSingle();
+      if (couponRow) {
+        await supabase
+          .from("coupons")
+          .update({ current_uses: (couponRow.current_uses || 0) + 1 })
+          .eq("code", appliedCoupon.code);
+      }
+    }
+
+    // Send order confirmation email (fire-and-forget)
+    const addressParts = [
+      selectedAddress.label, selectedAddress.city,
+      selectedAddress.area, selectedAddress.street,
+      selectedAddress.building, selectedAddress.floor,
+    ].filter(Boolean).join(", ");
+
+    supabase.functions.invoke("send-order-email", {
+      body: {
+        order_id: order.id,
+        items: cart.map(item => ({
+          title: item.product.title,
+          quantity: item.quantity,
+          price: item.product.price,
+        })),
         subtotal: cartTotal,
         delivery_fee: deliveryFee,
         discount: confirmedTotalDiscount,
         total: Math.max(cartTotal - confirmedTotalDiscount, 0) + deliveryFee,
+        delivery_address: addressParts,
         payment_method: paymentMethod,
-        notes: notesParts.length > 0 ? notesParts.join(" | ") : null,
-        coupon_code: couponCode,
-        status: "pending",
-      }).select().single();
+      },
+    }).catch(e => console.error("Order email failed:", e));
 
-      if (orderError) {
-        console.error(orderError);
-      } else if (order) {
-        const items = cart.map(item => ({
-          order_id: order.id,
-          product_id: item.product.id,
-          quantity: item.quantity,
-          price: item.product.price,
-        }));
-        await supabase.from("order_items").insert(items);
-
-        // Increment coupon usage if a real coupon was used
-        if (appliedCoupon?.code) {
-          const { data: couponRow } = await supabase
-            .from("coupons")
-            .select("current_uses")
-            .eq("code", appliedCoupon.code)
-            .maybeSingle();
-          if (couponRow) {
-            await supabase
-              .from("coupons")
-              .update({ current_uses: (couponRow.current_uses || 0) + 1 })
-              .eq("code", appliedCoupon.code);
-          }
-        }
-
-        // Send order confirmation email (fire-and-forget)
-        const addressParts = [
-          selectedAddress.label, selectedAddress.city,
-          selectedAddress.area, selectedAddress.street,
-          selectedAddress.building, selectedAddress.floor,
-        ].filter(Boolean).join(", ");
-
-        supabase.functions.invoke("send-order-email", {
-          body: {
-            order_id: order.id,
-            items: cart.map(item => ({
-              title: item.product.title,
-              quantity: item.quantity,
-              price: item.product.price,
-            })),
-            subtotal: cartTotal,
-            delivery_fee: deliveryFee,
-            discount: confirmedTotalDiscount,
-            total: Math.max(cartTotal - confirmedTotalDiscount, 0) + deliveryFee,
-            delivery_address: addressParts,
-            payment_method: paymentMethod,
-          },
-        }).catch(e => console.error("Order email failed:", e));
-
-        // Award loyalty points (1 point per 1,000 IQD)
-        const orderTotal = Math.max(cartTotal - confirmedTotalDiscount, 0) + deliveryFee;
-        const pts = calculatePoints(orderTotal);
-        if (pts > 0) {
-          setEarnedPoints(pts);
-          try {
-            await awardPoints.mutateAsync({
-              points: pts,
-              description: t("rewards.orderReward"),
-              referenceId: order.id,
-            });
-          } catch (e) {
-            console.error("Failed to award points:", e);
-          }
-        }
+    // Award loyalty points (1 point per 1,000 IQD)
+    const orderTotal = Math.max(cartTotal - confirmedTotalDiscount, 0) + deliveryFee;
+    const pts = calculatePoints(orderTotal);
+    if (pts > 0) {
+      setEarnedPoints(pts);
+      try {
+        await awardPoints.mutateAsync({
+          points: pts,
+          description: t("rewards.orderReward"),
+          referenceId: order.id,
+        });
+      } catch (e) {
+        console.error("Failed to award points:", e);
       }
     }
 
