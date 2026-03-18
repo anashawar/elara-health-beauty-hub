@@ -75,7 +75,7 @@ export default function AdminBanners() {
 
   const save = useMutation({
     mutationFn: async (f: BannerForm) => {
-      const payload = { title: f.title || null, subtitle: f.subtitle || null, image_url: f.image_url, link_url: f.link_url || null, is_active: f.is_active, sort_order: f.sort_order };
+      const payload = { title: f.title || null, subtitle: f.subtitle || null, image_url: f.image_url, image_url_ar: f.image_url_ar || null, image_url_ku: f.image_url_ku || null, link_url: f.link_url || null, is_active: f.is_active, sort_order: f.sort_order };
       if (f.id) {
         const { error } = await supabase.from("banners").update(payload).eq("id", f.id);
         if (error) throw error;
