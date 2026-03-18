@@ -286,11 +286,10 @@ input[type="search"], input[type="url"], input[type="number"], textarea {
   pointer-events: none;
 }
 
-/* GPU acceleration for scrollable containers */
+/* Preserve transform-based positioning on dialogs and sheets */
 .overflow-x-auto,
 .overflow-y-auto {
   will-change: scroll-position;
-  transform: translateZ(0);
 }
 
 /* Reduce paint on fixed/sticky elements */
