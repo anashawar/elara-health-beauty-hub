@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 const HeroBanner = memo(() => {
+  const { language } = useLanguage();
   const [current, setCurrent] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const autoPlayRef = useRef<ReturnType<typeof setInterval>>();

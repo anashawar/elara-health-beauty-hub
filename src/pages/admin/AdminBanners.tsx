@@ -177,6 +177,28 @@ export default function AdminBanners() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
+                  <Label className="mb-1 block">Banner Image — Arabic 🇮🇶</Label>
+                  <Input value={form.image_url_ar} onChange={(e) => setForm({ ...form, image_url_ar: e.target.value })} placeholder="Paste Arabic banner image URL" className="rounded-xl" />
+                  {form.image_url_ar && (
+                    <div className="relative mt-2 h-20 rounded-lg overflow-hidden border border-border">
+                      <img src={form.image_url_ar} className="w-full h-full object-cover" alt="AR" />
+                      <button onClick={() => setForm({ ...form, image_url_ar: "" })} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5"><X className="h-3 w-3" /></button>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <Label className="mb-1 block">Banner Image — Kurdish 🟢</Label>
+                  <Input value={form.image_url_ku} onChange={(e) => setForm({ ...form, image_url_ku: e.target.value })} placeholder="Paste Kurdish banner image URL" className="rounded-xl" />
+                  {form.image_url_ku && (
+                    <div className="relative mt-2 h-20 rounded-lg overflow-hidden border border-border">
+                      <img src={form.image_url_ku} className="w-full h-full object-cover" alt="KU" />
+                      <button onClick={() => setForm({ ...form, image_url_ku: "" })} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5"><X className="h-3 w-3" /></button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+                <div>
                   <Label>Title</Label>
                   <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="rounded-xl mt-1" />
                 </div>
