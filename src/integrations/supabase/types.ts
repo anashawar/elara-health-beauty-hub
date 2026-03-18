@@ -847,6 +847,39 @@ export type Database = {
         }
         Relationships: []
       }
+      prep_access_tokens: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          label: string
+          password_hash: string
+          token: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          password_hash: string
+          token?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          password_hash?: string
+          token?: string
+          username?: string
+        }
+        Relationships: []
+      }
       product_costs: {
         Row: {
           cost: number
