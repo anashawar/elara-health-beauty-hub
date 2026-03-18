@@ -104,7 +104,7 @@ export default function AdminBanners() {
 
   const openDialog = (banner?: any) => {
     if (banner) {
-      setForm({ id: banner.id, title: banner.title || "", subtitle: banner.subtitle || "", image_url: banner.image_url, link_url: banner.link_url || "", is_active: banner.is_active ?? true, sort_order: banner.sort_order || 0 });
+      setForm({ id: banner.id, title: banner.title || "", subtitle: banner.subtitle || "", image_url: banner.image_url, image_url_ar: banner.image_url_ar || "", image_url_ku: banner.image_url_ku || "", link_url: banner.link_url || "", is_active: banner.is_active ?? true, sort_order: banner.sort_order || 0 });
       setPreviewUrl(banner.image_url);
       setEditing(true);
     } else {
