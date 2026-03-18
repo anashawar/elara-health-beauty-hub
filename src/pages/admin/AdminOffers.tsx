@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Loader2, Search, Percent, Tag, Eye, EyeOff, Image as ImageIcon, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Search, Percent, Tag, Upload, X } from "lucide-react";
 import { useBrands, useCategories, useProducts, formatPrice } from "@/hooks/useProducts";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -50,9 +50,13 @@ export default function AdminOffers() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [search, setSearch] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [previewEn, setPreviewEn] = useState<string | null>(null);
+  const [previewAr, setPreviewAr] = useState<string | null>(null);
+  const [previewKu, setPreviewKu] = useState<string | null>(null);
+  const fileRefEn = useRef<HTMLInputElement>(null);
+  const fileRefAr = useRef<HTMLInputElement>(null);
+  const fileRefKu = useRef<HTMLInputElement>(null);
 
   const { data: brands = [] } = useBrands();
   const { data: categories = [] } = useCategories();
@@ -76,32 +80,54 @@ export default function AdminOffers() {
     setForm(emptyForm);
     setEditing(false);
     setOpen(false);
-    setImageFile(null);
-    setImagePreview(null);
+    setPreviewEn(null);
+    setPreviewAr(null);
+    setPreviewKu(null);
   };
 
-  const uploadImage = async (file: File): Promise<string> => {
+  const uploadImage = async (file: File, prefix = "offers"): Promise<string> => {
     const ext = file.name.split(".").pop();
-    const path = `offers/${Date.now()}.${ext}`;
+    const path = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true });
     if (error) throw error;
     const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(path);
     return publicUrl;
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, lang: "en" | "ar" | "ku") => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+
+    const localUrl = URL.createObjectURL(file);
+    if (lang === "en") setPreviewEn(localUrl);
+    else if (lang === "ar") setPreviewAr(localUrl);
+    else setPreviewKu(localUrl);
+
+    setUploading(true);
+    try {
+      const url = await uploadImage(file, `offers/${lang}`);
+      const key = lang === "en" ? "image_url" : lang === "ar" ? "image_url_ar" : "image_url_ku";
+      setForm((f) => ({ ...f, [key]: url }));
+      toast.success("Image uploaded!");
+    } catch (err: any) {
+      toast.error("Upload failed: " + err.message);
+      if (lang === "en") setPreviewEn(null);
+      else if (lang === "ar") setPreviewAr(null);
+      else setPreviewKu(null);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const saveMutation = useMutation({
     mutationFn: async (f: OfferForm) => {
-      setUploading(true);
-      let imageUrl = f.image_url;
-      if (imageFile) {
-        imageUrl = await uploadImage(imageFile);
-      }
-
       const payload: any = {
         title: f.title,
         subtitle: f.subtitle || null,
         description: f.description || null,
-        image_url: imageUrl || null,
+        image_url: f.image_url || null,
         image_url_ar: f.image_url_ar || null,
         image_url_ku: f.image_url_ku || null,
         discount_type: f.discount_type,
@@ -125,7 +151,6 @@ export default function AdminOffers() {
       }
     },
     onSuccess: () => {
-      setUploading(false);
       qc.invalidateQueries({ queryKey: ["admin-offers"] });
       qc.invalidateQueries({ queryKey: ["active-offers-gallery"] });
       qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
@@ -134,7 +159,7 @@ export default function AdminOffers() {
       toast.success(editing ? "Offer updated" : "Offer created");
       resetForm();
     },
-    onError: (e) => { setUploading(false); toast.error(e.message); },
+    onError: (e) => { toast.error(e.message); },
   });
 
   const deleteMutation = useMutation({
@@ -171,20 +196,13 @@ export default function AdminOffers() {
       starts_at: o.starts_at ? o.starts_at.split("T")[0] : "",
       ends_at: o.ends_at ? o.ends_at.split("T")[0] : "",
     });
-    if (o.image_url) setImagePreview(o.image_url);
+    setPreviewEn(o.image_url || null);
+    setPreviewAr(o.image_url_ar || null);
+    setPreviewKu(o.image_url_ku || null);
     setEditing(true);
     setOpen(true);
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  // Auto-fill target_name when selecting a target
   const handleTargetChange = (targetId: string) => {
     let name = "";
     if (form.target_type === "brand") {
@@ -208,6 +226,51 @@ export default function AdminOffers() {
     { value: "product", label: "Specific Product" },
   ];
 
+  const renderImageUpload = (
+    label: string,
+    lang: "en" | "ar" | "ku",
+    preview: string | null,
+    formKey: "image_url" | "image_url_ar" | "image_url_ku",
+    inputRef: React.RefObject<HTMLInputElement>,
+    setPreview: (v: string | null) => void,
+    required = false
+  ) => {
+    const imgSrc = preview || form[formKey];
+    return (
+      <div>
+        <Label className="mb-1.5 block text-xs font-semibold">{label}{required && " *"}</Label>
+        {imgSrc ? (
+          <div className="relative rounded-xl overflow-hidden border border-border bg-muted">
+            <img src={imgSrc} alt="" className="w-full h-32 object-cover" />
+            <div className="absolute top-1.5 right-1.5 flex gap-1">
+              <Button size="icon" variant="secondary" className="h-7 w-7 rounded-lg shadow-md" onClick={() => inputRef.current?.click()}>
+                <Upload className="w-3 h-3" />
+              </Button>
+              <Button size="icon" variant="secondary" className="h-7 w-7 rounded-lg shadow-md" onClick={() => { setForm({ ...form, [formKey]: "" }); setPreview(null); if (inputRef.current) inputRef.current.value = ""; }}>
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
+            {uploading && (
+              <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="w-full h-28 rounded-xl border-2 border-dashed border-border hover:border-primary/40 bg-muted/30 hover:bg-muted/50 transition-colors flex flex-col items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <Upload className="w-6 h-6 text-muted-foreground/40" />
+            <p className="text-xs text-muted-foreground">Click to upload</p>
+          </button>
+        )}
+        <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFileSelect(e, lang)} />
+      </div>
+    );
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -219,7 +282,7 @@ export default function AdminOffers() {
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="h-4 w-4 mr-1.5" />New Offer</Button>
           </DialogTrigger>
-          <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[92vh] overflow-y-auto">
+          <DialogContent className="!max-w-2xl max-h-[92vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editing ? "Edit Offer" : "Create New Offer"}</DialogTitle>
             </DialogHeader>
@@ -238,46 +301,10 @@ export default function AdminOffers() {
               </div>
 
               {/* Banner Images by Language */}
-              <div>
-                <Label className="mb-2 block">Banner Image — English 🇬🇧</Label>
-                {imagePreview ? (
-                  <div className="relative w-full h-36 rounded-xl overflow-hidden border border-border bg-muted">
-                    <img src={imagePreview} className="w-full h-full object-cover" alt="" />
-                    <button onClick={() => { setImageFile(null); setImagePreview(null); setForm({ ...form, image_url: "" }); }} className="absolute top-2 right-2 bg-background/80 rounded-full p-1 hover:bg-destructive hover:text-destructive-foreground transition-colors">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-28 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
-                    <Upload className="h-5 w-5 text-muted-foreground mb-1" />
-                    <span className="text-xs text-muted-foreground">Upload English banner</span>
-                    <span className="text-[10px] text-muted-foreground/70 mt-0.5">📐 1200×400px · PNG/WebP · Max 500KB</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                  </label>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <Label className="mb-1 block">Banner Image — Arabic 🇮🇶</Label>
-                  <Input value={form.image_url_ar} onChange={(e) => setForm({ ...form, image_url_ar: e.target.value })} placeholder="Paste Arabic banner image URL" />
-                  {form.image_url_ar && (
-                    <div className="relative mt-2 h-24 rounded-lg overflow-hidden border border-border">
-                      <img src={form.image_url_ar} className="w-full h-full object-cover" alt="AR" />
-                      <button onClick={() => setForm({ ...form, image_url_ar: "" })} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5"><Trash2 className="h-3 w-3" /></button>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <Label className="mb-1 block">Banner Image — Kurdish 🟢</Label>
-                  <Input value={form.image_url_ku} onChange={(e) => setForm({ ...form, image_url_ku: e.target.value })} placeholder="Paste Kurdish banner image URL" />
-                  {form.image_url_ku && (
-                    <div className="relative mt-2 h-24 rounded-lg overflow-hidden border border-border">
-                      <img src={form.image_url_ku} className="w-full h-full object-cover" alt="KU" />
-                      <button onClick={() => setForm({ ...form, image_url_ku: "" })} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5"><Trash2 className="h-3 w-3" /></button>
-                    </div>
-                  )}
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {renderImageUpload("English 🇬🇧", "en", previewEn, "image_url", fileRefEn as any, setPreviewEn, true)}
+                {renderImageUpload("Arabic 🇮🇶", "ar", previewAr, "image_url_ar", fileRefAr as any, setPreviewAr)}
+                {renderImageUpload("Kurdish 🟢", "ku", previewKu, "image_url_ku", fileRefKu as any, setPreviewKu)}
               </div>
 
               {/* Discount */}
@@ -378,7 +405,6 @@ export default function AdminOffers() {
                       )}
                     </div>
                   )}
-                  {/* Selected products chips */}
                   {form.target_id && (
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {form.target_id.split(",").filter(Boolean).map((pid, idx) => {
@@ -464,7 +490,6 @@ export default function AdminOffers() {
             return (
               <div key={o.id} className="bg-card rounded-2xl border border-border/50 overflow-hidden hover:shadow-premium transition-shadow">
                 <div className="flex">
-                  {/* Image thumbnail */}
                   {o.image_url ? (
                     <div className="w-24 md:w-32 flex-shrink-0">
                       <img src={o.image_url} className="w-full h-full object-cover" alt="" />
