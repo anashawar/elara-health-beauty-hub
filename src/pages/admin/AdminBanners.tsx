@@ -19,7 +19,11 @@ export default function AdminBanners() {
   const [editing, setEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewUrlAr, setPreviewUrlAr] = useState<string | null>(null);
+  const [previewUrlKu, setPreviewUrlKu] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const fileRefAr = useRef<HTMLInputElement>(null);
+  const fileRefKu = useRef<HTMLInputElement>(null);
 
   const { data: banners = [], isLoading } = useQuery({
     queryKey: ["admin-banners"],
@@ -30,47 +34,41 @@ export default function AdminBanners() {
     },
   });
 
-  const uploadImage = async (file: File): Promise<string> => {
+  const uploadImage = async (file: File, prefix = "banners"): Promise<string> => {
     const ext = file.name.split(".").pop() || "webp";
-    const path = `banners/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const path = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { error } = await supabase.storage.from("product-images").upload(path, file, { upsert: true });
     if (error) throw error;
     const { data } = supabase.storage.from("product-images").getPublicUrl(path);
     return data.publicUrl;
   };
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, lang: "en" | "ar" | "ku") => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be under 5MB");
-      return;
-    }
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
 
-    // Show local preview immediately
-    setPreviewUrl(URL.createObjectURL(file));
+    const localUrl = URL.createObjectURL(file);
+    if (lang === "en") setPreviewUrl(localUrl);
+    else if (lang === "ar") setPreviewUrlAr(localUrl);
+    else setPreviewUrlKu(localUrl);
+
     setUploading(true);
-
     try {
-      const url = await uploadImage(file);
-      setForm((f) => ({ ...f, image_url: url }));
+      const url = await uploadImage(file, `banners/${lang}`);
+      if (lang === "en") setForm((f) => ({ ...f, image_url: url }));
+      else if (lang === "ar") setForm((f) => ({ ...f, image_url_ar: url }));
+      else setForm((f) => ({ ...f, image_url_ku: url }));
       toast.success("Image uploaded!");
     } catch (err: any) {
       toast.error("Upload failed: " + err.message);
-      setPreviewUrl(null);
+      if (lang === "en") setPreviewUrl(null);
+      else if (lang === "ar") setPreviewUrlAr(null);
+      else setPreviewUrlKu(null);
     } finally {
       setUploading(false);
     }
-  };
-
-  const clearImage = () => {
-    setForm((f) => ({ ...f, image_url: "" }));
-    setPreviewUrl(null);
-    if (fileRef.current) fileRef.current.value = "";
   };
 
   const save = useMutation({
@@ -88,10 +86,7 @@ export default function AdminBanners() {
       qc.invalidateQueries({ queryKey: ["admin-banners"] });
       qc.invalidateQueries({ queryKey: ["banners"] });
       toast.success("Saved");
-      setOpen(false);
-      setForm(emptyForm);
-      setEditing(false);
-      setPreviewUrl(null);
+      resetDialog();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -102,20 +97,76 @@ export default function AdminBanners() {
     onError: (e) => toast.error(e.message),
   });
 
+  const resetDialog = () => {
+    setOpen(false);
+    setForm(emptyForm);
+    setEditing(false);
+    setPreviewUrl(null);
+    setPreviewUrlAr(null);
+    setPreviewUrlKu(null);
+  };
+
   const openDialog = (banner?: any) => {
     if (banner) {
       setForm({ id: banner.id, title: banner.title || "", subtitle: banner.subtitle || "", image_url: banner.image_url, image_url_ar: banner.image_url_ar || "", image_url_ku: banner.image_url_ku || "", link_url: banner.link_url || "", is_active: banner.is_active ?? true, sort_order: banner.sort_order || 0 });
       setPreviewUrl(banner.image_url);
+      setPreviewUrlAr(banner.image_url_ar || null);
+      setPreviewUrlKu(banner.image_url_ku || null);
       setEditing(true);
     } else {
       setForm(emptyForm);
       setPreviewUrl(null);
+      setPreviewUrlAr(null);
+      setPreviewUrlKu(null);
       setEditing(false);
     }
     setOpen(true);
   };
 
-  const displayPreview = previewUrl || form.image_url;
+  const renderImageUpload = (
+    label: string,
+    lang: "en" | "ar" | "ku",
+    preview: string | null,
+    formKey: "image_url" | "image_url_ar" | "image_url_ku",
+    inputRef: React.RefObject<HTMLInputElement>,
+    setPreview: (v: string | null) => void,
+    required = false
+  ) => {
+    const imgSrc = preview || form[formKey];
+    return (
+      <div>
+        <Label className="mb-1.5 block text-xs font-semibold">{label}{required && " *"}</Label>
+        {imgSrc ? (
+          <div className="relative rounded-xl overflow-hidden border border-border bg-muted">
+            <img src={imgSrc} alt="" className="w-full h-32 object-cover" />
+            <div className="absolute top-1.5 right-1.5 flex gap-1">
+              <Button size="icon" variant="secondary" className="h-7 w-7 rounded-lg shadow-md" onClick={() => inputRef.current?.click()}>
+                <Upload className="w-3 h-3" />
+              </Button>
+              <Button size="icon" variant="secondary" className="h-7 w-7 rounded-lg shadow-md" onClick={() => { setForm({ ...form, [formKey]: "" }); setPreview(null); if (inputRef.current) inputRef.current.value = ""; }}>
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
+            {uploading && (
+              <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="w-full h-28 rounded-xl border-2 border-dashed border-border hover:border-primary/40 bg-muted/30 hover:bg-muted/50 transition-colors flex flex-col items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <Upload className="w-6 h-6 text-muted-foreground/40" />
+            <p className="text-xs text-muted-foreground">Click to upload</p>
+          </button>
+        )}
+        <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFileSelect(e, lang)} />
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -124,78 +175,22 @@ export default function AdminBanners() {
           <h1 className="text-2xl font-display font-bold text-foreground">Banners</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{banners.length} banners</p>
         </div>
-        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setForm(emptyForm); setEditing(false); setPreviewUrl(null); } }}>
+        <Dialog open={open} onOpenChange={(v) => { if (!v) resetDialog(); else setOpen(true); }}>
           <DialogTrigger asChild>
             <Button size="sm" className="rounded-xl" onClick={() => openDialog()}>
               <Plus className="h-4 w-4 mr-1.5" />Add
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="!max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editing ? "Edit Banner" : "Add Banner"}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 mt-2">
-              {/* Image upload area */}
-              <div>
-                <Label className="mb-2 block">Banner Image — English 🇬🇧 *</Label>
-                {displayPreview ? (
-                  <div className="relative rounded-xl overflow-hidden border border-border bg-muted">
-                    <img src={displayPreview} alt="Preview" className="w-full h-48 object-cover" />
-                    <div className="absolute top-2 right-2 flex gap-1.5">
-                      <Button size="icon" variant="secondary" className="h-8 w-8 rounded-lg shadow-md" onClick={() => fileRef.current?.click()}>
-                        <Upload className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button size="icon" variant="secondary" className="h-8 w-8 rounded-lg shadow-md" onClick={clearImage}>
-                        <X className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                    {uploading && (
-                      <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="w-full h-48 rounded-xl border-2 border-dashed border-border hover:border-primary/40 bg-muted/30 hover:bg-muted/50 transition-colors flex flex-col items-center justify-center gap-2 cursor-pointer"
-                  >
-                    {uploading ? (
-                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                    ) : (
-                      <>
-                        <Upload className="w-8 h-8 text-muted-foreground/40" />
-                        <p className="text-sm font-medium text-muted-foreground">Click to upload image</p>
-                        <p className="text-[10px] text-muted-foreground/60">PNG, JPG, WebP · Max 5MB · 1200×400px recommended</p>
-                      </>
-                    )}
-                  </button>
-                )}
-                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <Label className="mb-1 block">Banner Image — Arabic 🇮🇶</Label>
-                  <Input value={form.image_url_ar} onChange={(e) => setForm({ ...form, image_url_ar: e.target.value })} placeholder="Paste Arabic banner image URL" className="rounded-xl" />
-                  {form.image_url_ar && (
-                    <div className="relative mt-2 h-20 rounded-lg overflow-hidden border border-border">
-                      <img src={form.image_url_ar} className="w-full h-full object-cover" alt="AR" />
-                      <button onClick={() => setForm({ ...form, image_url_ar: "" })} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5"><X className="h-3 w-3" /></button>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <Label className="mb-1 block">Banner Image — Kurdish 🟢</Label>
-                  <Input value={form.image_url_ku} onChange={(e) => setForm({ ...form, image_url_ku: e.target.value })} placeholder="Paste Kurdish banner image URL" className="rounded-xl" />
-                  {form.image_url_ku && (
-                    <div className="relative mt-2 h-20 rounded-lg overflow-hidden border border-border">
-                      <img src={form.image_url_ku} className="w-full h-full object-cover" alt="KU" />
-                      <button onClick={() => setForm({ ...form, image_url_ku: "" })} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5"><X className="h-3 w-3" /></button>
-                    </div>
-                  )}
-                </div>
+              {/* Language image uploads */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {renderImageUpload("English 🇬🇧", "en", previewUrl, "image_url", fileRef as any, setPreviewUrl, true)}
+                {renderImageUpload("Arabic 🇮🇶", "ar", previewUrlAr, "image_url_ar", fileRefAr as any, setPreviewUrlAr)}
+                {renderImageUpload("Kurdish 🟢", "ku", previewUrlKu, "image_url_ku", fileRefKu as any, setPreviewUrlKu)}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
