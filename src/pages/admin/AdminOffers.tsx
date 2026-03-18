@@ -158,6 +158,8 @@ export default function AdminOffers() {
       subtitle: o.subtitle || "",
       description: o.description || "",
       image_url: o.image_url || "",
+      image_url_ar: o.image_url_ar || "",
+      image_url_ku: o.image_url_ku || "",
       discount_type: o.discount_type,
       discount_value: o.discount_value,
       target_type: o.target_type,
