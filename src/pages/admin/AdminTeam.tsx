@@ -329,9 +329,9 @@ function PrepLinksSection() {
 
   const toggleLink = useMutation({
     mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
-      const { error } = await supabase
-        .from("prep_access_tokens")
-        .update({ is_active: active } as any)
+      const { error } = await (supabase
+        .from("prep_access_tokens" as any)
+        .update({ is_active: active } as any) as any)
         .eq("id", id);
       if (error) throw error;
     },
