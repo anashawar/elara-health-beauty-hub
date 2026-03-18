@@ -102,6 +102,8 @@ export default function AdminOffers() {
         subtitle: f.subtitle || null,
         description: f.description || null,
         image_url: imageUrl || null,
+        image_url_ar: f.image_url_ar || null,
+        image_url_ku: f.image_url_ku || null,
         discount_type: f.discount_type,
         discount_value: f.discount_value,
         target_type: f.target_type,
