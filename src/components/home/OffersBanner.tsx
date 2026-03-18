@@ -54,6 +54,9 @@ export default function OffersBanner() {
 
   const offer = offers[current];
   const linkTo = offer.link_url || "/collection/offers";
+  const offerImgSrc = (language === "ar" && offer.image_url_ar) ? offer.image_url_ar
+    : (language === "ku" && offer.image_url_ku) ? offer.image_url_ku
+    : offer.image_url;
 
   return (
     <section className="px-4 mt-6">
