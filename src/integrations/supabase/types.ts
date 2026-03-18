@@ -851,6 +851,8 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          excluded_brand_ids: string[]
+          excluded_product_ids: string[]
           id: string
           is_active: boolean
           label: string
@@ -861,6 +863,8 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          excluded_brand_ids?: string[]
+          excluded_product_ids?: string[]
           id?: string
           is_active?: boolean
           label?: string
@@ -871,6 +875,8 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          excluded_brand_ids?: string[]
+          excluded_product_ids?: string[]
           id?: string
           is_active?: boolean
           label?: string

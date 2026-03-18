@@ -52,6 +52,7 @@ interface PrepOrder {
   created_at: string;
   notes: string | null;
   items: PrepItem[];
+  excluded_item_count?: number;
   address: PrepAddress | null;
 }
 
@@ -454,9 +455,15 @@ function OrderCard({
         </div>
       )}
 
+      {order.excluded_item_count != null && order.excluded_item_count > 0 && (
+        <div className="px-4 py-2 bg-blue-500/5 border-t border-blue-500/10 flex items-center gap-2">
+          <span className="text-[11px] text-blue-600">ℹ️ {order.excluded_item_count} item{order.excluded_item_count > 1 ? "s" : ""} in this order will be handled by Operations</span>
+        </div>
+      )}
+
       <div className="px-4 py-3 border-t border-border flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
-          {totalItems} item{totalItems !== 1 ? "s" : ""} total
+          {totalItems} item{totalItems !== 1 ? "s" : ""} for this warehouse
         </p>
         {onPrepare && (
           <Button

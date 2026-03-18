@@ -31,7 +31,6 @@ Deno.serve(async (req) => {
     if (req.method === "POST") {
       const body = await req.json();
 
-      // Login action
       if (body.action === "login") {
         const { username, password } = body;
         if (!username || !password) return json({ error: "Username and password required" }, 400);
@@ -44,16 +43,13 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (!row) return json({ error: "Invalid credentials" }, 401);
-
-        // Simple password check (stored as plain text hash via btoa in admin)
         if (row.password_hash !== password) return json({ error: "Invalid credentials" }, 401);
 
         return json({ token: row.token, label: row.label });
       }
 
-      // Mark prepared action — requires token
+      // Mark prepared action
       if (body.order_id) {
-        // Validate token first
         const { data: tokenRow } = await supabase
           .from("prep_access_tokens")
           .select("id")
@@ -95,15 +91,17 @@ Deno.serve(async (req) => {
 
     // --- GET orders ---
     if (req.method === "GET") {
-      // Validate token
       const { data: tokenRow } = await supabase
         .from("prep_access_tokens")
-        .select("id, is_active")
+        .select("id, is_active, excluded_brand_ids, excluded_product_ids")
         .eq("token", token)
         .eq("is_active", true)
         .maybeSingle();
 
       if (!tokenRow) return json({ error: "Invalid or expired link" }, 401);
+
+      const excludedBrandIds: string[] = tokenRow.excluded_brand_ids || [];
+      const excludedProductIds: string[] = tokenRow.excluded_product_ids || [];
 
       const statusFilter = url.searchParams.get("status") || "pending,processing";
       const statuses = statusFilter.split(",").map((s) => s.trim());
@@ -124,9 +122,11 @@ Deno.serve(async (req) => {
         .in("order_id", orderIds);
 
       const productIds = [...new Set((items || []).map((i: any) => i.product_id))];
+      
+      // Fetch products WITH brand_id so we can filter by brand
       const { data: products } = await supabase
         .from("products")
-        .select("id, title, slug, volume_ml, volume_unit")
+        .select("id, title, slug, volume_ml, volume_unit, brand_id")
         .in("id", productIds);
 
       const { data: images } = await supabase
@@ -152,38 +152,62 @@ Deno.serve(async (req) => {
         addressMap = new Map((addresses || []).map((a: any) => [a.id, a]));
       }
 
-      const enrichedOrders = (orders || []).map((order: any) => {
-        const orderItems = (items || [])
-          .filter((i: any) => i.order_id === order.id)
-          .map((i: any) => {
-            const product = productMap.get(i.product_id);
-            return {
-              id: i.id,
-              quantity: i.quantity,
-              product: product
-                ? {
-                    id: product.id,
-                    title: product.title,
-                    volume: product.volume_ml ? `${product.volume_ml}${product.volume_unit || "ml"}` : null,
-                    image_url: imageMap.get(product.id) || null,
-                  }
-                : null,
-            };
-          });
+      // Determine which items are excluded for this warehouse
+      const isExcludedItem = (productId: string): boolean => {
+        if (excludedProductIds.includes(productId)) return true;
+        const product = productMap.get(productId);
+        if (product && product.brand_id && excludedBrandIds.includes(product.brand_id)) return true;
+        return false;
+      };
+
+      const enrichedOrders: any[] = [];
+
+      for (const order of orders || []) {
+        const orderItems = (items || []).filter((i: any) => i.order_id === order.id);
+        
+        // Split items into warehouse items vs excluded items
+        const warehouseItems: any[] = [];
+        const excludedItems: any[] = [];
+
+        for (const item of orderItems) {
+          const product = productMap.get(item.product_id);
+          const mapped = {
+            id: item.id,
+            quantity: item.quantity,
+            product: product
+              ? {
+                  id: product.id,
+                  title: product.title,
+                  volume: product.volume_ml ? `${product.volume_ml}${product.volume_unit || "ml"}` : null,
+                  image_url: imageMap.get(product.id) || null,
+                }
+              : null,
+          };
+
+          if (isExcludedItem(item.product_id)) {
+            excludedItems.push(mapped);
+          } else {
+            warehouseItems.push(mapped);
+          }
+        }
+
+        // Only include order if it has items for this warehouse
+        if (warehouseItems.length === 0) continue;
 
         const address = order.address_id ? addressMap.get(order.address_id) : null;
 
-        return {
+        enrichedOrders.push({
           id: order.id,
           status: order.status,
           created_at: order.created_at,
           notes: order.notes,
-          items: orderItems,
+          items: warehouseItems,
+          excluded_item_count: excludedItems.length,
           address: address
             ? { city: address.city, area: address.area, street: address.street, building: address.building, floor: address.floor, apartment: address.apartment, phone: address.phone, label: address.label }
             : null,
-        };
-      });
+        });
+      }
 
       return json({ orders: enrichedOrders });
     }
