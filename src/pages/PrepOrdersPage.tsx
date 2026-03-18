@@ -179,12 +179,12 @@ export default function PrepOrdersPage() {
     sessionStorage.removeItem("prep-session");
   };
 
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async (silent = false) => {
     if (!token) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError(null);
     try {
-      const statuses = tab === "pending" ? "pending,processing" : "prepared";
+      const statuses = tab === "pending" ? "processing" : "prepared";
       const res = await fetch(`${FUNC_URL}?token=${token}&status=${statuses}`);
       const data = await res.json();
       if (!res.ok) {
