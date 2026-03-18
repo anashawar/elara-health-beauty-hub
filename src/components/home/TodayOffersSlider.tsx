@@ -151,64 +151,23 @@ export default function TodayOffersSlider() {
 }
 
 function OfferCard({ offer, index }: { offer: Offer; index: number }) {
-  const { t } = useLanguage();
-  const gradient = GRADIENTS[index % GRADIENTS.length];
-  const Icon = ICONS[index % ICONS.length];
   const linkTo = offer.link_url || "/collection/offers";
-
-  const discountLabel =
-    offer.discount_type === "percentage"
-      ? `${offer.discount_value}%`
-      : offer.discount_type === "fixed"
-        ? `${offer.discount_value.toLocaleString()}`
-        : offer.discount_type === "bogo"
-          ? "B1G1"
-          : t("common.bundleDeal");
 
   return (
     <Link to={linkTo} className="block group">
-      <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} aspect-[3/4] shadow-lg`}>
-        {/* Decorative circle */}
-        <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/[0.08] rounded-full blur-sm" />
-        <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-white/[0.06] rounded-full blur-sm" />
-
-        {/* Image */}
-        {offer.image_url && (
-          <div className="absolute inset-0">
-            <img
-              src={offer.image_url}
-              alt=""
-              className="w-full h-full object-cover opacity-20 mix-blend-overlay"
-            />
+      <div className="relative overflow-hidden rounded-2xl aspect-[3/4] shadow-lg bg-muted">
+        {offer.image_url ? (
+          <img
+            src={offer.image_url}
+            alt={offer.title || ""}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            loading="lazy"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs">
+            {offer.title}
           </div>
         )}
-
-        {/* Content */}
-        <div className="relative z-10 h-full flex flex-col justify-between p-3.5">
-          {/* Top: Discount badge */}
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/20 backdrop-blur-lg text-[10px] font-extrabold uppercase tracking-wider text-white border border-white/15">
-              <Icon className="w-3 h-3" />
-              {discountLabel}
-            </span>
-          </div>
-
-          {/* Bottom: Title + CTA */}
-          <div>
-            <h3 className="text-[15px] font-display font-black text-white leading-tight tracking-tight line-clamp-2">
-              {offer.title}
-            </h3>
-            {offer.subtitle && (
-              <p className="text-[10px] text-white/65 mt-1 font-medium line-clamp-1">
-                {offer.subtitle}
-              </p>
-            )}
-            <div className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white text-foreground text-[11px] font-bold rounded-xl group-hover:shadow-lg group-hover:scale-[1.02] transition-all duration-300 shadow-md">
-              {t("common.shop")}
-              <ArrowRight className="w-3 h-3 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </div>
-        </div>
       </div>
     </Link>
   );
