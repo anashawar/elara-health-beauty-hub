@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Users, Plus, Trash2, Shield, ShieldCheck, Database, Loader2, Link2, Copy, Power } from "lucide-react";
+import { Users, Plus, Trash2, Shield, ShieldCheck, Database, Loader2, Link2, Copy, Power, Filter, X } from "lucide-react";
 import { useAdmin, type AppRole } from "@/hooks/useAdmin";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface TeamMember {
   id: string;
@@ -49,7 +50,6 @@ export default function AdminTeam() {
   const { data: members = [], isLoading } = useQuery<TeamMember[]>({
     queryKey: ["admin-team-members"],
     queryFn: async () => {
-      // Get all admin-level roles
       const { data: roles, error } = await supabase
         .from("user_roles")
         .select("id, user_id, role")
@@ -57,7 +57,6 @@ export default function AdminTeam() {
       if (error) throw error;
       if (!roles || roles.length === 0) return [];
 
-      // Get profiles for these users
       const userIds = [...new Set(roles.map((r: any) => r.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
@@ -81,11 +80,9 @@ export default function AdminTeam() {
 
   const addMember = useMutation({
     mutationFn: async ({ identifier, role }: { identifier: string; role: string }) => {
-      // Find user by email or phone
       const trimmed = identifier.trim();
       let targetUserId: string | null = null;
 
-      // Try by phone in profiles
       const { data: profileByPhone } = await supabase
         .from("profiles")
         .select("user_id")
@@ -97,13 +94,10 @@ export default function AdminTeam() {
       }
 
       if (!targetUserId) {
-        // It might be an email — we need an edge function to look up by email
-        // For now, try to find via the identifier as a user_id or show guidance
         toast.error("User not found. Make sure they have signed up first and have a phone number in their profile.");
         throw new Error("User not found");
       }
 
-      // Check if role already exists
       const { data: existing } = await supabase
         .from("user_roles")
         .select("id")
@@ -167,7 +161,6 @@ export default function AdminTeam() {
 
   return (
     <div className="space-y-8 max-w-3xl">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -178,7 +171,6 @@ export default function AdminTeam() {
         <p className="text-sm text-muted-foreground mt-1">Assign roles to your team members to control access.</p>
       </div>
 
-      {/* Role cards info */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {Object.entries(ROLE_CONFIG).map(([key, config]) => {
           const Icon = config.icon;
@@ -194,7 +186,6 @@ export default function AdminTeam() {
         })}
       </div>
 
-      {/* Add member form */}
       <div className="rounded-2xl border border-border bg-card p-5">
         <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
           <Plus className="w-4 h-4" /> Add Team Member
@@ -216,11 +207,7 @@ export default function AdminTeam() {
               <SelectItem value="data_entry">Data Entry</SelectItem>
             </SelectContent>
           </Select>
-          <Button
-            onClick={handleAdd}
-            disabled={adding || !emailOrPhone.trim()}
-            className="rounded-xl"
-          >
+          <Button onClick={handleAdd} disabled={adding || !emailOrPhone.trim()} className="rounded-xl">
             {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add"}
           </Button>
         </div>
@@ -229,7 +216,6 @@ export default function AdminTeam() {
         </p>
       </div>
 
-      {/* Team members list */}
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="px-5 py-3 border-b border-border bg-muted/30">
           <h3 className="text-sm font-bold text-foreground">Current Team ({members.length})</h3>
@@ -288,11 +274,12 @@ export default function AdminTeam() {
         )}
       </div>
 
-      {/* Prep Links Section */}
       <PrepLinksSection />
     </div>
   );
 }
+
+/* ─── Prep Links Section with Exclusion Filters ─── */
 
 function PrepLinksSection() {
   const qc = useQueryClient();
@@ -300,6 +287,15 @@ function PrepLinksSection() {
   const [label, setLabel] = useState("Warehouse A");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [editingFilters, setEditingFilters] = useState<string | null>(null);
+  const [filterBrandIds, setFilterBrandIds] = useState<string[]>([]);
+  const [filterProductIds, setFilterProductIds] = useState<string[]>([]);
+  const [brandSearch, setBrandSearch] = useState("");
+  const [productSearch, setProductSearch] = useState("");
+  // For new account creation
+  const [newExcludedBrands, setNewExcludedBrands] = useState<string[]>([]);
+  const [newExcludedProducts, setNewExcludedProducts] = useState<string[]>([]);
+  const [showNewFilters, setShowNewFilters] = useState(false);
 
   const { data: links = [], isLoading } = useQuery({
     queryKey: ["prep-links"],
@@ -309,6 +305,22 @@ function PrepLinksSection() {
         .select("*") as any)
         .order("created_at", { ascending: false });
       if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: allBrands = [] } = useQuery({
+    queryKey: ["all-brands-for-filters"],
+    queryFn: async () => {
+      const { data } = await supabase.from("brands").select("id, name").order("name");
+      return data || [];
+    },
+  });
+
+  const { data: allProducts = [] } = useQuery({
+    queryKey: ["all-products-for-filters"],
+    queryFn: async () => {
+      const { data } = await supabase.from("products").select("id, title").order("title").limit(500);
       return data || [];
     },
   });
@@ -323,6 +335,8 @@ function PrepLinksSection() {
           username: newUsername.trim().toLowerCase(),
           password_hash: newPassword,
           created_by: user!.id,
+          excluded_brand_ids: newExcludedBrands,
+          excluded_product_ids: newExcludedProducts,
         } as any) as any);
       if (error) throw error;
     },
@@ -332,8 +346,26 @@ function PrepLinksSection() {
       setLabel("Warehouse A");
       setNewUsername("");
       setNewPassword("");
+      setNewExcludedBrands([]);
+      setNewExcludedProducts([]);
+      setShowNewFilters(false);
     },
     onError: (e: any) => toast.error(e.message || "Failed to create"),
+  });
+
+  const updateFilters = useMutation({
+    mutationFn: async ({ id, brands, products }: { id: string; brands: string[]; products: string[] }) => {
+      const { error } = await (supabase
+        .from("prep_access_tokens" as any)
+        .update({ excluded_brand_ids: brands, excluded_product_ids: products } as any) as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["prep-links"] });
+      toast.success("Filters updated!");
+      setEditingFilters(null);
+    },
   });
 
   const toggleLink = useMutation({
@@ -367,6 +399,24 @@ function PrepLinksSection() {
     toast.success("Prep page link copied!");
   };
 
+  const openEditFilters = (link: any) => {
+    setEditingFilters(link.id);
+    setFilterBrandIds(link.excluded_brand_ids || []);
+    setFilterProductIds(link.excluded_product_ids || []);
+    setBrandSearch("");
+    setProductSearch("");
+  };
+
+  const getBrandName = (id: string) => allBrands.find((b: any) => b.id === id)?.name || id.slice(0, 8);
+  const getProductName = (id: string) => allProducts.find((p: any) => p.id === id)?.title || id.slice(0, 8);
+
+  const filteredBrands = allBrands.filter((b: any) =>
+    b.name.toLowerCase().includes(brandSearch.toLowerCase())
+  );
+  const filteredProducts = allProducts.filter((p: any) =>
+    p.title.toLowerCase().includes(productSearch.toLowerCase())
+  );
+
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden">
       <div className="px-5 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
@@ -381,34 +431,28 @@ function PrepLinksSection() {
 
       <div className="p-5 space-y-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Create username & password accounts for your logistics team. They'll log in at the prep page to view orders (no prices) and mark them as prepared.
+          Create accounts for your logistics team. They'll see orders (no prices) and mark them as prepared.
+          Use <strong>exclusion filters</strong> to route specific brands/products away from a warehouse — excluded items go to Operations instead.
         </p>
 
         {/* Create new account */}
         <div className="space-y-3 rounded-xl border border-border p-4 bg-muted/10">
           <p className="text-xs font-bold text-foreground">Create New Account</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Input
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="Label (e.g. Warehouse A)"
-              className="rounded-xl"
-            />
-            <Input
-              value={newUsername}
-              onChange={(e) => setNewUsername(e.target.value)}
-              placeholder="Username"
-              className="rounded-xl"
-            />
+            <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label (e.g. Warehouse A)" className="rounded-xl" />
+            <Input value={newUsername} onChange={(e) => setNewUsername(e.target.value)} placeholder="Username" className="rounded-xl" />
           </div>
           <div className="flex gap-2">
-            <Input
-              type="text"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Password"
-              className="flex-1 rounded-xl"
-            />
+            <Input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Password" className="flex-1 rounded-xl" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowNewFilters(!showNewFilters)}
+              className="rounded-xl gap-1.5 text-xs"
+            >
+              <Filter className="w-3 h-3" />
+              Filters {(newExcludedBrands.length + newExcludedProducts.length) > 0 && `(${newExcludedBrands.length + newExcludedProducts.length})`}
+            </Button>
             <Button
               onClick={() => createLink.mutate()}
               disabled={createLink.isPending || !newUsername.trim() || !newPassword.trim()}
@@ -418,6 +462,17 @@ function PrepLinksSection() {
               Create
             </Button>
           </div>
+
+          {showNewFilters && (
+            <ExclusionFilterEditor
+              brandIds={newExcludedBrands}
+              productIds={newExcludedProducts}
+              onBrandsChange={setNewExcludedBrands}
+              onProductsChange={setNewExcludedProducts}
+              allBrands={allBrands}
+              allProducts={allProducts}
+            />
+          )}
         </div>
 
         {/* Existing links */}
@@ -427,67 +482,173 @@ function PrepLinksSection() {
           </div>
         ) : links.length === 0 ? (
           <div className="py-6 text-center text-sm text-muted-foreground">
-            No prep links yet. Generate one above.
+            No prep accounts yet. Create one above.
           </div>
         ) : (
           <div className="space-y-2">
-            {links.map((link: any) => (
-              <div
-                key={link.id}
-                className={`flex items-center justify-between gap-3 p-3 rounded-xl border ${
-                  link.is_active ? "border-border bg-background" : "border-border/50 bg-muted/30 opacity-60"
-                }`}
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground truncate">{link.label}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    Username: <span className="font-mono">{link.username}</span>
-                  </p>
+            {links.map((link: any) => {
+              const exclusionCount = (link.excluded_brand_ids?.length || 0) + (link.excluded_product_ids?.length || 0);
+              const isEditing = editingFilters === link.id;
+
+              return (
+                <div key={link.id} className={`rounded-xl border ${link.is_active ? "border-border bg-background" : "border-border/50 bg-muted/30 opacity-60"}`}>
+                  <div className="flex items-center justify-between gap-3 p-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{link.label}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Username: <span className="font-mono">{link.username}</span>
+                        {exclusionCount > 0 && (
+                          <span className="ml-2 text-amber-600">• {exclusionCount} exclusion{exclusionCount > 1 ? "s" : ""}</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Badge variant="outline" className={`text-[10px] ${link.is_active ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-muted text-muted-foreground"}`}>
+                        {link.is_active ? "Active" : "Disabled"}
+                      </Badge>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => isEditing ? setEditingFilters(null) : openEditFilters(link)} title="Edit filters">
+                        <Filter className={`w-3.5 h-3.5 ${exclusionCount > 0 ? "text-amber-600" : ""}`} />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyLink()} title="Copy link">
+                        <Copy className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleLink.mutate({ id: link.id, active: !link.is_active })} title={link.is_active ? "Disable" : "Enable"}>
+                        <Power className={`w-3.5 h-3.5 ${link.is_active ? "text-emerald-600" : "text-muted-foreground"}`} />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => deleteLink.mutate(link.id)} title="Delete">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {isEditing && (
+                    <div className="border-t border-border p-4 bg-muted/10 space-y-3">
+                      <ExclusionFilterEditor
+                        brandIds={filterBrandIds}
+                        productIds={filterProductIds}
+                        onBrandsChange={setFilterBrandIds}
+                        onProductsChange={setFilterProductIds}
+                        allBrands={allBrands}
+                        allProducts={allProducts}
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <Button variant="outline" size="sm" onClick={() => setEditingFilters(null)} className="rounded-xl text-xs">Cancel</Button>
+                        <Button
+                          size="sm"
+                          onClick={() => updateFilters.mutate({ id: link.id, brands: filterBrandIds, products: filterProductIds })}
+                          disabled={updateFilters.isPending}
+                          className="rounded-xl text-xs gap-1.5"
+                        >
+                          {updateFilters.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                          Save Filters
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-1">
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] ${
-                      link.is_active
-                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {link.is_active ? "Active" : "Disabled"}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => copyLink()}
-                    title="Copy link"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => toggleLink.mutate({ id: link.id, active: !link.is_active })}
-                    title={link.is_active ? "Disable" : "Enable"}
-                  >
-                    <Power className={`w-3.5 h-3.5 ${link.is_active ? "text-emerald-600" : "text-muted-foreground"}`} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => deleteLink.mutate(link.id)}
-                    title="Delete"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ─── Reusable Exclusion Filter Editor ─── */
+
+function ExclusionFilterEditor({
+  brandIds,
+  productIds,
+  onBrandsChange,
+  onProductsChange,
+  allBrands,
+  allProducts,
+}: {
+  brandIds: string[];
+  productIds: string[];
+  onBrandsChange: (ids: string[]) => void;
+  onProductsChange: (ids: string[]) => void;
+  allBrands: any[];
+  allProducts: any[];
+}) {
+  const [brandSearch, setBrandSearch] = useState("");
+  const [productSearch, setProductSearch] = useState("");
+  const [tab, setTab] = useState<"brands" | "products">("brands");
+
+  const toggleBrand = (id: string) => {
+    onBrandsChange(brandIds.includes(id) ? brandIds.filter((b) => b !== id) : [...brandIds, id]);
+  };
+  const toggleProduct = (id: string) => {
+    onProductsChange(productIds.includes(id) ? productIds.filter((p) => p !== id) : [...productIds, id]);
+  };
+
+  const filteredBrands = allBrands.filter((b: any) => b.name.toLowerCase().includes(brandSearch.toLowerCase()));
+  const filteredProducts = allProducts.filter((p: any) => p.title.toLowerCase().includes(productSearch.toLowerCase()));
+
+  return (
+    <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <Filter className="w-3.5 h-3.5 text-amber-600" />
+        <p className="text-xs font-bold text-foreground">Exclusion Filters</p>
+        <p className="text-[10px] text-muted-foreground">— Items matching these filters will go to Operations instead</p>
+      </div>
+
+      {/* Selected exclusions */}
+      {(brandIds.length > 0 || productIds.length > 0) && (
+        <div className="flex flex-wrap gap-1.5">
+          {brandIds.map((id) => (
+            <Badge key={id} variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-500/20 gap-1 cursor-pointer" onClick={() => toggleBrand(id)}>
+              🏷 {allBrands.find((b: any) => b.id === id)?.name || id.slice(0, 8)}
+              <X className="w-2.5 h-2.5" />
+            </Badge>
+          ))}
+          {productIds.map((id) => (
+            <Badge key={id} variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-500/20 gap-1 cursor-pointer" onClick={() => toggleProduct(id)}>
+              📦 {allProducts.find((p: any) => p.id === id)?.title?.slice(0, 30) || id.slice(0, 8)}
+              <X className="w-2.5 h-2.5" />
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-border pb-1">
+        <button onClick={() => setTab("brands")} className={`text-[11px] font-medium pb-1 border-b-2 ${tab === "brands" ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}>
+          Exclude Brands ({brandIds.length})
+        </button>
+        <button onClick={() => setTab("products")} className={`text-[11px] font-medium pb-1 border-b-2 ${tab === "products" ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}>
+          Exclude Products ({productIds.length})
+        </button>
+      </div>
+
+      {tab === "brands" ? (
+        <div className="space-y-1.5">
+          <Input value={brandSearch} onChange={(e) => setBrandSearch(e.target.value)} placeholder="Search brands..." className="h-8 text-xs rounded-lg" />
+          <div className="max-h-36 overflow-y-auto space-y-0.5">
+            {filteredBrands.slice(0, 50).map((b: any) => (
+              <label key={b.id} className="flex items-center gap-2 px-2 py-1 hover:bg-muted/50 rounded cursor-pointer">
+                <Checkbox checked={brandIds.includes(b.id)} onCheckedChange={() => toggleBrand(b.id)} className="h-3.5 w-3.5" />
+                <span className="text-xs text-foreground">{b.name}</span>
+              </label>
+            ))}
+            {filteredBrands.length === 0 && <p className="text-[10px] text-muted-foreground py-2 text-center">No brands found</p>}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          <Input value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Search products..." className="h-8 text-xs rounded-lg" />
+          <div className="max-h-36 overflow-y-auto space-y-0.5">
+            {filteredProducts.slice(0, 50).map((p: any) => (
+              <label key={p.id} className="flex items-center gap-2 px-2 py-1 hover:bg-muted/50 rounded cursor-pointer">
+                <Checkbox checked={productIds.includes(p.id)} onCheckedChange={() => toggleProduct(p.id)} className="h-3.5 w-3.5" />
+                <span className="text-xs text-foreground truncate">{p.title}</span>
+              </label>
+            ))}
+            {filteredProducts.length === 0 && <p className="text-[10px] text-muted-foreground py-2 text-center">No products found</p>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
