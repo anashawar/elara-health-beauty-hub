@@ -20,6 +20,8 @@ interface OfferForm {
   subtitle: string;
   description: string;
   image_url: string;
+  image_url_ar: string;
+  image_url_ku: string;
   discount_type: string;
   discount_value: number;
   target_type: string;
@@ -34,6 +36,7 @@ interface OfferForm {
 
 const emptyForm: OfferForm = {
   title: "", subtitle: "", description: "", image_url: "",
+  image_url_ar: "", image_url_ku: "",
   discount_type: "percentage", discount_value: 0,
   target_type: "all", target_id: "", target_name: "", link_url: "",
   banner_style: "none", is_active: true, starts_at: "", ends_at: "",
