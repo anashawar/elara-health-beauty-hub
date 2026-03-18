@@ -137,7 +137,7 @@ export default function AdminBanners() {
             <div className="grid gap-4 mt-2">
               {/* Image upload area */}
               <div>
-                <Label className="mb-2 block">Banner Image *</Label>
+                <Label className="mb-2 block">Banner Image — English 🇬🇧 *</Label>
                 {displayPreview ? (
                   <div className="relative rounded-xl overflow-hidden border border-border bg-muted">
                     <img src={displayPreview} alt="Preview" className="w-full h-48 object-cover" />
