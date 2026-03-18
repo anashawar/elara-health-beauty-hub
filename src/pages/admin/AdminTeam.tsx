@@ -337,8 +337,8 @@ function PrepLinksSection() {
   });
 
   const copyLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/prep/login`);
-    toast.success("Prep login link copied!");
+    navigator.clipboard.writeText("https://elarastore.co/warehouse");
+    toast.success("Warehouse login link copied!");
   };
 
   return (
