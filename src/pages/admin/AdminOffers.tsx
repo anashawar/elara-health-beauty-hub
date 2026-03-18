@@ -282,7 +282,7 @@ export default function AdminOffers() {
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="h-4 w-4 mr-1.5" />New Offer</Button>
           </DialogTrigger>
-          <DialogContent className="!max-w-2xl max-h-[92vh] overflow-y-auto">
+          <DialogContent className="max-h-[92vh] overflow-y-auto" style={{ maxWidth: '672px' }}>
             <DialogHeader>
               <DialogTitle>{editing ? "Edit Offer" : "Create New Offer"}</DialogTitle>
             </DialogHeader>
