@@ -43,6 +43,7 @@ const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const { t } = useLanguage();
   const formatPrice = useFormatPrice();
+  const location = useLocation();
 
   useEffect(() => {
     window.scrollTo(0, 0);
