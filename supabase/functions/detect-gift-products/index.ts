@@ -59,17 +59,22 @@ serve(async (req) => {
 
       const prompt = `You are a gift recommendation expert for an online beauty & health store in Iraq (ELARA).
 
-Analyze these products and identify which ones are suitable as GIFTS. Gift-suitable products include:
-- Gift sets, bundles, collections
-- Perfumes, fragrances, body mists
-- Luxury skincare sets
-- Premium/high-end products
-- Products with attractive packaging
-- Body care sets (lotions, shower gels, etc.)
-- Makeup palettes or sets
-- Candles, diffusers
-- Hair care gift sets
-- Any product that someone would commonly buy as a present
+Analyze these products and identify which ones are suitable as GIFTS. 
+
+ONLY select products that fall into these categories:
+- Gift sets, bundles, or collections (multi-product packs)
+- Perfumes, fragrances, colognes, body mists
+- Luxury/premium skincare or body care SETS (NOT individual products like a single moisturizer or cleanser)
+- Makeup palettes or makeup gift sets
+- Candles, diffusers, home fragrance
+- Body care gift sets (lotion + shower gel combos, etc.)
+
+DO NOT select:
+- Individual skincare products (single serums, single moisturizers, single cleansers, single sunscreens)
+- Individual cosmetics (single lipstick, single mascara)
+- Supplements or vitamins
+- Hair care individual products (single shampoo, single conditioner)
+- Medical/treatment products
 
 Products list:
 ${productList}
