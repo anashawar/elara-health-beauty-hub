@@ -323,8 +323,8 @@ export async function generateSkinReportPdf(
     doc.rect(0, ph - 20, w, 0.8, "F");
 
     // Logo in footer
-    if (logoData) {
-      doc.addImage(logoData, "PNG", 14, ph - 17, 18, 6.5);
+    if (logoWhiteData) {
+      doc.addImage(logoWhiteData, "PNG", 14, ph - 17, 18, 6.5);
     } else {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(9);
