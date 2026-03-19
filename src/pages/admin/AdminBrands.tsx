@@ -334,6 +334,18 @@ export default function AdminBrands() {
               {b.featured && <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">FEATURED</span>}
               {b.country_of_origin && <p className="text-[10px] text-muted-foreground">{b.country_of_origin}</p>}
               <p className="text-[10px] text-muted-foreground">{b.slug}</p>
+              {(() => {
+                const whIds = getWarehouseIdsForBrand(b.id);
+                if (whIds.length === 0) return null;
+                const whNames = whIds.map((id: string) => warehouses.find((w: any) => w.id === id)?.name).filter(Boolean);
+                return (
+                  <div className="flex flex-wrap gap-0.5 mt-0.5 justify-center">
+                    {whNames.map((n: string) => (
+                      <Badge key={n} variant="outline" className="text-[8px] px-1 py-0 border-primary/20 text-primary">{n}</Badge>
+                    ))}
+                  </div>
+                );
+              })()}
               {!multiSelect && (
                 <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg" onClick={() => {
