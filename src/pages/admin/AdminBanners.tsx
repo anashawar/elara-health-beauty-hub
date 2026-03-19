@@ -186,10 +186,21 @@ export default function AdminBanners() {
               <DialogTitle>{editing ? "Edit Banner" : "Add Banner"}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 mt-2">
-              {/* Language image uploads */}
-              <p className="text-[10px] text-muted-foreground col-span-full -mb-1">
-                📐 Recommended: 1200×400px (3:1 ratio) · WebP or PNG · Under 500KB for best performance
-              </p>
+              {/* Image size guidelines */}
+              <div className="col-span-full bg-muted/50 rounded-xl p-3 border border-border/50 space-y-1.5">
+                <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">📐 Banner Image Guidelines</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-muted-foreground">
+                  <div className="flex items-start gap-2">
+                    <span className="bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded text-[10px] shrink-0">📱 Mobile</span>
+                    <span><strong>750 × 375px</strong> (2:1 ratio) — fits natively on iPhone & Android</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="bg-secondary text-secondary-foreground font-bold px-1.5 py-0.5 rounded text-[10px] shrink-0">🖥 Desktop</span>
+                    <span><strong>1400 × 400px</strong> (3.5:1 ratio) — shown on laptop/PC screens</span>
+                  </div>
+                </div>
+                <p className="text-[10px] text-muted-foreground">💡 Upload a <strong>2:1 ratio</strong> image for best cross-device results · WebP or PNG · Under 500KB</p>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {renderImageUpload("English 🇬🇧", "en", previewUrl, "image_url", fileRef as any, setPreviewUrl, true)}
                 {renderImageUpload("Arabic 🇮🇶", "ar", previewUrlAr, "image_url_ar", fileRefAr as any, setPreviewUrlAr)}
