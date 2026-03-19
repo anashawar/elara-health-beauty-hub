@@ -1,9 +1,11 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import TopHeader from "@/components/layout/TopHeader";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import BottomNav from "@/components/layout/BottomNav";
 import DesktopFooter from "@/components/layout/DesktopFooter";
-import HeroBanner from "@/components/home/HeroBanner";
+import HeroBanner, { prefetchBanners } from "@/components/home/HeroBanner";
 import CategoryGrid from "@/components/home/CategoryGrid";
 import AskElaraCard from "@/components/home/AskElaraCard";
 import SkinScanBanner from "@/components/home/SkinScanBanner";
@@ -24,8 +26,27 @@ const WhyElaraBanner = lazy(() => import("@/components/home/WhyElaraBanner"));
 import { MobileAppTopStrip, MobileAppHeroBanner, MobileAppInlineBanner } from "@/components/home/MobileAppBanners";
 
 const Index = () => {
+  const location = useLocation();
+  const queryClient = useQueryClient();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchInitialQuery, setSearchInitialQuery] = useState<string | undefined>();
   const { t } = useLanguage();
+
+  // Prefetch banners immediately on mount — they show first
+  useEffect(() => {
+    prefetchBanners(queryClient);
+  }, [queryClient]);
+
+  // Restore search state if navigated back from a product page
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.openSearch) {
+      setSearchInitialQuery(state.searchQuery || undefined);
+      setSearchOpen(true);
+      // Clean the state so it doesn't re-trigger
+      window.history.replaceState({}, "");
+    }
+  }, [location.state]);
 
   // Lightweight per-section queries — each fetches only ~20 products instead of all 2800
   const { data: trending = [], isLoading: loadingTrending } = useTrendingProducts();
@@ -35,6 +56,11 @@ const Index = () => {
 
   const isLoading = loadingTrending;
   const SectionFallback = <ProductSectionSkeleton />;
+
+  const handleSearchClose = () => {
+    setSearchOpen(false);
+    setSearchInitialQuery(undefined);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8 scroll-bounce" style={{ minHeight: '-webkit-fill-available' }}>
@@ -48,7 +74,7 @@ const Index = () => {
       <MobileAppTopStrip />
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <TopHeader onSearchClick={() => setSearchOpen(true)} />
-      <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SearchOverlay isOpen={searchOpen} onClose={handleSearchClose} initialQuery={searchInitialQuery} />
 
       <MobileAppHeroBanner />
       <HeroBanner />

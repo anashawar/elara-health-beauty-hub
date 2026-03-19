@@ -1,8 +1,25 @@
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageContext";
+
+// Prefetch banners as early as possible
+export function prefetchBanners(queryClient: any) {
+  queryClient.prefetchQuery({
+    queryKey: ["banners"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("banners")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
 
 const HeroBanner = memo(() => {
   const { language } = useLanguage();
@@ -10,7 +27,7 @@ const HeroBanner = memo(() => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const autoPlayRef = useRef<ReturnType<typeof setInterval>>();
 
-  const { data: banners = [] } = useQuery({
+  const { data: banners = [], isLoading } = useQuery({
     queryKey: ["banners"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -58,6 +75,15 @@ const HeroBanner = memo(() => {
     scrollRef.current?.scrollTo({ left: idx * scrollRef.current.offsetWidth, behavior: "smooth" });
   };
 
+  // Skeleton loader while banners load
+  if (isLoading) {
+    return (
+      <div className="relative w-full overflow-hidden aspect-[2/1] md:aspect-[3/1] lg:aspect-[3.5/1] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none">
+        <div className="w-full h-full bg-secondary animate-pulse rounded-2xl md:rounded-none" />
+      </div>
+    );
+  }
+
   if (banners.length === 0) return null;
 
   return (
@@ -80,6 +106,8 @@ const HeroBanner = memo(() => {
             className: "absolute inset-0 w-full h-full object-cover",
             draggable: false,
             loading: (idx === 0 ? "eager" : "lazy") as "eager" | "lazy",
+            // First banner gets high fetch priority
+            ...(idx === 0 ? { fetchPriority: "high" as const } : {}),
           };
 
           return banner.link_url ? (
