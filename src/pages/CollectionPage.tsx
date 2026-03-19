@@ -32,6 +32,7 @@ const CollectionPage = () => {
       case "picks": result = products.filter(p => p.isPick); break;
       case "offers": result = products.filter(p => p.originalPrice); break;
       case "new": result = products.filter(p => p.isNew); break;
+      case "gifts": result = products.filter(p => p.tags.includes("gift")); break;
       default: result = [];
     }
     if (searchQuery.length > 1) {
