@@ -79,8 +79,8 @@ export async function generateSkinReportPdf(
   doc.rect(0, 40, w, 1.5, "F");
 
   // Logo
-  if (logoData) {
-    doc.addImage(logoData, "PNG", 14, 8, 28, 10);
+  if (logoWhiteData) {
+    doc.addImage(logoWhiteData, "PNG", 14, 8, 28, 10);
   } else {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
