@@ -93,6 +93,16 @@ const Index = () => {
             <SkinScanBanner />
           </Suspense>
 
+          {discountedProducts.length > 0 && (
+            <Suspense fallback={null}>
+              <DiscountsSection products={discountedProducts} />
+            </Suspense>
+          )}
+
+          <Suspense fallback={null}>
+            <TodayOffersSlider />
+          </Suspense>
+
           {isLoading ? (
             <>
               <ProductSectionSkeleton />
@@ -103,10 +113,6 @@ const Index = () => {
               <ProductSection title={t("home.trendingNow")} subtitle={t("home.mostPopular")} products={trending} viewAllLink="/collection/trending" variant="trending" />
             </Suspense>
           )}
-
-          <Suspense fallback={null}>
-            <TodayOffersSlider />
-          </Suspense>
 
           <Suspense fallback={null}>
             <OffersBanner />
@@ -131,12 +137,6 @@ const Index = () => {
           <Suspense fallback={null}>
             <ConcernsSection />
           </Suspense>
-
-          {discountedProducts.length > 0 && (
-            <Suspense fallback={null}>
-              <DiscountsSection products={discountedProducts} />
-            </Suspense>
-          )}
 
           <Suspense fallback={null}>
             <MobileAppBanners />
