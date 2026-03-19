@@ -129,6 +129,7 @@ function SkinScanContent() {
   const [phase, setPhase] = useState<Phase>("capture");
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [makeupProducts, setMakeupProducts] = useState<Product[]>([]);
   const [scanProgress, setScanProgress] = useState(0);
   const [scanStep, setScanStep] = useState(0);
   const [cameraActive, setCameraActive] = useState(false);
