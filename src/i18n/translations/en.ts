@@ -419,6 +419,7 @@ export const en = {
     koreanSkincare: "Korean skincare",
     underBudget: "Under 15,000 IQD",
     askElaraAI: "Ask ELARA AI instead",
+    recentSearches: "Recent Searches",
   },
   install: {
     title: "Install ELARA",
