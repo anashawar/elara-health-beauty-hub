@@ -24,9 +24,14 @@ export function prefetchBanners(queryClient: any) {
 
 const HeroBanner = memo(() => {
   const { language } = useLanguage();
+  const isRtl = language === "ar" || language === "ku";
   const [current, setCurrent] = useState(0);
 
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    align: "center",
+    direction: isRtl ? "rtl" : "ltr",
+  });
 
   const { data: banners = [], isLoading } = useQuery({
     queryKey: ["banners"],
@@ -78,8 +83,8 @@ const HeroBanner = memo(() => {
   if (banners.length === 0) return null;
 
   return (
-    <div className="relative w-full overflow-hidden aspect-[2/1] md:aspect-[3/1] lg:aspect-[3.5/1] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none">
-      <div ref={emblaRef} className="overflow-hidden h-full">
+    <div key={language} className="relative w-full overflow-hidden aspect-[2/1] md:aspect-[3/1] lg:aspect-[3.5/1] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none">
+      <div ref={emblaRef} className="overflow-hidden h-full" dir={isRtl ? "rtl" : "ltr"}>
         <div className="flex h-full">
           {banners.map((banner: any, idx: number) => {
             const imgSrc = (language === "ar" && banner.image_url_ar) ? banner.image_url_ar
