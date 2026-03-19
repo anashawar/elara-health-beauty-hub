@@ -36,6 +36,8 @@ import {
   CalendarDays,
   ChevronDown,
   FileText,
+  Send,
+  MessageSquare,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import elaraLogo from "@/assets/elara-logo.png";
@@ -829,6 +831,7 @@ export default function PrepOrdersPage() {
                             onPrepare={tab === "pending" ? () => markPrepared(selectedOrderData.id) : undefined}
                             onClose={() => setSelectedOrder(null)}
                             onZoomImage={setZoomImage}
+                            token={token}
                           />
                         </div>
                       </div>
@@ -1449,14 +1452,41 @@ function OrderDetailPanel({
   onPrepare,
   onClose,
   onZoomImage,
+  token,
 }: {
   order: PrepOrder;
   isPreparing: boolean;
   onPrepare?: () => void;
   onClose: () => void;
   onZoomImage: (url: string) => void;
+  token: string | null;
 }) {
   const totalItems = order.items.reduce((s, i) => s + i.quantity, 0);
+  const [noteText, setNoteText] = useState("");
+  const [sendingNote, setSendingNote] = useState(false);
+  const [noteSent, setNoteSent] = useState(false);
+
+  const sendNoteToOps = async () => {
+    if (!noteText.trim() || !token) return;
+    setSendingNote(true);
+    try {
+      const res = await fetch(`${FUNC_URL}?token=${token}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send-note", order_id: order.id, note: noteText.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send note");
+      toast.success("Operations team has been notified!");
+      setNoteText("");
+      setNoteSent(true);
+      setTimeout(() => setNoteSent(false), 3000);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSendingNote(false);
+    }
+  };
 
   return (
     <motion.div
@@ -1621,6 +1651,37 @@ function OrderDetailPanel({
           )}
         </div>
       )}
+
+      {/* Notify Operations */}
+      <div className="px-5 py-4 border-t border-border/40 space-y-2.5">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className="text-xs font-bold text-foreground">Notify Operations</span>
+          {noteSent && (
+            <Badge variant="outline" className="text-[9px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20 ml-auto">
+              ✓ Sent
+            </Badge>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Input
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            placeholder="e.g. Product X out of stock, cost changed..."
+            className="h-9 rounded-xl text-xs bg-muted/30 border-border/40"
+            onKeyDown={(e) => e.key === "Enter" && sendNoteToOps()}
+          />
+          <Button
+            onClick={sendNoteToOps}
+            disabled={sendingNote || !noteText.trim()}
+            size="sm"
+            className="rounded-xl h-9 px-3 gap-1.5 flex-shrink-0"
+          >
+            {sendingNote ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+          </Button>
+        </div>
+        <p className="text-[10px] text-muted-foreground">This will instantly notify all operations admins.</p>
+      </div>
 
       {/* Action */}
       {onPrepare && (
