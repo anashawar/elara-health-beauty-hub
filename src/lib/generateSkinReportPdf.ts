@@ -61,8 +61,10 @@ export async function generateSkinReportPdf(
 
   // Load logo
   let logoData: string | null = null;
+  let logoWhiteData: string | null = null;
   try {
     logoData = await loadImageAsBase64(elaraLogo);
+    logoWhiteData = await loadImageAsBase64(elaraLogoWhite);
   } catch { /* fallback to text */ }
 
   // ── Brand colors ──
