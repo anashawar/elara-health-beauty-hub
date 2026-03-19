@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { Link } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageContext";
+import useEmblaCarousel from "embla-carousel-react";
 
 // Prefetch banners as early as possible
 export function prefetchBanners(queryClient: any) {
@@ -24,8 +25,8 @@ export function prefetchBanners(queryClient: any) {
 const HeroBanner = memo(() => {
   const { language } = useLanguage();
   const [current, setCurrent] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const autoPlayRef = useRef<ReturnType<typeof setInterval>>();
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
 
   const { data: banners = [], isLoading } = useQuery({
     queryKey: ["banners"],
@@ -41,41 +42,31 @@ const HeroBanner = memo(() => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const handleScroll = useCallback(() => {
-    if (scrollRef.current) {
-      const idx = Math.round(scrollRef.current.scrollLeft / scrollRef.current.offsetWidth);
-      setCurrent(idx);
-    }
-  }, []);
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setCurrent(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
 
   useEffect(() => {
-    if (banners.length <= 1) return;
-    autoPlayRef.current = setInterval(() => {
-      if (scrollRef.current) {
-        const next = (Math.round(scrollRef.current.scrollLeft / scrollRef.current.offsetWidth) + 1) % banners.length;
-        scrollRef.current.scrollTo({ left: next * scrollRef.current.offsetWidth, behavior: "smooth" });
-      }
+    if (!emblaApi) return;
+    emblaApi.on("select", onSelect);
+    onSelect();
+    return () => { emblaApi.off("select", onSelect); };
+  }, [emblaApi, onSelect]);
+
+  // Autoplay
+  useEffect(() => {
+    if (!emblaApi || banners.length <= 1) return;
+    const interval = setInterval(() => {
+      emblaApi.scrollNext();
     }, 5000);
-    return () => clearInterval(autoPlayRef.current);
-  }, [banners.length]);
+    return () => clearInterval(interval);
+  }, [emblaApi, banners.length]);
 
-  const handleTouchStart = () => clearInterval(autoPlayRef.current);
-  const handleTouchEnd = () => {
-    clearInterval(autoPlayRef.current);
-    if (banners.length <= 1) return;
-    autoPlayRef.current = setInterval(() => {
-      if (scrollRef.current) {
-        const next = (Math.round(scrollRef.current.scrollLeft / scrollRef.current.offsetWidth) + 1) % banners.length;
-        scrollRef.current.scrollTo({ left: next * scrollRef.current.offsetWidth, behavior: "smooth" });
-      }
-    }, 5000);
-  };
+  const goTo = useCallback((idx: number) => {
+    emblaApi?.scrollTo(idx);
+  }, [emblaApi]);
 
-  const goTo = (idx: number) => {
-    scrollRef.current?.scrollTo({ left: idx * scrollRef.current.offsetWidth, behavior: "smooth" });
-  };
-
-  // Skeleton loader while banners load
   if (isLoading) {
     return (
       <div className="relative w-full overflow-hidden aspect-[2/1] md:aspect-[3/1] lg:aspect-[3.5/1] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none">
@@ -87,39 +78,34 @@ const HeroBanner = memo(() => {
   if (banners.length === 0) return null;
 
   return (
-    <div className="relative w-full overflow-hidden aspect-[2/1] md:aspect-[3/1] lg:aspect-[3.5/1] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none touch-auto">
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden no-scrollbar h-full touch-auto"
-        style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch", overscrollBehaviorX: "auto", touchAction: "pan-y pan-x" }}
-      >
-        {banners.map((banner: any, idx: number) => {
-          const imgSrc = (language === "ar" && banner.image_url_ar) ? banner.image_url_ar
-            : (language === "ku" && banner.image_url_ku) ? banner.image_url_ku
-            : banner.image_url;
-          const imgProps = {
-            src: imgSrc,
-            alt: banner.title || "",
-            className: "absolute inset-0 w-full h-full object-cover",
-            draggable: false,
-            loading: (idx === 0 ? "eager" : "lazy") as "eager" | "lazy",
-            // First banner gets high fetch priority
-            ...(idx === 0 ? { fetchPriority: "high" as const } : {}),
-          };
+    <div className="relative w-full overflow-hidden aspect-[2/1] md:aspect-[3/1] lg:aspect-[3.5/1] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none">
+      <div ref={emblaRef} className="overflow-hidden h-full">
+        <div className="flex h-full">
+          {banners.map((banner: any, idx: number) => {
+            const imgSrc = (language === "ar" && banner.image_url_ar) ? banner.image_url_ar
+              : (language === "ku" && banner.image_url_ku) ? banner.image_url_ku
+              : banner.image_url;
 
-          return banner.link_url ? (
-            <Link key={banner.id} to={banner.link_url} className="w-full flex-shrink-0 snap-center relative h-full block" style={{ minWidth: "100%" }}>
-              <img {...imgProps} />
-            </Link>
-          ) : (
-            <div key={banner.id} className="w-full flex-shrink-0 snap-center relative h-full" style={{ minWidth: "100%" }}>
-              <img {...imgProps} />
-            </div>
-          );
-        })}
+            const slide = (
+              <img
+                src={imgSrc}
+                alt={banner.title || ""}
+                className="absolute inset-0 w-full h-full object-cover"
+                draggable={false}
+                loading={idx === 0 ? "eager" : "lazy"}
+                {...(idx === 0 ? { fetchPriority: "high" as const } : {})}
+              />
+            );
+
+            return (
+              <div key={banner.id} className="flex-[0_0_100%] min-w-0 relative h-full">
+                {banner.link_url ? (
+                  <Link to={banner.link_url} className="block w-full h-full">{slide}</Link>
+                ) : slide}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {banners.length > 1 && (
