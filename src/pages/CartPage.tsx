@@ -70,7 +70,7 @@ const CartPage = () => {
       const { data } = await supabase
         .from("orders")
         .select("id, status, total, created_at, order_items(quantity)")
-        .in("status", ["pending", "processing", "on_the_way"])
+        .in("status", ["processing", "prepared", "on_the_way"])
         .order("created_at", { ascending: false })
         .limit(3);
       return data || [];
