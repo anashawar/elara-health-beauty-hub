@@ -131,6 +131,12 @@ const Index = () => {
             <ConcernsSection />
           </Suspense>
 
+          {offers.length > 0 && (
+            <Suspense fallback={null}>
+              <DiscountsSection products={offers} />
+            </Suspense>
+          )}
+
           <Suspense fallback={null}>
             <MobileAppBanners />
           </Suspense>
