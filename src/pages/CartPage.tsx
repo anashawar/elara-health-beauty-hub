@@ -20,7 +20,7 @@ import { calcCouponDiscount, getEligibleSubtotal } from "@/lib/discountRules";
 const CartPage = () => {
   const { cart, updateQuantity, removeFromCart, cartTotal, cartCount, clearCart, pendingCoupon, setPendingCoupon, appliedCoupon, setAppliedCoupon } = useApp();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const formatPrice = useFormatPrice();
   const [coupon, setCoupon] = useState(appliedCoupon?.code || "");
   const [couponLoading, setCouponLoading] = useState(false);
