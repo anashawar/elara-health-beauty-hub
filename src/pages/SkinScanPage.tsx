@@ -349,7 +349,7 @@ function SkinScanContent() {
   // ─── CAPTURE PHASE ────────────────────────────────────
   if (phase === "capture") {
     return (
-      <div className="min-h-screen bg-background" dir={isRtl ? "rtl" : "ltr"}>
+      <div className="min-h-screen" dir={isRtl ? "rtl" : "ltr"} style={{ backgroundColor: showNativeScanner && isNative ? "transparent" : undefined }}>
         {/* Native Face Scanner (full-screen overlay on iOS/Android) */}
         {showNativeScanner && isNative && (
           <NativeFaceScanner
@@ -362,6 +362,8 @@ function SkinScanContent() {
             onClose={() => setShowNativeScanner(false)}
           />
         )}
+        {/* Hide page content when native scanner is active so camera shows through */}
+        {showNativeScanner && isNative ? null : (<>
         <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/30" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
