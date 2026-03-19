@@ -1449,14 +1449,41 @@ function OrderDetailPanel({
   onPrepare,
   onClose,
   onZoomImage,
+  token,
 }: {
   order: PrepOrder;
   isPreparing: boolean;
   onPrepare?: () => void;
   onClose: () => void;
   onZoomImage: (url: string) => void;
+  token: string | null;
 }) {
   const totalItems = order.items.reduce((s, i) => s + i.quantity, 0);
+  const [noteText, setNoteText] = useState("");
+  const [sendingNote, setSendingNote] = useState(false);
+  const [noteSent, setNoteSent] = useState(false);
+
+  const sendNoteToOps = async () => {
+    if (!noteText.trim() || !token) return;
+    setSendingNote(true);
+    try {
+      const res = await fetch(`${FUNC_URL}?token=${token}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send-note", order_id: order.id, note: noteText.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send note");
+      toast.success("Operations team has been notified!");
+      setNoteText("");
+      setNoteSent(true);
+      setTimeout(() => setNoteSent(false), 3000);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSendingNote(false);
+    }
+  };
 
   return (
     <motion.div
