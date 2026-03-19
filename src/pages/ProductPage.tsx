@@ -453,14 +453,7 @@ const ProductPage = () => {
 
             <ReviewSection productId={product.id} />
 
-            {related.length > 0 && (
-              <div className="mt-8">
-                <h3 className="text-base font-display font-bold text-foreground mb-3">{t("product.youMayAlsoLike")}</h3>
-                <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth-x pb-2 md:grid md:grid-cols-2 lg:grid-cols-4 md:overflow-visible">
-                  {related.map(p => <ProductCard key={p.id} product={p} variant="horizontal" offerPricing={getOfferForProduct(p, activeOffers)} />)}
-                </div>
-              </div>
-            )}
+            <RelatedProducts productId={product.id} categoryId={product.category_id} brandId={product.brand_id} />
 
             {/* Desktop: App Download Banner */}
             <div className="mt-8">
