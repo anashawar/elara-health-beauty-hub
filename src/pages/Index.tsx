@@ -12,7 +12,7 @@ const SkinScanBanner = lazy(() => import("@/components/home/SkinScanBanner"));
 import ProductSectionSkeleton from "@/components/home/ProductSectionSkeleton";
 import SearchOverlay from "@/components/SearchOverlay";
 import SEOHead, { organizationJsonLd, websiteJsonLd, storeJsonLd } from "@/components/SEOHead";
-import { useTrendingProducts, usePickProducts, useOfferProducts, useNewProducts, useGiftProducts } from "@/hooks/useHomeProducts";
+import { useTrendingProducts, usePickProducts, useOfferProducts, useNewProducts, useGiftProducts, useDiscountedProducts } from "@/hooks/useHomeProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 const ProductSection = lazy(() => import("@/components/home/ProductSection"));
