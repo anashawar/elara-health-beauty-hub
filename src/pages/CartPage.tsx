@@ -180,19 +180,7 @@ const CartPage = () => {
       }
     }
 
-    // Per-user usage limit: each user can use a coupon only once
-    if (user) {
-      const { count } = await supabase
-        .from("orders")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("coupon_code", data.code);
-      if ((count ?? 0) > 0) {
-        setCouponLoading(false);
-        toast(language === "ar" ? "لقد استخدمت هذا الكوبون مسبقاً" : language === "ku" ? "تۆ پێشتر ئەم کوپۆنەت بەکارهێناوە" : "You've already used this coupon");
-        return;
-      }
-    }
+    // Coupons can be reused by the same user on multiple orders
 
     setCouponLoading(false);
 
