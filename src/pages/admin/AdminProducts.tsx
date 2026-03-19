@@ -32,6 +32,7 @@ interface ProductForm {
   is_new: boolean;
   is_trending: boolean;
   is_pick: boolean;
+  is_gift: boolean;
   in_stock: boolean;
   volume_ml: string;
   volume_unit: string;
@@ -44,7 +45,7 @@ interface ProductForm {
 const emptyForm: ProductForm = {
   title: "", slug: "", price: 0, original_price: null, cost: null, description: "",
   usage_instructions: "", benefits: "",
-  category_id: "", subcategory_id: "", brand_id: "", is_new: false, is_trending: false, is_pick: false, in_stock: true,
+  category_id: "", subcategory_id: "", brand_id: "", is_new: false, is_trending: false, is_pick: false, is_gift: false, in_stock: true,
   volume_ml: "", volume_unit: "ml", skin_type: "", country_of_origin: "", condition: "", product_form: "",
 };
 
