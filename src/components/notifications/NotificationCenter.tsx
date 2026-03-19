@@ -150,9 +150,9 @@ export default function NotificationCenter() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 400 }}
-              className="absolute inset-x-0 bottom-0 bg-background rounded-t-[20px] flex flex-col"
+              className="absolute inset-x-0 top-0 bottom-0 bg-background flex flex-col"
               style={{
-                maxHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - 10px)',
+                paddingTop: 'env(safe-area-inset-top, 0px)',
                 paddingBottom: 'env(safe-area-inset-bottom, 0px)',
               }}
             >
