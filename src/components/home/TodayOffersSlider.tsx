@@ -39,7 +39,10 @@ export default function TodayOffersSlider() {
     },
   });
 
-  // Group offers into pairs
+  // If exactly 6 offers, show as a 2-row grid on mobile (no slider)
+  const showAsGrid = offers.length === 6;
+
+  // Group offers into pairs of 3 for slider mode
   const pairs: Offer[][] = [];
   for (let i = 0; i < offers.length; i += 3) {
     pairs.push(offers.slice(i, i + 3));
