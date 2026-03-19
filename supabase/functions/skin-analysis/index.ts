@@ -211,6 +211,20 @@ IMPORTANT:
 
     if (saveError) console.error("Save error:", saveError);
 
+    // Save skin tone to user profile for future makeup recommendations
+    if (analysis.skin_tone) {
+      const adminClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      const { error: profileError } = await adminClient.from("profiles").update({
+        skin_tone: analysis.skin_tone.category,
+        skin_tone_hex: analysis.skin_tone.hex_color,
+        skin_undertone: analysis.skin_tone.undertone,
+      }).eq("user_id", user.id);
+      if (profileError) console.error("Profile skin tone save error:", profileError);
+    }
+
     return new Response(JSON.stringify({ analysis }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
