@@ -32,10 +32,10 @@ serve(async (req) => {
     const { imageBase64, language = "en" } = await req.json();
     if (!imageBase64) throw new Error("No image provided");
 
-    // Fetch products for recommendations
+    // Fetch products for recommendations (skincare + makeup)
     const { data: products } = await supabase
       .from("products")
-      .select("id, title, title_ar, title_ku, slug, price, category_id, skin_type, condition, brand_id, benefits")
+      .select("id, title, title_ar, title_ku, slug, price, category_id, skin_type, condition, brand_id, benefits, shade")
       .eq("in_stock", true)
       .limit(200);
 
@@ -45,6 +45,7 @@ serve(async (req) => {
       skin_type: p.skin_type,
       condition: p.condition,
       benefits: p.benefits,
+      shade: p.shade,
     }));
 
     const langInstruction = language === "ar"
