@@ -67,6 +67,8 @@ export const ar = {
     limitedDeals: "عروض لفترة محدودة",
     newArrivals: "وصل جديد",
     freshAdditions: "منتجات جديدة ضفناها",
+    discounts: "تخفيضات",
+    discountsHurry: "لا تفوّتها، احصل عليها قبل ما تخلص!",
     featuredBrands: "ماركات مميزة",
     trustedByThousands: "يثق بيها الآلاف",
     buyNow: "اشتري الآن",

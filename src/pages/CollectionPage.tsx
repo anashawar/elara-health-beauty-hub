@@ -119,6 +119,7 @@ const CollectionPage = () => {
         case "trending": query = query.eq("is_trending", true); break;
         case "picks": query = query.eq("is_pick", true); break;
         case "offers": query = query.not("original_price", "is", null); break;
+        case "discounts": query = query.not("original_price", "is", null); break;
         case "new": query = query.eq("is_new", true); break;
       }
 

@@ -67,6 +67,8 @@ export const en = {
     limitedDeals: "Limited time deals",
     newArrivals: "New Arrivals",
     freshAdditions: "Fresh additions to our collection",
+    discounts: "Discounts",
+    discountsHurry: "Hurry and get them soon!",
     featuredBrands: "Featured Brands",
     trustedByThousands: "Trusted by thousands",
     buyNow: "Buy now",
