@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Minus, Plus, Trash2, Tag, ShoppingBag, Sparkles, Truck, X, CheckCircle2, Loader2, Package, ChevronRight } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Trash2, Tag, ShoppingBag, Sparkles, Truck, X, CheckCircle2, Loader2, Package, ChevronRight, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/context/AppContext";
 import { useFormatPrice } from "@/hooks/useProducts";
@@ -14,6 +14,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { getDeliveryFee, FREE_DELIVERY_MIN } from "@/lib/deliveryFee";
+import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
+import { calcCouponDiscount, getEligibleSubtotal } from "@/lib/discountRules";
 
 const CartPage = () => {
   const { cart, updateQuantity, removeFromCart, cartTotal, cartCount, clearCart, pendingCoupon, setPendingCoupon, appliedCoupon, setAppliedCoupon } = useApp();
