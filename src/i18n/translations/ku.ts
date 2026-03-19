@@ -398,6 +398,7 @@ export const ku = {
     minPrice: "کەمترین نرخ (د.ع)",
     maxPrice: "زۆرترین نرخ (د.ع)",
     clearFilters: "فلتەرەکان بسڕەوە",
+    clearAll: "هەموو بسڕەوە",
     applyFilters: "فلتەرەکان جێبەجێ بکە",
     noProductsFound: "هیچ بەرهەمێک نەدۆزرایەوە",
     clearAllFilters: "هەموو فلتەرەکان بسڕەوە",

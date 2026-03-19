@@ -398,6 +398,7 @@ export const ar = {
     minPrice: "أقل سعر (د.ع)",
     maxPrice: "أعلى سعر (د.ع)",
     clearFilters: "امسح الفلاتر",
+    clearAll: "مسح الكل",
     applyFilters: "طبّق الفلاتر",
     noProductsFound: "ما كو منتجات",
     clearAllFilters: "امسح كل الفلاتر",
