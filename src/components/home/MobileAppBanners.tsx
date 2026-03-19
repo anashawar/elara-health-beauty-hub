@@ -16,7 +16,7 @@ export const MobileAppTopStrip = () => {
         <X className="w-3.5 h-3.5 text-white/50" />
       </button>
       <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 border border-white/10 flex items-center justify-center flex-shrink-0">
-        <img src={elaraLogo} alt="ELARA" className="h-5 brightness-0 invert" />
+        <img src={elaraLogo} alt="ELARA" className="h-5 brightness-0 invert" width={64} height={20} />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[11px] font-bold leading-tight">ELARA App</p>

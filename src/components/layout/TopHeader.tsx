@@ -100,7 +100,7 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
         {/* Top row: Logo + Welcome */}
         <div className="flex items-center justify-between">
           <Link to="/home" className="flex-shrink-0">
-            <img src={elaraLogo} alt="ELARA" className="h-7" />
+            <img src={elaraLogo} alt="ELARA" className="h-7" width={90} height={28} />
           </Link>
 
           <div className="flex items-center gap-1.5">

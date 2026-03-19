@@ -62,7 +62,7 @@ const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }
       <div className="flex-shrink-0 w-[152px] rounded-3xl border border-border/30 bg-card shadow-sm overflow-hidden group">
         <Link to={url} className="block">
           <div className="relative aspect-square overflow-hidden bg-secondary/40">
-            <img src={product.image} alt={product.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+            <img src={product.image} alt={product.title} width={152} height={152} className="w-full h-full object-cover" loading="lazy" decoding="async" />
             {outOfStock && (
               <span className="absolute inset-0 flex items-center justify-center bg-background/50">
                 <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-3 py-1 rounded-xl">{t("product.outOfStock") || "Out of Stock"}</span>
@@ -114,7 +114,7 @@ const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }
     <div className="rounded-3xl border border-border/30 bg-card shadow-sm overflow-hidden group">
       <Link to={url} className="block">
         <div className="relative aspect-square overflow-hidden bg-secondary/40">
-          <img src={product.image} alt={product.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+          <img src={product.image} alt={product.title} width={200} height={200} className="w-full h-full object-cover" loading="lazy" decoding="async" />
           {outOfStock && (
             <span className="absolute inset-0 flex items-center justify-center bg-background/50">
               <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-3 py-1 rounded-xl">{t("product.outOfStock") || "Out of Stock"}</span>

@@ -7,8 +7,8 @@ import BottomNav from "@/components/layout/BottomNav";
 import DesktopFooter from "@/components/layout/DesktopFooter";
 import HeroBanner, { prefetchBanners } from "@/components/home/HeroBanner";
 import CategoryGrid from "@/components/home/CategoryGrid";
-import AskElaraCard from "@/components/home/AskElaraCard";
-import SkinScanBanner from "@/components/home/SkinScanBanner";
+const AskElaraCard = lazy(() => import("@/components/home/AskElaraCard"));
+const SkinScanBanner = lazy(() => import("@/components/home/SkinScanBanner"));
 import ProductSectionSkeleton from "@/components/home/ProductSectionSkeleton";
 import SearchOverlay from "@/components/SearchOverlay";
 import SEOHead, { organizationJsonLd, websiteJsonLd, storeJsonLd } from "@/components/SEOHead";
@@ -23,7 +23,9 @@ const ConcernsSection = lazy(() => import("@/components/home/ConcernsSection"));
 const DealsBanner = lazy(() => import("@/components/home/DealsBanner"));
 const AppDownloadBanner = lazy(() => import("@/components/home/AppDownloadBanner"));
 const WhyElaraBanner = lazy(() => import("@/components/home/WhyElaraBanner"));
-import { MobileAppTopStrip, MobileAppHeroBanner, MobileAppInlineBanner } from "@/components/home/MobileAppBanners";
+const MobileAppBanners = lazy(() => import("@/components/home/MobileAppBanners").then(m => ({ default: m.MobileAppInlineBanner })));
+const MobileAppHeroBanner = lazy(() => import("@/components/home/MobileAppBanners").then(m => ({ default: m.MobileAppHeroBanner })));
+import { MobileAppTopStrip } from "@/components/home/MobileAppBanners";
 const GiftsSection = lazy(() => import("@/components/home/GiftsSection"));
 
 const Index = () => {
@@ -75,13 +77,19 @@ const Index = () => {
       <SearchOverlay isOpen={searchOpen} onClose={handleSearchClose} initialQuery={searchInitialQuery} />
 
       <div className="flex-1 pb-24 md:pb-0 scroll-bounce">
-        <MobileAppHeroBanner />
+        <Suspense fallback={null}>
+          <MobileAppHeroBanner />
+        </Suspense>
         <HeroBanner />
 
         <div className="app-container md:max-w-7xl md:mx-auto">
           <CategoryGrid />
-          <AskElaraCard />
-          <SkinScanBanner />
+          <Suspense fallback={null}>
+            <AskElaraCard />
+          </Suspense>
+          <Suspense fallback={null}>
+            <SkinScanBanner />
+          </Suspense>
 
           {isLoading ? (
             <>
@@ -122,7 +130,9 @@ const Index = () => {
             <ConcernsSection />
           </Suspense>
 
-          <MobileAppInlineBanner />
+          <Suspense fallback={null}>
+            <MobileAppBanners />
+          </Suspense>
 
           <Suspense fallback={null}>
             <DealsBanner />
