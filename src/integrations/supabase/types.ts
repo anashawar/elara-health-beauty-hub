@@ -1126,6 +1126,7 @@ export type Database = {
           is_trending: boolean | null
           original_price: number | null
           price: number
+          shade: string | null
           skin_type: string | null
           slug: string
           subcategory_id: string | null
@@ -1161,6 +1162,7 @@ export type Database = {
           is_trending?: boolean | null
           original_price?: number | null
           price: number
+          shade?: string | null
           skin_type?: string | null
           slug: string
           subcategory_id?: string | null
@@ -1196,6 +1198,7 @@ export type Database = {
           is_trending?: boolean | null
           original_price?: number | null
           price?: number
+          shade?: string | null
           skin_type?: string | null
           slug?: string
           subcategory_id?: string | null
@@ -1242,6 +1245,9 @@ export type Database = {
           gender: string | null
           id: string
           phone: string | null
+          skin_tone: string | null
+          skin_tone_hex: string | null
+          skin_undertone: string | null
           updated_at: string
           user_id: string
         }
@@ -1253,6 +1259,9 @@ export type Database = {
           gender?: string | null
           id?: string
           phone?: string | null
+          skin_tone?: string | null
+          skin_tone_hex?: string | null
+          skin_undertone?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1264,6 +1273,9 @@ export type Database = {
           gender?: string | null
           id?: string
           phone?: string | null
+          skin_tone?: string | null
+          skin_tone_hex?: string | null
+          skin_undertone?: string | null
           updated_at?: string
           user_id?: string
         }
