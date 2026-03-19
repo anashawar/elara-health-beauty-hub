@@ -16,6 +16,9 @@ interface ProductCardProps {
   offerPricing?: OfferPricing | null;
 }
 
+/** SEO-friendly product URL — always use slug */
+const productUrl = (p: ProductWithRelations) => `/product/${p.slug}`;
+
 const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }: ProductCardProps) => {
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
   const { user } = useAuth();
@@ -32,6 +35,8 @@ const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }
     : product.originalPrice
       ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
       : 0;
+
+  const url = productUrl(product);
 
   const handleAddToCart = useCallback((e?: React.MouseEvent) => {
     e?.preventDefault();
@@ -55,9 +60,9 @@ const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }
   if (variant === "horizontal") {
     return (
       <div className="flex-shrink-0 w-[152px] rounded-3xl border border-border/30 bg-card shadow-sm overflow-hidden group">
-        <Link to={`/product/${product.id}`} className="block">
+        <Link to={url} className="block">
           <div className="relative aspect-square overflow-hidden bg-secondary/40">
-            <img src={product.image} alt={product.title} className={`w-full h-full object-cover ${outOfStock ? "opacity-50 grayscale" : ""}`} loading="lazy" decoding="async" />
+            <img src={product.image} alt={product.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
             {outOfStock && (
               <span className="absolute inset-0 flex items-center justify-center bg-background/50">
                 <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-3 py-1 rounded-xl">{t("product.outOfStock") || "Out of Stock"}</span>
@@ -73,7 +78,7 @@ const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }
         </Link>
         <div className="p-3">
           <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">{product.brand}</p>
-          <Link to={`/product/${product.id}`}>
+          <Link to={url}>
             <h3 className="text-[13px] font-bold text-foreground mt-0.5 line-clamp-2 leading-snug tracking-tight">{product.title}</h3>
           </Link>
           <div className="flex items-center gap-1.5 mt-2">
@@ -107,9 +112,9 @@ const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }
 
   return (
     <div className="rounded-3xl border border-border/30 bg-card shadow-sm overflow-hidden group">
-      <Link to={`/product/${product.id}`} className="block">
+      <Link to={url} className="block">
         <div className="relative aspect-square overflow-hidden bg-secondary/40">
-          <img src={product.image} alt={product.title} className={`w-full h-full object-cover ${outOfStock ? "opacity-50 grayscale" : ""}`} loading="lazy" decoding="async" />
+          <img src={product.image} alt={product.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
           {outOfStock && (
             <span className="absolute inset-0 flex items-center justify-center bg-background/50">
               <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-3 py-1 rounded-xl">{t("product.outOfStock") || "Out of Stock"}</span>
@@ -131,7 +136,7 @@ const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }
       </Link>
       <div className="p-3.5">
         <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">{product.brand}</p>
-        <Link to={`/product/${product.id}`}>
+        <Link to={url}>
           <h3 className="text-[15px] font-bold text-foreground mt-1 line-clamp-2 leading-snug tracking-tight">{product.title}</h3>
         </Link>
         <div className="flex items-center gap-1.5 mt-2">

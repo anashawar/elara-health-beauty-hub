@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/layout/BottomNav";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import FloatingSearch from "@/components/layout/FloatingSearch";
+import DesktopFooter from "@/components/layout/DesktopFooter";
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
 import { useCategories, useBrands, concerns, type ProductWithRelations } from "@/hooks/useProducts";
@@ -196,12 +197,12 @@ const ShopPage = () => {
   const topBrands = brands.filter((b: any) => b.featured).slice(0, 8);
 
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-8">
+    <div className="min-h-screen bg-background flex flex-col">
       <SEOHead
-        title="Shop All Products — ELARA Iraq"
-        description="Browse all health & beauty products on ELARA. Original brands, fast delivery across Iraq."
+        title="Shop All Beauty & Health Products in Iraq"
+        description="Browse 2000+ original health & beauty products on ELARA. Top brands like CeraVe, The Ordinary, L'Oréal. Fast delivery across Iraq."
         canonical="https://elara-health-beauty-hub.lovable.app/shop"
-        keywords="shop iraq, beauty products iraq, cosmetics iraq, skincare iraq, ELARA shop"
+        keywords="shop iraq, beauty products iraq, cosmetics iraq, skincare iraq, ELARA shop, buy beauty products iraq, online pharmacy iraq"
       />
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
@@ -577,6 +578,9 @@ const ShopPage = () => {
         )}
       </AnimatePresence>
 
+      <div className="hidden md:block">
+        <DesktopFooter />
+      </div>
       <FloatingSearch />
       <BottomNav />
     </div>

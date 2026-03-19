@@ -3,12 +3,14 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Search, X } from "lucide-react";
 import BottomNav from "@/components/layout/BottomNav";
 import DesktopHeader from "@/components/layout/DesktopHeader";
+import DesktopFooter from "@/components/layout/DesktopFooter";
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
+import SEOHead, { collectionJsonLd, breadcrumbJsonLd, SITE_BASE } from "@/components/SEOHead";
 
 const PAGE_SIZE = 30;
 
@@ -148,10 +150,27 @@ const CollectionPage = () => {
     return map;
   }, [products, activeOffers]);
 
+  const collectionTitle = t(meta.titleKey);
+  const collectionDesc = `Shop ${collectionTitle} products at ELARA. ${total} products available. Original beauty, skincare & health products with fast delivery across Iraq.`;
+
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-8">
+    <div className="min-h-screen bg-background flex flex-col">
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+
+      <SEOHead
+        title={`${collectionTitle} — Shop ${collectionTitle} Products in Iraq`}
+        description={collectionDesc}
+        canonical={`${SITE_BASE}/collection/${type}`}
+        keywords={`${collectionTitle} iraq, ${collectionTitle} beauty, ${collectionTitle} skincare, beauty iraq, elara ${type}`}
+        jsonLd={[
+          collectionJsonLd(collectionTitle, collectionDesc, `${SITE_BASE}/collection/${type}`),
+          breadcrumbJsonLd([
+            { name: "ELARA", url: SITE_BASE },
+            { name: collectionTitle, url: `${SITE_BASE}/collection/${type}` },
+          ]),
+        ]}
+      />
 
       <header className="sticky top-0 z-40 bg-card/95 border-b border-border md:hidden" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
         <div className="flex items-center gap-3 px-4 py-3">
@@ -161,7 +180,7 @@ const CollectionPage = () => {
           <div className="flex items-center gap-2">
             <span className="text-lg">{meta.icon}</span>
             <div>
-              <h1 className="text-lg font-display font-bold text-foreground">{t(meta.titleKey)}</h1>
+              <h1 className="text-lg font-display font-bold text-foreground">{collectionTitle}</h1>
               <p className="text-[11px] text-muted-foreground">{t(meta.subtitleKey)}</p>
             </div>
           </div>
@@ -186,59 +205,63 @@ const CollectionPage = () => {
         </div>
       </header>
 
-      <div className="app-container">
-        <div className="hidden md:flex items-center gap-3 px-6 pt-6 pb-2">
-          <Link to="/home" className="text-sm text-muted-foreground hover:text-foreground">← Back</Link>
-          <span className="text-muted-foreground">/</span>
-          <h1 className="text-2xl font-display font-bold text-foreground">{t(meta.titleKey)}</h1>
+      <div className="flex-1 pb-24 md:pb-0">
+        <div className="max-w-7xl mx-auto w-full">
+          <div className="hidden md:flex items-center gap-3 px-6 pt-6 pb-2">
+            <Link to="/home" className="text-sm text-muted-foreground hover:text-foreground">← Back</Link>
+            <span className="text-muted-foreground">/</span>
+            <h1 className="text-2xl font-display font-bold text-foreground">{collectionTitle}</h1>
+          </div>
+
+          <div className="px-4 md:px-6 mt-3 mb-2">
+            <p className="text-xs text-muted-foreground">{total} {t("common.products").toLowerCase()}</p>
+          </div>
+
+          {isLoading && products.length === 0 ? (
+            <div className="flex justify-center py-12">
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4 md:px-6">
+              {products.map(p => (
+                <ProductCard key={p.id} product={p} offerPricing={offerMap.get(p.id) ?? null} />
+              ))}
+            </div>
+          )}
+
+          {!isLoading && products.length === 0 && (
+            <div className="text-center mt-12 px-4">
+              <p className="text-muted-foreground text-sm">{t("categories.noProductsFound")}</p>
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6 mb-4 px-4">
+              <button
+                disabled={page <= 1}
+                onClick={() => { setPage(p => p - 1); window.scrollTo(0, 0); }}
+                className="px-4 py-2 text-sm font-semibold rounded-xl bg-secondary text-foreground disabled:opacity-40"
+              >
+                ←
+              </button>
+              <span className="text-sm text-muted-foreground font-medium">
+                {page} / {totalPages}
+              </span>
+              <button
+                disabled={page >= totalPages}
+                onClick={() => { setPage(p => p + 1); window.scrollTo(0, 0); }}
+                className="px-4 py-2 text-sm font-semibold rounded-xl bg-secondary text-foreground disabled:opacity-40"
+              >
+                →
+              </button>
+            </div>
+          )}
         </div>
-
-        <div className="px-4 md:px-6 mt-3 mb-2">
-          <p className="text-xs text-muted-foreground">{total} {t("common.products").toLowerCase()}</p>
-        </div>
-
-        {isLoading && products.length === 0 ? (
-          <div className="flex justify-center py-12">
-            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4 md:px-6">
-            {products.map(p => (
-              <ProductCard key={p.id} product={p} offerPricing={offerMap.get(p.id) ?? null} />
-            ))}
-          </div>
-        )}
-
-        {!isLoading && products.length === 0 && (
-          <div className="text-center mt-12 px-4">
-            <p className="text-muted-foreground text-sm">{t("categories.noProductsFound")}</p>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-6 mb-4 px-4">
-            <button
-              disabled={page <= 1}
-              onClick={() => { setPage(p => p - 1); window.scrollTo(0, 0); }}
-              className="px-4 py-2 text-sm font-semibold rounded-xl bg-secondary text-foreground disabled:opacity-40"
-            >
-              ←
-            </button>
-            <span className="text-sm text-muted-foreground font-medium">
-              {page} / {totalPages}
-            </span>
-            <button
-              disabled={page >= totalPages}
-              onClick={() => { setPage(p => p + 1); window.scrollTo(0, 0); }}
-              className="px-4 py-2 text-sm font-semibold rounded-xl bg-secondary text-foreground disabled:opacity-40"
-            >
-              →
-            </button>
-          </div>
-        )}
       </div>
 
+      <div className="hidden md:block">
+        <DesktopFooter />
+      </div>
       <BottomNav />
     </div>
   );

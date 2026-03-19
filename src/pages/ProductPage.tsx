@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react"
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Heart, Share2, ShoppingBag, Search, Truck, ShieldCheck, BadgeCheck, X, Star, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import SearchOverlay from "@/components/SearchOverlay";
+import DesktopFooter from "@/components/layout/DesktopFooter";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/components/ui/sonner";
@@ -22,7 +23,7 @@ import ImageZoomViewer from "@/components/product/ImageZoomViewer";
 
 const PUBLISHED_URL = "https://elara-health-beauty-hub.lovable.app";
 
-const getShareUrl = (productId: string) => `${PUBLISHED_URL}/product/${productId}`;
+const getShareUrl = (slug: string) => `${PUBLISHED_URL}/product/${slug}`;
 
 const handleNativeShare = async (title: string, text: string, url: string, fallbackToast: string) => {
   try {
@@ -175,7 +176,7 @@ const ProductPage = () => {
               onClick={() => handleNativeShare(
                 product.title,
                 t("product.shareText", { title: product.title, brand: product.brand }),
-                getShareUrl(product.id),
+                getShareUrl(product.slug),
                 t("product.linkCopied")
               )}
               className="p-2 rounded-xl hover:bg-secondary active:scale-90 transition-all"
@@ -305,7 +306,7 @@ const ProductPage = () => {
                 onClick={() => handleNativeShare(
                   product.title,
                   t("product.shareText", { title: product.title, brand: product.brand }),
-                  getShareUrl(product.id),
+                  getShareUrl(product.slug),
                   t("product.linkCopied")
                 )}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border hover:bg-secondary transition-colors"
@@ -470,6 +471,9 @@ const ProductPage = () => {
         </div>
       </div>
 
+      <div className="hidden md:block">
+        <DesktopFooter />
+      </div>
       <BottomNav />
       <ImageZoomViewer
         images={images}

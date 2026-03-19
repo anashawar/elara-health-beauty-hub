@@ -14,5 +14,11 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /checkout
+Disallow: /reset-password
+Disallow: /prep/
+Disallow: /warehouse
 
 Sitemap: https://mycpfwnfvtsgshdzggrm.supabase.co/functions/v1/sitemap
