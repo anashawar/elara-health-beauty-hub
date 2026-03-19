@@ -143,6 +143,15 @@ const ShopPage = () => {
   const products = data?.products || [];
   const totalCount = data?.total || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const { data: activeOffers = [] } = useActiveOffers();
+
+  const offerMap = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof getOfferForProduct>>();
+    for (const p of products) {
+      map.set(p.id, getOfferForProduct(p, activeOffers));
+    }
+    return map;
+  }, [products, activeOffers]);
 
   const getCatName = useCallback((cat: any) => {
     if (language === "ar" && cat.name_ar) return cat.name_ar;
