@@ -32,6 +32,7 @@ interface ProductForm {
   is_new: boolean;
   is_trending: boolean;
   is_pick: boolean;
+  is_gift: boolean;
   in_stock: boolean;
   volume_ml: string;
   volume_unit: string;
@@ -44,7 +45,7 @@ interface ProductForm {
 const emptyForm: ProductForm = {
   title: "", slug: "", price: 0, original_price: null, cost: null, description: "",
   usage_instructions: "", benefits: "",
-  category_id: "", subcategory_id: "", brand_id: "", is_new: false, is_trending: false, is_pick: false, in_stock: true,
+  category_id: "", subcategory_id: "", brand_id: "", is_new: false, is_trending: false, is_pick: false, is_gift: false, in_stock: true,
   volume_ml: "", volume_unit: "ml", skin_type: "", country_of_origin: "", condition: "", product_form: "",
 };
 
@@ -212,6 +213,15 @@ export default function AdminProducts() {
         }
       }
 
+      // Manage "gift" tag
+      if (productId) {
+        const { data: existingGiftTag } = await supabase.from("product_tags").select("id").eq("product_id", productId).eq("tag", "gift").maybeSingle();
+        if (f.is_gift && !existingGiftTag) {
+          await supabase.from("product_tags").insert({ product_id: productId, tag: "gift" });
+        } else if (!f.is_gift && existingGiftTag) {
+          await supabase.from("product_tags").delete().eq("id", existingGiftTag.id);
+        }
+      }
       // Auto-translate only for NEW products (not updates)
       if (productId && !f.id) {
         try {
@@ -341,6 +351,9 @@ export default function AdminProducts() {
     const { data: costData } = await supabase.from("product_costs").select("cost").eq("product_id", p.id).maybeSingle();
     if (costData) cost = Number(costData.cost);
 
+    // Check if product has "gift" tag
+    const { data: giftTag } = await supabase.from("product_tags").select("id").eq("product_id", p.id).eq("tag", "gift").maybeSingle();
+
     setForm({
       id: p.id, title: p.title, slug: p.slug, price: p.price,
       original_price: p.original_price, cost, description: p.description || "",
@@ -348,7 +361,7 @@ export default function AdminProducts() {
       benefits: (p.benefits || []).join("\n"),
       category_id: p.category_id || "", subcategory_id: p.subcategory_id || "",
       brand_id: p.brand_id || "",
-      is_new: p.is_new || false, is_trending: p.is_trending || false, is_pick: p.is_pick || false, in_stock: p.in_stock !== false,
+      is_new: p.is_new || false, is_trending: p.is_trending || false, is_pick: p.is_pick || false, is_gift: !!giftTag, in_stock: p.in_stock !== false,
       volume_ml: p.volume_ml || "", volume_unit: p.volume_unit || "ml", skin_type: p.skin_type || "", country_of_origin: p.country_of_origin || "",
       condition: (p as any).condition || "", product_form: (p as any).form || "",
     });
@@ -1126,6 +1139,9 @@ export default function AdminProducts() {
                       </label>
                       <label className="flex items-center gap-2 text-sm">
                         <Switch checked={form.is_pick} onCheckedChange={(v) => setForm({ ...form, is_pick: v })} /> Staff Pick
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <Switch checked={form.is_gift} onCheckedChange={(v) => setForm({ ...form, is_gift: v })} /> 🎁 Gift
                       </label>
                     </div>
                   </div>

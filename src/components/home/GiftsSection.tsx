@@ -1,5 +1,5 @@
 import { memo, useRef, useState, useEffect } from "react";
-import { Gift, ChevronRight, Sparkles } from "lucide-react";
+import { Gift, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProductCard from "@/components/ProductCard";
 import type { ProductWithRelations } from "@/hooks/useProducts";
@@ -37,7 +37,6 @@ const GiftsSection = memo(({ products }: GiftsSectionProps) => {
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full" style={{ background: "radial-gradient(circle, hsl(38 70% 55% / 0.25) 0%, transparent 70%)" }} />
           <div className="absolute bottom-0 left-10 w-20 h-20 rounded-full" style={{ background: "radial-gradient(circle, hsl(268 84% 58% / 0.2) 0%, transparent 70%)" }} />
-          {/* Floating gift emojis */}
           <span className="absolute top-3 right-8 text-2xl opacity-20 animate-pulse">🎁</span>
           <span className="absolute bottom-2 right-24 text-lg opacity-15" style={{ animationDelay: "1s" }}>✨</span>
           <span className="absolute top-5 left-[60%] text-sm opacity-10">🎀</span>
@@ -50,11 +49,9 @@ const GiftsSection = memo(({ products }: GiftsSectionProps) => {
                 <Gift className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-display font-bold text-white tracking-tight flex items-center gap-2">
-                  {t("home.giftsForLovedOnes") || "Gift Ideas"}
-                  <Sparkles className="w-4 h-4 text-yellow-300/80" />
+                <h2 className="text-xl font-display font-bold text-white tracking-tight">
+                  {t("home.bestGifts") || "Best Gifts"}
                 </h2>
-                <p className="text-[12px] text-white/55 mt-0.5">{t("home.aiCuratedGifts") || "AI-curated picks for every occasion"}</p>
               </div>
             </div>
             <Link
@@ -108,14 +105,6 @@ const GiftsSection = memo(({ products }: GiftsSectionProps) => {
             <ChevronRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" />
           </Link>
         </div>
-      </div>
-
-      {/* AI badge */}
-      <div className="flex justify-center mt-2">
-        <span className="inline-flex items-center gap-1 text-[9px] font-medium text-muted-foreground/60 bg-secondary/50 px-2.5 py-1 rounded-full">
-          <Sparkles className="w-2.5 h-2.5" />
-          {t("home.aiPowered") || "AI-powered recommendations"}
-        </span>
       </div>
     </section>
   );

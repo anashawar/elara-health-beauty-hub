@@ -28,13 +28,14 @@ serve(async (req) => {
 
     const taggedIds = new Set((alreadyTagged || []).map((t: any) => t.product_id));
 
-    // Get products not yet analyzed — newest first
+    // Get products not yet analyzed — prioritize likely gift products
     const { data: products, error: prodErr } = await supabase
       .from("products")
       .select("id, title, description, price, original_price, brand_id, category_id, brands(name), categories(name)")
       .eq("in_stock", true)
+      .or("title.ilike.%set%,title.ilike.%gift%,title.ilike.%perfume%,title.ilike.%fragrance%,title.ilike.%cologne%,title.ilike.%palette%,title.ilike.%collection%,title.ilike.%bundle%,title.ilike.%kit%,title.ilike.%trio%,title.ilike.%duo%,title.ilike.%mist%,title.ilike.%eau de%")
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(300);
 
     if (prodErr) throw prodErr;
 
@@ -59,17 +60,22 @@ serve(async (req) => {
 
       const prompt = `You are a gift recommendation expert for an online beauty & health store in Iraq (ELARA).
 
-Analyze these products and identify which ones are suitable as GIFTS. Gift-suitable products include:
-- Gift sets, bundles, collections
-- Perfumes, fragrances, body mists
-- Luxury skincare sets
-- Premium/high-end products
-- Products with attractive packaging
-- Body care sets (lotions, shower gels, etc.)
-- Makeup palettes or sets
-- Candles, diffusers
-- Hair care gift sets
-- Any product that someone would commonly buy as a present
+Analyze these products and identify which ones are suitable as GIFTS. 
+
+ONLY select products that fall into these categories:
+- Gift sets, bundles, or collections (multi-product packs)
+- Perfumes, fragrances, colognes, body mists
+- Luxury/premium skincare or body care SETS (NOT individual products like a single moisturizer or cleanser)
+- Makeup palettes or makeup gift sets
+- Candles, diffusers, home fragrance
+- Body care gift sets (lotion + shower gel combos, etc.)
+
+DO NOT select:
+- Individual skincare products (single serums, single moisturizers, single cleansers, single sunscreens)
+- Individual cosmetics (single lipstick, single mascara)
+- Supplements or vitamins
+- Hair care individual products (single shampoo, single conditioner)
+- Medical/treatment products
 
 Products list:
 ${productList}

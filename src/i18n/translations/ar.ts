@@ -81,10 +81,8 @@ export const ar = {
     todayOffers: "عروض اليوم",
     curatedDeals: "عروض مختارة خصيصاً إلك",
     findWhatYouNeed: "اعثر على ما تحتاجه بشرتك",
-    giftsForLovedOnes: "أفكار هدايا 🎁",
-    aiCuratedGifts: "اختيارات ذكية لكل مناسبة",
+    bestGifts: "أفضل الهدايا",
     moreGifts: "هدايا أكثر",
-    aiPowered: "توصيات بالذكاء الاصطناعي",
   },
   banner: {
     newUserOffer: "عرض المستخدم الجديد",
