@@ -398,6 +398,7 @@ export const en = {
     minPrice: "Min Price (IQD)",
     maxPrice: "Max Price (IQD)",
     clearFilters: "Clear filters",
+    clearAll: "Clear All",
     applyFilters: "Apply Filters",
     noProductsFound: "No products found",
     clearAllFilters: "Clear all filters",
