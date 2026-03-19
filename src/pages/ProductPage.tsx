@@ -138,6 +138,7 @@ const ProductPage = () => {
         image={productImage}
         type="product"
         keywords={`${product.title}, ${brandName}, buy ${product.title} iraq, ${brandName} iraq, beauty iraq, skincare iraq`}
+        alternateLanguages={seoAlternates}
         jsonLd={[
           productJsonLd({
             title: product.title,
@@ -148,10 +149,14 @@ const ProductPage = () => {
             slug: product.slug,
             brandName: brandName || undefined,
             inStock: product.inStock,
+            rating: undefined,
+            reviewCount: undefined,
+            category: product.category_slug || undefined,
           }),
           breadcrumbJsonLd([
             { name: "ELARA", url: "https://elara-health-beauty-hub.lovable.app" },
             { name: "Shop", url: "https://elara-health-beauty-hub.lovable.app/shop" },
+            ...(brandName ? [{ name: brandName, url: `https://elara-health-beauty-hub.lovable.app/brand/${brandObj?.slug || product.brand_id}` }] : []),
             { name: product.title, url: `https://elara-health-beauty-hub.lovable.app/product/${product.slug}` },
           ]),
         ]}
