@@ -13,7 +13,7 @@ interface SearchOverlayProps {
 }
 
 const SearchOverlay = ({ isOpen, onClose, initialQuery }: SearchOverlayProps) => {
-  const { data: products = [] } = useProducts();
+  const { data: products = [] } = useProducts({ enabled: isOpen });
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
   const { t } = useLanguage();
