@@ -108,7 +108,7 @@ const App = () => (
               <Route path="/" element={<ResponsiveHome />} />
               <Route path="/home" element={<Index />} />
               <Route path="/categories" element={<CategoriesPage />} />
-              <Route path="/shop" element={<CategoryPage />} />
+              <Route path="/shop" element={<ShopPage />} />
               <Route path="/category/:id" element={<CategoryPage />} />
               <Route path="/collection/:type" element={<CollectionPage />} />
               <Route path="/concern/:id" element={<CategoryPage />} />
