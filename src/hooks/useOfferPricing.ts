@@ -11,6 +11,12 @@ interface ActiveOffer {
   title: string;
 }
 
+export interface OfferPricing {
+  discountedPrice: number;
+  offerLabel: string;
+  discountPercent: number;
+}
+
 export function useActiveOffers() {
   return useQuery({
     queryKey: ["active-offers-pricing"],
@@ -20,21 +26,18 @@ export function useActiveOffers() {
         .select("id, discount_type, discount_value, target_type, target_id, title")
         .eq("is_active", true);
       if (error) throw error;
-      const now = new Date();
-      // We can't filter dates server-side easily, so filter client-side
       return data || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 min — match global stale time
+    staleTime: 1000 * 60 * 5,
   });
 }
 
 export function getOfferForProduct(
   product: ProductWithRelations,
   offers: ActiveOffer[]
-): { discountedPrice: number; offerLabel: string; discountPercent: number } | null {
+): OfferPricing | null {
   if (!offers.length) return null;
 
-  // Find best applicable offer
   let bestOffer: ActiveOffer | null = null;
   let bestDiscount = 0;
 

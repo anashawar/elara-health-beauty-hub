@@ -10,6 +10,7 @@ import ProductCard from "@/components/ProductCard";
 import { useProducts, useCategories, useSubcategories, concerns } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 import SEOHead, { breadcrumbJsonLd } from "@/components/SEOHead";
+import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 
 const concernKeywords: Record<string, string[]> = {
   acne: ["acne", "blemish", "pimple", "breakout", "zit"],
@@ -52,6 +53,7 @@ const CategoryPage = () => {
   const category = !isConcernRoute ? categories.find(c => c.slug === id) : null;
   const activeConcern = isConcernRoute ? concerns.find(c => c.id === id) : null;
   const BRANDS = [...new Set(allProducts.map(p => p.brand))];
+  const { data: activeOffers = [] } = useActiveOffers();
 
   const categorySubs = useMemo(() => {
     if (!category) return [];
@@ -274,7 +276,7 @@ const CategoryPage = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4 md:px-6">
           {filteredProducts.map(p => (
-            <ProductCard key={p.id} product={p} />
+            <ProductCard key={p.id} product={p} offerPricing={getOfferForProduct(p, activeOffers)} />
           ))}
         </div>
 

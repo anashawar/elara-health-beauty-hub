@@ -45,7 +45,7 @@
     --sage: 150 15% 55%;
     --sage-light: 150 20% 94%;
 
-    /* iOS Glass tokens */
+    /* Glass tokens — simplified for performance */
     --glass: 0 0% 100% / 0.72;
     --glass-border: 0 0% 100% / 0.5;
     --glass-heavy: 0 0% 100% / 0.85;
@@ -81,7 +81,7 @@
     font-family: 'DM Sans', sans-serif;
   }
 
-  /* iOS-grade shadows */
+  /* Lightweight shadows — no blur-heavy operations */
   .shadow-premium {
     box-shadow: 
       0 1px 3px hsl(20 10% 12% / 0.04),
@@ -96,8 +96,7 @@
   .shadow-glass {
     box-shadow: 
       0 1px 2px hsl(20 10% 12% / 0.03),
-      0 4px 16px -2px hsl(20 10% 12% / 0.05),
-      inset 0 0.5px 0 0 hsl(0 0% 100% / 0.6);
+      0 4px 16px -2px hsl(20 10% 12% / 0.05);
   }
   .shadow-float {
     box-shadow: 
@@ -105,26 +104,24 @@
       0 12px 28px -4px hsl(20 10% 12% / 0.08);
   }
 
-  /* Glass effects */
+  /* Glass effects — use sparingly, only on overlays/modals/nav */
   .glass {
     background: hsl(var(--glass));
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
   .glass-heavy {
     background: hsl(var(--glass-heavy));
-    backdrop-filter: saturate(180%) blur(24px);
-    -webkit-backdrop-filter: saturate(180%) blur(24px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
   .glass-subtle {
     background: hsl(0 0% 100% / 0.55);
-    backdrop-filter: saturate(150%) blur(16px);
-    -webkit-backdrop-filter: saturate(150%) blur(16px);
   }
   .glass-dark {
     background: hsl(20 10% 10% / 0.55);
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
   /* Gradient mesh for hero sections */
@@ -180,7 +177,7 @@ header[class*="sticky"] {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* ── Mobile UX: momentum scroll & overscroll ── */
+/* ── Mobile UX: momentum scroll ── */
 .overflow-y-auto,
 .overflow-x-auto {
   -webkit-overflow-scrolling: touch;
@@ -217,11 +214,10 @@ input, textarea, select {
   }
 }
 
-/* Smooth horizontal scrollers */
+/* Smooth horizontal scrollers — no scroll-behavior: smooth (causes jank on mobile) */
 .scroll-smooth-x {
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
 }
 .scroll-smooth-x > * {
   scroll-snap-align: start;
@@ -267,10 +263,10 @@ input[type="search"], input[type="url"], input[type="number"], textarea {
 
 /* Smooth page transitions */
 .page-enter {
-  animation: pageSlideIn 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: pageSlideIn 200ms ease-out forwards;
 }
 @keyframes pageSlideIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -286,36 +282,23 @@ input[type="search"], input[type="url"], input[type="number"], textarea {
   pointer-events: none;
 }
 
-/* Preserve transform-based positioning on dialogs and sheets */
-.overflow-x-auto,
-.overflow-y-auto {
-  will-change: scroll-position;
-}
-
-/* Reduce paint on fixed/sticky elements */
+/* GPU layer promotion ONLY for fixed/sticky nav — not scroll containers */
 nav[class*="fixed"],
 header[class*="sticky"] {
-  will-change: transform;
   transform: translateZ(0);
   contain: layout style;
 }
 
-/* Optimize image rendering */
+/* Optimize image rendering — auto content-visibility for offscreen images */
 img {
   content-visibility: auto;
   contain-intrinsic-size: auto 200px;
 }
 
-/* GPU-accelerate snap scrollers (banners, product sliders) */
-.snap-x {
-  will-change: scroll-position;
-  transform: translateZ(0);
-}
-
 /* Faster transition defaults for interactive elements */
 button, a, [role="button"] {
-  transition-duration: 150ms;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 100ms;
+  transition-timing-function: ease-out;
 }
 
 /* Reduce motion for users who prefer it */
@@ -325,4 +308,9 @@ button, a, [role="button"] {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* CSS containment for product cards — reduces layout/paint scope */
+.product-card-container {
+  contain: layout style paint;
 }

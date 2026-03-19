@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Search, SlidersHorizontal, X, ChevronDown, ChevronLeft, ChevronRight as ChevronRightIcon, Grid3X3, LayoutList, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +12,7 @@ import ProductCard from "@/components/ProductCard";
 import { useCategories, useBrands, concerns, type ProductWithRelations } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 import SEOHead from "@/components/SEOHead";
+import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 
 type ViewMode = "grid" | "list";
 type SortKey = "relevance" | "name-az" | "newest" | "price-low" | "price-high";
@@ -142,6 +143,15 @@ const ShopPage = () => {
   const products = data?.products || [];
   const totalCount = data?.total || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const { data: activeOffers = [] } = useActiveOffers();
+
+  const offerMap = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof getOfferForProduct>>();
+    for (const p of products) {
+      map.set(p.id, getOfferForProduct(p, activeOffers));
+    }
+    return map;
+  }, [products, activeOffers]);
 
   const getCatName = useCallback((cat: any) => {
     if (language === "ar" && cat.name_ar) return cat.name_ar;
@@ -356,7 +366,7 @@ const ShopPage = () => {
             }
           >
             {products.map((p) => (
-              <ProductCard key={p.id} product={p} variant={viewMode === "list" ? "horizontal" : "vertical"} />
+              <ProductCard key={p.id} product={p} variant={viewMode === "list" ? "horizontal" : "vertical"} offerPricing={offerMap.get(p.id) ?? null} />
             ))}
           </div>
         )}

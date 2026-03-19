@@ -20,7 +20,7 @@ const BottomNav = memo(() => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" style={{ contain: 'layout style' }}>
       <div className="app-container">
-        <div className="bg-card/95 backdrop-blur-xl border-t border-border/40 shadow-[0_-1px_3px_hsl(20_10%_12%/0.04)] bottom-nav-safe">
+        <div className="bg-card border-t border-border/40 shadow-[0_-1px_3px_hsl(20_10%_12%/0.04)] bottom-nav-safe">
           <div className="flex items-center justify-around py-1">
             {navItems.map(({ icon: Icon, label, path, isAI }) => {
               const isActive = location.pathname === path || (path === "/home" && location.pathname === "/");
@@ -33,7 +33,7 @@ const BottomNav = memo(() => {
                     className="relative flex flex-col items-center gap-0.5 px-4 -mt-4"
                   >
                     <div
-                      className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-float border-2 transition-colors duration-150 ${
+                      className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-float border-2 transition-colors duration-100 ${
                         isActive
                           ? "bg-primary border-primary/30"
                           : "bg-gradient-to-br from-primary to-violet-600 border-primary/20"
@@ -54,14 +54,14 @@ const BottomNav = memo(() => {
                 <Link
                   key={path}
                   to={path}
-                  className="relative flex flex-col items-center gap-0.5 px-4 py-2 active:opacity-70 transition-opacity duration-100"
+                  className="relative flex flex-col items-center gap-0.5 px-4 py-2 active:opacity-70 transition-opacity duration-80"
                 >
                   <div className="relative">
                     {isActive && (
                       <div className="absolute -inset-2.5 bg-primary/10 rounded-2xl" />
                     )}
                     <Icon
-                      className={`relative w-[22px] h-[22px] transition-colors duration-150 ${
+                      className={`relative w-[22px] h-[22px] transition-colors duration-100 ${
                         isActive
                           ? "text-primary stroke-[2.5px]"
                           : "text-muted-foreground/70 stroke-[1.8px]"
@@ -74,7 +74,7 @@ const BottomNav = memo(() => {
                     )}
                   </div>
                   <span
-                    className={`text-[10px] leading-tight transition-colors duration-150 ${
+                    className={`text-[10px] leading-tight transition-colors duration-100 ${
                       isActive
                         ? "text-primary font-bold"
                         : "text-muted-foreground/60 font-medium"
