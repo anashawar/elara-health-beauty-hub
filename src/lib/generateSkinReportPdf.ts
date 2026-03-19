@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import elaraLogo from "@/assets/elara-logo.png";
+import elaraLogoWhite from "@/assets/elara-logo-white.png";
 
 interface Analysis {
   overall_score: number;
