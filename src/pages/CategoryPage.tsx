@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import BottomNav from "@/components/layout/BottomNav";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import FloatingSearch from "@/components/layout/FloatingSearch";
+import DesktopFooter from "@/components/layout/DesktopFooter";
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
 import { useProducts, useCategories, useSubcategories, concerns } from "@/hooks/useProducts";
@@ -373,6 +374,9 @@ const CategoryPage = () => {
         )}
       </AnimatePresence>
 
+      <div className="hidden md:block">
+        <DesktopFooter />
+      </div>
       <FloatingSearch />
       <BottomNav />
     </div>

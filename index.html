@@ -54,9 +54,9 @@
       "name": "ELARA",
       "url": "https://elara-health-beauty-hub.lovable.app",
       "logo": "https://elara-health-beauty-hub.lovable.app/app-icon.png",
-      "description": "Iraq's #1 online health & beauty marketplace",
+      "description": "Iraq's #1 online health & beauty marketplace. Original products, AI-powered skincare, fast delivery.",
       "address": {"@type":"PostalAddress","addressLocality":"Erbil","addressRegion":"Kurdistan Region","addressCountry":"IQ"},
-      "contactPoint": {"@type":"ContactPoint","telephone":"+964-750-722-9002","contactType":"customer service","email":"info@elarastore.co"},
+      "contactPoint": {"@type":"ContactPoint","telephone":"+964-750-722-9002","contactType":"customer service","email":"info@elarastore.co","availableLanguage":["English","Arabic","Kurdish"]},
       "sameAs": ["https://instagram.com/elara.iq","https://facebook.com/elara.iq"]
     }
     </script>
@@ -68,11 +68,27 @@
       "name": "ELARA",
       "url": "https://elara-health-beauty-hub.lovable.app",
       "description": "Iraq's Smart Health & Beauty Marketplace. Shop skincare, makeup, haircare, vitamins & more.",
+      "inLanguage": ["en", "ar", "ku"],
       "potentialAction": {
         "@type": "SearchAction",
         "target": {"@type":"EntryPoint","urlTemplate":"https://elara-health-beauty-hub.lovable.app/shop?q={search_term_string}"},
         "query-input": "required name=search_term_string"
       }
+    }
+    </script>
+    <!-- JSON-LD OnlineStore -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "OnlineStore",
+      "name": "ELARA",
+      "url": "https://elara-health-beauty-hub.lovable.app",
+      "logo": "https://elara-health-beauty-hub.lovable.app/app-icon.png",
+      "description": "Iraq's premier online health & beauty store",
+      "currenciesAccepted": "IQD",
+      "paymentAccepted": "Cash on Delivery",
+      "areaServed": {"@type":"Country","name":"Iraq"},
+      "address": {"@type":"PostalAddress","addressLocality":"Erbil","addressRegion":"Kurdistan Region","addressCountry":"IQ"}
     }
     </script>
   </head>
