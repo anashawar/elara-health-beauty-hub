@@ -52,7 +52,7 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
       await CameraPreview.start({
         parent: "camera-preview-container",
         position: useFront ? "front" : "rear",
-        toBack: false,
+        toBack: true,
         disableAudio: true,
         storeToFile: false,
         width: window.innerWidth,
@@ -70,6 +70,28 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
       }
     }
   }, [useFront, cameraHeight]);
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const root = document.getElementById("root");
+
+    const previous = {
+      htmlBackground: html.style.background,
+      bodyBackground: body.style.background,
+      rootBackground: root?.style.background ?? "",
+    };
+
+    html.style.background = "transparent";
+    body.style.background = "transparent";
+    if (root) root.style.background = "transparent";
+
+    return () => {
+      html.style.background = previous.htmlBackground;
+      body.style.background = previous.bodyBackground;
+      if (root) root.style.background = previous.rootBackground;
+    };
+  }, []);
 
   // Init MediaPipe
   const initLandmarker = useCallback(async () => {
