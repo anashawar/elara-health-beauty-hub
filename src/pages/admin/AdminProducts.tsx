@@ -1128,6 +1128,9 @@ export default function AdminProducts() {
                       <label className="flex items-center gap-2 text-sm">
                         <Switch checked={form.is_pick} onCheckedChange={(v) => setForm({ ...form, is_pick: v })} /> Staff Pick
                       </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <Switch checked={form.is_gift} onCheckedChange={(v) => setForm({ ...form, is_gift: v })} /> 🎁 Gift
+                      </label>
                     </div>
                   </div>
                 </div>
