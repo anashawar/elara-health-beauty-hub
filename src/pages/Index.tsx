@@ -24,6 +24,7 @@ const DealsBanner = lazy(() => import("@/components/home/DealsBanner"));
 const AppDownloadBanner = lazy(() => import("@/components/home/AppDownloadBanner"));
 const WhyElaraBanner = lazy(() => import("@/components/home/WhyElaraBanner"));
 import { MobileAppTopStrip, MobileAppHeroBanner, MobileAppInlineBanner } from "@/components/home/MobileAppBanners";
+const GiftsSection = lazy(() => import("@/components/home/GiftsSection"));
 
 const Index = () => {
   const location = useLocation();
