@@ -22,3 +22,4 @@ Disallow: /prep/
 Disallow: /warehouse
 
 Sitemap: https://mycpfwnfvtsgshdzggrm.supabase.co/functions/v1/sitemap
+Sitemap: https://mycpfwnfvtsgshdzggrm.supabase.co/functions/v1/google-merchant-feed

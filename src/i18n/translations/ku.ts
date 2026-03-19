@@ -119,6 +119,8 @@ export const ku = {
     size: "قەبارە",
     form: "شێوە",
     youMayAlsoLike: "ئەمانەش بۆ تۆ باشن",
+    customersAlsoViewed: "کڕیارەکانیش سەیریان کرد",
+    relatedProducts: "بەرهەمە هاوشێوەکان",
     notFound: "بەرهەمەکە نەدۆزرایەوە",
     reviewsAndRatings: "هەڵسەنگاندن و بۆچوونەکان",
     writeReview: "بۆچوونێک بنووسە",

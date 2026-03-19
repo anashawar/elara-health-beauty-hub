@@ -119,6 +119,8 @@ export const en = {
     size: "Size",
     form: "Form",
     youMayAlsoLike: "You May Also Like",
+    customersAlsoViewed: "Customers Also Viewed",
+    relatedProducts: "Related Products",
     notFound: "Product not found",
     reviewsAndRatings: "Reviews & Ratings",
     writeReview: "Write a Review",

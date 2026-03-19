@@ -8,7 +8,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/components/ui/sonner";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/hooks/useAuth";
-import { useProduct, useRelatedProducts, useBrands, useFormatPrice } from "@/hooks/useProducts";
+import { useProduct, useBrands, useFormatPrice } from "@/hooks/useProducts";
+import RelatedProducts from "@/components/product/RelatedProducts";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 import { Share } from "@capacitor/share";
 import { Capacitor } from "@capacitor/core";
@@ -61,7 +62,7 @@ const ProductPage = () => {
   const { data: product, isLoading: productLoading } = useProduct(id);
   const { data: activeOffers = [] } = useActiveOffers();
   const { data: brands = [] } = useBrands();
-  const { data: related = [] } = useRelatedProducts(product?.category_id, id);
+  // Related products are now handled by the RelatedProducts component
 
   if (productLoading) {
     return (
@@ -121,6 +122,13 @@ const ProductPage = () => {
     ? product.description.slice(0, 155)
     : `Buy ${product.title} online in Iraq. Original product, fast delivery. Shop on ELARA.`;
 
+  // Multilingual SEO alternates
+  const seoAlternates = [
+    { lang: "en", url: `https://elara-health-beauty-hub.lovable.app/product/${product.slug}` },
+    { lang: "ar", url: `https://elara-health-beauty-hub.lovable.app/product/${product.slug}?lang=ar` },
+    { lang: "ku", url: `https://elara-health-beauty-hub.lovable.app/product/${product.slug}?lang=ku` },
+  ];
+
   return (
     <div className="min-h-screen bg-background pb-36 md:pb-8">
       <SEOHead
@@ -130,6 +138,7 @@ const ProductPage = () => {
         image={productImage}
         type="product"
         keywords={`${product.title}, ${brandName}, buy ${product.title} iraq, ${brandName} iraq, beauty iraq, skincare iraq`}
+        alternateLanguages={seoAlternates}
         jsonLd={[
           productJsonLd({
             title: product.title,
@@ -140,10 +149,14 @@ const ProductPage = () => {
             slug: product.slug,
             brandName: brandName || undefined,
             inStock: product.inStock,
+            rating: undefined,
+            reviewCount: undefined,
+            category: product.category_slug || undefined,
           }),
           breadcrumbJsonLd([
             { name: "ELARA", url: "https://elara-health-beauty-hub.lovable.app" },
             { name: "Shop", url: "https://elara-health-beauty-hub.lovable.app/shop" },
+            ...(brandName ? [{ name: brandName, url: `https://elara-health-beauty-hub.lovable.app/brand/${brandObj?.slug || product.brand_id}` }] : []),
             { name: product.title, url: `https://elara-health-beauty-hub.lovable.app/product/${product.slug}` },
           ]),
         ]}
@@ -440,14 +453,7 @@ const ProductPage = () => {
 
             <ReviewSection productId={product.id} />
 
-            {related.length > 0 && (
-              <div className="mt-8">
-                <h3 className="text-base font-display font-bold text-foreground mb-3">{t("product.youMayAlsoLike")}</h3>
-                <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth-x pb-2 md:grid md:grid-cols-2 lg:grid-cols-4 md:overflow-visible">
-                  {related.map(p => <ProductCard key={p.id} product={p} variant="horizontal" offerPricing={getOfferForProduct(p, activeOffers)} />)}
-                </div>
-              </div>
-            )}
+            <RelatedProducts productId={product.id} categoryId={product.category_id} brandId={product.brand_id} />
 
             {/* Desktop: App Download Banner */}
             <div className="mt-8">
