@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Heart, Share2, ShoppingBag, Search, Truck, ShieldCheck, BadgeCheck, X, Star, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import SearchOverlay from "@/components/SearchOverlay";
 import DesktopHeader from "@/components/layout/DesktopHeader";
@@ -43,6 +43,7 @@ const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const { t } = useLanguage();
   const formatPrice = useFormatPrice();
+  const location = useLocation();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -152,7 +153,14 @@ const ProductPage = () => {
       {/* Mobile header */}
       <header className="sticky top-0 z-40 glass-heavy border-b border-border/30 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="flex items-center gap-2 px-4 py-3">
-          <button onClick={() => navigate(-1)} className="p-2 -ms-1 rounded-xl hover:bg-secondary active:bg-secondary active:scale-90 transition-all flex-shrink-0">
+          <button onClick={() => {
+            const state = location.state as any;
+            if (state?.fromSearch) {
+              navigate("/home", { state: { openSearch: true, searchQuery: state.searchQuery } });
+            } else {
+              navigate(-1);
+            }
+          }} className="p-2 -ms-1 rounded-xl hover:bg-secondary active:bg-secondary active:scale-90 transition-all flex-shrink-0">
             <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
           </button>
           <button

@@ -1,25 +1,29 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { Search, X, ArrowRight, Sparkles } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Search, X, ArrowRight, Sparkles, Clock, Trash2 } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import BottomNav from "@/components/layout/BottomNav";
 import { useProducts, useCategories, useBrands, useFormatPrice, concerns } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { getRecentSearches, addRecentSearch, clearRecentSearches } from "@/hooks/useRecentSearches";
 
 interface SearchOverlayProps {
   isOpen: boolean;
   onClose: () => void;
+  initialQuery?: string;
 }
 
-const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
+const SearchOverlay = ({ isOpen, onClose, initialQuery }: SearchOverlayProps) => {
   const { data: products = [] } = useProducts();
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
   const { t } = useLanguage();
   const formatPrice = useFormatPrice();
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [priceFilter, setPriceFilter] = useState<string | null>(null);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -44,9 +48,21 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
   }, []);
 
   useEffect(() => {
-    if (isOpen) { setTimeout(() => inputRef.current?.focus(), 100); }
-    else { setQuery(""); setDebouncedQuery(""); setActiveFilter(null); setPriceFilter(null); }
-  }, [isOpen]);
+    if (isOpen) {
+      setRecentSearches(getRecentSearches());
+      // Restore initial query if provided (e.g. coming back via swipe)
+      if (initialQuery) {
+        setQuery(initialQuery);
+        setDebouncedQuery(initialQuery);
+      }
+      setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      setQuery("");
+      setDebouncedQuery("");
+      setActiveFilter(null);
+      setPriceFilter(null);
+    }
+  }, [isOpen, initialQuery]);
 
   // Cleanup debounce on unmount
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
@@ -91,6 +107,36 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
   const hasResults = filteredResults.products.length > 0 || filteredResults.categories.length > 0 || filteredResults.brands.length > 0;
   const isSearching = query.length >= 2 || activeFilter || priceFilter;
 
+  // Save to recent searches when user taps a result
+  const handleResultClick = useCallback(() => {
+    if (query.trim().length >= 2) {
+      addRecentSearch(query.trim());
+    }
+    onClose();
+  }, [query, onClose]);
+
+  const handleRecentSearchTap = useCallback((term: string) => {
+    setQuery(term);
+    setDebouncedQuery(term);
+    addRecentSearch(term);
+    setRecentSearches(getRecentSearches());
+  }, []);
+
+  const handleClearRecent = useCallback(() => {
+    clearRecentSearches();
+    setRecentSearches([]);
+  }, []);
+
+  // Navigate to product from search — saves search state for back navigation
+  const handleProductClick = useCallback((productId: string) => {
+    if (query.trim().length >= 2) {
+      addRecentSearch(query.trim());
+    }
+    // Use navigate with state so swipe-back restores search
+    navigate(`/product/${productId}`, { state: { fromSearch: true, searchQuery: query } });
+    onClose();
+  }, [query, navigate, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -116,6 +162,34 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
         <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4" style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }}>
           {!isSearching && (
             <div className="space-y-6">
+              {/* Recent Searches */}
+              {recentSearches.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                      <p className="text-xs font-bold text-foreground uppercase tracking-wider">{t("search.recentSearches") || "Recent Searches"}</p>
+                    </div>
+                    <button onClick={handleClearRecent} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive transition-colors">
+                      <Trash2 className="w-3 h-3" />
+                      {t("common.clearAll") || "Clear all"}
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {recentSearches.map(term => (
+                      <button
+                        key={term}
+                        onClick={() => handleRecentSearchTap(term)}
+                        className="flex items-center gap-1.5 text-xs bg-secondary/80 text-secondary-foreground px-3 py-2 rounded-xl hover:bg-accent transition-colors"
+                      >
+                        <Clock className="w-3 h-3 text-muted-foreground/50" />
+                        {term}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <div className="flex items-center gap-1.5 mb-3"><Sparkles className="w-3.5 h-3.5 text-primary" /><p className="text-xs font-bold text-foreground uppercase tracking-wider">{t("search.recommendedForYou")}</p></div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -142,11 +216,11 @@ const SearchOverlay = ({ isOpen, onClose }: SearchOverlayProps) => {
             </div>
           )}
 
-          {filteredResults.brands.length > 0 && (<div className="mb-4"><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("categories.brands")}</p>{filteredResults.brands.map(b => (<Link key={b.id} to={`/brand/${b.id}`} onClick={onClose} className="flex items-center justify-between py-2.5 border-b border-border/50"><div className="flex items-center gap-3">{b.logo_url && <img src={b.logo_url} alt={b.name} className="w-8 h-8 rounded-lg object-cover bg-secondary" />}<span className="text-sm font-medium text-foreground">{b.name}</span></div><ArrowRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" /></Link>))}</div>)}
+          {filteredResults.brands.length > 0 && (<div className="mb-4"><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("categories.brands")}</p>{filteredResults.brands.map(b => (<Link key={b.id} to={`/brand/${b.id}`} onClick={handleResultClick} className="flex items-center justify-between py-2.5 border-b border-border/50"><div className="flex items-center gap-3">{b.logo_url && <img src={b.logo_url} alt={b.name} className="w-8 h-8 rounded-lg object-cover bg-secondary" />}<span className="text-sm font-medium text-foreground">{b.name}</span></div><ArrowRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" /></Link>))}</div>)}
 
-          {filteredResults.categories.length > 0 && (<div className="mb-4"><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("nav.categories")}</p>{filteredResults.categories.map(cat => (<Link key={cat.id} to={`/category/${cat.slug}`} onClick={onClose} className="flex items-center justify-between py-2.5 border-b border-border/50"><div className="flex items-center gap-2"><span className="text-lg">{cat.icon}</span><span className="text-sm font-medium text-foreground">{cat.name}</span></div><ArrowRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" /></Link>))}</div>)}
+          {filteredResults.categories.length > 0 && (<div className="mb-4"><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("nav.categories")}</p>{filteredResults.categories.map(cat => (<Link key={cat.id} to={`/category/${cat.slug}`} onClick={handleResultClick} className="flex items-center justify-between py-2.5 border-b border-border/50"><div className="flex items-center gap-2"><span className="text-lg">{cat.icon}</span><span className="text-sm font-medium text-foreground">{cat.name}</span></div><ArrowRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" /></Link>))}</div>)}
 
-          {filteredResults.products.length > 0 && (<div><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("common.products")} ({filteredResults.products.length})</p><div className="md:grid md:grid-cols-2 md:gap-x-4">{filteredResults.products.map(p => (<Link key={p.id} to={`/product/${p.id}`} onClick={onClose} className="flex items-center gap-3 py-2.5 border-b border-border/50 hover:bg-secondary/50 md:px-3 md:rounded-xl md:border-none transition-colors"><img src={p.image} alt={p.title} className="w-14 h-14 rounded-xl object-cover bg-secondary flex-shrink-0" loading="lazy" /><div className="flex-1 min-w-0"><p className="text-[10px] font-bold text-primary uppercase tracking-wider">{p.brand}</p><p className="text-sm font-medium text-foreground truncate">{p.title}</p><div className="flex items-center gap-2 mt-0.5"><span className="text-xs font-bold text-foreground">{formatPrice(p.price)}</span>{p.originalPrice && <span className="text-[10px] text-muted-foreground line-through">{formatPrice(p.originalPrice)}</span>}</div></div></Link>))}</div></div>)}
+          {filteredResults.products.length > 0 && (<div><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("common.products")} ({filteredResults.products.length})</p><div className="md:grid md:grid-cols-2 md:gap-x-4">{filteredResults.products.map(p => (<button key={p.id} onClick={() => handleProductClick(p.id)} className="flex items-center gap-3 py-2.5 border-b border-border/50 hover:bg-secondary/50 md:px-3 md:rounded-xl md:border-none transition-colors w-full text-left rtl:text-right"><img src={p.image} alt={p.title} className="w-14 h-14 rounded-xl object-cover bg-secondary flex-shrink-0" loading="lazy" /><div className="flex-1 min-w-0"><p className="text-[10px] font-bold text-primary uppercase tracking-wider">{p.brand}</p><p className="text-sm font-medium text-foreground truncate">{p.title}</p><div className="flex items-center gap-2 mt-0.5"><span className="text-xs font-bold text-foreground">{formatPrice(p.price)}</span>{p.originalPrice && <span className="text-[10px] text-muted-foreground line-through">{formatPrice(p.originalPrice)}</span>}</div></div></button>))}</div></div>)}
 
           {isSearching && !hasResults && (
             <div className="text-center mt-12">
