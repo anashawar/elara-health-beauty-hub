@@ -248,7 +248,7 @@ export default function AdminBanners() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {banners.map((b: any) => (
             <div key={b.id} className="bg-card rounded-2xl border border-border/50 overflow-hidden hover:shadow-premium transition-shadow">
-              <div className="relative h-36 bg-secondary">
+              <div className="relative aspect-[2/1] bg-secondary">
                 <img src={b.image_url} className="w-full h-full object-cover" alt="" />
                 <div className="absolute top-2 right-2 flex gap-1">
                   <span className={`text-[10px] font-bold px-2 py-1 rounded-lg backdrop-blur-sm ${b.is_active ? "bg-emerald-500/90 text-white" : "bg-black/50 text-white"}`}>
