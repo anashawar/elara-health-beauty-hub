@@ -284,13 +284,22 @@ function SkinScanContent() {
       const result = data.analysis as Analysis;
       setAnalysis(result);
 
-      // Fetch recommended products
+      // Fetch recommended skincare products
       if (result.recommended_product_ids?.length) {
         const { data: prods } = await supabase
           .from("products")
           .select("id, title, title_ar, title_ku, slug, price, product_images(image_url)")
           .in("id", result.recommended_product_ids);
         setProducts(prods || []);
+      }
+
+      // Fetch recommended makeup products
+      if (result.makeup_shade_matches?.recommended_makeup_product_ids?.length) {
+        const { data: makeupProds } = await supabase
+          .from("products")
+          .select("id, title, title_ar, title_ku, slug, price, product_images(image_url)")
+          .in("id", result.makeup_shade_matches.recommended_makeup_product_ids);
+        setMakeupProducts(makeupProds || []);
       }
 
       // Save analysis to database
