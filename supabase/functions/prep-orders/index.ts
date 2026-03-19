@@ -48,6 +48,42 @@ Deno.serve(async (req) => {
         return json({ token: row.token, label: row.label });
       }
 
+      // Send note to operations
+      if (body.action === "send-note") {
+        const { order_id, note } = body;
+        if (!order_id || !note) return json({ error: "Order ID and note required" }, 400);
+
+        const { data: tokenRow } = await supabase
+          .from("prep_access_tokens")
+          .select("id, label")
+          .eq("token", token)
+          .eq("is_active", true)
+          .maybeSingle();
+        if (!tokenRow) return json({ error: "Invalid or expired link" }, 401);
+
+        const warehouseName = tokenRow.label || "Warehouse";
+
+        // Notify operations & admin users
+        const { data: opsUsers } = await supabase
+          .from("user_roles")
+          .select("user_id")
+          .in("role", ["admin", "operations"]);
+
+        if (opsUsers && opsUsers.length > 0) {
+          const notifications = opsUsers.map((u: any) => ({
+            user_id: u.user_id,
+            title: `⚠️ ${warehouseName} Note`,
+            body: `Order #${order_id.slice(0, 8)}: ${note}`,
+            type: "order",
+            link_url: "/admin/orders",
+            icon: "📋",
+          }));
+          await supabase.from("notifications").insert(notifications);
+        }
+
+        return json({ success: true });
+      }
+
       // Mark prepared action
       if (body.order_id) {
         const { data: tokenRow } = await supabase
