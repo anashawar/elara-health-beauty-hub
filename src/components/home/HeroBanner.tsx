@@ -89,10 +89,13 @@ const HeroBanner = memo(() => {
             const slide = (
               <img
                 src={imgSrc}
-                alt={banner.title || ""}
+                alt={banner.title || "ELARA Banner"}
                 className="absolute inset-0 w-full h-full object-cover"
                 draggable={false}
+                width={800}
+                height={400}
                 loading={idx === 0 ? "eager" : "lazy"}
+                decoding={idx === 0 ? "sync" : "async"}
                 {...(idx === 0 ? { fetchPriority: "high" as const } : {})}
               />
             );
