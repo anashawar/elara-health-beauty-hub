@@ -48,8 +48,10 @@ const OrdersPage = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [cancelDialogId, setCancelDialogId] = useState<string | null>(null);
+  const [ratingOrderId, setRatingOrderId] = useState<string | null>(null);
   const [, setTick] = useState(0); // force re-render for countdown
   const qc = useQueryClient();
+  const prevOrderStatusesRef = useRef<Record<string, string>>({});
 
   const statusConfig: Record<string, { label: string; color: string; step: number }> = {
     processing: { label: t("cart.processing"), color: "bg-violet-400", step: 0 },
