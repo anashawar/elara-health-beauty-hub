@@ -18,6 +18,7 @@ import ResponsiveHome from "./components/ResponsiveHome";
 
 // Lazy loaded — secondary pages
 const CollectionPage = lazy(() => import("./pages/CollectionPage"));
+const ShopPage = lazy(() => import("./pages/ShopPage"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const CategoriesPage = lazy(() => import("./pages/CategoriesPage"));
 const ProductPage = lazy(() => import("./pages/ProductPage"));
@@ -107,7 +108,7 @@ const App = () => (
               <Route path="/" element={<ResponsiveHome />} />
               <Route path="/home" element={<Index />} />
               <Route path="/categories" element={<CategoriesPage />} />
-              <Route path="/shop" element={<CategoryPage />} />
+              <Route path="/shop" element={<ShopPage />} />
               <Route path="/category/:id" element={<CategoryPage />} />
               <Route path="/collection/:type" element={<CollectionPage />} />
               <Route path="/concern/:id" element={<CategoryPage />} />
