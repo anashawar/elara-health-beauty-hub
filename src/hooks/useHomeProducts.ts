@@ -122,6 +122,60 @@ export function useOfferProducts() {
   });
 }
 
+/**
+ * Fetches products that belong to brands/categories targeted by active offers.
+ * This dynamically syncs with the offers system — when an offer is added or removed,
+ * the discounted products list updates automatically.
+ */
+export function useDiscountedProducts() {
+  const { language } = useLanguage();
+  return useQuery<ProductWithRelations[]>({
+    queryKey: ["home-discounted", language],
+    queryFn: async () => {
+      // 1. Get active offers with brand/category targets
+      const { data: offers, error: offErr } = await supabase
+        .from("offers")
+        .select("target_type, target_id, discount_type, discount_value")
+        .eq("is_active", true);
+
+      if (offErr) throw offErr;
+      if (!offers || offers.length === 0) return [];
+
+      const brandIds: string[] = [];
+      const categoryIds: string[] = [];
+      let allProducts = false;
+
+      for (const o of offers) {
+        if (o.target_type === "all") { allProducts = true; break; }
+        if (o.target_type === "brand" && o.target_id) brandIds.push(o.target_id);
+        if (o.target_type === "category" && o.target_id) categoryIds.push(o.target_id);
+      }
+
+      // 2. Fetch products matching those targets
+      let query = supabase.from("products").select(CARD_SELECT) as any;
+
+      if (!allProducts) {
+        // Build OR filter for brand and category targets
+        const filters: string[] = [];
+        if (brandIds.length > 0) filters.push(`brand_id.in.(${brandIds.join(",")})`);
+        if (categoryIds.length > 0) filters.push(`category_id.in.(${categoryIds.join(",")})`);
+        if (filters.length === 0) return [];
+        query = query.or(filters.join(","));
+      }
+
+      query = query.eq("in_stock", true);
+
+      const { data, error } = await query
+        .order("created_at", { ascending: false })
+        .limit(SECTION_LIMIT);
+
+      if (error) throw error;
+      return (data || []).map((p: any) => mapProduct(p, language));
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function useGiftProducts() {
   const { language } = useLanguage();
   return useQuery<ProductWithRelations[]>({
