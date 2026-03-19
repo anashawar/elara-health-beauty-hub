@@ -407,6 +407,17 @@ const OrdersPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Order Rating Dialog */}
+      {user && ratingOrderId && (
+        <OrderRatingDialog
+          open={!!ratingOrderId}
+          onOpenChange={(open) => !open && setRatingOrderId(null)}
+          orderId={ratingOrderId}
+          userId={user.id}
+          orderNumber={ratingOrderId.slice(0, 8).toUpperCase()}
+        />
+      )}
     </div>
   );
 };
