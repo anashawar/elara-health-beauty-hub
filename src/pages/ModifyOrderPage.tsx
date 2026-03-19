@@ -143,7 +143,7 @@ const ModifyOrderPage = () => {
         <div className="flex flex-col items-center justify-center py-20 px-4">
           <Clock className="w-16 h-16 text-muted-foreground/30 mb-4" />
           <p className="text-base font-semibold text-foreground mb-1">{t("orders.modifyExpired") || "Modification window expired"}</p>
-          <p className="text-sm text-muted-foreground mb-4">{t("orders.modifyExpiredDesc") || "Orders can only be modified within 1 hour of placement."}</p>
+          <p className="text-sm text-muted-foreground mb-4">{t("orders.modifyExpiredDesc") || "Orders can only be modified within 5 minutes of placement."}</p>
           <Link to="/orders" className="px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-xl text-sm">
             {t("orders.backToOrders") || "Back to Orders"}
           </Link>
