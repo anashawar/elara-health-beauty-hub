@@ -500,4 +500,9 @@ export const ar = {
     youEarned: "كسبت",
     orderReward: "مكافأة الطلب",
   },
+  brands: {
+    discoverTitle: "اكتشف العلامات التجارية",
+    discoverSubtitle: "استكشف مجموعتنا المختارة من أفضل العلامات التجارية العالمية للجمال",
+    searchPlaceholder: "ابحث عن علامة تجارية...",
+  },
 };
