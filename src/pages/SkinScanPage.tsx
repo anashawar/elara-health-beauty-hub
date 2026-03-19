@@ -332,6 +332,7 @@ function SkinScanContent() {
     setPhase("capture");
     setAnalysis(null);
     setProducts([]);
+    setMakeupProducts([]);
     setCapturedImage(null);
     setScanProgress(0);
   };
