@@ -100,11 +100,9 @@ const CheckoutPage = () => {
       .eq("user_id", user.id);
 
     const confirmedFirstOrder = (freshCount ?? 0) === 0;
-    const confirmedFirstDiscount = confirmedFirstOrder && meetsMinimum
-      ? Math.round((cartTotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250
-      : 0;
-    const confirmedCouponDiscount = couponDiscount; // already calculated from context
-    const confirmedTotalDiscount = confirmedFirstDiscount + confirmedCouponDiscount;
+    const confirmedDiscounts = calcOrderDiscounts(cart, cartTotal, confirmedFirstOrder, appliedCoupon, offerLookup);
+    const confirmedTotalDiscount = confirmedDiscounts.totalDiscount;
+    const confirmedFirstDiscount = confirmedDiscounts.firstOrderDiscount;
 
     // Build notes and coupon_code
     const notesParts: string[] = [];
