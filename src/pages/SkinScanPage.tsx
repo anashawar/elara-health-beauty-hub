@@ -32,9 +32,26 @@ interface RoutineStep {
   frequency?: string;
 }
 
+interface SkinTone {
+  category: string;
+  undertone: string;
+  hex_color: string;
+  fitzpatrick_type: number;
+  description: string;
+}
+
+interface MakeupShadeMatches {
+  foundation_shade: string;
+  concealer_shade: string;
+  powder_shade: string;
+  shade_range: string;
+  recommended_makeup_product_ids: string[];
+}
+
 interface Analysis {
   overall_score: number;
   skin_type: string;
+  skin_tone?: SkinTone;
   hydration_score: number;
   elasticity_score: number;
   clarity_score: number;
@@ -48,6 +65,7 @@ interface Analysis {
   problems: SkinProblem[];
   routine: { morning: RoutineStep[]; evening: RoutineStep[]; weekly?: RoutineStep[] };
   recommended_product_ids: string[];
+  makeup_shade_matches?: MakeupShadeMatches;
   lifestyle_tips: string[];
   summary: string;
 }
@@ -111,6 +129,7 @@ function SkinScanContent() {
   const [phase, setPhase] = useState<Phase>("capture");
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [makeupProducts, setMakeupProducts] = useState<Product[]>([]);
   const [scanProgress, setScanProgress] = useState(0);
   const [scanStep, setScanStep] = useState(0);
   const [cameraActive, setCameraActive] = useState(false);
@@ -265,13 +284,22 @@ function SkinScanContent() {
       const result = data.analysis as Analysis;
       setAnalysis(result);
 
-      // Fetch recommended products
+      // Fetch recommended skincare products
       if (result.recommended_product_ids?.length) {
         const { data: prods } = await supabase
           .from("products")
           .select("id, title, title_ar, title_ku, slug, price, product_images(image_url)")
           .in("id", result.recommended_product_ids);
         setProducts(prods || []);
+      }
+
+      // Fetch recommended makeup products
+      if (result.makeup_shade_matches?.recommended_makeup_product_ids?.length) {
+        const { data: makeupProds } = await supabase
+          .from("products")
+          .select("id, title, title_ar, title_ku, slug, price, product_images(image_url)")
+          .in("id", result.makeup_shade_matches.recommended_makeup_product_ids);
+        setMakeupProducts(makeupProds || []);
       }
 
       // Save analysis to database
@@ -304,6 +332,7 @@ function SkinScanContent() {
     setPhase("capture");
     setAnalysis(null);
     setProducts([]);
+    setMakeupProducts([]);
     setCapturedImage(null);
     setScanProgress(0);
   };
@@ -707,7 +736,57 @@ function SkinScanContent() {
             )}
           </motion.div>
 
-          {/* Detailed Scores */}
+          {/* Skin Tone & Makeup Match */}
+          {analysis.skin_tone && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-card rounded-2xl border border-border/50 shadow-premium p-5">
+              <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
+                <span className="text-base">🎨</span>
+                {language === "ar" ? "لون بشرتك والمكياج المناسب" : language === "ku" ? "ڕەنگی پێستت و مەیکئەپی گونجاو" : "Your Skin Tone & Shade Match"}
+              </h3>
+              
+              {/* Skin tone swatch */}
+              <div className="flex items-center gap-4 mb-4">
+                <div className="relative">
+                  <div 
+                    className="w-16 h-16 rounded-2xl border-2 border-border shadow-md" 
+                    style={{ backgroundColor: analysis.skin_tone.hex_color }}
+                  />
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-card border border-border flex items-center justify-center text-[9px] font-bold text-foreground">
+                    {analysis.skin_tone.fitzpatrick_type}
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-foreground capitalize">{analysis.skin_tone.category.replace(/-/g, ' ')}</p>
+                  <p className="text-[11px] text-muted-foreground capitalize">
+                    {language === "ar" ? "الدرجة التحتية: " : language === "ku" ? "ئەندەرتۆن: " : "Undertone: "}
+                    <span className="font-semibold text-foreground">{analysis.skin_tone.undertone}</span>
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{analysis.skin_tone.description}</p>
+                </div>
+              </div>
+
+              {/* Makeup shade recommendations */}
+              {analysis.makeup_shade_matches && (
+                <div className="bg-secondary/50 rounded-xl p-3 space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-2">
+                    {language === "ar" ? "درجات المكياج المناسبة لك" : language === "ku" ? "پلەکانی مەیکئەپی گونجاو بۆت" : "Your Shade Matches"}
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: language === "ar" ? "كريم أساس" : "Foundation", value: analysis.makeup_shade_matches.foundation_shade },
+                      { label: language === "ar" ? "كونسيلر" : "Concealer", value: analysis.makeup_shade_matches.concealer_shade },
+                      { label: language === "ar" ? "بودرة" : "Powder", value: analysis.makeup_shade_matches.powder_shade },
+                    ].map((item, i) => (
+                      <div key={i} className="bg-card rounded-lg p-2 text-center border border-border/30">
+                        <p className="text-[9px] text-muted-foreground font-medium">{item.label}</p>
+                        <p className="text-[11px] font-bold text-foreground mt-0.5 leading-tight">{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-card rounded-2xl border border-border/50 shadow-premium p-5">
             <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
               <Zap className="w-4 h-4 text-primary" />
@@ -910,6 +989,34 @@ function SkinScanContent() {
               </h3>
               <div className="space-y-2">
                 {products.map(p => (
+                  <Link key={p.id} to={`/product/${p.slug}`} className="flex items-center gap-3 p-2.5 bg-secondary/50 rounded-xl hover:bg-secondary transition-colors">
+                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-background flex-shrink-0">
+                      {p.product_images?.[0]?.image_url ? (
+                        <img src={p.product_images[0].image_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-muted flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-muted-foreground" /></div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-foreground truncate">{getProductTitle(p)}</p>
+                      <p className="text-[11px] text-primary font-bold mt-0.5">{p.price.toLocaleString()} IQD</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 rtl:rotate-180" />
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Makeup Products Matched by Skin Tone */}
+          {makeupProducts.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="bg-card rounded-2xl border border-border/50 shadow-premium p-5">
+              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                <span className="text-base">💄</span>
+                {language === "ar" ? "مكياج مناسب للون بشرتك" : language === "ku" ? "مەیکئەپی گونجاو بۆ ڕەنگی پێستت" : "Makeup Matched to Your Skin Tone"}
+              </h3>
+              <div className="space-y-2">
+                {makeupProducts.map(p => (
                   <Link key={p.id} to={`/product/${p.slug}`} className="flex items-center gap-3 p-2.5 bg-secondary/50 rounded-xl hover:bg-secondary transition-colors">
                     <div className="w-12 h-12 rounded-lg overflow-hidden bg-background flex-shrink-0">
                       {p.product_images?.[0]?.image_url ? (
