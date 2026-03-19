@@ -64,6 +64,7 @@ const AdminImageSearch = lazy(() => import("./pages/admin/AdminImageSearch"));
 const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 const AdminTeam = lazy(() => import("./pages/admin/AdminTeam"));
 const AdminWarehouseCosts = lazy(() => import("./pages/admin/AdminWarehouseCosts"));
+const AdminWarehouses = lazy(() => import("./pages/admin/AdminWarehouses"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
