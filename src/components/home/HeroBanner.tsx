@@ -61,7 +61,7 @@ const HeroBanner = memo(() => {
   if (banners.length === 0) return null;
 
   return (
-    <div className="relative w-full overflow-hidden aspect-[16/9] md:aspect-[21/9] lg:aspect-[21/9] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none touch-auto">
+    <div className="relative w-full overflow-hidden aspect-[2/1] md:aspect-[3/1] lg:aspect-[3.5/1] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none touch-auto">
       <div
         ref={scrollRef}
         onScroll={handleScroll}

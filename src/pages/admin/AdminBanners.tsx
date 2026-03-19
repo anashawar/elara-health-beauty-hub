@@ -138,7 +138,7 @@ export default function AdminBanners() {
         <Label className="mb-1.5 block text-xs font-semibold">{label}{required && " *"}</Label>
         {imgSrc ? (
           <div className="relative rounded-xl overflow-hidden border border-border bg-muted">
-            <img src={imgSrc} alt="" className="w-full h-32 object-cover" />
+            <img src={imgSrc} alt="" className="w-full aspect-[2/1] object-cover" />
             <div className="absolute top-1.5 right-1.5 flex gap-1">
               <Button size="icon" variant="secondary" className="h-7 w-7 rounded-lg shadow-md" onClick={() => inputRef.current?.click()}>
                 <Upload className="w-3 h-3" />
@@ -157,7 +157,7 @@ export default function AdminBanners() {
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="w-full h-28 rounded-xl border-2 border-dashed border-border hover:border-primary/40 bg-muted/30 hover:bg-muted/50 transition-colors flex flex-col items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full aspect-[2/1] rounded-xl border-2 border-dashed border-border hover:border-primary/40 bg-muted/30 hover:bg-muted/50 transition-colors flex flex-col items-center justify-center gap-1.5 cursor-pointer"
           >
             <Upload className="w-6 h-6 text-muted-foreground/40" />
             <p className="text-xs text-muted-foreground">Click to upload</p>
@@ -186,10 +186,21 @@ export default function AdminBanners() {
               <DialogTitle>{editing ? "Edit Banner" : "Add Banner"}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 mt-2">
-              {/* Language image uploads */}
-              <p className="text-[10px] text-muted-foreground col-span-full -mb-1">
-                📐 Recommended: 1200×400px (3:1 ratio) · WebP or PNG · Under 500KB for best performance
-              </p>
+              {/* Image size guidelines */}
+              <div className="col-span-full bg-muted/50 rounded-xl p-3 border border-border/50 space-y-1.5">
+                <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">📐 Banner Image Guidelines</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-muted-foreground">
+                  <div className="flex items-start gap-2">
+                    <span className="bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded text-[10px] shrink-0">📱 Mobile</span>
+                    <span><strong>750 × 375px</strong> (2:1 ratio) — fits natively on iPhone & Android</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="bg-secondary text-secondary-foreground font-bold px-1.5 py-0.5 rounded text-[10px] shrink-0">🖥 Desktop</span>
+                    <span><strong>1400 × 400px</strong> (3.5:1 ratio) — shown on laptop/PC screens</span>
+                  </div>
+                </div>
+                <p className="text-[10px] text-muted-foreground">💡 Upload a <strong>2:1 ratio</strong> image for best cross-device results · WebP or PNG · Under 500KB</p>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {renderImageUpload("English 🇬🇧", "en", previewUrl, "image_url", fileRef as any, setPreviewUrl, true)}
                 {renderImageUpload("Arabic 🇮🇶", "ar", previewUrlAr, "image_url_ar", fileRefAr as any, setPreviewUrlAr)}
@@ -237,7 +248,7 @@ export default function AdminBanners() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {banners.map((b: any) => (
             <div key={b.id} className="bg-card rounded-2xl border border-border/50 overflow-hidden hover:shadow-premium transition-shadow">
-              <div className="relative h-36 bg-secondary">
+              <div className="relative aspect-[2/1] bg-secondary">
                 <img src={b.image_url} className="w-full h-full object-cover" alt="" />
                 <div className="absolute top-2 right-2 flex gap-1">
                   <span className={`text-[10px] font-bold px-2 py-1 rounded-lg backdrop-blur-sm ${b.is_active ? "bg-emerald-500/90 text-white" : "bg-black/50 text-white"}`}>
