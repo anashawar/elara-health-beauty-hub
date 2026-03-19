@@ -130,7 +130,9 @@ const Index = () => {
             <ConcernsSection />
           </Suspense>
 
-          <MobileAppInlineBanner />
+          <Suspense fallback={null}>
+            <MobileAppBanners />
+          </Suspense>
 
           <Suspense fallback={null}>
             <DealsBanner />
