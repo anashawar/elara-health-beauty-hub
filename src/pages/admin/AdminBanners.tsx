@@ -138,7 +138,7 @@ export default function AdminBanners() {
         <Label className="mb-1.5 block text-xs font-semibold">{label}{required && " *"}</Label>
         {imgSrc ? (
           <div className="relative rounded-xl overflow-hidden border border-border bg-muted">
-            <img src={imgSrc} alt="" className="w-full h-32 object-cover" />
+            <img src={imgSrc} alt="" className="w-full aspect-[2/1] object-cover" />
             <div className="absolute top-1.5 right-1.5 flex gap-1">
               <Button size="icon" variant="secondary" className="h-7 w-7 rounded-lg shadow-md" onClick={() => inputRef.current?.click()}>
                 <Upload className="w-3 h-3" />
@@ -157,7 +157,7 @@ export default function AdminBanners() {
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="w-full h-28 rounded-xl border-2 border-dashed border-border hover:border-primary/40 bg-muted/30 hover:bg-muted/50 transition-colors flex flex-col items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full aspect-[2/1] rounded-xl border-2 border-dashed border-border hover:border-primary/40 bg-muted/30 hover:bg-muted/50 transition-colors flex flex-col items-center justify-center gap-1.5 cursor-pointer"
           >
             <Upload className="w-6 h-6 text-muted-foreground/40" />
             <p className="text-xs text-muted-foreground">Click to upload</p>
