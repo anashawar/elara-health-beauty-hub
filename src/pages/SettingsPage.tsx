@@ -39,17 +39,13 @@ const SettingsPage = () => {
   });
 
   useEffect(() => {
-    if (profile) {
-      setFullName(profile.full_name || "");
-      setPhone(profile.phone || "");
-      setGender(profile.gender || "");
-      setBirthdate(profile.birthdate || "");
-      setAvatarPreview(profile.avatar_url || null);
-    } else if (user) {
-      setFullName(user.user_metadata?.full_name || "");
-      setGender(user.user_metadata?.gender || "");
-      setBirthdate(user.user_metadata?.birthdate || "");
-    }
+    if (!user) return;
+
+    setFullName(profile?.full_name || user.user_metadata?.full_name || "");
+    setPhone(profile?.phone || user.phone || user.user_metadata?.phone || "");
+    setGender(profile?.gender || user.user_metadata?.gender || "");
+    setBirthdate(profile?.birthdate || user.user_metadata?.birthdate || "");
+    setAvatarPreview(profile?.avatar_url || null);
   }, [profile, user]);
 
   const saveMutation = useMutation({

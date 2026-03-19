@@ -122,16 +122,21 @@ serve(async (req) => {
         throw new Error("Existing account is missing email. Please contact support.");
       }
 
-      // Sync profile data for existing user (fills in any missing fields)
-      const profileUpdate: Record<string, any> = { user_id: existingUser.id };
-      if (full_name) profileUpdate.full_name = full_name;
-      if (normalizedPhone) profileUpdate.phone = normalizedPhone;
-      if (gender) profileUpdate.gender = gender;
-      if (birthdate) profileUpdate.birthdate = birthdate;
+      const existingMetadata = existingUser.user_metadata ?? {};
+      const profileUpdate: Record<string, unknown> = { user_id: existingUser.id };
+
+      const syncedFullName = full_name || existingMetadata.full_name || existingMetadata.name;
+      const syncedPhone = normalizedPhone || existingUser.phone || existingMetadata.phone;
+      const syncedGender = gender || existingMetadata.gender;
+      const syncedBirthdate = birthdate || existingMetadata.birthdate;
+
+      if (syncedFullName) profileUpdate.full_name = syncedFullName;
+      if (syncedPhone) profileUpdate.phone = syncedPhone;
+      if (syncedGender) profileUpdate.gender = syncedGender;
+      if (syncedBirthdate) profileUpdate.birthdate = syncedBirthdate;
 
       await supabase.from("profiles").upsert(profileUpdate, { onConflict: "user_id" });
 
-      // Sign in existing user
       const { data, error } = await supabase.auth.admin.generateLink({
         type: "magiclink",
         email: existingUser.email,
