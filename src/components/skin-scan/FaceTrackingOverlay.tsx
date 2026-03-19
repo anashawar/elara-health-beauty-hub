@@ -281,8 +281,14 @@ export default function FaceTrackingOverlay({ videoRef, mirrored = false }: Face
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none z-10"
-      style={mirrored ? { transform: "scaleX(-1)" } : {}}
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      style={{
+        zIndex: 30,
+        position: "absolute",
+        willChange: "transform",
+        transform: "translateZ(0)",
+        ...(mirrored ? { transform: "scaleX(-1) translateZ(0)" } : {}),
+      }}
     />
   );
 }
