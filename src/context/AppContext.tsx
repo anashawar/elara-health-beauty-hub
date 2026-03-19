@@ -10,6 +10,8 @@ export interface AppliedCoupon {
   code: string;
   discount_type: string;
   discount_value: number;
+  influencer_name?: string | null;
+  influencer_commission?: number | null;
 }
 
 interface AppContextType {
