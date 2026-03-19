@@ -1,28 +1,64 @@
-import { useState, useMemo, useCallback } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { Search, SlidersHorizontal, X, ChevronDown, Grid3X3, LayoutList, Sparkles } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Search, SlidersHorizontal, X, ChevronDown, ChevronLeft, ChevronRight as ChevronRightIcon, Grid3X3, LayoutList, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/layout/BottomNav";
 import DesktopHeader from "@/components/layout/DesktopHeader";
 import FloatingSearch from "@/components/layout/FloatingSearch";
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
-import { useProducts, useCategories, useBrands, concerns } from "@/hooks/useProducts";
+import { useCategories, useBrands, concerns, type ProductWithRelations } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 import SEOHead from "@/components/SEOHead";
 
 type ViewMode = "grid" | "list";
 type SortKey = "relevance" | "name-az" | "newest" | "price-low" | "price-high";
 
+const PAGE_SIZE = 30;
+
+const CARD_SELECT = `
+  id, title, title_ar, title_ku, slug, price, original_price,
+  is_new, is_trending, is_pick, in_stock,
+  brand_id, category_id,
+  categories ( slug ),
+  brands ( name ),
+  product_images ( image_url, sort_order )
+`;
+
+function mapProduct(p: any, language: "en" | "ar" | "ku"): ProductWithRelations {
+  const localizedTitle =
+    language === "ar" ? (p.title_ar || p.title) : language === "ku" ? (p.title_ku || p.title) : p.title;
+  return {
+    id: p.id, title: localizedTitle, slug: p.slug,
+    brand: p.brands?.name || "", brand_id: p.brand_id,
+    category_id: p.category_id, category_slug: p.categories?.slug || null,
+    subcategory_id: null,
+    price: Number(p.price),
+    originalPrice: p.original_price ? Number(p.original_price) : null,
+    image: p.product_images?.[0]?.image_url || "/placeholder.svg",
+    images: (p.product_images || [])
+      .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+      .map((img: any) => img.image_url),
+    tags: [], description: "", benefits: [], usage: "",
+    isNew: p.is_new || false, isTrending: p.is_trending || false,
+    isPick: p.is_pick || false, inStock: p.in_stock !== false,
+    country_of_origin: null, form: null, gender: null,
+    volume_ml: null, volume_unit: "ml", application: null,
+    skin_type: null, condition: null,
+  };
+}
+
 const ShopPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { data: allProducts = [], isLoading } = useProducts();
+  const [searchParams] = useSearchParams();
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
   const { t, language } = useLanguage();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<SortKey>("relevance");
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
@@ -32,9 +68,80 @@ const ShopPage = () => {
     searchParams.get("brand") ? [searchParams.get("brand")!] : []
   );
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 200000]);
-  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [activeFilterTab, setActiveFilterTab] = useState("sort");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [page, setPage] = useState(1);
+
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedSearch(searchQuery); setPage(1); }, 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  // Reset page on filter change
+  useEffect(() => { setPage(1); }, [selectedCategories, selectedBrands, priceRange, sortBy]);
+
+  // Resolve category slugs to IDs for DB query
+  const selectedCategoryIds = selectedCategories
+    .map((slug) => categories.find((c) => c.slug === slug)?.id)
+    .filter(Boolean) as string[];
+
+  // Resolve brand names to IDs
+  const selectedBrandIds = selectedBrands
+    .map((name) => brands.find((b: any) => b.name === name)?.id)
+    .filter(Boolean) as string[];
+
+  // Server-side paginated query
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["shop-products", language, page, debouncedSearch, selectedCategoryIds, selectedBrandIds, priceRange, sortBy],
+    queryFn: async () => {
+      let query = supabase.from("products").select(CARD_SELECT, { count: "exact" }) as any;
+
+      // Filters
+      if (debouncedSearch.length > 1) {
+        query = query.or(`title.ilike.%${debouncedSearch}%,title_ar.ilike.%${debouncedSearch}%,title_ku.ilike.%${debouncedSearch}%`);
+      }
+      if (selectedCategoryIds.length === 1) {
+        query = query.eq("category_id", selectedCategoryIds[0]);
+      } else if (selectedCategoryIds.length > 1) {
+        query = query.in("category_id", selectedCategoryIds);
+      }
+      if (selectedBrandIds.length === 1) {
+        query = query.eq("brand_id", selectedBrandIds[0]);
+      } else if (selectedBrandIds.length > 1) {
+        query = query.in("brand_id", selectedBrandIds);
+      }
+      if (priceRange[0] > 0) query = query.gte("price", priceRange[0]);
+      if (priceRange[1] < 200000) query = query.lte("price", priceRange[1]);
+
+      // Sort
+      switch (sortBy) {
+        case "name-az": query = query.order("title", { ascending: true }); break;
+        case "newest": query = query.order("created_at", { ascending: false }); break;
+        case "price-low": query = query.order("price", { ascending: true }); break;
+        case "price-high": query = query.order("price", { ascending: false }); break;
+        default: query = query.order("created_at", { ascending: false }); break;
+      }
+
+      // Pagination
+      const from = (page - 1) * PAGE_SIZE;
+      query = query.range(from, from + PAGE_SIZE - 1);
+
+      const { data: rows, error, count } = await query;
+      if (error) throw error;
+
+      return {
+        products: (rows || []).map((p: any) => mapProduct(p, language)),
+        total: count || 0,
+      };
+    },
+    placeholderData: (prev) => prev, // keep old data while loading
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const products = data?.products || [];
+  const totalCount = data?.total || 0;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const getCatName = useCallback((cat: any) => {
     if (language === "ar" && cat.name_ar) return cat.name_ar;
@@ -60,59 +167,21 @@ const ShopPage = () => {
     (sortBy !== "relevance" ? 1 : 0) +
     selectedCategories.length +
     selectedBrands.length +
-    selectedConditions.length +
     (priceRange[0] > 0 || priceRange[1] < 200000 ? 1 : 0);
-
-  const filteredProducts = useMemo(() => {
-    let result = [...allProducts];
-
-    if (searchQuery.length > 1) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (p) => p.title.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)
-      );
-    }
-
-    if (selectedCategories.length > 0) {
-      result = result.filter((p) => p.category_slug && selectedCategories.includes(p.category_slug));
-    }
-
-    if (selectedBrands.length > 0) {
-      result = result.filter((p) => selectedBrands.includes(p.brand));
-    }
-
-    result = result.filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1]);
-
-    if (selectedConditions.length > 0) {
-      result = result.filter((p) => p.tags.some((tag) => selectedConditions.includes(tag)));
-    }
-
-    switch (sortBy) {
-      case "name-az": result.sort((a, b) => a.title.localeCompare(b.title)); break;
-      case "newest": result.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0)); break;
-      case "price-low": result.sort((a, b) => a.price - b.price); break;
-      case "price-high": result.sort((a, b) => b.price - a.price); break;
-    }
-
-    return result;
-  }, [allProducts, searchQuery, selectedCategories, selectedBrands, priceRange, selectedConditions, sortBy]);
 
   const toggleCategory = (slug: string) =>
     setSelectedCategories((prev) => (prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]));
   const toggleBrand = (name: string) =>
     setSelectedBrands((prev) => (prev.includes(name) ? prev.filter((b) => b !== name) : [...prev, name]));
-  const toggleCondition = (id: string) =>
-    setSelectedConditions((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
   const clearFilters = () => {
     setSortBy("relevance");
     setSelectedCategories([]);
     setSelectedBrands([]);
     setPriceRange([0, 200000]);
-    setSelectedConditions([]);
     setSearchQuery("");
+    setPage(1);
   };
 
-  // Quick category chips for visual browsing
   const topCategories = categories.slice(0, 10);
   const topBrands = brands.filter((b: any) => b.featured).slice(0, 8);
 
@@ -127,20 +196,16 @@ const ShopPage = () => {
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
-      {/* Hero Section */}
+      {/* Hero */}
       <div className="relative bg-gradient-to-br from-primary/8 via-background to-accent/5 border-b border-border/50">
         <div className="app-container px-4 md:px-6 pt-16 md:pt-8 pb-5">
           <div className="flex items-center gap-2 mb-1">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-xs font-semibold text-primary uppercase tracking-wider">
-              {t("common.appName")}
-            </span>
+            <span className="text-xs font-semibold text-primary uppercase tracking-wider">{t("common.appName")}</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
-            Shop
-          </h1>
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Shop</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {allProducts.length.toLocaleString()} {t("common.products").toLowerCase()}
+            {totalCount.toLocaleString()} {t("common.products").toLowerCase()}
           </p>
         </div>
       </div>
@@ -256,7 +321,8 @@ const ShopPage = () => {
       {/* Results bar */}
       <div className="app-container px-4 md:px-6 mt-3 mb-2 flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
-          {filteredProducts.length.toLocaleString()} {t("common.products").toLowerCase()}
+          {isFetching && !isLoading ? "..." : totalCount.toLocaleString()} {t("common.products").toLowerCase()}
+          {totalPages > 1 && ` · ${page}/${totalPages}`}
         </p>
         <button
           onClick={() => setShowFilters(true)}
@@ -289,13 +355,13 @@ const ShopPage = () => {
                 : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
             }
           >
-            {filteredProducts.map((p) => (
+            {products.map((p) => (
               <ProductCard key={p.id} product={p} variant={viewMode === "list" ? "horizontal" : "vertical"} />
             ))}
           </div>
         )}
 
-        {!isLoading && filteredProducts.length === 0 && (
+        {!isLoading && products.length === 0 && (
           <div className="text-center mt-16 px-4">
             <div className="w-16 h-16 mx-auto mb-4 bg-secondary/60 rounded-full flex items-center justify-center">
               <Search className="w-7 h-7 text-muted-foreground" />
@@ -304,6 +370,53 @@ const ShopPage = () => {
             <p className="text-muted-foreground text-sm mt-1">{t("common.tryDifferent")}</p>
             <button onClick={clearFilters} className="mt-4 px-6 py-2.5 bg-primary text-primary-foreground font-semibold rounded-xl text-sm">
               {t("categories.clearAllFilters") || "Clear All Filters"}
+            </button>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-8 mb-4">
+            <button
+              onClick={() => { setPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              disabled={page === 1}
+              className="p-2 rounded-xl border border-border/50 bg-card text-foreground disabled:opacity-30 disabled:cursor-not-allowed hover:bg-secondary transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
+            </button>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum: number;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (page <= 3) {
+                pageNum = i + 1;
+              } else if (page >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = page - 2 + i;
+              }
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => { setPage(pageNum); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  className={`w-9 h-9 rounded-xl text-sm font-medium transition-colors ${
+                    page === pageNum
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-card text-foreground border border-border/50 hover:bg-secondary"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+
+            <button
+              onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              disabled={page === totalPages}
+              className="p-2 rounded-xl border border-border/50 bg-card text-foreground disabled:opacity-30 disabled:cursor-not-allowed hover:bg-secondary transition-colors"
+            >
+              <ChevronRightIcon className="w-4 h-4 rtl:rotate-180" />
             </button>
           </div>
         )}
@@ -339,7 +452,6 @@ const ShopPage = () => {
                   { key: "categories", label: t("nav.categories") || "Categories" },
                   { key: "brands", label: t("categories.brands") },
                   { key: "price", label: t("categories.price") },
-                  { key: "condition", label: t("categories.condition") },
                 ].map((tab) => (
                   <button
                     key={tab.key}
@@ -438,26 +550,6 @@ const ShopPage = () => {
                       />
                       <p className="text-sm font-medium text-foreground mt-1">{priceRange[1].toLocaleString()} IQD</p>
                     </div>
-                  </div>
-                )}
-                {activeFilterTab === "condition" && (
-                  <div className="space-y-1">
-                    {concerns.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => toggleCondition(c.id)}
-                        className={`w-full text-left rtl:text-right px-4 py-3 rounded-xl text-sm transition-colors flex items-center justify-between ${
-                          selectedConditions.includes(c.id) ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-secondary"
-                        }`}
-                      >
-                        <span>{c.icon} {c.name}</span>
-                        {selectedConditions.includes(c.id) && (
-                          <span className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                            <span className="text-primary-foreground text-xs">✓</span>
-                          </span>
-                        )}
-                      </button>
-                    ))}
                   </div>
                 )}
               </div>
