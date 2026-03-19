@@ -128,7 +128,6 @@ const CartPage = () => {
     setCouponLoading(true);
 
     const trimmedCode = coupon.trim().toUpperCase();
-    console.log("[Coupon] Searching for code:", trimmedCode);
 
     const { data, error } = await supabase
       .from("coupons")
@@ -137,34 +136,34 @@ const CartPage = () => {
       .eq("is_active", true)
       .maybeSingle();
 
-    console.log("[Coupon] Result:", { data, error });
-
     if (error || !data) {
       setCouponLoading(false);
-      console.warn("[Coupon] Invalid - error:", error, "data:", data);
       toast(t("cart.invalidCoupon"));
       return;
     }
 
+    // Expired check
     if (data.expires_at && new Date(data.expires_at) < new Date()) {
       setCouponLoading(false);
       toast(t("cart.couponExpired"));
       return;
     }
 
+    // Max global uses check
     if (data.max_uses && data.current_uses >= data.max_uses) {
       setCouponLoading(false);
       toast(t("cart.couponLimitReached"));
       return;
     }
 
+    // Min order amount check (against full cart total before discounts)
     if (data.min_order_amount && cartTotal < data.min_order_amount) {
       setCouponLoading(false);
       toast(t("cart.minOrderRequired", { amount: formatPrice(data.min_order_amount) }));
       return;
     }
 
-    // Check if coupon is restricted to specific users
+    // Per-user restriction check
     if (user) {
       const { data: allowedUsers } = await supabase
         .from("coupon_allowed_users")
@@ -181,13 +180,43 @@ const CartPage = () => {
       }
     }
 
+    // Per-user usage limit: each user can use a coupon only once
+    if (user) {
+      const { count } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("coupon_code", data.code);
+      if ((count ?? 0) > 0) {
+        setCouponLoading(false);
+        toast(language === "ar" ? "لقد استخدمت هذا الكوبون مسبقاً" : language === "ku" ? "تۆ پێشتر ئەم کوپۆنەت بەکارهێناوە" : "You've already used this coupon");
+        return;
+      }
+    }
+
     setCouponLoading(false);
+
+    // Accept the coupon (with influencer tracking info)
     setAppliedCoupon({
       code: data.code,
       discount_type: data.discount_type,
       discount_value: data.discount_value,
+      influencer_name: data.influencer_name,
+      influencer_commission: data.influencer_commission,
     });
-    toast(t("cart.couponApplied"));
+
+    // On first order: inform user that coupon discount won't apply but is tracked
+    if (isFirstOrder) {
+      toast(language === "ar"
+        ? "تم قبول الكوبون! خصم 15% للطلب الأول يُطبّق تلقائياً. خصم الكوبون سيعمل من الطلب الثاني."
+        : language === "ku"
+          ? "کوپۆنەکە وەرگیرا! داشکانی 15% بۆ داواکاری یەکەم خۆکارانە دادەنرێت. داشکانی کوپۆن لە داواکاری دووەمەوە کار دەکات."
+          : "Coupon accepted! Your 15% first-order discount is applied automatically. Coupon discount will work from your second order.",
+        { duration: 6000 }
+      );
+    } else {
+      toast(t("cart.couponApplied"));
+    }
   };
 
   const removeCoupon = () => {
