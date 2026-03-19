@@ -51,15 +51,14 @@ const OrdersPage = () => {
   const qc = useQueryClient();
 
   const statusConfig: Record<string, { label: string; color: string; step: number }> = {
-    pending: { label: t("cart.pending"), color: "bg-amber-400", step: 0 },
-    in_progress: { label: t("cart.processing"), color: "bg-violet-400", step: 1 },
-    shipped: { label: t("cart.shipped"), color: "bg-cyan-400", step: 2 },
-    on_the_way: { label: t("cart.onTheWay"), color: "bg-blue-400", step: 3 },
-    delivered: { label: t("cart.delivered"), color: "bg-sage", step: 4 },
+    processing: { label: t("cart.processing"), color: "bg-violet-400", step: 0 },
+    prepared: { label: t("cart.prepared") || "Prepared", color: "bg-emerald-400", step: 1 },
+    on_the_way: { label: t("cart.onTheWay"), color: "bg-blue-400", step: 2 },
+    delivered: { label: t("cart.delivered"), color: "bg-sage", step: 3 },
     cancelled: { label: t("cart.cancelled"), color: "bg-destructive", step: -1 },
   };
 
-  const steps = [t("cart.pending"), t("cart.processing"), t("cart.shipped"), t("cart.onTheWay"), t("cart.delivered")];
+  const steps = [t("cart.processing"), t("cart.prepared") || "Prepared", t("cart.onTheWay"), t("cart.delivered")];
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["orders", user?.id],
