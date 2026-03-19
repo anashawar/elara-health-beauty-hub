@@ -28,7 +28,7 @@ const MODIFY_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 const canModifyOrder = (createdAt: string, status: string) => {
   if (status === "cancelled" || status === "delivered" || status === "shipped" || status === "on_the_way") return false;
   const elapsed = Date.now() - new Date(createdAt).getTime();
-  return elapsed < ONE_HOUR_MS;
+  return elapsed < MODIFY_WINDOW_MS;
 };
 
 const getTimeRemaining = (createdAt: string) => {
