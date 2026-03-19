@@ -54,6 +54,7 @@ const Index = () => {
   const { data: offers = [], isLoading: loadingOffers } = useOfferProducts();
   const { data: newArrivals = [], isLoading: loadingNew } = useNewProducts();
   const { data: giftProducts = [] } = useGiftProducts();
+  const { data: discountedProducts = [] } = useDiscountedProducts();
 
   const isLoading = loadingTrending;
   const SectionFallback = <ProductSectionSkeleton />;
