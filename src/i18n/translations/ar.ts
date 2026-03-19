@@ -119,6 +119,8 @@ export const ar = {
     size: "الحجم",
     form: "الشكل",
     youMayAlsoLike: "يمكن يعجبك هم",
+    customersAlsoViewed: "الزبائن شافوا هم",
+    relatedProducts: "منتجات مشابهة",
     notFound: "المنتج مو موجود",
     reviewsAndRatings: "التقييمات",
     writeReview: "اكتب تقييم",
