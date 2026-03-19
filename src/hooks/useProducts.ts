@@ -114,12 +114,14 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
   return allProducts.map((p: any) => mapRawProduct(p, language));
 }
 
-export function useProducts() {
+export function useProducts(options?: { enabled?: boolean }) {
   const { language } = useLanguage();
 
   return useQuery<ProductWithRelations[]>({
     queryKey: ["products", language],
     queryFn: () => fetchProducts(language),
+    enabled: options?.enabled !== false,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

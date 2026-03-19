@@ -118,6 +118,7 @@ export function useOfferProducts() {
       if (error) throw error;
       return (data || []).map((p: any) => mapProduct(p, language));
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 
