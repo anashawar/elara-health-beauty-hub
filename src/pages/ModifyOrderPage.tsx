@@ -56,7 +56,7 @@ const ModifyOrderPage = () => {
     }
   }, [order, initialized]);
 
-  const canModify = order && order.status !== "cancelled" && order.status !== "delivered" && order.status !== "shipped" && order.status !== "on_the_way"
+  const canModify = order && order.status !== "cancelled" && order.status !== "delivered" && order.status !== "prepared" && order.status !== "on_the_way"
     && (Date.now() - new Date(order.created_at).getTime()) < MODIFY_WINDOW_MS;
 
   const minsLeft = order ? Math.max(0, Math.ceil((MODIFY_WINDOW_MS - (Date.now() - new Date(order.created_at).getTime())) / 60000)) : 0;
