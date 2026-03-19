@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Search, SlidersHorizontal, X, ChevronDown, ChevronLeft, ChevronRight as ChevronRightIcon, Grid3X3, LayoutList, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +12,7 @@ import ProductCard from "@/components/ProductCard";
 import { useCategories, useBrands, concerns, type ProductWithRelations } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 import SEOHead from "@/components/SEOHead";
+import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 
 type ViewMode = "grid" | "list";
 type SortKey = "relevance" | "name-az" | "newest" | "price-low" | "price-high";
