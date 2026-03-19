@@ -77,13 +77,19 @@ const Index = () => {
       <SearchOverlay isOpen={searchOpen} onClose={handleSearchClose} initialQuery={searchInitialQuery} />
 
       <div className="flex-1 pb-24 md:pb-0 scroll-bounce">
-        <MobileAppHeroBanner />
+        <Suspense fallback={null}>
+          <MobileAppHeroBanner />
+        </Suspense>
         <HeroBanner />
 
         <div className="app-container md:max-w-7xl md:mx-auto">
           <CategoryGrid />
-          <AskElaraCard />
-          <SkinScanBanner />
+          <Suspense fallback={null}>
+            <AskElaraCard />
+          </Suspense>
+          <Suspense fallback={null}>
+            <SkinScanBanner />
+          </Suspense>
 
           {isLoading ? (
             <>
