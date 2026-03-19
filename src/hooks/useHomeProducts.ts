@@ -82,6 +82,7 @@ export function useTrendingProducts() {
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-trending", language],
     queryFn: () => fetchSection({ is_trending: true }, language),
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -90,6 +91,7 @@ export function usePickProducts() {
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-picks", language],
     queryFn: () => fetchSection({ is_pick: true }, language),
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -98,6 +100,7 @@ export function useNewProducts() {
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-new", language],
     queryFn: () => fetchSection({ is_new: true }, language),
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -115,6 +118,7 @@ export function useOfferProducts() {
       if (error) throw error;
       return (data || []).map((p: any) => mapProduct(p, language));
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 

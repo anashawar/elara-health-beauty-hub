@@ -74,7 +74,7 @@ const Index = () => {
       <MobileAppTopStrip />
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <TopHeader onSearchClick={() => setSearchOpen(true)} />
-      <SearchOverlay isOpen={searchOpen} onClose={handleSearchClose} initialQuery={searchInitialQuery} />
+      {searchOpen && <SearchOverlay isOpen={searchOpen} onClose={handleSearchClose} initialQuery={searchInitialQuery} />}
 
       <div className="flex-1 pb-24 md:pb-0 scroll-bounce">
         <Suspense fallback={null}>
