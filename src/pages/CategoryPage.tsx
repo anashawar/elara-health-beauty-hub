@@ -53,6 +53,7 @@ const CategoryPage = () => {
   const category = !isConcernRoute ? categories.find(c => c.slug === id) : null;
   const activeConcern = isConcernRoute ? concerns.find(c => c.id === id) : null;
   const BRANDS = [...new Set(allProducts.map(p => p.brand))];
+  const { data: activeOffers = [] } = useActiveOffers();
 
   const categorySubs = useMemo(() => {
     if (!category) return [];
