@@ -112,6 +112,7 @@ const App = () => (
               <Route path="/collection/:type" element={<CollectionPage />} />
               <Route path="/concern/:id" element={<CategoryPage />} />
               <Route path="/product/:id" element={<ProductPage />} />
+              <Route path="/brands" element={<AllBrandsPage />} />
               <Route path="/brand/:id" element={<BrandPage />} />
               <Route path="/cart" element={<AuthGuard><CartPage /></AuthGuard>} />
               <Route path="/wishlist" element={<WishlistPage />} />

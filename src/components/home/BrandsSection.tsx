@@ -30,6 +30,9 @@ const BrandsSection = () => {
             <p className="text-[11px] text-muted-foreground">{t("home.trustedByThousands")}</p>
           </div>
         </div>
+        <Link to="/brands" className="text-xs font-semibold text-primary hover:underline">
+          {t("common.viewAll")}
+        </Link>
       </div>
 
       {/* Mobile: horizontal scroll — no stagger animations for performance */}
