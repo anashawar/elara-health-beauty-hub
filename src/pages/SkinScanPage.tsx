@@ -1008,6 +1008,34 @@ function SkinScanContent() {
             </motion.div>
           )}
 
+          {/* Makeup Products Matched by Skin Tone */}
+          {makeupProducts.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="bg-card rounded-2xl border border-border/50 shadow-premium p-5">
+              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                <span className="text-base">💄</span>
+                {language === "ar" ? "مكياج مناسب للون بشرتك" : language === "ku" ? "مەیکئەپی گونجاو بۆ ڕەنگی پێستت" : "Makeup Matched to Your Skin Tone"}
+              </h3>
+              <div className="space-y-2">
+                {makeupProducts.map(p => (
+                  <Link key={p.id} to={`/product/${p.slug}`} className="flex items-center gap-3 p-2.5 bg-secondary/50 rounded-xl hover:bg-secondary transition-colors">
+                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-background flex-shrink-0">
+                      {p.product_images?.[0]?.image_url ? (
+                        <img src={p.product_images[0].image_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-muted flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-muted-foreground" /></div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-foreground truncate">{getProductTitle(p)}</p>
+                      <p className="text-[11px] text-primary font-bold mt-0.5">{p.price.toLocaleString()} IQD</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 rtl:rotate-180" />
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
           {/* Lifestyle Tips */}
           {analysis.lifestyle_tips?.length > 0 && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 rounded-2xl border border-primary/20 p-5">
