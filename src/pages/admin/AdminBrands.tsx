@@ -215,6 +215,39 @@ export default function AdminBrands() {
                   <input type="checkbox" id="featured" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} className="h-4 w-4 rounded border-border accent-primary" />
                   <Label htmlFor="featured">Featured on Homepage</Label>
                 </div>
+
+                {/* Warehouse assignment */}
+                {warehouses.length > 0 && (
+                  <div className="border-t border-border/50 pt-3">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <Warehouse className="w-3.5 h-3.5" /> Available in Warehouses
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {warehouses.map((w: any) => {
+                        const checked = form.warehouse_ids.includes(w.id);
+                        return (
+                          <label key={w.id} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border cursor-pointer text-sm transition-all ${checked ? "border-primary bg-primary/5 text-primary font-medium" : "border-border/50 bg-card text-foreground"}`}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => {
+                                setForm(prev => ({
+                                  ...prev,
+                                  warehouse_ids: checked
+                                    ? prev.warehouse_ids.filter(id => id !== w.id)
+                                    : [...prev.warehouse_ids, w.id],
+                                }));
+                              }}
+                              className="h-3.5 w-3.5 rounded border-border accent-primary"
+                            />
+                            {w.name}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <Button className="rounded-xl" onClick={() => save.mutate(form)} disabled={!form.name || save.isPending}>
                   {save.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}{editing ? "Update" : "Create"}
                 </Button>
