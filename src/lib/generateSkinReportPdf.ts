@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import elaraLogo from "@/assets/elara-logo.png";
+import elaraLogoWhite from "@/assets/elara-logo-white.png";
 
 interface Analysis {
   overall_score: number;
@@ -60,8 +61,10 @@ export async function generateSkinReportPdf(
 
   // Load logo
   let logoData: string | null = null;
+  let logoWhiteData: string | null = null;
   try {
     logoData = await loadImageAsBase64(elaraLogo);
+    logoWhiteData = await loadImageAsBase64(elaraLogoWhite);
   } catch { /* fallback to text */ }
 
   // ── Brand colors ──
@@ -76,8 +79,8 @@ export async function generateSkinReportPdf(
   doc.rect(0, 40, w, 1.5, "F");
 
   // Logo
-  if (logoData) {
-    doc.addImage(logoData, "PNG", 14, 8, 28, 10);
+  if (logoWhiteData) {
+    doc.addImage(logoWhiteData, "PNG", 14, 8, 28, 10);
   } else {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
@@ -320,8 +323,8 @@ export async function generateSkinReportPdf(
     doc.rect(0, ph - 20, w, 0.8, "F");
 
     // Logo in footer
-    if (logoData) {
-      doc.addImage(logoData, "PNG", 14, ph - 17, 18, 6.5);
+    if (logoWhiteData) {
+      doc.addImage(logoWhiteData, "PNG", 14, ph - 17, 18, 6.5);
     } else {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(9);
