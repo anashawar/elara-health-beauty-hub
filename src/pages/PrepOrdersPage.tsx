@@ -829,6 +829,7 @@ export default function PrepOrdersPage() {
                             onPrepare={tab === "pending" ? () => markPrepared(selectedOrderData.id) : undefined}
                             onClose={() => setSelectedOrder(null)}
                             onZoomImage={setZoomImage}
+                            token={token}
                           />
                         </div>
                       </div>
