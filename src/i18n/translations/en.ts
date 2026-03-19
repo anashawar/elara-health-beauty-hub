@@ -471,12 +471,12 @@ export const en = {
   concerns: {
     acne: "Acne",
     drySkin: "Dry Skin",
-    hyperpigmentation: "Hyperpigmentation",
+    hyperpigmentation: "Pigmentation",
     hairLoss: "Hair Loss",
     dandruff: "Dandruff",
     sensitiveSkin: "Sensitive Skin",
-    immunity: "Immunity",
-    weightLoss: "Weight Loss",
+    darkCircles: "Dark Circles",
+    antiAging: "Anti-Aging",
   },
   rewards: {
     title: "ELARA Rewards",
