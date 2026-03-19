@@ -30,6 +30,7 @@ const ModifyOrderPage = lazy(() => import("./pages/ModifyOrderPage"));
 const AddressesPage = lazy(() => import("./pages/AddressesPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const BrandPage = lazy(() => import("./pages/BrandPage"));
+const AllBrandsPage = lazy(() => import("./pages/AllBrandsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const InstallPage = lazy(() => import("./pages/InstallPage"));
