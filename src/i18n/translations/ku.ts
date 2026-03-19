@@ -33,6 +33,8 @@ export const ku = {
     item: "دانە",
     new: "نوێ",
     off: "داشکاندن",
+    all: "هەموو",
+    brands: "براندەکان",
     free: "بەخۆڕایی",
     verified: "پشتڕاستکراوە",
     original: "ئەسڵی ١٠٠٪",
