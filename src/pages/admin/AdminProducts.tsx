@@ -342,6 +342,9 @@ export default function AdminProducts() {
     const { data: costData } = await supabase.from("product_costs").select("cost").eq("product_id", p.id).maybeSingle();
     if (costData) cost = Number(costData.cost);
 
+    // Check if product has "gift" tag
+    const { data: giftTag } = await supabase.from("product_tags").select("id").eq("product_id", p.id).eq("tag", "gift").maybeSingle();
+
     setForm({
       id: p.id, title: p.title, slug: p.slug, price: p.price,
       original_price: p.original_price, cost, description: p.description || "",
@@ -349,7 +352,7 @@ export default function AdminProducts() {
       benefits: (p.benefits || []).join("\n"),
       category_id: p.category_id || "", subcategory_id: p.subcategory_id || "",
       brand_id: p.brand_id || "",
-      is_new: p.is_new || false, is_trending: p.is_trending || false, is_pick: p.is_pick || false, in_stock: p.in_stock !== false,
+      is_new: p.is_new || false, is_trending: p.is_trending || false, is_pick: p.is_pick || false, is_gift: !!giftTag, in_stock: p.in_stock !== false,
       volume_ml: p.volume_ml || "", volume_unit: p.volume_unit || "ml", skin_type: p.skin_type || "", country_of_origin: p.country_of_origin || "",
       condition: (p as any).condition || "", product_form: (p as any).form || "",
     });
