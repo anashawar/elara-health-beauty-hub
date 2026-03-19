@@ -213,6 +213,15 @@ export default function AdminProducts() {
         }
       }
 
+      // Manage "gift" tag
+      if (productId) {
+        const { data: existingGiftTag } = await supabase.from("product_tags").select("id").eq("product_id", productId).eq("tag", "gift").maybeSingle();
+        if (f.is_gift && !existingGiftTag) {
+          await supabase.from("product_tags").insert({ product_id: productId, tag: "gift" });
+        } else if (!f.is_gift && existingGiftTag) {
+          await supabase.from("product_tags").delete().eq("id", existingGiftTag.id);
+        }
+      }
       // Auto-translate only for NEW products (not updates)
       if (productId && !f.id) {
         try {
