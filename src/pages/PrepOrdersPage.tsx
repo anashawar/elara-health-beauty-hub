@@ -1652,6 +1652,37 @@ function OrderDetailPanel({
         </div>
       )}
 
+      {/* Notify Operations */}
+      <div className="px-5 py-4 border-t border-border/40 space-y-2.5">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className="text-xs font-bold text-foreground">Notify Operations</span>
+          {noteSent && (
+            <Badge variant="outline" className="text-[9px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20 ml-auto">
+              ✓ Sent
+            </Badge>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Input
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            placeholder="e.g. Product X out of stock, cost changed..."
+            className="h-9 rounded-xl text-xs bg-muted/30 border-border/40"
+            onKeyDown={(e) => e.key === "Enter" && sendNoteToOps()}
+          />
+          <Button
+            onClick={sendNoteToOps}
+            disabled={sendingNote || !noteText.trim()}
+            size="sm"
+            className="rounded-xl h-9 px-3 gap-1.5 flex-shrink-0"
+          >
+            {sendingNote ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+          </Button>
+        </div>
+        <p className="text-[10px] text-muted-foreground">This will instantly notify all operations admins.</p>
+      </div>
+
       {/* Action */}
       {onPrepare && (
         <div className="px-5 py-4 border-t border-border/40">
