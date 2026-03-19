@@ -18,6 +18,7 @@ import ResponsiveHome from "./components/ResponsiveHome";
 
 // Lazy loaded — secondary pages
 const CollectionPage = lazy(() => import("./pages/CollectionPage"));
+const ShopPage = lazy(() => import("./pages/ShopPage"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const CategoriesPage = lazy(() => import("./pages/CategoriesPage"));
 const ProductPage = lazy(() => import("./pages/ProductPage"));
