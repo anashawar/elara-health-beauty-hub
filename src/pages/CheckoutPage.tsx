@@ -15,9 +15,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { calculatePoints, useAwardPoints } from "@/hooks/useLoyalty";
 import { getDeliveryFee } from "@/lib/deliveryFee";
-
-const FIRST_ORDER_DISCOUNT_PERCENT = 15;
-const FIRST_ORDER_MIN_AMOUNT = 20000;
+import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
+import {
+  FIRST_ORDER_DISCOUNT_PERCENT,
+  FIRST_ORDER_MIN_AMOUNT,
+  calcOrderDiscounts,
+} from "@/lib/discountRules";
 
 const CheckoutPage = () => {
   const { cart, cartTotal, clearCart, appliedCoupon } = useApp();
@@ -45,23 +48,19 @@ const CheckoutPage = () => {
       return count ?? 0;
     },
     enabled: !!user,
-    staleTime: 0, // Always fresh — critical for accuracy
+    staleTime: 0,
   });
 
   const isFirstOrder = existingOrderCount === 0 && !ordersCountLoading;
   const meetsMinimum = cartTotal >= FIRST_ORDER_MIN_AMOUNT;
-  const firstOrderDiscount = isFirstOrder && meetsMinimum
-    ? Math.round((cartTotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250
-    : 0;
 
-  // Coupon discount from cart
-  const couponDiscount = appliedCoupon
-    ? appliedCoupon.discount_type === "percentage"
-      ? Math.round(cartTotal * (appliedCoupon.discount_value / 100))
-      : appliedCoupon.discount_value
-    : 0;
+  // Active offers for determining already-discounted products
+  const { data: activeOffers = [] } = useActiveOffers();
+  const offerLookup = (p: any) => getOfferForProduct(p, activeOffers);
 
-  const totalDiscount = firstOrderDiscount + couponDiscount;
+  // Use centralized discount rules engine
+  const discounts = calcOrderDiscounts(cart, cartTotal, isFirstOrder, appliedCoupon, offerLookup);
+  const { firstOrderDiscount, couponDiscount, totalDiscount } = discounts;
 
   const { data: addresses = [], isLoading: addressesLoading } = useQuery({
     queryKey: ["addresses", user?.id],
