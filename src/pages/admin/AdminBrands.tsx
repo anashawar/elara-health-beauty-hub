@@ -66,18 +66,48 @@ export default function AdminBrands() {
     },
   });
 
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ["admin-warehouses-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("warehouses").select("id, name").eq("is_active", true).order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: brandWarehouses = [] } = useQuery({
+    queryKey: ["admin-brand-warehouses"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("brand_warehouses").select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const getWarehouseIdsForBrand = (brandId: string) =>
+    brandWarehouses.filter((bw: any) => bw.brand_id === brandId).map((bw: any) => bw.warehouse_id);
+
   const save = useMutation({
     mutationFn: async (f: BrandForm) => {
       const payload = { name: f.name, slug: f.slug || f.name.toLowerCase().replace(/\s+/g, "-"), logo_url: f.logo_url || null, country_of_origin: f.country_of_origin || null, featured: f.featured };
+      let brandId = f.id;
       if (f.id) {
         const { error } = await supabase.from("brands").update(payload).eq("id", f.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("brands").insert(payload);
+        const { data, error } = await supabase.from("brands").insert(payload).select("id").single();
         if (error) throw error;
+        brandId = data.id;
+      }
+
+      // Sync brand_warehouses
+      await supabase.from("brand_warehouses").delete().eq("brand_id", brandId!);
+      if (f.warehouse_ids.length > 0) {
+        const rows = f.warehouse_ids.map(wid => ({ brand_id: brandId!, warehouse_id: wid }));
+        await supabase.from("brand_warehouses").insert(rows);
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-brands"] }); toast.success("Saved"); setOpen(false); setForm(emptyForm); setEditing(false); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-brands"] }); qc.invalidateQueries({ queryKey: ["admin-brand-warehouses"] }); toast.success("Saved"); setOpen(false); setForm(emptyForm); setEditing(false); },
     onError: (e) => toast.error(e.message),
   });
 
