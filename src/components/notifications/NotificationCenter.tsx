@@ -5,7 +5,7 @@ import { useNotifications, type Notification } from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetPortal, SheetTitle } from "@/components/ui/sheet";
 
 const typeConfig: Record<string, { icon: any; color: string; bg: string }> = {
   promotional: { icon: Gift, color: "text-primary", bg: "bg-primary/10" },
@@ -94,9 +94,7 @@ export default function NotificationCenter() {
         )}
       </button>
 
-      {/* Mobile: bottom sheet full screen, Desktop: side panel */}
       <Sheet open={open} onOpenChange={setOpen}>
-        {/* Desktop: right side panel */}
         <SheetContent side="right" className="hidden md:flex w-full max-w-sm p-0 flex-col">
           <SheetHeader className="px-5 py-4 border-b border-border/40">
             <div className="flex items-center justify-between w-full">
@@ -131,80 +129,78 @@ export default function NotificationCenter() {
             )}
           </div>
         </SheetContent>
+
+        <SheetPortal>
+          <AnimatePresence>
+            {open && (
+              <div className="md:hidden fixed inset-0 z-[9999]">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute inset-0 bg-black/35"
+                  onClick={() => setOpen(false)}
+                />
+                <motion.div
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  transition={{ type: "spring", damping: 30, stiffness: 400 }}
+                  className="absolute inset-0 flex flex-col bg-background"
+                  style={{
+                    paddingTop: "env(safe-area-inset-top, 0px)",
+                    paddingBottom: "env(safe-area-inset-bottom, 0px)",
+                    minHeight: "100dvh",
+                  }}
+                >
+                  <div className="flex justify-center pt-2.5 pb-1 flex-shrink-0">
+                    <div className="w-9 h-1 rounded-full bg-muted-foreground/20" />
+                  </div>
+
+                  <div className="flex items-start justify-between gap-3 px-5 py-3 flex-shrink-0">
+                    <div className="min-w-0">
+                      <h2 className="text-[17px] font-display font-bold text-foreground">Notifications</h2>
+                      {unreadCount > 0 && (
+                        <p className="text-[12px] text-muted-foreground mt-0.5">{unreadCount} unread</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={() => markAllAsRead.mutate()}
+                          className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-semibold text-primary bg-primary/10 rounded-full active:scale-95 transition-all"
+                        >
+                          <CheckCheck className="w-3 h-3" />
+                          Read all
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setOpen(false)}
+                        className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center active:scale-90 transition-transform"
+                      >
+                        <X className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-border/40 mx-4 flex-shrink-0" />
+
+                  <div className="flex-1 overflow-y-auto overscroll-contain divide-y divide-border/20">
+                    {notifications.length === 0 ? (
+                      <EmptyState />
+                    ) : (
+                      notifications.map((n) => (
+                        <NotificationItem key={n.id} notification={n} onRead={handleRead} />
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+        </SheetPortal>
       </Sheet>
-
-      {/* Mobile: native sheet approach */}
-      <AnimatePresence>
-        {open && (
-          <div className="md:hidden fixed inset-0 z-[9999]" style={{ WebkitTransform: 'translateZ(0)' }}>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="absolute inset-0 bg-black/30"
-              onClick={() => setOpen(false)}
-            />
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 400 }}
-              className="absolute inset-x-0 top-0 bottom-0 bg-background flex flex-col"
-              style={{
-                paddingTop: 'env(safe-area-inset-top, 0px)',
-                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-              }}
-            >
-              {/* Drag handle */}
-              <div className="flex justify-center pt-2.5 pb-1 flex-shrink-0">
-                <div className="w-9 h-1 rounded-full bg-muted-foreground/20" />
-              </div>
-
-              {/* Header */}
-              <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
-                <div>
-                  <h2 className="text-[17px] font-display font-bold text-foreground">Notifications</h2>
-                  {unreadCount > 0 && (
-                    <p className="text-[12px] text-muted-foreground mt-0.5">{unreadCount} unread</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={() => markAllAsRead.mutate()}
-                      className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-semibold text-primary bg-primary/10 rounded-full active:scale-95 transition-all"
-                    >
-                      <CheckCheck className="w-3 h-3" />
-                      Read all
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setOpen(false)}
-                    className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center active:scale-90 transition-transform"
-                  >
-                    <X className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Separator */}
-              <div className="h-px bg-border/40 mx-4 flex-shrink-0" />
-
-              {/* Notification list */}
-              <div className="flex-1 overflow-y-auto overscroll-contain divide-y divide-border/20 -webkit-overflow-scrolling-touch">
-                {notifications.length === 0 ? (
-                  <EmptyState />
-                ) : (
-                  notifications.map((n) => (
-                    <NotificationItem key={n.id} notification={n} onRead={handleRead} />
-                  ))
-                )}
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </>
   );
 }
