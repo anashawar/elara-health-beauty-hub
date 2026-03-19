@@ -506,16 +506,31 @@ const CheckoutPage = () => {
             )}
 
             {/* Coupon discount line */}
-            {couponDiscount > 0 && appliedCoupon && (
+            {appliedCoupon && (
               <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="border-t border-border pt-2 mt-2 flex justify-between text-sm"
+                className="border-t border-border pt-2 mt-2"
               >
-                <span className="text-primary font-medium flex items-center gap-1">
-                  🏷️ {t("cart.coupon")} ({appliedCoupon.code})
-                </span>
-                <span className="text-primary font-bold">-{formatPrice(couponDiscount)}</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-primary font-medium flex items-center gap-1">
+                    🏷️ {t("cart.coupon")} ({appliedCoupon.code})
+                  </span>
+                  {couponDiscount > 0 ? (
+                    <span className="text-primary font-bold">-{formatPrice(couponDiscount)}</span>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">
+                      {isFirstOrder
+                        ? (language === "ar" ? "من الطلب الثاني" : "From 2nd order")
+                        : (language === "ar" ? "لا منتجات مؤهلة" : "No eligible items")}
+                    </span>
+                  )}
+                </div>
+                {isFirstOrder && appliedCoupon.influencer_name && (
+                  <p className="text-[9px] text-muted-foreground mt-1">
+                    ✓ {language === "ar" ? `مسجّل عبر ${appliedCoupon.influencer_name}` : `Tracked via ${appliedCoupon.influencer_name}`}
+                  </p>
+                )}
               </motion.div>
             )}
 
