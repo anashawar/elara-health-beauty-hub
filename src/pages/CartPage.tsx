@@ -80,6 +80,21 @@ const CartPage = () => {
     enabled: !!user,
   });
 
+  const { data: defaultAddress } = useQuery({
+    queryKey: ["default-address-city", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("addresses")
+        .select("city")
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   // Check if first order (for coupon rules messaging)
   const { data: existingOrderCount } = useQuery({
     queryKey: ["user-order-count-cart", user?.id],
