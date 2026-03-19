@@ -20,6 +20,7 @@ const collectionMeta: Record<string, { titleKey: string; subtitleKey: string; ic
   offers: { titleKey: "home.specialOffers", subtitleKey: "home.limitedDeals", icon: "🏷️" },
   new: { titleKey: "home.newArrivals", subtitleKey: "home.freshAdditions", icon: "✨" },
   gifts: { titleKey: "home.bestGifts", subtitleKey: "home.moreGifts", icon: "🎁" },
+  discounts: { titleKey: "home.discounts", subtitleKey: "home.discountsHurry", icon: "💰" },
 };
 
 const CARD_SELECT = `
@@ -118,6 +119,7 @@ const CollectionPage = () => {
         case "trending": query = query.eq("is_trending", true); break;
         case "picks": query = query.eq("is_pick", true); break;
         case "offers": query = query.not("original_price", "is", null); break;
+        case "discounts": query = query.not("original_price", "is", null); break;
         case "new": query = query.eq("is_new", true); break;
       }
 

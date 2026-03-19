@@ -27,6 +27,7 @@ const MobileAppBanners = lazy(() => import("@/components/home/MobileAppBanners")
 const MobileAppHeroBanner = lazy(() => import("@/components/home/MobileAppBanners").then(m => ({ default: m.MobileAppHeroBanner })));
 import { MobileAppTopStrip } from "@/components/home/MobileAppBanners";
 const GiftsSection = lazy(() => import("@/components/home/GiftsSection"));
+const DiscountsSection = lazy(() => import("@/components/home/DiscountsSection"));
 
 const Index = () => {
   const location = useLocation();
@@ -129,6 +130,12 @@ const Index = () => {
           <Suspense fallback={null}>
             <ConcernsSection />
           </Suspense>
+
+          {offers.length > 0 && (
+            <Suspense fallback={null}>
+              <DiscountsSection products={offers} />
+            </Suspense>
+          )}
 
           <Suspense fallback={null}>
             <MobileAppBanners />
