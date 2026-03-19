@@ -80,26 +80,27 @@ const CartPage = () => {
     enabled: !!user,
   });
 
-  const { data: defaultAddress } = useQuery({
-    queryKey: ["default-address-city", user?.id],
+  // Check if first order (for coupon rules messaging)
+  const { data: existingOrderCount } = useQuery({
+    queryKey: ["user-order-count-cart", user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("addresses")
-        .select("city")
-        .order("is_default", { ascending: false })
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
+      const { count } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id);
+      return count ?? 0;
     },
     enabled: !!user,
+    staleTime: 0,
   });
+  const isFirstOrder = existingOrderCount === 0;
 
-  const discount = appliedCoupon
-    ? appliedCoupon.discount_type === "percentage"
-      ? Math.round(cartTotal * (appliedCoupon.discount_value / 100))
-      : appliedCoupon.discount_value
-    : 0;
+  const { data: activeOffers = [] } = useActiveOffers();
+  const offerLookup = (p: any) => getOfferForProduct(p, activeOffers);
+
+  // Calculate discount using the rules engine (coupon only on non-discounted items, 0 on first order)
+  const discount = calcCouponDiscount(appliedCoupon, cart, isFirstOrder, offerLookup);
+  const eligibleSubtotal = getEligibleSubtotal(cart, offerLookup);
 
   const subtotalAfterDiscount = Math.max(cartTotal - discount, 0);
   const deliveryFee = getDeliveryFee(defaultAddress?.city, subtotalAfterDiscount);
