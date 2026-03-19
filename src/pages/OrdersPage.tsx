@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Package, ChevronDown, ChevronUp, X, Clock, AlertTriangle, Pencil } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
+import OrderRatingDialog from "@/components/orders/OrderRatingDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,8 +48,10 @@ const OrdersPage = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [cancelDialogId, setCancelDialogId] = useState<string | null>(null);
+  const [ratingOrderId, setRatingOrderId] = useState<string | null>(null);
   const [, setTick] = useState(0); // force re-render for countdown
   const qc = useQueryClient();
+  const prevOrderStatusesRef = useRef<Record<string, string>>({});
 
   const statusConfig: Record<string, { label: string; color: string; step: number }> = {
     processing: { label: t("cart.processing"), color: "bg-violet-400", step: 0 },
@@ -79,17 +82,41 @@ const OrdersPage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Realtime subscription
+  // Realtime subscription — detect delivered status changes
   useEffect(() => {
     if (!user) return;
     const channel = supabase
       .channel('user-orders-realtime')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, () => {
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
+        const newRow = payload.new as any;
+        const oldRow = payload.old as any;
+        // If this order just became delivered, trigger rating popup
+        if (newRow.status === 'delivered' && oldRow.status !== 'delivered' && newRow.user_id === user.id) {
+          setRatingOrderId(newRow.id);
+        }
         qc.invalidateQueries({ queryKey: ["orders", user.id] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user, qc]);
+
+  // Also check on initial load for unrated delivered orders
+  useEffect(() => {
+    if (!user || orders.length === 0) return;
+    const checkUnrated = async () => {
+      const deliveredOrders = orders.filter(o => o.status === 'delivered');
+      if (deliveredOrders.length === 0) return;
+      const { data: rated } = await supabase
+        .from("order_ratings" as any)
+        .select("order_id")
+        .eq("user_id", user.id)
+        .in("order_id", deliveredOrders.map(o => o.id));
+      const ratedIds = new Set((rated || []).map((r: any) => r.order_id));
+      const unrated = deliveredOrders.find(o => !ratedIds.has(o.id));
+      if (unrated) setRatingOrderId(unrated.id);
+    };
+    checkUnrated();
+  }, [user, orders]);
 
   const cancelMutation = useMutation({
     mutationFn: async (orderId: string) => {
@@ -380,6 +407,17 @@ const OrdersPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Order Rating Dialog */}
+      {user && ratingOrderId && (
+        <OrderRatingDialog
+          open={!!ratingOrderId}
+          onOpenChange={(open) => !open && setRatingOrderId(null)}
+          orderId={ratingOrderId}
+          userId={user.id}
+          orderNumber={ratingOrderId.slice(0, 8).toUpperCase()}
+        />
+      )}
     </div>
   );
 };
