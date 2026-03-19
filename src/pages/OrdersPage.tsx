@@ -82,17 +82,41 @@ const OrdersPage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Realtime subscription
+  // Realtime subscription — detect delivered status changes
   useEffect(() => {
     if (!user) return;
     const channel = supabase
       .channel('user-orders-realtime')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, () => {
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
+        const newRow = payload.new as any;
+        const oldRow = payload.old as any;
+        // If this order just became delivered, trigger rating popup
+        if (newRow.status === 'delivered' && oldRow.status !== 'delivered' && newRow.user_id === user.id) {
+          setRatingOrderId(newRow.id);
+        }
         qc.invalidateQueries({ queryKey: ["orders", user.id] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user, qc]);
+
+  // Also check on initial load for unrated delivered orders
+  useEffect(() => {
+    if (!user || orders.length === 0) return;
+    const checkUnrated = async () => {
+      const deliveredOrders = orders.filter(o => o.status === 'delivered');
+      if (deliveredOrders.length === 0) return;
+      const { data: rated } = await supabase
+        .from("order_ratings" as any)
+        .select("order_id")
+        .eq("user_id", user.id)
+        .in("order_id", deliveredOrders.map(o => o.id));
+      const ratedIds = new Set((rated || []).map((r: any) => r.order_id));
+      const unrated = deliveredOrders.find(o => !ratedIds.has(o.id));
+      if (unrated) setRatingOrderId(unrated.id);
+    };
+    checkUnrated();
+  }, [user, orders]);
 
   const cancelMutation = useMutation({
     mutationFn: async (orderId: string) => {
