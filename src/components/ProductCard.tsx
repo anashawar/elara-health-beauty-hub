@@ -6,25 +6,25 @@ import { useAuth } from "@/hooks/useAuth";
 import type { ProductWithRelations } from "@/hooks/useProducts";
 import { useFormatPrice } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
+import type { OfferPricing } from "@/hooks/useOfferPricing";
 import { toast } from "@/components/ui/sonner";
 
 interface ProductCardProps {
   product: ProductWithRelations;
   variant?: "horizontal" | "vertical";
+  /** Pre-computed offer pricing — pass from parent to avoid per-card queries */
+  offerPricing?: OfferPricing | null;
 }
 
-const ProductCard = memo(({ product, variant = "vertical" }: ProductCardProps) => {
+const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }: ProductCardProps) => {
   const { addToCart, toggleWishlist, isInWishlist } = useApp();
   const { user } = useAuth();
   const navigate = useNavigate();
   const formatPrice = useFormatPrice();
   const { t } = useLanguage();
-  const { data: activeOffers = [] } = useActiveOffers();
   const wishlisted = isInWishlist(product.id);
   const outOfStock = !product.inStock;
 
-  const offerPricing = getOfferForProduct(product, activeOffers);
   const displayPrice = offerPricing ? offerPricing.discountedPrice : product.price;
   const originalDisplayPrice = offerPricing ? product.price : product.originalPrice;
   const discount = offerPricing
@@ -54,20 +54,20 @@ const ProductCard = memo(({ product, variant = "vertical" }: ProductCardProps) =
 
   if (variant === "horizontal") {
     return (
-      <div className="flex-shrink-0 w-[152px] glass rounded-3xl border border-border/30 shadow-glass overflow-hidden group will-change-transform">
+      <div className="flex-shrink-0 w-[152px] rounded-3xl border border-border/30 bg-card shadow-sm overflow-hidden group">
         <Link to={`/product/${product.id}`} className="block">
           <div className="relative aspect-square overflow-hidden bg-secondary/40">
-            <img src={product.image} alt={product.title} className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${outOfStock ? "opacity-50 grayscale" : ""}`} loading="lazy" decoding="async" />
+            <img src={product.image} alt={product.title} className={`w-full h-full object-cover ${outOfStock ? "opacity-50 grayscale" : ""}`} loading="lazy" decoding="async" />
             {outOfStock && (
-              <span className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+              <span className="absolute inset-0 flex items-center justify-center bg-background/50">
                 <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-3 py-1 rounded-xl">{t("product.outOfStock") || "Out of Stock"}</span>
               </span>
             )}
             {!outOfStock && discount > 0 && (
-              <span className="absolute top-2.5 left-2.5 rtl:left-auto rtl:right-2.5 bg-primary/90 backdrop-blur-sm text-primary-foreground text-[10px] font-bold px-2.5 py-1 rounded-xl shadow-sm">-{discount}%</span>
+              <span className="absolute top-2.5 left-2.5 rtl:left-auto rtl:right-2.5 bg-primary/90 text-primary-foreground text-[10px] font-bold px-2.5 py-1 rounded-xl shadow-sm">-{discount}%</span>
             )}
             {!outOfStock && product.isNew && (
-              <span className="absolute top-2.5 left-2.5 rtl:left-auto rtl:right-2.5 bg-foreground/80 backdrop-blur-sm text-background text-[10px] font-bold px-2.5 py-1 rounded-xl">{t("common.new")}</span>
+              <span className="absolute top-2.5 left-2.5 rtl:left-auto rtl:right-2.5 bg-foreground/80 text-background text-[10px] font-bold px-2.5 py-1 rounded-xl">{t("common.new")}</span>
             )}
           </div>
         </Link>
@@ -89,15 +89,15 @@ const ProductCard = memo(({ product, variant = "vertical" }: ProductCardProps) =
             <button
               onClick={handleAddToCart}
               disabled={outOfStock}
-              className={`flex-1 flex items-center justify-center gap-1 text-[11px] font-semibold py-2 rounded-xl transition-colors duration-150 active:scale-95 ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90 shadow-sm"}`}
+              className={`flex-1 flex items-center justify-center gap-1 text-[11px] font-semibold py-2 rounded-xl transition-colors duration-100 active:scale-95 ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground shadow-sm"}`}
             >
               {outOfStock ? (t("product.outOfStock") || "Out of Stock") : <><Plus className="w-3 h-3" /> {t("product.add")}</>}
             </button>
             <button
               onClick={handleToggleWishlist}
-              className="p-2 rounded-xl bg-secondary/60 hover:bg-secondary transition-colors duration-150 active:scale-90"
+              className="p-2 rounded-xl bg-secondary/60 transition-colors duration-100 active:scale-90"
             >
-              <Heart className={`w-3.5 h-3.5 transition-colors duration-150 ${wishlisted ? "fill-primary text-primary" : "text-muted-foreground/50"}`} />
+              <Heart className={`w-3.5 h-3.5 ${wishlisted ? "fill-primary text-primary" : "text-muted-foreground/50"}`} />
             </button>
           </div>
         </div>
@@ -106,26 +106,26 @@ const ProductCard = memo(({ product, variant = "vertical" }: ProductCardProps) =
   }
 
   return (
-    <div className="glass rounded-3xl border border-border/30 shadow-glass overflow-hidden group will-change-transform">
+    <div className="rounded-3xl border border-border/30 bg-card shadow-sm overflow-hidden group">
       <Link to={`/product/${product.id}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-secondary/40">
-          <img src={product.image} alt={product.title} className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${outOfStock ? "opacity-50 grayscale" : ""}`} loading="lazy" decoding="async" />
+          <img src={product.image} alt={product.title} className={`w-full h-full object-cover ${outOfStock ? "opacity-50 grayscale" : ""}`} loading="lazy" decoding="async" />
           {outOfStock && (
-            <span className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+            <span className="absolute inset-0 flex items-center justify-center bg-background/50">
               <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-3 py-1 rounded-xl">{t("product.outOfStock") || "Out of Stock"}</span>
             </span>
           )}
           {!outOfStock && discount > 0 && (
-            <span className="absolute top-2.5 left-2.5 rtl:left-auto rtl:right-2.5 bg-primary/90 backdrop-blur-sm text-primary-foreground text-[10px] font-bold px-2.5 py-1 rounded-xl shadow-sm">-{discount}%</span>
+            <span className="absolute top-2.5 left-2.5 rtl:left-auto rtl:right-2.5 bg-primary/90 text-primary-foreground text-[10px] font-bold px-2.5 py-1 rounded-xl shadow-sm">-{discount}%</span>
           )}
           {!outOfStock && product.isNew && !discount && (
-            <span className="absolute top-2.5 left-2.5 rtl:left-auto rtl:right-2.5 bg-foreground/80 backdrop-blur-sm text-background text-[10px] font-bold px-2.5 py-1 rounded-xl">{t("common.new")}</span>
+            <span className="absolute top-2.5 left-2.5 rtl:left-auto rtl:right-2.5 bg-foreground/80 text-background text-[10px] font-bold px-2.5 py-1 rounded-xl">{t("common.new")}</span>
           )}
           <button
             onClick={handleToggleWishlist}
-            className="absolute top-2.5 right-2.5 rtl:right-auto rtl:left-2.5 p-2 rounded-full glass shadow-sm hover:bg-card transition-colors duration-150 active:scale-90"
+            className="absolute top-2.5 right-2.5 rtl:right-auto rtl:left-2.5 p-2 rounded-full bg-card/80 shadow-sm transition-colors duration-100 active:scale-90"
           >
-            <Heart className={`w-4 h-4 transition-colors duration-150 ${wishlisted ? "fill-primary text-primary" : "text-muted-foreground/60"}`} />
+            <Heart className={`w-4 h-4 ${wishlisted ? "fill-primary text-primary" : "text-muted-foreground/60"}`} />
           </button>
         </div>
       </Link>
@@ -146,7 +146,7 @@ const ProductCard = memo(({ product, variant = "vertical" }: ProductCardProps) =
         <button
           onClick={handleAddToCart}
           disabled={outOfStock}
-          className={`w-full flex items-center justify-center gap-1 text-xs font-semibold py-2.5 rounded-2xl mt-3 transition-colors duration-150 active:scale-[0.97] ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90 shadow-sm"}`}
+          className={`w-full flex items-center justify-center gap-1 text-xs font-semibold py-2.5 rounded-2xl mt-3 transition-colors duration-100 active:scale-[0.97] ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground shadow-sm"}`}
         >
           {outOfStock ? (t("product.outOfStock") || "Out of Stock") : <><Plus className="w-3.5 h-3.5" /> {t("product.addToCart")}</>}
         </button>
