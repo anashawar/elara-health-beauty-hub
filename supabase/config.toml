@@ -29,3 +29,13 @@ project_id = "mycpfwnfvtsgshdzggrm"
     verify_jwt = true
   [functions.skin-analysis]
     verify_jwt = false
+  [functions.detect-gift-products]
+    verify_jwt = false
+  [functions.bulk-import-products]
+    verify_jwt = false
+  [functions.sitemap]
+    verify_jwt = false
+  [functions.translate-products]
+    verify_jwt = false
+  [functions.prep-orders]
+    verify_jwt = false

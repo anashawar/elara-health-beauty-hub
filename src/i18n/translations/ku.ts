@@ -81,6 +81,10 @@ export const ku = {
     todayOffers: "ئۆفەرەکانی ئەمڕۆ",
     curatedDeals: "ئۆفەری هەڵبژێردراو تایبەت بۆ تۆ",
     findWhatYouNeed: "ئەوە بدۆزەرەوە کە پێستت پێویستی پێیە",
+    giftsForLovedOnes: "بیرۆکەی دیاری 🎁",
+    aiCuratedGifts: "هەڵبژاردنی زیرەکانە بۆ هەموو بۆنەیەک",
+    moreGifts: "دیاری زیاتر",
+    aiPowered: "پێشنیاری بە زیرەکی دەستکرد",
   },
   banner: {
     newUserOffer: "ئۆفەری بەکارهێنەری نوێ",

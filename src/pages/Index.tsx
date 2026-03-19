@@ -12,7 +12,7 @@ import SkinScanBanner from "@/components/home/SkinScanBanner";
 import ProductSectionSkeleton from "@/components/home/ProductSectionSkeleton";
 import SearchOverlay from "@/components/SearchOverlay";
 import SEOHead, { organizationJsonLd, websiteJsonLd } from "@/components/SEOHead";
-import { useTrendingProducts, usePickProducts, useOfferProducts, useNewProducts } from "@/hooks/useHomeProducts";
+import { useTrendingProducts, usePickProducts, useOfferProducts, useNewProducts, useGiftProducts } from "@/hooks/useHomeProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 const ProductSection = lazy(() => import("@/components/home/ProductSection"));
@@ -24,6 +24,7 @@ const DealsBanner = lazy(() => import("@/components/home/DealsBanner"));
 const AppDownloadBanner = lazy(() => import("@/components/home/AppDownloadBanner"));
 const WhyElaraBanner = lazy(() => import("@/components/home/WhyElaraBanner"));
 import { MobileAppTopStrip, MobileAppHeroBanner, MobileAppInlineBanner } from "@/components/home/MobileAppBanners";
+const GiftsSection = lazy(() => import("@/components/home/GiftsSection"));
 
 const Index = () => {
   const location = useLocation();
@@ -53,6 +54,7 @@ const Index = () => {
   const { data: picks = [], isLoading: loadingPicks } = usePickProducts();
   const { data: offers = [], isLoading: loadingOffers } = useOfferProducts();
   const { data: newArrivals = [], isLoading: loadingNew } = useNewProducts();
+  const { data: giftProducts = [] } = useGiftProducts();
 
   const isLoading = loadingTrending;
   const SectionFallback = <ProductSectionSkeleton />;
@@ -115,6 +117,13 @@ const Index = () => {
         <Suspense fallback={null}>
           <BrandsSection />
         </Suspense>
+
+        {/* AI-Curated Gifts Section */}
+        {giftProducts.length > 0 && (
+          <Suspense fallback={null}>
+            <GiftsSection products={giftProducts} />
+          </Suspense>
+        )}
 
         <Suspense fallback={null}>
           <ConcernsSection />

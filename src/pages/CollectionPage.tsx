@@ -13,6 +13,7 @@ const collectionMeta: Record<string, { titleKey: string; subtitleKey: string; ic
   picks: { titleKey: "home.elaraPicks", subtitleKey: "home.curatedForYou", icon: "💎" },
   offers: { titleKey: "home.specialOffers", subtitleKey: "home.limitedDeals", icon: "🏷️" },
   new: { titleKey: "home.newArrivals", subtitleKey: "home.freshAdditions", icon: "✨" },
+  gifts: { titleKey: "home.giftsForLovedOnes", subtitleKey: "home.aiCuratedGifts", icon: "🎁" },
 };
 
 const CollectionPage = () => {
@@ -31,6 +32,7 @@ const CollectionPage = () => {
       case "picks": result = products.filter(p => p.isPick); break;
       case "offers": result = products.filter(p => p.originalPrice); break;
       case "new": result = products.filter(p => p.isNew); break;
+      case "gifts": result = products.filter(p => p.tags.includes("gift")); break;
       default: result = [];
     }
     if (searchQuery.length > 1) {
