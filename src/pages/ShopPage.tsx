@@ -366,7 +366,7 @@ const ShopPage = () => {
             }
           >
             {products.map((p) => (
-              <ProductCard key={p.id} product={p} variant={viewMode === "list" ? "horizontal" : "vertical"} />
+              <ProductCard key={p.id} product={p} variant={viewMode === "list" ? "horizontal" : "vertical"} offerPricing={offerMap.get(p.id) ?? null} />
             ))}
           </div>
         )}
