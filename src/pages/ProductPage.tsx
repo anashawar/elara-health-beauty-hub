@@ -122,6 +122,13 @@ const ProductPage = () => {
     ? product.description.slice(0, 155)
     : `Buy ${product.title} online in Iraq. Original product, fast delivery. Shop on ELARA.`;
 
+  // Multilingual SEO alternates
+  const seoAlternates = [
+    { lang: "en", url: `https://elara-health-beauty-hub.lovable.app/product/${product.slug}` },
+    { lang: "ar", url: `https://elara-health-beauty-hub.lovable.app/product/${product.slug}?lang=ar` },
+    { lang: "ku", url: `https://elara-health-beauty-hub.lovable.app/product/${product.slug}?lang=ku` },
+  ];
+
   return (
     <div className="min-h-screen bg-background pb-36 md:pb-8">
       <SEOHead
