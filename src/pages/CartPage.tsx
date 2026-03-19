@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Minus, Plus, Trash2, Tag, ShoppingBag, Sparkles, Truck, X, CheckCircle2, Loader2, Package, ChevronRight } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Trash2, Tag, ShoppingBag, Sparkles, Truck, X, CheckCircle2, Loader2, Package, ChevronRight, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/context/AppContext";
 import { useFormatPrice } from "@/hooks/useProducts";
@@ -14,11 +14,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { getDeliveryFee, FREE_DELIVERY_MIN } from "@/lib/deliveryFee";
+import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
+import { calcCouponDiscount, getEligibleSubtotal } from "@/lib/discountRules";
 
 const CartPage = () => {
   const { cart, updateQuantity, removeFromCart, cartTotal, cartCount, clearCart, pendingCoupon, setPendingCoupon, appliedCoupon, setAppliedCoupon } = useApp();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const formatPrice = useFormatPrice();
   const [coupon, setCoupon] = useState(appliedCoupon?.code || "");
   const [couponLoading, setCouponLoading] = useState(false);
@@ -93,11 +95,27 @@ const CartPage = () => {
     enabled: !!user,
   });
 
-  const discount = appliedCoupon
-    ? appliedCoupon.discount_type === "percentage"
-      ? Math.round(cartTotal * (appliedCoupon.discount_value / 100))
-      : appliedCoupon.discount_value
-    : 0;
+  // Check if first order (for coupon rules messaging)
+  const { data: existingOrderCount } = useQuery({
+    queryKey: ["user-order-count-cart", user?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id);
+      return count ?? 0;
+    },
+    enabled: !!user,
+    staleTime: 0,
+  });
+  const isFirstOrder = existingOrderCount === 0;
+
+  const { data: activeOffers = [] } = useActiveOffers();
+  const offerLookup = (p: any) => getOfferForProduct(p, activeOffers);
+
+  // Calculate discount using the rules engine (coupon only on non-discounted items, 0 on first order)
+  const discount = calcCouponDiscount(appliedCoupon, cart, isFirstOrder, offerLookup);
+  const eligibleSubtotal = getEligibleSubtotal(cart, offerLookup);
 
   const subtotalAfterDiscount = Math.max(cartTotal - discount, 0);
   const deliveryFee = getDeliveryFee(defaultAddress?.city, subtotalAfterDiscount);
@@ -110,7 +128,6 @@ const CartPage = () => {
     setCouponLoading(true);
 
     const trimmedCode = coupon.trim().toUpperCase();
-    console.log("[Coupon] Searching for code:", trimmedCode);
 
     const { data, error } = await supabase
       .from("coupons")
@@ -119,34 +136,34 @@ const CartPage = () => {
       .eq("is_active", true)
       .maybeSingle();
 
-    console.log("[Coupon] Result:", { data, error });
-
     if (error || !data) {
       setCouponLoading(false);
-      console.warn("[Coupon] Invalid - error:", error, "data:", data);
       toast(t("cart.invalidCoupon"));
       return;
     }
 
+    // Expired check
     if (data.expires_at && new Date(data.expires_at) < new Date()) {
       setCouponLoading(false);
       toast(t("cart.couponExpired"));
       return;
     }
 
+    // Max global uses check
     if (data.max_uses && data.current_uses >= data.max_uses) {
       setCouponLoading(false);
       toast(t("cart.couponLimitReached"));
       return;
     }
 
+    // Min order amount check (against full cart total before discounts)
     if (data.min_order_amount && cartTotal < data.min_order_amount) {
       setCouponLoading(false);
       toast(t("cart.minOrderRequired", { amount: formatPrice(data.min_order_amount) }));
       return;
     }
 
-    // Check if coupon is restricted to specific users
+    // Per-user restriction check
     if (user) {
       const { data: allowedUsers } = await supabase
         .from("coupon_allowed_users")
@@ -163,13 +180,43 @@ const CartPage = () => {
       }
     }
 
+    // Per-user usage limit: each user can use a coupon only once
+    if (user) {
+      const { count } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("coupon_code", data.code);
+      if ((count ?? 0) > 0) {
+        setCouponLoading(false);
+        toast(language === "ar" ? "لقد استخدمت هذا الكوبون مسبقاً" : language === "ku" ? "تۆ پێشتر ئەم کوپۆنەت بەکارهێناوە" : "You've already used this coupon");
+        return;
+      }
+    }
+
     setCouponLoading(false);
+
+    // Accept the coupon (with influencer tracking info)
     setAppliedCoupon({
       code: data.code,
       discount_type: data.discount_type,
       discount_value: data.discount_value,
+      influencer_name: data.influencer_name,
+      influencer_commission: data.influencer_commission,
     });
-    toast(t("cart.couponApplied"));
+
+    // On first order: inform user that coupon discount won't apply but is tracked
+    if (isFirstOrder) {
+      toast(language === "ar"
+        ? "تم قبول الكوبون! خصم 15% للطلب الأول يُطبّق تلقائياً. خصم الكوبون سيعمل من الطلب الثاني."
+        : language === "ku"
+          ? "کوپۆنەکە وەرگیرا! داشکانی 15% بۆ داواکاری یەکەم خۆکارانە دادەنرێت. داشکانی کوپۆن لە داواکاری دووەمەوە کار دەکات."
+          : "Coupon accepted! Your 15% first-order discount is applied automatically. Coupon discount will work from your second order.",
+        { duration: 6000 }
+      );
+    } else {
+      toast(t("cart.couponApplied"));
+    }
   };
 
   const removeCoupon = () => {
@@ -343,14 +390,24 @@ const CartPage = () => {
                   >
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-primary" />
-                      <div>
+                  <div>
                         <p className="text-xs font-bold text-primary">{appliedCoupon.code}</p>
                         <p className="text-[10px] text-muted-foreground">
-                          {appliedCoupon.discount_type === "percentage"
-                            ? `${appliedCoupon.discount_value}% ${t("common.off").toLowerCase()}`
-                            : `${formatPrice(appliedCoupon.discount_value)} ${t("common.off").toLowerCase()}`}
-                          {" · "}{t("cart.youSave")} {formatPrice(discount)}
+                          {isFirstOrder
+                            ? (language === "ar" ? "مسجّل للتتبع • خصم الكوبون من الطلب الثاني" : "Tracked • Coupon discount from 2nd order")
+                            : (
+                              appliedCoupon.discount_type === "percentage"
+                                ? `${appliedCoupon.discount_value}% ${t("common.off").toLowerCase()}`
+                                : `${formatPrice(appliedCoupon.discount_value)} ${t("common.off").toLowerCase()}`
+                            ) + (discount > 0 ? ` · ${t("cart.youSave")} ${formatPrice(discount)}` : "")
+                          }
                         </p>
+                        {isFirstOrder && (
+                          <p className="text-[9px] text-amber-600 dark:text-amber-400 mt-0.5 flex items-center gap-1">
+                            <Info className="w-3 h-3" />
+                            {language === "ar" ? "خصم 15% للطلب الأول يُطبّق تلقائياً في الدفع" : "15% first-order discount applied at checkout"}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <button onClick={removeCoupon} className="p-1.5 hover:bg-primary/10 rounded-lg transition-colors">

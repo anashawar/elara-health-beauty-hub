@@ -15,9 +15,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { calculatePoints, useAwardPoints } from "@/hooks/useLoyalty";
 import { getDeliveryFee } from "@/lib/deliveryFee";
-
-const FIRST_ORDER_DISCOUNT_PERCENT = 15;
-const FIRST_ORDER_MIN_AMOUNT = 20000;
+import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
+import {
+  FIRST_ORDER_DISCOUNT_PERCENT,
+  FIRST_ORDER_MIN_AMOUNT,
+  calcOrderDiscounts,
+} from "@/lib/discountRules";
 
 const CheckoutPage = () => {
   const { cart, cartTotal, clearCart, appliedCoupon } = useApp();
@@ -45,23 +48,19 @@ const CheckoutPage = () => {
       return count ?? 0;
     },
     enabled: !!user,
-    staleTime: 0, // Always fresh — critical for accuracy
+    staleTime: 0,
   });
 
   const isFirstOrder = existingOrderCount === 0 && !ordersCountLoading;
   const meetsMinimum = cartTotal >= FIRST_ORDER_MIN_AMOUNT;
-  const firstOrderDiscount = isFirstOrder && meetsMinimum
-    ? Math.round((cartTotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250
-    : 0;
 
-  // Coupon discount from cart
-  const couponDiscount = appliedCoupon
-    ? appliedCoupon.discount_type === "percentage"
-      ? Math.round(cartTotal * (appliedCoupon.discount_value / 100))
-      : appliedCoupon.discount_value
-    : 0;
+  // Active offers for determining already-discounted products
+  const { data: activeOffers = [] } = useActiveOffers();
+  const offerLookup = (p: any) => getOfferForProduct(p, activeOffers);
 
-  const totalDiscount = firstOrderDiscount + couponDiscount;
+  // Use centralized discount rules engine
+  const discounts = calcOrderDiscounts(cart, cartTotal, isFirstOrder, appliedCoupon, offerLookup);
+  const { firstOrderDiscount, couponDiscount, totalDiscount } = discounts;
 
   const { data: addresses = [], isLoading: addressesLoading } = useQuery({
     queryKey: ["addresses", user?.id],
@@ -101,11 +100,9 @@ const CheckoutPage = () => {
       .eq("user_id", user.id);
 
     const confirmedFirstOrder = (freshCount ?? 0) === 0;
-    const confirmedFirstDiscount = confirmedFirstOrder && meetsMinimum
-      ? Math.round((cartTotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250
-      : 0;
-    const confirmedCouponDiscount = couponDiscount; // already calculated from context
-    const confirmedTotalDiscount = confirmedFirstDiscount + confirmedCouponDiscount;
+    const confirmedDiscounts = calcOrderDiscounts(cart, cartTotal, confirmedFirstOrder, appliedCoupon, offerLookup);
+    const confirmedTotalDiscount = confirmedDiscounts.totalDiscount;
+    const confirmedFirstDiscount = confirmedDiscounts.firstOrderDiscount;
 
     // Build notes and coupon_code
     const notesParts: string[] = [];
@@ -509,16 +506,31 @@ const CheckoutPage = () => {
             )}
 
             {/* Coupon discount line */}
-            {couponDiscount > 0 && appliedCoupon && (
+            {appliedCoupon && (
               <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="border-t border-border pt-2 mt-2 flex justify-between text-sm"
+                className="border-t border-border pt-2 mt-2"
               >
-                <span className="text-primary font-medium flex items-center gap-1">
-                  🏷️ {t("cart.coupon")} ({appliedCoupon.code})
-                </span>
-                <span className="text-primary font-bold">-{formatPrice(couponDiscount)}</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-primary font-medium flex items-center gap-1">
+                    🏷️ {t("cart.coupon")} ({appliedCoupon.code})
+                  </span>
+                  {couponDiscount > 0 ? (
+                    <span className="text-primary font-bold">-{formatPrice(couponDiscount)}</span>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">
+                      {isFirstOrder
+                        ? (language === "ar" ? "من الطلب الثاني" : "From 2nd order")
+                        : (language === "ar" ? "لا منتجات مؤهلة" : "No eligible items")}
+                    </span>
+                  )}
+                </div>
+                {isFirstOrder && appliedCoupon.influencer_name && (
+                  <p className="text-[9px] text-muted-foreground mt-1">
+                    ✓ {language === "ar" ? `مسجّل عبر ${appliedCoupon.influencer_name}` : `Tracked via ${appliedCoupon.influencer_name}`}
+                  </p>
+                )}
               </motion.div>
             )}
 
