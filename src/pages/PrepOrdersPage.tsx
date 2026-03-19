@@ -36,6 +36,8 @@ import {
   CalendarDays,
   ChevronDown,
   FileText,
+  Send,
+  MessageSquare,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import elaraLogo from "@/assets/elara-logo.png";
