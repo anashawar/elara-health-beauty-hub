@@ -13,7 +13,7 @@ const collectionMeta: Record<string, { titleKey: string; subtitleKey: string; ic
   picks: { titleKey: "home.elaraPicks", subtitleKey: "home.curatedForYou", icon: "💎" },
   offers: { titleKey: "home.specialOffers", subtitleKey: "home.limitedDeals", icon: "🏷️" },
   new: { titleKey: "home.newArrivals", subtitleKey: "home.freshAdditions", icon: "✨" },
-  gifts: { titleKey: "home.giftsForLovedOnes", subtitleKey: "home.aiCuratedGifts", icon: "🎁" },
+  gifts: { titleKey: "home.bestGifts", subtitleKey: "home.moreGifts", icon: "🎁" },
 };
 
 const CollectionPage = () => {
