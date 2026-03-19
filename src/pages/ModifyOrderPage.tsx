@@ -13,7 +13,7 @@ import { toast } from "@/components/ui/sonner";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { getDeliveryFee } from "@/lib/deliveryFee";
 
-const ONE_HOUR_MS = 60 * 60 * 1000;
+const MODIFY_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
 const ModifyOrderPage = () => {
   const { id: orderId } = useParams<{ id: string }>();

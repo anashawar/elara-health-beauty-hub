@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const ONE_HOUR_MS = 60 * 60 * 1000;
+const MODIFY_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
 const canModifyOrder = (createdAt: string, status: string) => {
   if (status === "cancelled" || status === "delivered" || status === "shipped" || status === "on_the_way") return false;
