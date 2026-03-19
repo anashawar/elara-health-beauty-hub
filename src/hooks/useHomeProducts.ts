@@ -117,3 +117,33 @@ export function useOfferProducts() {
     },
   });
 }
+
+export function useGiftProducts() {
+  const { language } = useLanguage();
+  return useQuery<ProductWithRelations[]>({
+    queryKey: ["home-gifts", language],
+    queryFn: async () => {
+      // First get product IDs tagged as "gift"
+      const { data: tagData, error: tagErr } = await supabase
+        .from("product_tags")
+        .select("product_id")
+        .eq("tag", "gift")
+        .limit(30);
+
+      if (tagErr) throw tagErr;
+      const giftIds = (tagData || []).map((t: any) => t.product_id);
+      if (giftIds.length === 0) return [];
+
+      const { data, error } = await (supabase
+        .from("products")
+        .select(CARD_SELECT) as any)
+        .in("id", giftIds)
+        .eq("in_stock", true)
+        .limit(SECTION_LIMIT);
+
+      if (error) throw error;
+      return (data || []).map((p: any) => mapProduct(p, language));
+    },
+    staleTime: 10 * 60 * 1000, // gift tags change less frequently
+  });
+}
