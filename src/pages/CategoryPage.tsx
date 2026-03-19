@@ -276,7 +276,7 @@ const CategoryPage = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4 md:px-6">
           {filteredProducts.map(p => (
-            <ProductCard key={p.id} product={p} />
+            <ProductCard key={p.id} product={p} offerPricing={getOfferForProduct(p, activeOffers)} />
           ))}
         </div>
 
