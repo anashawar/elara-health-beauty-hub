@@ -118,6 +118,13 @@ const Index = () => {
           <BrandsSection />
         </Suspense>
 
+        {/* AI-Curated Gifts Section */}
+        {giftProducts.length > 0 && (
+          <Suspense fallback={null}>
+            <GiftsSection products={giftProducts} />
+          </Suspense>
+        )}
+
         <Suspense fallback={null}>
           <ConcernsSection />
         </Suspense>
