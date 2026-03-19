@@ -1,9 +1,30 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Percent } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const DealsBanner = () => {
   const { t } = useLanguage();
+  const { user } = useAuth();
+
+  const { data: hasOrdered } = useQuery({
+    queryKey: ["has-first-order", user?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id)
+        .limit(1);
+      return (count ?? 0) > 0;
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Hide if user is logged in and has already ordered
+  if (user && hasOrdered) return null;
 
   return (
     <section className="px-4 mt-8">
