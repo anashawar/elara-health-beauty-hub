@@ -32,9 +32,26 @@ interface RoutineStep {
   frequency?: string;
 }
 
+interface SkinTone {
+  category: string;
+  undertone: string;
+  hex_color: string;
+  fitzpatrick_type: number;
+  description: string;
+}
+
+interface MakeupShadeMatches {
+  foundation_shade: string;
+  concealer_shade: string;
+  powder_shade: string;
+  shade_range: string;
+  recommended_makeup_product_ids: string[];
+}
+
 interface Analysis {
   overall_score: number;
   skin_type: string;
+  skin_tone?: SkinTone;
   hydration_score: number;
   elasticity_score: number;
   clarity_score: number;
@@ -48,6 +65,7 @@ interface Analysis {
   problems: SkinProblem[];
   routine: { morning: RoutineStep[]; evening: RoutineStep[]; weekly?: RoutineStep[] };
   recommended_product_ids: string[];
+  makeup_shade_matches?: MakeupShadeMatches;
   lifestyle_tips: string[];
   summary: string;
 }
