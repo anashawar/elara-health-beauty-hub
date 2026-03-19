@@ -337,7 +337,7 @@ export default function AdminBrands() {
               {!multiSelect && (
                 <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg" onClick={() => {
-                    setForm({ id: b.id, name: b.name, slug: b.slug, logo_url: b.logo_url || "", country_of_origin: b.country_of_origin || "", featured: b.featured || false });
+                    setForm({ id: b.id, name: b.name, slug: b.slug, logo_url: b.logo_url || "", country_of_origin: b.country_of_origin || "", featured: b.featured || false, warehouse_ids: getWarehouseIdsForBrand(b.id) });
                     setEditing(true); setOpen(true);
                   }}><Pencil className="h-3 w-3" /></Button>
                   <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg text-destructive" onClick={() => {
