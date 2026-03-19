@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
+import OrderRatingDialog from "@/components/orders/OrderRatingDialog";
 import {
   AlertDialog,
   AlertDialogAction,
