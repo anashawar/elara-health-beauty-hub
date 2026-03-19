@@ -82,7 +82,6 @@ const CollectionPage = () => {
     queryKey: ["collection", type, page, searchQuery, language],
     queryFn: async () => {
       if (type === "gifts") {
-        // Gift products need tag lookup first
         const { data: tagData } = await supabase
           .from("product_tags")
           .select("product_id")
@@ -110,16 +109,62 @@ const CollectionPage = () => {
         };
       }
 
+      // "discounts" type: fetch products from brands/categories with active offers
+      if (type === "discounts") {
+        const { data: offers } = await supabase
+          .from("offers")
+          .select("target_type, target_id")
+          .eq("is_active", true);
+
+        if (!offers || offers.length === 0) return { products: [], total: 0 };
+
+        const brandIds: string[] = [];
+        const categoryIds: string[] = [];
+        let allProducts = false;
+
+        for (const o of offers) {
+          if (o.target_type === "all") { allProducts = true; break; }
+          if (o.target_type === "brand" && o.target_id) brandIds.push(o.target_id);
+          if (o.target_type === "category" && o.target_id) categoryIds.push(o.target_id);
+        }
+
+        let query = supabase
+          .from("products")
+          .select(CARD_SELECT, { count: "exact" }) as any;
+
+        if (!allProducts) {
+          const filters: string[] = [];
+          if (brandIds.length > 0) filters.push(`brand_id.in.(${brandIds.join(",")})`);
+          if (categoryIds.length > 0) filters.push(`category_id.in.(${categoryIds.join(",")})`);
+          if (filters.length === 0) return { products: [], total: 0 };
+          query = query.or(filters.join(","));
+        }
+
+        query = query.eq("in_stock", true);
+
+        if (searchQuery.length > 1) {
+          query = query.ilike("title", `%${searchQuery}%`);
+        }
+
+        const from = (page - 1) * PAGE_SIZE;
+        const { data: rows, count } = await query
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE_SIZE - 1);
+
+        return {
+          products: (rows || []).map((p: any) => mapProduct(p, language)),
+          total: count || 0,
+        };
+      }
+
       let query = supabase
         .from("products")
         .select(CARD_SELECT, { count: "exact" }) as any;
 
-      // Apply filter based on collection type
       switch (type) {
         case "trending": query = query.eq("is_trending", true); break;
         case "picks": query = query.eq("is_pick", true); break;
         case "offers": query = query.not("original_price", "is", null); break;
-        case "discounts": query = query.not("original_price", "is", null); break;
         case "new": query = query.eq("is_new", true); break;
       }
 

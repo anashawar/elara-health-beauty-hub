@@ -12,7 +12,7 @@ const SkinScanBanner = lazy(() => import("@/components/home/SkinScanBanner"));
 import ProductSectionSkeleton from "@/components/home/ProductSectionSkeleton";
 import SearchOverlay from "@/components/SearchOverlay";
 import SEOHead, { organizationJsonLd, websiteJsonLd, storeJsonLd } from "@/components/SEOHead";
-import { useTrendingProducts, usePickProducts, useOfferProducts, useNewProducts, useGiftProducts } from "@/hooks/useHomeProducts";
+import { useTrendingProducts, usePickProducts, useOfferProducts, useNewProducts, useGiftProducts, useDiscountedProducts } from "@/hooks/useHomeProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 const ProductSection = lazy(() => import("@/components/home/ProductSection"));
@@ -54,6 +54,7 @@ const Index = () => {
   const { data: offers = [], isLoading: loadingOffers } = useOfferProducts();
   const { data: newArrivals = [], isLoading: loadingNew } = useNewProducts();
   const { data: giftProducts = [] } = useGiftProducts();
+  const { data: discountedProducts = [] } = useDiscountedProducts();
 
   const isLoading = loadingTrending;
   const SectionFallback = <ProductSectionSkeleton />;
@@ -131,9 +132,9 @@ const Index = () => {
             <ConcernsSection />
           </Suspense>
 
-          {offers.length > 0 && (
+          {discountedProducts.length > 0 && (
             <Suspense fallback={null}>
-              <DiscountsSection products={offers} />
+              <DiscountsSection products={discountedProducts} />
             </Suspense>
           )}
 
