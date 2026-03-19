@@ -81,10 +81,8 @@ export const en = {
     todayOffers: "Today's Offers",
     curatedDeals: "Curated deals just for you",
     findWhatYouNeed: "Find what your skin needs",
-    giftsForLovedOnes: "Gift Ideas 🎁",
-    aiCuratedGifts: "AI-curated picks for every occasion",
+    bestGifts: "Best Gifts",
     moreGifts: "More gift ideas",
-    aiPowered: "AI-powered recommendations",
   },
   banner: {
     newUserOffer: "NEW USER OFFER",
