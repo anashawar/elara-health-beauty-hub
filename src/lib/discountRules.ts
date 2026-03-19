@@ -37,8 +37,8 @@ export function isProductDiscounted(
   product: ProductWithRelations,
   getOfferForProduct?: (p: ProductWithRelations) => OfferPricing | null
 ): boolean {
-  // Product has a set original_price (manually discounted)
-  if (product.original_price && product.original_price > product.price) return true;
+  // Product has a set originalPrice (manually discounted)
+  if (product.originalPrice && product.originalPrice > product.price) return true;
   // Product has an active offer
   if (getOfferForProduct && getOfferForProduct(product)) return true;
   return false;
