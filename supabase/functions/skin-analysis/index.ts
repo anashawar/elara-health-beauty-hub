@@ -69,6 +69,13 @@ If a valid human face IS detected, analyze the face photo and return a detailed 
 {
   "overall_score": <number 0-100>,
   "skin_type": "<oily|dry|combination|normal|sensitive>",
+  "skin_tone": {
+    "category": "<fair|light|light-medium|medium|medium-tan|tan|deep-tan|deep|rich-deep>",
+    "undertone": "<warm|cool|neutral|olive>",
+    "hex_color": "<hex color code like #C68642 representing the detected skin tone>",
+    "fitzpatrick_type": <number 1-6>,
+    "description": "<1-2 sentence description of the skin tone>"
+  },
   "hydration_score": <number 0-100>,
   "elasticity_score": <number 0-100>,
   "clarity_score": <number 0-100>,
@@ -99,18 +106,29 @@ If a valid human face IS detected, analyze the face photo and return a detailed 
     ]
   },
   "recommended_product_ids": ["<product id 1>", "<product id 2>", ...],
+  "makeup_shade_matches": {
+    "foundation_shade": "<shade name like 'Medium Beige' or 'Deep Caramel'>",
+    "concealer_shade": "<1-2 shades lighter than foundation>",
+    "powder_shade": "<matching powder shade name>",
+    "shade_range": "<light|medium|tan|deep>",
+    "recommended_makeup_product_ids": ["<product id>", ...]
+  },
   "lifestyle_tips": ["<tip 1>", "<tip 2>", "<tip 3>"],
   "summary": "<2-3 sentence overall assessment>"
 }
 
-Available products from ELARA catalog to recommend (pick the most relevant ones based on skin analysis):
+Available products from ELARA catalog to recommend (pick the most relevant ones based on skin analysis).
+Products with a "shade" field are makeup products — match them to the user's detected skin tone:
 ${JSON.stringify(productList.slice(0, 100))}
 
 IMPORTANT:
 - REJECT any image that is not a real human face — logos, products, objects, cartoons, animals, screenshots must all be rejected
 - Be scientifically accurate and detailed
 - Only return valid JSON, no markdown or extra text
-- Recommend 3-8 products from the provided list that match the skin needs
+- Recommend 3-8 skincare products from the provided list that match the skin needs
+- For makeup_shade_matches, recommend foundation/concealer/powder products whose shade matches the detected skin tone
+- ACCURATELY detect the skin tone — consider the lighting conditions and provide a realistic hex color
+- The skin tone category should be specific (9 options from fair to rich-deep) not generic
 - Scores should reflect realistic assessment, not always high
 - PAY SPECIAL ATTENTION to common concerns in Iraq/Middle East: acne, pigmentation/dark spots, dryness, oiliness, enlarged pores, and dark circles
 - Always provide acne_score, pigmentation_score, dryness_score, oiliness_score, pores_score, and dark_circles_score even if the concern is minimal
