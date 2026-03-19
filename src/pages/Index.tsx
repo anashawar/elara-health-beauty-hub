@@ -132,9 +132,9 @@ const Index = () => {
             <ConcernsSection />
           </Suspense>
 
-          {offers.length > 0 && (
+          {discountedProducts.length > 0 && (
             <Suspense fallback={null}>
-              <DiscountsSection products={offers} />
+              <DiscountsSection products={discountedProducts} />
             </Suspense>
           )}
 
