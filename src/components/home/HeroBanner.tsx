@@ -67,7 +67,7 @@ const HeroBanner = memo(() => {
         onScroll={handleScroll}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden no-scrollbar h-full touch-auto md:overflow-x-hidden"
+        className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden no-scrollbar h-full touch-auto"
         style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch", overscrollBehaviorX: "auto", touchAction: "pan-y pan-x" }}
       >
         {banners.map((banner: any, idx: number) => {
