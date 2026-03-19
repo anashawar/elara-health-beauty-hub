@@ -61,6 +61,7 @@ const navItems: NavItem[] = [
   { title: "Image Finder", url: "/admin/images", icon: ImagePlus, roles: ["admin", "operations", "data_entry"] },
   { title: "Support Chat", url: "/admin/support", icon: Headphones, roles: ["admin", "operations"] },
   { title: "Team", url: "/admin/team", icon: Users, roles: ["admin"] },
+  { title: "Warehouses", url: "/admin/warehouses", icon: Warehouse, roles: ["admin", "operations"] },
 ];
 
 export default function AdminSidebar() {

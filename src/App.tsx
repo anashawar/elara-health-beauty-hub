@@ -45,6 +45,7 @@ const SupportPage = lazy(() => import("./pages/SupportPage"));
 const SkinScanPage = lazy(() => import("./pages/SkinScanPage"));
 const SkinScanHistoryPage = lazy(() => import("./pages/SkinScanHistoryPage"));
 const PrepOrdersPage = lazy(() => import("./pages/PrepOrdersPage"));
+const WarehouseSystemPage = lazy(() => import("./pages/WarehouseSystemPage"));
 
 // Admin — always lazy
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
