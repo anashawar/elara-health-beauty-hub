@@ -88,58 +88,68 @@ export default function TodayOffersSlider() {
         </div>
       </div>
 
-      {/* Slider */}
-      {/* Navigation Arrows - above slider */}
-      {pairs.length > 1 && (
-        <div className="flex items-center justify-end gap-2 mb-3">
-          <button
-            onClick={prev}
-            className="w-7 h-7 rounded-full bg-muted/80 border border-border/50 flex items-center justify-center text-foreground hover:bg-muted transition-all"
-          >
-            <ChevronLeft className="w-3.5 h-3.5 rtl:rotate-180" />
-          </button>
-          <button
-            onClick={next}
-            className="w-7 h-7 rounded-full bg-muted/80 border border-border/50 flex items-center justify-center text-foreground hover:bg-muted transition-all"
-          >
-            <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
-          </button>
-        </div>
-      )}
-
-      {/* Slider */}
-      <div className="relative">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={current}
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="grid grid-cols-3 gap-2.5"
-          >
-            {currentPair.map((offer, i) => (
-              <OfferCard key={offer.id} offer={offer} index={current * 3 + i} />
-            ))}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* Dots */}
-      {pairs.length > 1 && (
-        <div className="flex justify-center gap-2 mt-3">
-          {pairs.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => goTo(idx)}
-              className={`rounded-full transition-all duration-500 ${
-                idx === current
-                  ? "w-7 h-2 bg-primary shadow-md shadow-primary/30"
-                  : "w-2 h-2 bg-muted-foreground/20 hover:bg-muted-foreground/40"
-              }`}
-            />
+      {/* Grid mode for 6 offers on mobile */}
+      {showAsGrid ? (
+        <div className="grid grid-cols-3 gap-2.5 md:grid-cols-6">
+          {offers.map((offer, i) => (
+            <OfferCard key={offer.id} offer={offer} index={i} />
           ))}
         </div>
+      ) : (
+        <>
+          {/* Navigation Arrows - above slider */}
+          {pairs.length > 1 && (
+            <div className="flex items-center justify-end gap-2 mb-3">
+              <button
+                onClick={prev}
+                className="w-7 h-7 rounded-full bg-muted/80 border border-border/50 flex items-center justify-center text-foreground hover:bg-muted transition-all"
+              >
+                <ChevronLeft className="w-3.5 h-3.5 rtl:rotate-180" />
+              </button>
+              <button
+                onClick={next}
+                className="w-7 h-7 rounded-full bg-muted/80 border border-border/50 flex items-center justify-center text-foreground hover:bg-muted transition-all"
+              >
+                <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
+              </button>
+            </div>
+          )}
+
+          {/* Slider */}
+          <div className="relative">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={current}
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+                className="grid grid-cols-3 gap-2.5"
+              >
+                {currentPair.map((offer, i) => (
+                  <OfferCard key={offer.id} offer={offer} index={current * 3 + i} />
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Dots */}
+          {pairs.length > 1 && (
+            <div className="flex justify-center gap-2 mt-3">
+              {pairs.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => goTo(idx)}
+                  className={`rounded-full transition-all duration-500 ${
+                    idx === current
+                      ? "w-7 h-2 bg-primary shadow-md shadow-primary/30"
+                      : "w-2 h-2 bg-muted-foreground/20 hover:bg-muted-foreground/40"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </section>
   );
