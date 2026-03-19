@@ -500,4 +500,9 @@ export const en = {
     youEarned: "You earned",
     orderReward: "Order reward",
   },
+  brands: {
+    discoverTitle: "Discover Brands",
+    discoverSubtitle: "Explore our curated collection of world-class beauty brands",
+    searchPlaceholder: "Search brands...",
+  },
 };

@@ -500,4 +500,9 @@ export const ku = {
     youEarned: "بەدەستت هێنا",
     orderReward: "خەڵاتی داواکاری",
   },
+  brands: {
+    discoverTitle: "براندەکان بدۆزەرەوە",
+    discoverSubtitle: "کۆکراوەی براندە جیهانییەکانی جوانکاری بپشکنە",
+    searchPlaceholder: "بگەڕێ بۆ براند...",
+  },
 };
