@@ -389,11 +389,11 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
   }
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black flex flex-col">
+    <div className="fixed inset-0 z-[100] flex flex-col" style={{ backgroundColor: "transparent" }}>
       {/* Camera area */}
-      <div className="relative flex-shrink-0" style={{ height: cameraHeight }}>
-        {/* Native camera renders into this container */}
-        <div id="camera-preview-container" className="absolute inset-0" />
+      <div className="relative flex-shrink-0" style={{ height: cameraHeight, backgroundColor: "transparent" }}>
+        {/* Native camera renders behind the web layer inside this area */}
+        <div id="camera-preview-container" className="absolute inset-0" style={{ backgroundColor: "transparent", zIndex: 0 }} />
 
         {/* Face tracking canvas overlay — matches camera area exactly */}
         <canvas
