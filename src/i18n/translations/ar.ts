@@ -474,8 +474,8 @@ export const ar = {
     hairLoss: "تساقط الشعر",
     dandruff: "قشرة",
     sensitiveSkin: "بشرة حساسة",
-    immunity: "مناعة",
-    weightLoss: "تنحيف",
+    darkCircles: "هالات سوداء",
+    antiAging: "مكافحة الشيخوخة",
   },
   rewards: {
     title: "مكافآت ELARA",
