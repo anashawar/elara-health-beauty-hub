@@ -49,6 +49,7 @@ export const en = {
     iqd: "IQD",
     bundleDeal: "BUNDLE DEAL",
     buyOneGetOne: "BUY 1 GET 1",
+    clearAll: "Clear All",
   },
   nav: {
     home: "Home",

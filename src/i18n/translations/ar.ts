@@ -49,6 +49,7 @@ export const ar = {
     iqd: "د.ع",
     bundleDeal: "عرض باقة",
     buyOneGetOne: "اشتري 1 واحصل 1",
+    clearAll: "مسح الكل",
   },
   nav: {
     home: "الرئيسية",
