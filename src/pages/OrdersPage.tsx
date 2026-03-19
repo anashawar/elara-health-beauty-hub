@@ -107,7 +107,7 @@ const OrdersPage = () => {
       const deliveredOrders = orders.filter(o => o.status === 'delivered');
       if (deliveredOrders.length === 0) return;
       const { data: rated } = await supabase
-        .from("order_ratings" as any)
+        .from("order_ratings")
         .select("order_id")
         .eq("user_id", user.id)
         .in("order_id", deliveredOrders.map(o => o.id));

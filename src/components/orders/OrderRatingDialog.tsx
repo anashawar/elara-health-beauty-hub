@@ -99,7 +99,7 @@ const OrderRatingDialog = ({
     if (!allRated) return;
     setSubmitting(true);
     try {
-      const { error } = await supabase.from("order_ratings" as any).insert({
+      const { error } = await supabase.from("order_ratings").insert({
         order_id: orderId,
         user_id: userId,
         quality_rating: categories.find((c) => c.key === "quality")!.value,
@@ -109,7 +109,7 @@ const OrderRatingDialog = ({
         price_rating: categories.find((c) => c.key === "price")!.value,
         overall_rating: overallRating,
         comment: comment.trim() || null,
-      } as any);
+      });
       if (error) throw error;
       setStep("success");
       toast.success(t("rating.thankYou") || "Thank you for your feedback!");

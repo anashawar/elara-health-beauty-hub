@@ -776,6 +776,56 @@ export type Database = {
           },
         ]
       }
+      order_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          delivery_time_rating: number | null
+          expectation_rating: number | null
+          id: string
+          order_id: string
+          overall_rating: number | null
+          price_rating: number | null
+          quality_rating: number | null
+          service_rating: number | null
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          delivery_time_rating?: number | null
+          expectation_rating?: number | null
+          id?: string
+          order_id: string
+          overall_rating?: number | null
+          price_rating?: number | null
+          quality_rating?: number | null
+          service_rating?: number | null
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          delivery_time_rating?: number | null
+          expectation_rating?: number | null
+          id?: string
+          order_id?: string
+          overall_rating?: number | null
+          price_rating?: number | null
+          quality_rating?: number | null
+          service_rating?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_ratings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           address_id: string | null
