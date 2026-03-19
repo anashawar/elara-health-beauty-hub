@@ -52,7 +52,7 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
       await CameraPreview.start({
         parent: "camera-preview-container",
         position: useFront ? "front" : "rear",
-        toBack: false,
+        toBack: true,
         disableAudio: true,
         storeToFile: false,
         width: window.innerWidth,
@@ -70,6 +70,28 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
       }
     }
   }, [useFront, cameraHeight]);
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const root = document.getElementById("root");
+
+    const previous = {
+      htmlBackground: html.style.background,
+      bodyBackground: body.style.background,
+      rootBackground: root?.style.background ?? "",
+    };
+
+    html.style.background = "transparent";
+    body.style.background = "transparent";
+    if (root) root.style.background = "transparent";
+
+    return () => {
+      html.style.background = previous.htmlBackground;
+      body.style.background = previous.bodyBackground;
+      if (root) root.style.background = previous.rootBackground;
+    };
+  }, []);
 
   // Init MediaPipe
   const initLandmarker = useCallback(async () => {
@@ -367,11 +389,11 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
   }
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black flex flex-col">
+    <div className="fixed inset-0 z-[100] flex flex-col" style={{ backgroundColor: "transparent" }}>
       {/* Camera area */}
-      <div className="relative flex-shrink-0" style={{ height: cameraHeight }}>
-        {/* Native camera renders into this container */}
-        <div id="camera-preview-container" className="absolute inset-0" />
+      <div className="relative flex-shrink-0" style={{ height: cameraHeight, backgroundColor: "transparent" }}>
+        {/* Native camera renders behind the web layer inside this area */}
+        <div id="camera-preview-container" className="absolute inset-0" style={{ backgroundColor: "transparent", zIndex: 0 }} />
 
         {/* Face tracking canvas overlay — matches camera area exactly */}
         <canvas
