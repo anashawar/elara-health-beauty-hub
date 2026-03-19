@@ -126,7 +126,7 @@ const CheckoutPage = () => {
       payment_method: paymentMethod,
       notes: notesParts.length > 0 ? notesParts.join(" | ") : null,
       coupon_code: couponCode,
-      status: "pending",
+      status: "processing",
     }).select().single();
 
     if (orderError) {
