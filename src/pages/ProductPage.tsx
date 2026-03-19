@@ -62,7 +62,7 @@ const ProductPage = () => {
   const { data: product, isLoading: productLoading } = useProduct(id);
   const { data: activeOffers = [] } = useActiveOffers();
   const { data: brands = [] } = useBrands();
-  const { data: related = [] } = useRelatedProducts(product?.category_id, id);
+  // Related products are now handled by the RelatedProducts component
 
   if (productLoading) {
     return (
