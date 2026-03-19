@@ -24,9 +24,14 @@ export function prefetchBanners(queryClient: any) {
 
 const HeroBanner = memo(() => {
   const { language } = useLanguage();
+  const isRtl = language === "ar" || language === "ku";
   const [current, setCurrent] = useState(0);
 
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    align: "center",
+    direction: isRtl ? "rtl" : "ltr",
+  });
 
   const { data: banners = [], isLoading } = useQuery({
     queryKey: ["banners"],
