@@ -376,7 +376,8 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
         {/* Face tracking canvas overlay — matches camera area exactly */}
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full pointer-events-none z-10"
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ zIndex: 30, position: "absolute", willChange: "transform", transform: "translateZ(0)" }}
         />
 
         {/* Corner brackets */}

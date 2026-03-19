@@ -383,8 +383,8 @@ function SkinScanContent() {
         <div className="max-w-lg mx-auto px-4 py-6 pb-24">
           {/* Camera view */}
           {cameraActive ? (
-            <div className="relative rounded-3xl overflow-hidden bg-foreground/5 aspect-[3/4]">
-              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" style={useFrontCamera ? { transform: "scaleX(-1)" } : {}} />
+            <div className="relative rounded-3xl overflow-hidden bg-foreground/5 aspect-[3/4]" style={{ isolation: "isolate" }}>
+              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" style={{ position: "relative", zIndex: 1, transform: useFrontCamera ? "scaleX(-1)" : "none" }} />
               
               {/* Live face tracking overlay */}
               <FaceTrackingOverlay videoRef={videoRef as React.RefObject<HTMLVideoElement>} mirrored={useFrontCamera} />
