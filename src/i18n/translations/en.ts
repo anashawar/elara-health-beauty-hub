@@ -168,6 +168,7 @@ export const en = {
     activeOrders: "Your Active Orders",
     pending: "Pending",
     processing: "Processing",
+    prepared: "Prepared",
     shipped: "Shipped",
     onTheWay: "On the Way",
     delivered: "Delivered",
