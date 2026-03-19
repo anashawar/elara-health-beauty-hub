@@ -49,6 +49,7 @@ export const ku = {
     iqd: "د.ع",
     bundleDeal: "ئۆفەری باندڵ",
     buyOneGetOne: "١ بکڕە ١ وەربگرە",
+    clearAll: "سڕینەوەی هەموو",
   },
   nav: {
     home: "سەرەتا",

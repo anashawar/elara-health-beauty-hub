@@ -227,7 +227,7 @@ const SearchOverlay = ({ isOpen, onClose, initialQuery }: SearchOverlayProps) =>
               <p className="text-4xl mb-3">🔍</p>
               <p className="text-sm font-medium text-foreground mb-1">{t("common.noResults")}</p>
               <p className="text-xs text-muted-foreground mb-4">{t("common.tryDifferent")}</p>
-              <div className="flex flex-wrap justify-center gap-2 mb-5">{TRENDING_TERMS.slice(0, 4).map(term => (<button key={term} onClick={() => { setQuery(term); setDebouncedQuery(term); setActiveFilter(null); setPriceFilter(null); }} className="text-xs bg-secondary text-secondary-foreground px-3 py-2 rounded-xl">Try "{term}"</button>))}</div>
+              <div className="flex flex-wrap justify-center gap-2 mb-5">{TRENDING_TERMS.slice(0, 4).map(term => (<button key={term} onClick={() => { setQuery(term); setDebouncedQuery(term); setActiveFilter(null); setPriceFilter(null); }} className="text-xs bg-secondary text-secondary-foreground px-3 py-2 rounded-xl">{term}</button>))}</div>
               <Link to={`/elara-ai?q=${encodeURIComponent(query)}`} onClick={onClose} className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-primary to-violet-600 text-white font-semibold text-sm shadow-float">
                 <Sparkles className="w-4 h-4" />
                 {t("search.askElaraAI") || "Ask ELARA AI instead"}
