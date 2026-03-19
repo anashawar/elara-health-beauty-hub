@@ -558,6 +558,7 @@ function SkinScanContent() {
         </div>
         <canvas ref={canvasRef} className="hidden" />
         <BottomNav />
+        </>)}
       </div>
     );
   }
