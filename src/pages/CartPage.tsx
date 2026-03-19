@@ -120,29 +120,50 @@ const CartPage = () => {
       .maybeSingle();
 
     console.log("[Coupon] Result:", { data, error });
-    setCouponLoading(false);
 
     if (error || !data) {
+      setCouponLoading(false);
       console.warn("[Coupon] Invalid - error:", error, "data:", data);
       toast(t("cart.invalidCoupon"));
       return;
     }
 
     if (data.expires_at && new Date(data.expires_at) < new Date()) {
+      setCouponLoading(false);
       toast(t("cart.couponExpired"));
       return;
     }
 
     if (data.max_uses && data.current_uses >= data.max_uses) {
+      setCouponLoading(false);
       toast(t("cart.couponLimitReached"));
       return;
     }
 
     if (data.min_order_amount && cartTotal < data.min_order_amount) {
+      setCouponLoading(false);
       toast(t("cart.minOrderRequired", { amount: formatPrice(data.min_order_amount) }));
       return;
     }
 
+    // Check if coupon is restricted to specific users
+    if (user) {
+      const { data: allowedUsers } = await supabase
+        .from("coupon_allowed_users")
+        .select("user_id")
+        .eq("coupon_id", data.id);
+
+      if (allowedUsers && allowedUsers.length > 0) {
+        const isAllowed = allowedUsers.some((au: any) => au.user_id === user.id);
+        if (!isAllowed) {
+          setCouponLoading(false);
+          toast(t("cart.invalidCoupon"));
+          return;
+        }
+      }
+    }
+
+    setCouponLoading(false);
     setAppliedCoupon({
       code: data.code,
       discount_type: data.discount_type,

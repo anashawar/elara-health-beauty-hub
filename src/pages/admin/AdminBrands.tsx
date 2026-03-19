@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Pencil, Trash2, Loader2, Tag, Sparkles, ImageIcon, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Pencil, Trash2, Loader2, Tag, Sparkles, ImageIcon, Search, Warehouse } from "lucide-react";
 import { toast } from "sonner";
 
-interface BrandForm { id?: string; name: string; slug: string; logo_url: string; country_of_origin: string; featured: boolean; }
-const emptyForm: BrandForm = { name: "", slug: "", logo_url: "", country_of_origin: "", featured: false };
+interface BrandForm { id?: string; name: string; slug: string; logo_url: string; country_of_origin: string; featured: boolean; warehouse_ids: string[]; }
+const emptyForm: BrandForm = { name: "", slug: "", logo_url: "", country_of_origin: "", featured: false, warehouse_ids: [] };
 
 export default function AdminBrands() {
   const qc = useQueryClient();
@@ -65,18 +66,48 @@ export default function AdminBrands() {
     },
   });
 
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ["admin-warehouses-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("warehouses").select("id, name").eq("is_active", true).order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: brandWarehouses = [] } = useQuery({
+    queryKey: ["admin-brand-warehouses"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("brand_warehouses").select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const getWarehouseIdsForBrand = (brandId: string) =>
+    brandWarehouses.filter((bw: any) => bw.brand_id === brandId).map((bw: any) => bw.warehouse_id);
+
   const save = useMutation({
     mutationFn: async (f: BrandForm) => {
       const payload = { name: f.name, slug: f.slug || f.name.toLowerCase().replace(/\s+/g, "-"), logo_url: f.logo_url || null, country_of_origin: f.country_of_origin || null, featured: f.featured };
+      let brandId = f.id;
       if (f.id) {
         const { error } = await supabase.from("brands").update(payload).eq("id", f.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("brands").insert(payload);
+        const { data, error } = await supabase.from("brands").insert(payload).select("id").single();
         if (error) throw error;
+        brandId = data.id;
+      }
+
+      // Sync brand_warehouses
+      await supabase.from("brand_warehouses").delete().eq("brand_id", brandId!);
+      if (f.warehouse_ids.length > 0) {
+        const rows = f.warehouse_ids.map(wid => ({ brand_id: brandId!, warehouse_id: wid }));
+        await supabase.from("brand_warehouses").insert(rows);
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-brands"] }); toast.success("Saved"); setOpen(false); setForm(emptyForm); setEditing(false); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-brands"] }); qc.invalidateQueries({ queryKey: ["admin-brand-warehouses"] }); toast.success("Saved"); setOpen(false); setForm(emptyForm); setEditing(false); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -184,6 +215,39 @@ export default function AdminBrands() {
                   <input type="checkbox" id="featured" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} className="h-4 w-4 rounded border-border accent-primary" />
                   <Label htmlFor="featured">Featured on Homepage</Label>
                 </div>
+
+                {/* Warehouse assignment */}
+                {warehouses.length > 0 && (
+                  <div className="border-t border-border/50 pt-3">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <Warehouse className="w-3.5 h-3.5" /> Available in Warehouses
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {warehouses.map((w: any) => {
+                        const checked = form.warehouse_ids.includes(w.id);
+                        return (
+                          <label key={w.id} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border cursor-pointer text-sm transition-all ${checked ? "border-primary bg-primary/5 text-primary font-medium" : "border-border/50 bg-card text-foreground"}`}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => {
+                                setForm(prev => ({
+                                  ...prev,
+                                  warehouse_ids: checked
+                                    ? prev.warehouse_ids.filter(id => id !== w.id)
+                                    : [...prev.warehouse_ids, w.id],
+                                }));
+                              }}
+                              className="h-3.5 w-3.5 rounded border-border accent-primary"
+                            />
+                            {w.name}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <Button className="rounded-xl" onClick={() => save.mutate(form)} disabled={!form.name || save.isPending}>
                   {save.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}{editing ? "Update" : "Create"}
                 </Button>
@@ -270,10 +334,22 @@ export default function AdminBrands() {
               {b.featured && <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">FEATURED</span>}
               {b.country_of_origin && <p className="text-[10px] text-muted-foreground">{b.country_of_origin}</p>}
               <p className="text-[10px] text-muted-foreground">{b.slug}</p>
+              {(() => {
+                const whIds = getWarehouseIdsForBrand(b.id);
+                if (whIds.length === 0) return null;
+                const whNames = whIds.map((id: string) => warehouses.find((w: any) => w.id === id)?.name).filter(Boolean);
+                return (
+                  <div className="flex flex-wrap gap-0.5 mt-0.5 justify-center">
+                    {whNames.map((n: string) => (
+                      <Badge key={n} variant="outline" className="text-[8px] px-1 py-0 border-primary/20 text-primary">{n}</Badge>
+                    ))}
+                  </div>
+                );
+              })()}
               {!multiSelect && (
                 <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg" onClick={() => {
-                    setForm({ id: b.id, name: b.name, slug: b.slug, logo_url: b.logo_url || "", country_of_origin: b.country_of_origin || "", featured: b.featured || false });
+                    setForm({ id: b.id, name: b.name, slug: b.slug, logo_url: b.logo_url || "", country_of_origin: b.country_of_origin || "", featured: b.featured || false, warehouse_ids: getWarehouseIdsForBrand(b.id) });
                     setEditing(true); setOpen(true);
                   }}><Pencil className="h-3 w-3" /></Button>
                   <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg text-destructive" onClick={() => {

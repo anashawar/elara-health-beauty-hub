@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Loader2, Ticket, Users, Eye, ShoppingBag } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Ticket, Users, Eye, ShoppingBag, Search, X, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/hooks/useProducts";
@@ -23,11 +23,13 @@ interface CouponForm {
   is_active: boolean;
   influencer_name: string;
   influencer_commission: number;
+  allowed_user_ids: string[];
 }
 
 const emptyForm: CouponForm = {
   code: "", discount_type: "percentage", discount_value: 0, min_order_amount: 0,
   max_uses: null, is_active: true, influencer_name: "", influencer_commission: 0,
+  allowed_user_ids: [],
 };
 
 export default function AdminCoupons() {
@@ -37,11 +39,37 @@ export default function AdminCoupons() {
   const [editing, setEditing] = useState(false);
   const [detailCoupon, setDetailCoupon] = useState<any>(null);
 
+  // User search state
+  const [phoneSearch, setPhoneSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
+
   // Fetch coupons
   const { data: coupons = [], isLoading } = useQuery({
     queryKey: ["admin-coupons"],
     queryFn: async () => {
       const { data, error } = await supabase.from("coupons").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch coupon allowed users
+  const { data: couponAllowedUsers = [] } = useQuery({
+    queryKey: ["admin-coupon-allowed-users"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("coupon_allowed_users").select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch all profiles for mapping user info
+  const { data: allProfiles = [] } = useQuery({
+    queryKey: ["admin-profiles-all"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("user_id, full_name, phone");
       if (error) throw error;
       return data;
     },
@@ -62,6 +90,35 @@ export default function AdminCoupons() {
 
   const getOrdersForCoupon = (code: string) => couponOrders.filter((o: any) => o.coupon_code === code);
 
+  const getAllowedUsersForCoupon = (couponId: string) => {
+    const userIds = couponAllowedUsers.filter((u: any) => u.coupon_id === couponId).map((u: any) => u.user_id);
+    return allProfiles.filter((p: any) => userIds.includes(p.user_id));
+  };
+
+  const searchUsersByPhone = async () => {
+    if (!phoneSearch.trim()) return;
+    setSearching(true);
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("user_id, full_name, phone")
+      .ilike("phone", `%${phoneSearch.trim()}%`)
+      .limit(10);
+    setSearching(false);
+    if (error) { toast.error(error.message); return; }
+    setSearchResults(data || []);
+  };
+
+  const addUserToSelection = (user: any) => {
+    if (selectedUsers.some(u => u.user_id === user.user_id)) return;
+    setSelectedUsers(prev => [...prev, user]);
+    setForm(prev => ({ ...prev, allowed_user_ids: [...prev.allowed_user_ids, user.user_id] }));
+  };
+
+  const removeUserFromSelection = (userId: string) => {
+    setSelectedUsers(prev => prev.filter(u => u.user_id !== userId));
+    setForm(prev => ({ ...prev, allowed_user_ids: prev.allowed_user_ids.filter(id => id !== userId) }));
+  };
+
   const save = useMutation({
     mutationFn: async (f: CouponForm) => {
       const payload: any = {
@@ -74,20 +131,35 @@ export default function AdminCoupons() {
         influencer_name: f.influencer_name || null,
         influencer_commission: f.influencer_commission || 0,
       };
+
+      let couponId = f.id;
+
       if (f.id) {
         const { error } = await supabase.from("coupons").update(payload).eq("id", f.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("coupons").insert(payload);
+        const { data, error } = await supabase.from("coupons").insert(payload).select("id").single();
         if (error) throw error;
+        couponId = data.id;
+      }
+
+      // Sync allowed users
+      // Delete existing allowed users for this coupon
+      await supabase.from("coupon_allowed_users").delete().eq("coupon_id", couponId!);
+
+      // Insert new allowed users if any
+      if (f.allowed_user_ids.length > 0) {
+        const rows = f.allowed_user_ids.map(uid => ({ coupon_id: couponId!, user_id: uid }));
+        const { error: insertError } = await supabase.from("coupon_allowed_users").insert(rows);
+        if (insertError) throw insertError;
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-coupons"] });
+      qc.invalidateQueries({ queryKey: ["admin-coupon-allowed-users"] });
       toast.success("Saved");
       setOpen(false);
-      setForm(emptyForm);
-      setEditing(false);
+      resetForm();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -104,6 +176,28 @@ export default function AdminCoupons() {
     onError: (e) => toast.error(e.message),
   });
 
+  const resetForm = () => {
+    setForm(emptyForm);
+    setEditing(false);
+    setSelectedUsers([]);
+    setSearchResults([]);
+    setPhoneSearch("");
+  };
+
+  const openEditCoupon = (c: any) => {
+    const allowedUsers = getAllowedUsersForCoupon(c.id);
+    const allowedUserIds = couponAllowedUsers.filter((u: any) => u.coupon_id === c.id).map((u: any) => u.user_id);
+    setForm({
+      id: c.id, code: c.code, discount_type: c.discount_type, discount_value: c.discount_value,
+      min_order_amount: c.min_order_amount || 0, max_uses: c.max_uses, is_active: c.is_active,
+      influencer_name: c.influencer_name || "", influencer_commission: c.influencer_commission || 0,
+      allowed_user_ids: allowedUserIds,
+    });
+    setSelectedUsers(allowedUsers);
+    setEditing(true);
+    setOpen(true);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -111,7 +205,7 @@ export default function AdminCoupons() {
           <h1 className="text-2xl font-display font-bold text-foreground">Coupons & Influencers</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{coupons.length} coupons</p>
         </div>
-        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setForm(emptyForm); setEditing(false); } }}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
           <DialogTrigger asChild>
             <Button size="sm" className="rounded-xl"><Plus className="h-4 w-4 mr-1.5" />Add</Button>
           </DialogTrigger>
@@ -148,6 +242,75 @@ export default function AdminCoupons() {
                 </div>
               </div>
 
+              {/* User restriction section */}
+              <div className="border-t border-border/50 pt-3">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5" /> Restrict to Specific Users (Optional)
+                </p>
+                <p className="text-[11px] text-muted-foreground mb-2">
+                  Leave empty = available for everyone. Add users = only they can use this coupon.
+                </p>
+
+                {/* Phone search */}
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    value={phoneSearch}
+                    onChange={(e) => setPhoneSearch(e.target.value)}
+                    placeholder="Search by phone number..."
+                    onKeyDown={(e) => e.key === "Enter" && searchUsersByPhone()}
+                  />
+                  <Button type="button" size="sm" variant="outline" className="rounded-xl shrink-0" onClick={searchUsersByPhone} disabled={searching}>
+                    {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  </Button>
+                </div>
+
+                {/* Search results */}
+                {searchResults.length > 0 && (
+                  <div className="bg-secondary/30 rounded-xl p-2 mb-2 max-h-32 overflow-y-auto space-y-1">
+                    {searchResults.map((u: any) => {
+                      const alreadyAdded = selectedUsers.some(s => s.user_id === u.user_id);
+                      return (
+                        <div key={u.user_id} className="flex items-center justify-between bg-card rounded-lg px-3 py-1.5">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{u.full_name || "No name"}</p>
+                            <p className="text-xs text-muted-foreground">{u.phone || "No phone"}</p>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={alreadyAdded ? "ghost" : "default"}
+                            className="h-7 rounded-lg text-xs"
+                            onClick={() => addUserToSelection(u)}
+                            disabled={alreadyAdded}
+                          >
+                            {alreadyAdded ? "Added" : "Add"}
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Selected users */}
+                {selectedUsers.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">
+                      {selectedUsers.length} user{selectedUsers.length > 1 ? "s" : ""} allowed
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedUsers.map((u: any) => (
+                        <Badge key={u.user_id} variant="secondary" className="flex items-center gap-1 pr-1">
+                          {u.full_name || u.phone || "User"}
+                          <button type="button" onClick={() => removeUserFromSelection(u.user_id)} className="hover:bg-destructive/10 rounded-full p-0.5">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <label className="flex items-center gap-2 text-sm">
                 <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} /> Active
               </label>
@@ -168,6 +331,7 @@ export default function AdminCoupons() {
             const totalRevenue = orders.reduce((sum: number, o: any) => sum + Number(o.total), 0);
             const totalDiscount = orders.reduce((sum: number, o: any) => sum + Number(o.discount), 0);
             const commission = c.influencer_commission ? (totalRevenue * c.influencer_commission / 100) : 0;
+            const allowedUsers = getAllowedUsersForCoupon(c.id);
 
             return (
               <div key={c.id} className="bg-card rounded-2xl border border-border/50 p-4 hover:shadow-premium transition-shadow relative overflow-hidden group">
@@ -188,6 +352,15 @@ export default function AdminCoupons() {
                       {c.influencer_commission > 0 && (
                         <Badge className="text-[9px] bg-primary/10 text-primary border-primary/20 px-1.5 py-0">{c.influencer_commission}% commission</Badge>
                       )}
+                    </div>
+                  )}
+
+                  {allowedUsers.length > 0 && (
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <UserCheck className="w-3 h-3 text-amber-600" />
+                      <span className="text-[10px] font-semibold text-amber-600">
+                        Restricted to {allowedUsers.length} user{allowedUsers.length > 1 ? "s" : ""}
+                      </span>
                     </div>
                   )}
 
@@ -222,15 +395,9 @@ export default function AdminCoupons() {
                         <Eye className="h-3 w-3 mr-1" /> Details
                       </Button>
                     )}
-                    <Button size="sm" variant="ghost" className="flex-1 h-8 rounded-xl text-xs" onClick={() => {
-                      setForm({
-                        id: c.id, code: c.code, discount_type: c.discount_type, discount_value: c.discount_value,
-                        min_order_amount: c.min_order_amount || 0, max_uses: c.max_uses, is_active: c.is_active,
-                        influencer_name: c.influencer_name || "", influencer_commission: c.influencer_commission || 0,
-                      });
-                      setEditing(true);
-                      setOpen(true);
-                    }}><Pencil className="h-3 w-3 mr-1" /> Edit</Button>
+                    <Button size="sm" variant="ghost" className="flex-1 h-8 rounded-xl text-xs" onClick={() => openEditCoupon(c)}>
+                      <Pencil className="h-3 w-3 mr-1" /> Edit
+                    </Button>
                     <Button size="sm" variant="ghost" className="h-8 rounded-xl text-xs text-destructive hover:bg-destructive/5" onClick={() => {
                       if (confirm("Delete?")) del.mutate(c.id);
                     }}><Trash2 className="h-3 w-3 mr-1" /> Delete</Button>

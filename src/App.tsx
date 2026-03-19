@@ -45,6 +45,7 @@ const SupportPage = lazy(() => import("./pages/SupportPage"));
 const SkinScanPage = lazy(() => import("./pages/SkinScanPage"));
 const SkinScanHistoryPage = lazy(() => import("./pages/SkinScanHistoryPage"));
 const PrepOrdersPage = lazy(() => import("./pages/PrepOrdersPage"));
+const WarehouseSystemPage = lazy(() => import("./pages/WarehouseSystemPage"));
 
 // Admin — always lazy
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
@@ -63,6 +64,7 @@ const AdminImageSearch = lazy(() => import("./pages/admin/AdminImageSearch"));
 const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 const AdminTeam = lazy(() => import("./pages/admin/AdminTeam"));
 const AdminWarehouseCosts = lazy(() => import("./pages/admin/AdminWarehouseCosts"));
+const AdminWarehouses = lazy(() => import("./pages/admin/AdminWarehouses"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -136,6 +138,7 @@ const App = () => (
               <Route path="/skin-scan" element={<AuthGuard><SkinScanPage /></AuthGuard>} />
               <Route path="/skin-scan/history" element={<AuthGuard><SkinScanHistoryPage /></AuthGuard>} />
               <Route path="/warehouse" element={<PrepOrdersPage />} />
+              <Route path="/warehouse-system" element={<WarehouseSystemPage />} />
               <Route path="/prep/login" element={<PrepOrdersPage />} />
               <Route path="/prep/:token" element={<PrepOrdersPage />} />
               {/* Admin Panel */}
@@ -155,6 +158,7 @@ const App = () => (
                 <Route path="support" element={<AdminSupport />} />
                 <Route path="team" element={<AdminTeam />} />
                 <Route path="warehouse-costs" element={<AdminWarehouseCosts />} />
+                <Route path="warehouses" element={<AdminWarehouses />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
