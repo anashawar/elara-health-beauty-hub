@@ -33,7 +33,7 @@ const canModifyOrder = (createdAt: string, status: string) => {
 
 const getTimeRemaining = (createdAt: string) => {
   const elapsed = Date.now() - new Date(createdAt).getTime();
-  const remaining = ONE_HOUR_MS - elapsed;
+  const remaining = MODIFY_WINDOW_MS - elapsed;
   if (remaining <= 0) return null;
   const mins = Math.ceil(remaining / 60000);
   return mins;
