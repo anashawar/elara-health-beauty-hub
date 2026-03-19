@@ -98,10 +98,11 @@ export default function AdminCoupons() {
   const searchUsersByPhone = async () => {
     if (!phoneSearch.trim()) return;
     setSearching(true);
+    const term = phoneSearch.trim();
     const { data, error } = await supabase
       .from("profiles")
       .select("user_id, full_name, phone")
-      .ilike("phone", `%${phoneSearch.trim()}%`)
+      .or(`phone.ilike.%${term}%,full_name.ilike.%${term}%`)
       .limit(10);
     setSearching(false);
     if (error) { toast.error(error.message); return; }
@@ -256,7 +257,7 @@ export default function AdminCoupons() {
                   <Input
                     value={phoneSearch}
                     onChange={(e) => setPhoneSearch(e.target.value)}
-                    placeholder="Search by phone number..."
+                    placeholder="Search by phone or name..."
                     onKeyDown={(e) => e.key === "Enter" && searchUsersByPhone()}
                   />
                   <Button type="button" size="sm" variant="outline" className="rounded-xl shrink-0" onClick={searchUsersByPhone} disabled={searching}>
