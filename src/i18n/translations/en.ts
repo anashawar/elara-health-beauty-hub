@@ -33,6 +33,8 @@ export const en = {
     item: "item",
     new: "NEW",
     off: "OFF",
+    all: "All",
+    brands: "Brands",
     free: "FREE",
     verified: "Verified",
     original: "100% Original",

@@ -33,6 +33,8 @@ export const ar = {
     item: "قطعة",
     new: "جديد",
     off: "خصم",
+    all: "الكل",
+    brands: "العلامات التجارية",
     free: "مجاني",
     verified: "موثوق",
     original: "أصلي 100%",
