@@ -28,13 +28,14 @@ serve(async (req) => {
 
     const taggedIds = new Set((alreadyTagged || []).map((t: any) => t.product_id));
 
-    // Get products not yet analyzed — newest first
+    // Get products not yet analyzed — prioritize likely gift products
     const { data: products, error: prodErr } = await supabase
       .from("products")
       .select("id, title, description, price, original_price, brand_id, category_id, brands(name), categories(name)")
       .eq("in_stock", true)
+      .or("title.ilike.%set%,title.ilike.%gift%,title.ilike.%perfume%,title.ilike.%fragrance%,title.ilike.%cologne%,title.ilike.%palette%,title.ilike.%collection%,title.ilike.%bundle%,title.ilike.%kit%,title.ilike.%trio%,title.ilike.%duo%,title.ilike.%mist%,title.ilike.%eau de%")
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(300);
 
     if (prodErr) throw prodErr;
 
