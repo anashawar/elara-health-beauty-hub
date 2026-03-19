@@ -303,10 +303,26 @@ header[class*="sticky"] {
 /* Optimize image rendering */
 img {
   content-visibility: auto;
+  contain-intrinsic-size: auto 200px;
+}
+
+/* GPU-accelerate snap scrollers (banners, product sliders) */
+.snap-x {
+  will-change: scroll-position;
+  transform: translateZ(0);
 }
 
 /* Faster transition defaults for interactive elements */
 button, a, [role="button"] {
   transition-duration: 150ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
