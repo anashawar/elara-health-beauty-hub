@@ -10,6 +10,7 @@ import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useProduct, useBrands, useFormatPrice } from "@/hooks/useProducts";
 import RelatedProducts from "@/components/product/RelatedProducts";
+import FrequentlyBoughtTogether from "@/components/product/FrequentlyBoughtTogether";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 import { Share } from "@capacitor/share";
 import { Capacitor } from "@capacitor/core";
