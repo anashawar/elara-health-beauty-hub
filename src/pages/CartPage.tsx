@@ -364,6 +364,11 @@ const CartPage = () => {
                   ))}
                 </AnimatePresence>
               </div>
+
+              {/* Frequently Bought Together for cart */}
+              {cart.length > 0 && (
+                <CartFrequentlyBought cartProductIds={cart.map(i => i.product.id)} />
+              )}
             </div>
 
             {/* Sidebar - Order Summary */}
