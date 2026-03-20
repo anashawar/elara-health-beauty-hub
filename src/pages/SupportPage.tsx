@@ -233,7 +233,7 @@ export default function SupportPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isRtl = language === "ar" || language === "ku";
 
   const [supportMode, setSupportMode] = useState<SupportMode>(null);
