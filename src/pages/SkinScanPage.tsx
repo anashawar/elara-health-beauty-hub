@@ -472,7 +472,7 @@ function SkinScanContent() {
                 <div className="flex items-center justify-center gap-1.5 mb-2">
                   <Sparkles className="w-3.5 h-3.5 text-primary" />
                   <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-primary">
-                    {language === "ar" ? "مدعوم بالذكاء الاصطناعي" : language === "ku" ? "بە هێزی AI" : "Powered by AI"}
+                    {t("skinScan.poweredByAI")}
                   </span>
                 </div>
                 <h2 className="text-2xl font-display font-black text-foreground mb-2">
