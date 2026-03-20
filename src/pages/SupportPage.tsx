@@ -654,14 +654,14 @@ export default function SupportPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-bold text-foreground">
-                  {language === "ar" ? "تحدث مع الذكاء الاصطناعي" : language === "ku" ? "قسە لەگەڵ AI بکە" : "Talk with AI"}
+                  {t("support.talkWithAI")}
                 </h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                  {language === "ar" ? "إجابات فورية عن الطلبات، التوصيل، المنتجات، والأسئلة الشائعة" : language === "ku" ? "وەڵامی خێرا دەربارەی داواکاری، گەیاندن، بەرهەم، و پرسیارە باوەکان" : "Instant answers about orders, delivery, products & FAQs"}
+                  {t("support.talkWithAIDesc")}
                 </p>
               </div>
               <div className="flex-shrink-0 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                {language === "ar" ? "فوري" : "Instant"}
+                {language === "ar" ? "فوري" : language === "ku" ? "خێرا" : "Instant"}
               </div>
             </motion.button>
 
