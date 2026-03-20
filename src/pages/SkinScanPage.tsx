@@ -121,7 +121,7 @@ function SkinScanContent() {
   const { user } = useAuth();
   const { addToCart } = useApp();
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isRtl = language === "ar" || language === "ku";
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -142,10 +142,10 @@ function SkinScanContent() {
   const isNative = Capacitor.isNativePlatform();
 
   const scanSteps = [
-    { label: language === "ar" ? "تحليل البشرة..." : language === "ku" ? "شیکردنەوەی پێست..." : "Mapping skin texture...", icon: Fingerprint },
-    { label: language === "ar" ? "فحص الترطيب..." : language === "ku" ? "پشکنینی شێداری..." : "Measuring hydration levels...", icon: Droplets },
-    { label: language === "ar" ? "كشف المشاكل..." : language === "ku" ? "دۆزینەوەی کێشەکان..." : "Detecting skin concerns...", icon: Eye },
-    { label: language === "ar" ? "بناء الروتين المخصص..." : language === "ku" ? "دروستکردنی ڕووتین..." : "Building your personalized routine...", icon: Sparkles },
+    { label: t("skinScan.mappingTexture"), icon: Fingerprint },
+    { label: t("skinScan.measuringHydration"), icon: Droplets },
+    { label: t("skinScan.detectingConcerns"), icon: Eye },
+    { label: t("skinScan.buildingRoutine"), icon: Sparkles },
   ];
 
   // Fetch past scans count
@@ -190,8 +190,8 @@ function SkinScanContent() {
       const msg = err instanceof Error ? err.message : "Camera access denied";
       console.error("Camera error:", err);
       toast.error(msg.includes("NotAllowed") || msg.includes("Permission")
-        ? (language === "ar" ? "يرجى السماح بالوصول للكاميرا" : "Please allow camera access in your browser settings")
-        : (language === "ar" ? "تعذر فتح الكاميرا" : "Could not open camera"));
+        ? t("skinScan.allowCamera")
+        : t("skinScan.cameraError"));
     }
   }, [useFrontCamera, language]);
 
@@ -364,12 +364,12 @@ function SkinScanContent() {
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-rose-500 via-primary to-violet-500 mx-auto mb-4 flex items-center justify-center shadow-lg">
             <Scan className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-lg font-display font-bold text-foreground mb-2">ELARA AI Skin Analyzer</h2>
+           <h2 className="text-lg font-display font-bold text-foreground mb-2">{t("skinScan.skinAnalyzer")}</h2>
           <p className="text-sm text-muted-foreground mb-4">
-            {language === "ar" ? "سجل دخول لتحليل بشرتك" : "Sign in to analyze your skin"}
+            {t("skinScan.signInToScan")}
           </p>
           <button onClick={() => navigate("/auth")} className="px-6 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-semibold">
-            {language === "ar" ? "تسجيل الدخول" : "Sign In"}
+            {t("common.signIn")}
           </button>
         </div>
         <BottomNav />
@@ -407,7 +407,7 @@ function SkinScanContent() {
             {pastScans.length > 0 && (
               <Link to="/skin-scan/history" className="flex items-center gap-1 text-xs text-primary font-medium">
                 <History className="w-3.5 h-3.5" />
-                {language === "ar" ? "السجل" : "History"}
+                {t("skinScan.history")}
               </Link>
             )}
           </div>
@@ -472,7 +472,7 @@ function SkinScanContent() {
                 <div className="flex items-center justify-center gap-1.5 mb-2">
                   <Sparkles className="w-3.5 h-3.5 text-primary" />
                   <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-primary">
-                    {language === "ar" ? "مدعوم بالذكاء الاصطناعي" : language === "ku" ? "بە هێزی AI" : "Powered by AI"}
+                    {t("skinScan.poweredByAI")}
                   </span>
                 </div>
                 <h2 className="text-2xl font-display font-black text-foreground mb-2">

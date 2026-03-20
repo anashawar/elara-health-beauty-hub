@@ -114,7 +114,7 @@ export default function CartFrequentlyBought({ cartProductIds }: Props) {
       skin_type: null, condition: null,
     });
     setAddedIds(prev => new Set(prev).add(p.id));
-    toast.success(language === "ar" ? "تمت الإضافة للسلة" : language === "ku" ? "زیادکرا بۆ سەبەتە" : "Added to cart");
+    toast.success(t("fbt.addedToCart"));
   };
 
   return (
@@ -132,10 +132,10 @@ export default function CartFrequentlyBought({ cartProductIds }: Props) {
           </div>
           <div>
             <h3 className="text-sm font-display font-bold text-foreground leading-tight">
-              {language === "ar" ? "عملاء آخرون اشتروا أيضاً" : language === "ku" ? "کڕیارانی تر ئەمانەیان کڕیوە" : "Customers Also Bought"}
+              {t("fbt.customersAlsoBought")}
             </h3>
             <p className="text-[10px] text-muted-foreground">
-              {language === "ar" ? "بناءً على طلبات مشابهة" : language === "ku" ? "لەسەر بنەمای داواکاری هاوشێوە" : "Based on similar orders"}
+              {t("fbt.basedOnOrders")}
             </p>
           </div>
         </div>

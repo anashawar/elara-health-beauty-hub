@@ -13,7 +13,7 @@ interface NativeAppGateProps {
 export default function NativeAppGate({ children, featureName = "ELARA AI" }: NativeAppGateProps) {
   const isNative = Capacitor.isNativePlatform();
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isRtl = language === "ar" || language === "ku";
 
   if (isNative) return <>{children}</>;
@@ -40,7 +40,7 @@ export default function NativeAppGate({ children, featureName = "ELARA AI" }: Na
           </div>
 
           <h2 className="text-xl font-display font-black text-foreground mb-3">
-            {language === "ar" ? "متاح فقط على تطبيق ELARA" : language === "ku" ? "تەنها لە ئەپی ELARA بەردەستە" : "Available Only on ELARA App"}
+            {t("nativeApp.availableOnApp")}
           </h2>
 
           <p className="text-sm text-muted-foreground leading-relaxed mb-6">
@@ -57,14 +57,14 @@ export default function NativeAppGate({ children, featureName = "ELARA AI" }: Na
               className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-rose-500 via-primary to-violet-500 text-white font-semibold rounded-2xl shadow-lg text-sm"
             >
               <Download className="w-4 h-4" />
-              {language === "ar" ? "حمّل تطبيق ELARA" : language === "ku" ? "ئەپی ELARA دابەزێنە" : "Download ELARA App"}
+              {t("nativeApp.downloadApp")}
             </button>
 
             <button
               onClick={() => navigate("/")}
               className="w-full py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              {language === "ar" ? "تصفح المتجر" : language === "ku" ? "گەڕان لە فرۆشگا" : "Continue Browsing"}
+              {t("nativeApp.continueBrowsing")}
             </button>
           </div>
 

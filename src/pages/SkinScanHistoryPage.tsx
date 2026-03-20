@@ -30,7 +30,7 @@ const DiffBadge = ({ diff, size = "sm" }: { diff: number; size?: "sm" | "lg" }) 
 const SkinScanHistoryPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isRtl = language === "ar" || language === "ku";
   const [compareMode, setCompareMode] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
@@ -91,8 +91,8 @@ const SkinScanHistoryPage = () => {
               <Scan className="w-5 h-5 text-primary" />
               <h1 className="text-lg font-display font-bold">
                 {showComparison
-                  ? (language === "ar" ? "المقارنة" : "Comparison")
-                  : (language === "ar" ? "سجل تحليلات البشرة" : "Scan History")}
+                  ? t("support.comparison")
+                  : t("support.scanHistory")}
               </h1>
             </div>
           </div>

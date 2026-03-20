@@ -118,7 +118,7 @@ export default function FrequentlyBoughtTogether({ productId, categoryId, brandI
       });
     }
     setAddedIds(new Set(bundleProducts.map(p => p.id)));
-    toast.success(language === "ar" ? "تمت إضافة المجموعة للسلة" : language === "ku" ? "کۆمەڵە زیادکرا بۆ سەبەتە" : "Bundle added to cart");
+    toast.success(t("fbt.bundleAdded"));
   };
 
   if (bundleProducts.length < 2) return null;
@@ -134,7 +134,7 @@ export default function FrequentlyBoughtTogether({ productId, categoryId, brandI
     >
       <h3 className="text-sm font-display font-bold text-foreground mb-3 flex items-center gap-2">
         <ShoppingBag className="w-4 h-4 text-primary" />
-        {language === "ar" ? "يُشترى معاً بشكل متكرر" : language === "ku" ? "زۆرجار پێکەوە دەکڕدرێن" : "Frequently Bought Together"}
+        {t("fbt.title")}
       </h3>
 
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
@@ -165,7 +165,7 @@ export default function FrequentlyBoughtTogether({ productId, categoryId, brandI
 
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/30">
         <div>
-          <p className="text-[10px] text-muted-foreground">{language === "ar" ? "المجموع" : "Bundle total"}</p>
+          <p className="text-[10px] text-muted-foreground">{t("fbt.bundleTotal")}</p>
           <p className="text-sm font-bold text-foreground">{formatPrice(bundleTotal)}</p>
         </div>
         <button
@@ -179,8 +179,8 @@ export default function FrequentlyBoughtTogether({ productId, categoryId, brandI
         >
           {allAdded ? <Check className="w-3.5 h-3.5" /> : <ShoppingBag className="w-3.5 h-3.5" />}
           {allAdded
-            ? (language === "ar" ? "تمت الإضافة" : "Added")
-            : (language === "ar" ? "أضف الكل للسلة" : language === "ku" ? "هەمووی زیاد بکە" : "Add All to Cart")}
+            ? t("fbt.added")
+            : t("fbt.addAllToCart")}
         </button>
       </div>
     </motion.div>
