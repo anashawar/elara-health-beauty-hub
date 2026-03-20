@@ -279,7 +279,7 @@ export default function SupportPage() {
   });
 
   // Fetch messages for active conversation
-  const { data: messages: humanMessages = [] } = useQuery({
+  const { data: humanMessages = [] } = useQuery({
     queryKey: ["support-messages", activeConversation],
     queryFn: async () => {
       const { data, error } = await supabase
