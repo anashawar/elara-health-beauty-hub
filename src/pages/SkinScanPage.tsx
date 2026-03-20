@@ -407,7 +407,7 @@ function SkinScanContent() {
             {pastScans.length > 0 && (
               <Link to="/skin-scan/history" className="flex items-center gap-1 text-xs text-primary font-medium">
                 <History className="w-3.5 h-3.5" />
-                {language === "ar" ? "السجل" : "History"}
+                {t("skinScan.history")}
               </Link>
             )}
           </div>
