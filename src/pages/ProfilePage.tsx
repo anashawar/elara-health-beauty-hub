@@ -48,7 +48,7 @@ const ProfilePage = () => {
     { icon: Package, label: t("profile.myOrders"), path: "/orders" },
     { icon: Heart, label: t("profile.wishlist"), path: "/wishlist" },
     { icon: MapPin, label: t("profile.addresses"), path: "/addresses" },
-    { icon: Headphones, label: "Contact Support", path: "/support" },
+    { icon: Headphones, label: t("support.contactSupport"), path: "/support" },
     { icon: Settings, label: t("profile.settings"), path: "/settings" },
     { icon: Info, label: t("profile.aboutElara"), path: "/about" },
     { icon: HelpCircle, label: t("profile.faq"), path: "/faq" },
