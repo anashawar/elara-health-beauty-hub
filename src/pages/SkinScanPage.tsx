@@ -7,6 +7,7 @@ import { Capacitor } from "@capacitor/core";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useApp } from "@/context/AppContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "@/components/ui/sonner";
 import BottomNav from "@/components/layout/BottomNav";
