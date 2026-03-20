@@ -165,7 +165,7 @@ export default function FrequentlyBoughtTogether({ productId, categoryId, brandI
 
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/30">
         <div>
-          <p className="text-[10px] text-muted-foreground">{language === "ar" ? "المجموع" : "Bundle total"}</p>
+          <p className="text-[10px] text-muted-foreground">{t("fbt.bundleTotal")}</p>
           <p className="text-sm font-bold text-foreground">{formatPrice(bundleTotal)}</p>
         </div>
         <button
