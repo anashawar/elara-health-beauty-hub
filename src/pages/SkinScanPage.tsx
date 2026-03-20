@@ -121,7 +121,7 @@ function SkinScanContent() {
   const { user } = useAuth();
   const { addToCart } = useApp();
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isRtl = language === "ar" || language === "ku";
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
