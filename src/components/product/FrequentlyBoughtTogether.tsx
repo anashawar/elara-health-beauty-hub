@@ -134,7 +134,7 @@ export default function FrequentlyBoughtTogether({ productId, categoryId, brandI
     >
       <h3 className="text-sm font-display font-bold text-foreground mb-3 flex items-center gap-2">
         <ShoppingBag className="w-4 h-4 text-primary" />
-        {language === "ar" ? "يُشترى معاً بشكل متكرر" : language === "ku" ? "زۆرجار پێکەوە دەکڕدرێن" : "Frequently Bought Together"}
+        {t("fbt.title")}
       </h3>
 
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
