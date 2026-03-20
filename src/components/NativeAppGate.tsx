@@ -13,7 +13,7 @@ interface NativeAppGateProps {
 export default function NativeAppGate({ children, featureName = "ELARA AI" }: NativeAppGateProps) {
   const isNative = Capacitor.isNativePlatform();
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isRtl = language === "ar" || language === "ku";
 
   if (isNative) return <>{children}</>;
