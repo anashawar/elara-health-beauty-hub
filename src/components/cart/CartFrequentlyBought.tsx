@@ -114,7 +114,7 @@ export default function CartFrequentlyBought({ cartProductIds }: Props) {
       skin_type: null, condition: null,
     });
     setAddedIds(prev => new Set(prev).add(p.id));
-    toast.success(language === "ar" ? "تمت الإضافة للسلة" : language === "ku" ? "زیادکرا بۆ سەبەتە" : "Added to cart");
+    toast.success(t("fbt.addedToCart"));
   };
 
   return (
