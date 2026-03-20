@@ -118,7 +118,7 @@ export default function FrequentlyBoughtTogether({ productId, categoryId, brandI
       });
     }
     setAddedIds(new Set(bundleProducts.map(p => p.id)));
-    toast.success(language === "ar" ? "تمت إضافة المجموعة للسلة" : language === "ku" ? "کۆمەڵە زیادکرا بۆ سەبەتە" : "Bundle added to cart");
+    toast.success(t("fbt.bundleAdded"));
   };
 
   if (bundleProducts.length < 2) return null;
