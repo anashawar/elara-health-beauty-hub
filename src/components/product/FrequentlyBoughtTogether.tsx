@@ -179,8 +179,8 @@ export default function FrequentlyBoughtTogether({ productId, categoryId, brandI
         >
           {allAdded ? <Check className="w-3.5 h-3.5" /> : <ShoppingBag className="w-3.5 h-3.5" />}
           {allAdded
-            ? (language === "ar" ? "تمت الإضافة" : "Added")
-            : (language === "ar" ? "أضف الكل للسلة" : language === "ku" ? "هەمووی زیاد بکە" : "Add All to Cart")}
+            ? t("fbt.added")
+            : t("fbt.addAllToCart")}
         </button>
       </div>
     </motion.div>
