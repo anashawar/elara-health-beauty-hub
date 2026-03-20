@@ -144,14 +144,14 @@ const ProfilePage = () => {
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <Sparkles className="w-3 h-3 text-white/70" />
                     <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/60">
-                      {language === "ar" ? "ميزة متقدمة" : language === "ku" ? "تایبەتمەندی پێشکەوتوو" : "AI-Powered"}
+                      {t("skinScan.advancedFeature")}
                     </span>
                   </div>
                   <h3 className="text-[15px] font-display font-bold text-white leading-tight">
-                    {language === "ar" ? "محلل البشرة ELARA AI" : language === "ku" ? "شیکەری پێست ELARA AI" : "ELARA AI Skin Analyzer"}
+                    {t("skinScan.skinAnalyzer")}
                   </h3>
                   <p className="text-[11px] text-white/60 leading-snug mt-0.5">
-                    {language === "ar" ? "امسح وجهك واحصل على تحليل مفصل" : language === "ku" ? "دەموچاوت بسکان بکە و شیکردنەوە وەربگرە" : "Scan your face & get a detailed skin report"}
+                    {t("skinScan.scanDesc")}
                   </p>
                 </div>
                 <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
