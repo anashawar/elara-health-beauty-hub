@@ -27,37 +27,39 @@ const DiscountsSection = memo(({ products }: DiscountsSectionProps) => {
 
   return (
     <section className="mt-8">
-      {/* Header with gradient accent */}
-      <div className="mx-4 rounded-t-3xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 px-5 pt-5 pb-4 relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 opacity-20" style={{
-          background: 'radial-gradient(circle at 15% 50%, hsl(0 0% 100% / 0.3) 0%, transparent 50%), radial-gradient(circle at 85% 20%, hsl(0 0% 100% / 0.2) 0%, transparent 40%)'
+      {/* Header */}
+      <div className="mx-4 rounded-t-2xl px-5 pt-5 pb-4 relative overflow-hidden" style={{
+        background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--rose)) 100%)'
+      }}>
+        {/* Subtle decorative mesh */}
+        <div className="absolute inset-0 opacity-[0.07]" style={{
+          background: 'radial-gradient(circle at 80% 20%, hsl(0 0% 100%) 0%, transparent 45%)'
         }} />
-        <div className="absolute top-2 right-6 rtl:right-auto rtl:left-6 opacity-10">
-          <Percent className="w-20 h-20 text-white rotate-12" />
+        <div className="absolute -bottom-4 -right-4 rtl:-right-auto rtl:-left-4 opacity-[0.06]">
+          <Percent className="w-24 h-24 text-white rotate-[-15deg]" />
         </div>
 
         <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-3">
             <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-              className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center border border-white/15 backdrop-blur-sm"
+              animate={{ rotate: [0, -8, 8, 0] }}
+              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+              className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center"
             >
-              <Timer className="w-5 h-5 text-white" />
+              <Percent className="w-[18px] h-[18px] text-primary-foreground" />
             </motion.div>
             <div>
-              <h2 className="text-xl font-display font-bold text-white tracking-tight">
+              <h2 className="text-lg font-sans font-bold text-primary-foreground tracking-tight leading-tight">
                 {t("home.discounts")}
               </h2>
-              <p className="text-[12px] text-white/70 mt-0.5 font-medium">
+              <p className="text-[11px] text-primary-foreground/60 mt-0.5 font-medium">
                 {t("home.discountsHurry")}
               </p>
             </div>
           </div>
           <Link
             to="/collection/discounts"
-            className="flex items-center gap-0.5 text-xs font-bold text-white bg-white/20 px-3.5 py-2 rounded-xl border border-white/15 backdrop-blur-sm hover:bg-white/30 transition-colors"
+            className="flex items-center gap-0.5 text-[11px] font-semibold text-primary-foreground/90 bg-white/12 px-3 py-1.5 rounded-lg hover:bg-white/20 active:scale-[0.97] transition-all"
           >
             {t("common.viewAll")} <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
           </Link>
@@ -65,8 +67,8 @@ const DiscountsSection = memo(({ products }: DiscountsSectionProps) => {
       </div>
 
       {/* Product scroll area */}
-      <div className="mx-4 rounded-b-3xl bg-gradient-to-b from-orange-500/8 to-transparent pb-2">
-        <div className="flex gap-3 overflow-x-auto px-4 py-4 scrollbar-hide scroll-smooth snap-x snap-mandatory"
+      <div className="mx-4 rounded-b-2xl border border-t-0 border-border/50 bg-card pb-1">
+        <div className="flex gap-3 overflow-x-auto px-3 py-3 scrollbar-hide scroll-smooth snap-x snap-mandatory"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           {products.map((product) => (
