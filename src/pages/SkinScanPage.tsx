@@ -142,10 +142,10 @@ function SkinScanContent() {
   const isNative = Capacitor.isNativePlatform();
 
   const scanSteps = [
-    { label: language === "ar" ? "تحليل البشرة..." : language === "ku" ? "شیکردنەوەی پێست..." : "Mapping skin texture...", icon: Fingerprint },
-    { label: language === "ar" ? "فحص الترطيب..." : language === "ku" ? "پشکنینی شێداری..." : "Measuring hydration levels...", icon: Droplets },
-    { label: language === "ar" ? "كشف المشاكل..." : language === "ku" ? "دۆزینەوەی کێشەکان..." : "Detecting skin concerns...", icon: Eye },
-    { label: language === "ar" ? "بناء الروتين المخصص..." : language === "ku" ? "دروستکردنی ڕووتین..." : "Building your personalized routine...", icon: Sparkles },
+    { label: t("skinScan.mappingTexture"), icon: Fingerprint },
+    { label: t("skinScan.measuringHydration"), icon: Droplets },
+    { label: t("skinScan.detectingConcerns"), icon: Eye },
+    { label: t("skinScan.buildingRoutine"), icon: Sparkles },
   ];
 
   // Fetch past scans count
