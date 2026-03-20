@@ -119,6 +119,7 @@ export default function SkinScanPage() {
 
 function SkinScanContent() {
   const { user } = useAuth();
+  const { addToCart } = useApp();
   const navigate = useNavigate();
   const { language } = useLanguage();
   const isRtl = language === "ar" || language === "ku";
