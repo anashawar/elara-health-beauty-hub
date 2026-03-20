@@ -30,7 +30,7 @@ const DiffBadge = ({ diff, size = "sm" }: { diff: number; size?: "sm" | "lg" }) 
 const SkinScanHistoryPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isRtl = language === "ar" || language === "ku";
   const [compareMode, setCompareMode] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
