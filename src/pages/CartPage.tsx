@@ -16,6 +16,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { getDeliveryFee, FREE_DELIVERY_MIN } from "@/lib/deliveryFee";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 import { calcCouponDiscount, getEligibleSubtotal } from "@/lib/discountRules";
+import CartFrequentlyBought from "@/components/cart/CartFrequentlyBought";
 
 const CartPage = () => {
   const { cart, updateQuantity, removeFromCart, cartTotal, cartCount, clearCart, pendingCoupon, setPendingCoupon, appliedCoupon, setAppliedCoupon } = useApp();
