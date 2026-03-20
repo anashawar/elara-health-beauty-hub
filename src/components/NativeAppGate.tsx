@@ -64,7 +64,7 @@ export default function NativeAppGate({ children, featureName = "ELARA AI" }: Na
               onClick={() => navigate("/")}
               className="w-full py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              {language === "ar" ? "تصفح المتجر" : language === "ku" ? "گەڕان لە فرۆشگا" : "Continue Browsing"}
+              {t("nativeApp.continueBrowsing")}
             </button>
           </div>
 
