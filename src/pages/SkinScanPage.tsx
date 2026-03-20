@@ -364,12 +364,12 @@ function SkinScanContent() {
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-rose-500 via-primary to-violet-500 mx-auto mb-4 flex items-center justify-center shadow-lg">
             <Scan className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-lg font-display font-bold text-foreground mb-2">ELARA AI Skin Analyzer</h2>
+           <h2 className="text-lg font-display font-bold text-foreground mb-2">{t("skinScan.skinAnalyzer")}</h2>
           <p className="text-sm text-muted-foreground mb-4">
-            {language === "ar" ? "سجل دخول لتحليل بشرتك" : "Sign in to analyze your skin"}
+            {t("skinScan.signInToScan")}
           </p>
           <button onClick={() => navigate("/auth")} className="px-6 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-semibold">
-            {language === "ar" ? "تسجيل الدخول" : "Sign In"}
+            {t("common.signIn")}
           </button>
         </div>
         <BottomNav />
