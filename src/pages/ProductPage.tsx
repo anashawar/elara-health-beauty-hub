@@ -454,6 +454,8 @@ const ProductPage = () => {
 
             <ReviewSection productId={product.id} />
 
+            <FrequentlyBoughtTogether productId={product.id} categoryId={product.category_id} brandId={product.brand_id} />
+
             <RelatedProducts productId={product.id} categoryId={product.category_id} brandId={product.brand_id} />
 
             {/* Desktop: App Download Banner */}
