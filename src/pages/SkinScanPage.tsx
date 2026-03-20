@@ -190,8 +190,8 @@ function SkinScanContent() {
       const msg = err instanceof Error ? err.message : "Camera access denied";
       console.error("Camera error:", err);
       toast.error(msg.includes("NotAllowed") || msg.includes("Permission")
-        ? (language === "ar" ? "يرجى السماح بالوصول للكاميرا" : "Please allow camera access in your browser settings")
-        : (language === "ar" ? "تعذر فتح الكاميرا" : "Could not open camera"));
+        ? t("skinScan.allowCamera")
+        : t("skinScan.cameraError"));
     }
   }, [useFrontCamera, language]);
 
