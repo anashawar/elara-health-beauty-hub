@@ -40,7 +40,7 @@ export default function NativeAppGate({ children, featureName = "ELARA AI" }: Na
           </div>
 
           <h2 className="text-xl font-display font-black text-foreground mb-3">
-            {language === "ar" ? "متاح فقط على تطبيق ELARA" : language === "ku" ? "تەنها لە ئەپی ELARA بەردەستە" : "Available Only on ELARA App"}
+            {t("nativeApp.availableOnApp")}
           </h2>
 
           <p className="text-sm text-muted-foreground leading-relaxed mb-6">
