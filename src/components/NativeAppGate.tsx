@@ -57,7 +57,7 @@ export default function NativeAppGate({ children, featureName = "ELARA AI" }: Na
               className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-rose-500 via-primary to-violet-500 text-white font-semibold rounded-2xl shadow-lg text-sm"
             >
               <Download className="w-4 h-4" />
-              {language === "ar" ? "حمّل تطبيق ELARA" : language === "ku" ? "ئەپی ELARA دابەزێنە" : "Download ELARA App"}
+              {t("nativeApp.downloadApp")}
             </button>
 
             <button
