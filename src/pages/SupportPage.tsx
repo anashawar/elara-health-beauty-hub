@@ -676,10 +676,10 @@ export default function SupportPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-bold text-foreground">
-                  {language === "ar" ? "تحدث مع فريق الدعم" : language === "ku" ? "قسە لەگەڵ تیمی پشتگیری بکە" : "Talk with Human"}
+                  {t("support.talkWithHuman")}
                 </h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                  {language === "ar" ? "تواصل مباشر مع فريق ELARA لحل مشكلتك" : language === "ku" ? "پەیوەندی ڕاستەوخۆ لەگەڵ تیمی ELARA بۆ چارەسەری کێشەکەت" : "Chat directly with ELARA's support team"}
+                  {t("support.talkWithHumanDesc")}
                 </p>
               </div>
             </motion.button>
