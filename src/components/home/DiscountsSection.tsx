@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react";
-import { ChevronRight, Percent, Timer } from "lucide-react";
+import { ChevronRight, Percent } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import ProductCard from "@/components/ProductCard";
