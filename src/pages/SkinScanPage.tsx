@@ -7,6 +7,7 @@ import { Capacitor } from "@capacitor/core";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useApp } from "@/context/AppContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "@/components/ui/sonner";
 import BottomNav from "@/components/layout/BottomNav";
@@ -118,6 +119,7 @@ export default function SkinScanPage() {
 
 function SkinScanContent() {
   const { user } = useAuth();
+  const { addToCart } = useApp();
   const navigate = useNavigate();
   const { language } = useLanguage();
   const isRtl = language === "ar" || language === "ku";
@@ -989,20 +991,40 @@ function SkinScanContent() {
               </h3>
               <div className="space-y-2">
                 {products.map(p => (
-                  <Link key={p.id} to={`/product/${p.slug}`} className="flex items-center gap-3 p-2.5 bg-secondary/50 rounded-xl hover:bg-secondary transition-colors">
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-background flex-shrink-0">
-                      {p.product_images?.[0]?.image_url ? (
-                        <img src={p.product_images[0].image_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-muted-foreground" /></div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-foreground truncate">{getProductTitle(p)}</p>
-                      <p className="text-[11px] text-primary font-bold mt-0.5">{p.price.toLocaleString()} IQD</p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 rtl:rotate-180" />
-                  </Link>
+                  <div key={p.id} className="flex items-center gap-3 p-2.5 bg-secondary/50 rounded-xl">
+                    <Link to={`/product/${p.slug}`} className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-background flex-shrink-0">
+                        {p.product_images?.[0]?.image_url ? (
+                          <img src={p.product_images[0].image_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-muted flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-muted-foreground" /></div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-foreground truncate">{getProductTitle(p)}</p>
+                        <p className="text-[11px] text-primary font-bold mt-0.5">{p.price.toLocaleString()} IQD</p>
+                      </div>
+                    </Link>
+                    <button
+                      onClick={() => {
+                        addToCart({
+                          id: p.id, title: p.title, slug: p.slug, price: Number(p.price),
+                          originalPrice: null, image: p.product_images?.[0]?.image_url || "/placeholder.svg",
+                          images: (p.product_images || []).map((img: any) => img.image_url),
+                          brand: "", brand_id: null, category_id: null, category_slug: null, subcategory_id: null,
+                          tags: [], description: "", benefits: [], usage: "",
+                          isNew: false, isTrending: false, isPick: false, inStock: true,
+                          country_of_origin: null, form: null, gender: null,
+                          volume_ml: null, volume_unit: "ml", application: null,
+                          skin_type: null, condition: null,
+                        });
+                        toast.success(language === "ar" ? "تمت الإضافة للسلة" : language === "ku" ? "زیادکرا بۆ سەبەتە" : "Added to cart");
+                      }}
+                      className="flex-shrink-0 w-9 h-9 rounded-xl bg-primary flex items-center justify-center active:scale-90 transition-transform shadow-sm"
+                    >
+                      <ShoppingBag className="w-4 h-4 text-primary-foreground" />
+                    </button>
+                  </div>
                 ))}
               </div>
             </motion.div>
@@ -1017,20 +1039,40 @@ function SkinScanContent() {
               </h3>
               <div className="space-y-2">
                 {makeupProducts.map(p => (
-                  <Link key={p.id} to={`/product/${p.slug}`} className="flex items-center gap-3 p-2.5 bg-secondary/50 rounded-xl hover:bg-secondary transition-colors">
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-background flex-shrink-0">
-                      {p.product_images?.[0]?.image_url ? (
-                        <img src={p.product_images[0].image_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-muted-foreground" /></div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-foreground truncate">{getProductTitle(p)}</p>
-                      <p className="text-[11px] text-primary font-bold mt-0.5">{p.price.toLocaleString()} IQD</p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 rtl:rotate-180" />
-                  </Link>
+                  <div key={p.id} className="flex items-center gap-3 p-2.5 bg-secondary/50 rounded-xl">
+                    <Link to={`/product/${p.slug}`} className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-background flex-shrink-0">
+                        {p.product_images?.[0]?.image_url ? (
+                          <img src={p.product_images[0].image_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-muted flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-muted-foreground" /></div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-foreground truncate">{getProductTitle(p)}</p>
+                        <p className="text-[11px] text-primary font-bold mt-0.5">{p.price.toLocaleString()} IQD</p>
+                      </div>
+                    </Link>
+                    <button
+                      onClick={() => {
+                        addToCart({
+                          id: p.id, title: p.title, slug: p.slug, price: Number(p.price),
+                          originalPrice: null, image: p.product_images?.[0]?.image_url || "/placeholder.svg",
+                          images: (p.product_images || []).map((img: any) => img.image_url),
+                          brand: "", brand_id: null, category_id: null, category_slug: null, subcategory_id: null,
+                          tags: [], description: "", benefits: [], usage: "",
+                          isNew: false, isTrending: false, isPick: false, inStock: true,
+                          country_of_origin: null, form: null, gender: null,
+                          volume_ml: null, volume_unit: "ml", application: null,
+                          skin_type: null, condition: null,
+                        });
+                        toast.success(language === "ar" ? "تمت الإضافة للسلة" : language === "ku" ? "زیادکرا بۆ سەبەتە" : "Added to cart");
+                      }}
+                      className="flex-shrink-0 w-9 h-9 rounded-xl bg-primary flex items-center justify-center active:scale-90 transition-transform shadow-sm"
+                    >
+                      <ShoppingBag className="w-4 h-4 text-primary-foreground" />
+                    </button>
+                  </div>
                 ))}
               </div>
             </motion.div>
