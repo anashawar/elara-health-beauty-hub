@@ -1,35 +1,18 @@
 import { useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { requestFCMToken, onForegroundMessage, getFirebaseConfig } from "@/lib/firebase";
 import { toast } from "sonner";
 
+/**
+ * Hook version — kept for backward compatibility if used elsewhere.
+ */
 export function usePushNotifications() {
   const { user } = useAuth();
   const initialized = useRef(false);
 
-  const initServiceWorker = useCallback(async () => {
-    if (!("serviceWorker" in navigator)) return;
-    try {
-      const config = await getFirebaseConfig();
-      if (!config) return;
-      const reg = await navigator.serviceWorker.ready;
-      reg.active?.postMessage({
-        type: "FIREBASE_CONFIG",
-        config: {
-          apiKey: config.apiKey,
-          projectId: config.projectId,
-          messagingSenderId: config.messagingSenderId,
-          appId: config.appId,
-        },
-      });
-    } catch (e) {
-      console.warn("SW init failed:", e);
-    }
-  }, []);
-
   const subscribe = useCallback(async () => {
     if (!user) return;
+    const { requestFCMToken } = await import("@/lib/firebase");
     const token = await requestFCMToken();
     if (!token) return;
 
@@ -55,20 +38,106 @@ export function usePushNotifications() {
     if (!user || initialized.current) return;
     initialized.current = true;
 
-    initServiceWorker();
-    subscribe();
+    // Defer Firebase import
+    const init = async () => {
+      const { getFirebaseConfig, onForegroundMessage } = await import("@/lib/firebase");
 
-    const unsubscribe = onForegroundMessage((payload: any) => {
-      const { title, body } = payload.notification || payload.data || {};
-      if (title) {
-        toast(title, { description: body });
+      // Init service worker
+      if ("serviceWorker" in navigator) {
+        try {
+          const config = await getFirebaseConfig();
+          if (config) {
+            const reg = await navigator.serviceWorker.ready;
+            reg.active?.postMessage({
+              type: "FIREBASE_CONFIG",
+              config: {
+                apiKey: config.apiKey,
+                projectId: config.projectId,
+                messagingSenderId: config.messagingSenderId,
+                appId: config.appId,
+              },
+            });
+          }
+        } catch (e) {
+          console.warn("SW init failed:", e);
+        }
       }
-    });
 
-    return () => {
-      if (typeof unsubscribe === "function") unsubscribe();
+      subscribe();
+
+      onForegroundMessage((payload: any) => {
+        const { title, body } = payload.notification || payload.data || {};
+        if (title) {
+          toast(title, { description: body });
+        }
+      });
     };
-  }, [user, initServiceWorker, subscribe]);
+
+    init();
+  }, [user, subscribe]);
 
   return { subscribe };
+}
+
+/**
+ * Standalone init — called from deferred App init.
+ * Dynamically imports firebase only when actually needed.
+ */
+export async function initPushNotifications() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return; // No user — skip entirely
+
+    const { getFirebaseConfig, onForegroundMessage, requestFCMToken } = await import("@/lib/firebase");
+
+    // Init service worker
+    if ("serviceWorker" in navigator) {
+      const config = await getFirebaseConfig();
+      if (config) {
+        const reg = await navigator.serviceWorker.ready;
+        reg.active?.postMessage({
+          type: "FIREBASE_CONFIG",
+          config: {
+            apiKey: config.apiKey,
+            projectId: config.projectId,
+            messagingSenderId: config.messagingSenderId,
+            appId: config.appId,
+          },
+        });
+      }
+    }
+
+    // Subscribe
+    const token = await requestFCMToken();
+    if (token) {
+      const { data: existing } = await supabase
+        .from("push_subscriptions")
+        .select("id, endpoint")
+        .eq("user_id", session.user.id)
+        .eq("endpoint", token)
+        .maybeSingle();
+
+      if (!existing) {
+        await supabase.from("push_subscriptions").insert({
+          user_id: session.user.id,
+          endpoint: token,
+          p256dh: "fcm",
+          auth: "fcm",
+          is_active: true,
+        });
+      }
+    }
+
+    // Foreground messages
+    onForegroundMessage((payload: any) => {
+      const { title, body } = payload.notification || payload.data || {};
+      if (title) {
+        const { toast: t } = await import("sonner") as any;
+        // Already imported above, just use toast
+      }
+    });
+  } catch (e) {
+    // Silent — push is non-critical
+    console.warn("Deferred push init failed:", e);
+  }
 }

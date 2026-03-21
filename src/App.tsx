@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
@@ -8,7 +8,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/context/AppContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
 import AuthGuard from "./components/AuthGuard";
 
 // Eagerly loaded — critical path
@@ -82,8 +81,22 @@ const SwipeBackWrapper = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const PushInit = () => {
-  usePushNotifications();
+/**
+ * Deferred push notification init — only after idle + 5s delay.
+ * Firebase SDK is ~100KB+ and should never block initial render.
+ */
+const DeferredPushInit = () => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const idle = (window as any).requestIdleCallback || ((cb: any) => setTimeout(cb, 200));
+      idle(() => {
+        import("@/hooks/usePushNotifications").then(({ initPushNotifications }) => {
+          initPushNotifications();
+        });
+      });
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
   return null;
 };
 
@@ -103,7 +116,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <PushInit />
+            <DeferredPushInit />
             <SwipeBackWrapper>
             <Suspense fallback={PageFallback}>
             <Routes>
