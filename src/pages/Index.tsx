@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import TopHeader from "@/components/layout/TopHeader";
 import DesktopHeader from "@/components/layout/DesktopHeader";
@@ -7,14 +7,16 @@ import BottomNav from "@/components/layout/BottomNav";
 import DesktopFooter from "@/components/layout/DesktopFooter";
 import HeroBanner, { prefetchBanners } from "@/components/home/HeroBanner";
 import CategoryGrid from "@/components/home/CategoryGrid";
-const AskElaraCard = lazy(() => import("@/components/home/AskElaraCard"));
-const SkinScanBanner = lazy(() => import("@/components/home/SkinScanBanner"));
 import ProductSectionSkeleton from "@/components/home/ProductSectionSkeleton";
 import SearchOverlay from "@/components/SearchOverlay";
 import SEOHead, { organizationJsonLd, websiteJsonLd, storeJsonLd } from "@/components/SEOHead";
-import { useTrendingProducts, usePickProducts, useOfferProducts, useNewProducts, useGiftProducts, useDiscountedProducts } from "@/hooks/useHomeProducts";
+import { useTrendingProducts, useDiscountedProducts } from "@/hooks/useHomeProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useLazySection } from "@/hooks/useLazySection";
 
+// Lazy loaded — secondary sections
+const AskElaraCard = lazy(() => import("@/components/home/AskElaraCard"));
+const SkinScanBanner = lazy(() => import("@/components/home/SkinScanBanner"));
 const ProductSection = lazy(() => import("@/components/home/ProductSection"));
 const TodayOffersSlider = lazy(() => import("@/components/home/TodayOffersSlider"));
 const OffersBanner = lazy(() => import("@/components/home/OffersBanner"));
@@ -26,8 +28,11 @@ const WhyElaraBanner = lazy(() => import("@/components/home/WhyElaraBanner"));
 const MobileAppBanners = lazy(() => import("@/components/home/MobileAppBanners").then(m => ({ default: m.MobileAppInlineBanner })));
 const MobileAppHeroBanner = lazy(() => import("@/components/home/MobileAppBanners").then(m => ({ default: m.MobileAppHeroBanner })));
 import { MobileAppTopStrip } from "@/components/home/MobileAppBanners";
-const GiftsSection = lazy(() => import("@/components/home/GiftsSection"));
+
 const DiscountsSection = lazy(() => import("@/components/home/DiscountsSection"));
+
+/** Deferred section — only loads data + renders when scrolled near */
+const DeferredProductSections = lazy(() => import("@/components/home/DeferredProductSections"));
 
 const Index = () => {
   const location = useLocation();
@@ -49,15 +54,15 @@ const Index = () => {
     }
   }, [location.state]);
 
+  // Only fetch trending (above-fold) and discounted eagerly
   const { data: trending = [], isLoading: loadingTrending } = useTrendingProducts();
-  const { data: picks = [], isLoading: loadingPicks } = usePickProducts();
-  const { data: offers = [], isLoading: loadingOffers } = useOfferProducts();
-  const { data: newArrivals = [], isLoading: loadingNew } = useNewProducts();
-  const { data: giftProducts = [] } = useGiftProducts();
   const { data: discountedProducts = [] } = useDiscountedProducts();
 
+  // Intersection observers for deferred sections
+  const midSection = useLazySection("300px");
+  const bottomSection = useLazySection("400px");
+
   const isLoading = loadingTrending;
-  const SectionFallback = <ProductSectionSkeleton />;
 
   const handleSearchClose = () => {
     setSearchOpen(false);
@@ -79,13 +84,16 @@ const Index = () => {
       {searchOpen && <SearchOverlay isOpen={searchOpen} onClose={handleSearchClose} initialQuery={searchInitialQuery} />}
 
       <div className="flex-1 pb-24 md:pb-0 scroll-bounce">
-        <Suspense fallback={null}>
-          <MobileAppHeroBanner />
-        </Suspense>
         <HeroBanner />
 
         <div className="app-container md:max-w-7xl md:mx-auto">
           <CategoryGrid />
+
+          {/* MobileAppHeroBanner moved BELOW hero + categories so it doesn't push LCP down */}
+          <Suspense fallback={null}>
+            <MobileAppHeroBanner />
+          </Suspense>
+
           <Suspense fallback={null}>
             <AskElaraCard />
           </Suspense>
@@ -109,7 +117,7 @@ const Index = () => {
               <ProductSectionSkeleton />
             </>
           ) : (
-            <Suspense fallback={SectionFallback}>
+            <Suspense fallback={<ProductSectionSkeleton />}>
               <ProductSection title={t("home.trendingNow")} subtitle={t("home.mostPopular")} products={trending} viewAllLink="/collection/trending" variant="trending" />
             </Suspense>
           )}
@@ -124,39 +132,37 @@ const Index = () => {
             </Suspense>
           </div>
 
-          <Suspense fallback={null}>
-            <BrandsSection />
-          </Suspense>
-
-          {giftProducts.length > 0 && (
-            <Suspense fallback={null}>
-              <GiftsSection products={giftProducts} />
-            </Suspense>
-          )}
-
-          <Suspense fallback={null}>
-            <ConcernsSection />
-          </Suspense>
-
-          <Suspense fallback={null}>
-            <MobileAppBanners />
-          </Suspense>
-
-          <Suspense fallback={null}>
-            <DealsBanner />
-          </Suspense>
-
-          {loadingPicks || loadingOffers || loadingNew ? (
-            <ProductSectionSkeleton />
-          ) : (
-            <Suspense fallback={SectionFallback}>
+          {/* Mid-fold: brands, gifts, concerns — deferred */}
+          <div ref={midSection.ref}>
+            {midSection.visible && (
               <>
-                <ProductSection title={t("home.elaraPicks")} subtitle={t("home.curatedForYou")} products={picks} viewAllLink="/collection/picks" />
-                <ProductSection title={t("home.specialOffers")} subtitle={t("home.limitedDeals")} products={offers} viewAllLink="/collection/offers" />
-                <ProductSection title={t("home.newArrivals")} subtitle={t("home.freshAdditions")} products={newArrivals} viewAllLink="/collection/new" />
+                <Suspense fallback={null}>
+                  <BrandsSection />
+                </Suspense>
+
+                <Suspense fallback={null}>
+                  <ConcernsSection />
+                </Suspense>
+
+                <Suspense fallback={null}>
+                  <MobileAppBanners />
+                </Suspense>
+
+                <Suspense fallback={null}>
+                  <DealsBanner />
+                </Suspense>
               </>
-            </Suspense>
-          )}
+            )}
+          </div>
+
+          {/* Bottom-fold: picks, offers, new arrivals — deferred data fetch */}
+          <div ref={bottomSection.ref}>
+            {bottomSection.visible && (
+              <Suspense fallback={<ProductSectionSkeleton />}>
+                <DeferredProductSections />
+              </Suspense>
+            )}
+          </div>
 
           <Suspense fallback={null}>
             <WhyElaraBanner />
