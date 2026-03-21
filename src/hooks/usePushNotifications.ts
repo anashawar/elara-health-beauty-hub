@@ -129,11 +129,13 @@ export async function initPushNotifications() {
     }
 
     // Foreground messages
-    onForegroundMessage((payload: any) => {
+    const { onForegroundMessage: onMsg } = await import("@/lib/firebase");
+    onMsg((payload: any) => {
       const { title, body } = payload.notification || payload.data || {};
       if (title) {
-        const { toast: t } = await import("sonner") as any;
-        // Already imported above, just use toast
+        import("sonner").then(({ toast: t }) => {
+          t(title, { description: body });
+        });
       }
     });
   } catch (e) {
