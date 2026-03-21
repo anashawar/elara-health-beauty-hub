@@ -28,7 +28,7 @@ const WhyElaraBanner = lazy(() => import("@/components/home/WhyElaraBanner"));
 const MobileAppBanners = lazy(() => import("@/components/home/MobileAppBanners").then(m => ({ default: m.MobileAppInlineBanner })));
 const MobileAppHeroBanner = lazy(() => import("@/components/home/MobileAppBanners").then(m => ({ default: m.MobileAppHeroBanner })));
 import { MobileAppTopStrip } from "@/components/home/MobileAppBanners";
-const GiftsSection = lazy(() => import("@/components/home/GiftsSection"));
+
 const DiscountsSection = lazy(() => import("@/components/home/DiscountsSection"));
 
 /** Deferred section — only loads data + renders when scrolled near */
