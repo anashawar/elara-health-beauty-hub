@@ -1,0 +1,21 @@
+# Long cache for hashed assets (Vite adds content hashes)
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Images and fonts
+/*.png
+  Cache-Control: public, max-age=604800
+/*.jpg
+  Cache-Control: public, max-age=604800
+/*.svg
+  Cache-Control: public, max-age=604800
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+
+# Service worker — never cache
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# HTML — short cache
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate

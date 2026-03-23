@@ -7,7 +7,8 @@ const CategoryGrid = memo(() => {
   const { data: categories = [] } = useCategories();
   const { language } = useLanguage();
 
-  if (categories.length === 0) return null;
+  // Don't return null — parent reserves min-height for CLS prevention
+  if (categories.length === 0) return <div />;
 
   const displayCategories = categories.slice(0, 8);
 

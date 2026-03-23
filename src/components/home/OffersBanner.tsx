@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 export default function OffersBanner() {
   const { language } = useLanguage();
-  const qc = useQueryClient();
 
   const { data: offers = [] } = useQuery({
     queryKey: ["active-offers-gallery"],
@@ -28,16 +26,7 @@ export default function OffersBanner() {
     },
   });
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('offers-banner-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, () => {
-        qc.invalidateQueries({ queryKey: ["active-offers-gallery"] });
-        qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [qc]);
+  // Removed realtime subscription — unnecessary overhead for offers that rarely change
 
   const [current, setCurrent] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
@@ -60,39 +49,30 @@ export default function OffersBanner() {
 
   return (
     <section className="px-4 mt-6">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={offer.id}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.35 }}
-        >
-          <Link to={linkTo} className="block relative overflow-hidden rounded-3xl shadow-float group">
-            <div className="relative h-[160px] md:h-[200px]">
-              <img
-                src={offerImgSrc}
-                alt={offer.title || ""}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-              />
-            </div>
-          </Link>
+      <Link to={linkTo} className="block relative overflow-hidden rounded-3xl shadow-float group">
+        <div className="relative h-[160px] md:h-[200px]">
+          <img
+            src={offerImgSrc}
+            alt={offer.title || ""}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      </Link>
 
-          {offers.length > 1 && (
-            <div className="flex justify-center gap-1.5 mt-3">
-              {offers.map((_: any, idx: number) => (
-                <button
-                  key={idx}
-                  onClick={() => { setCurrent(idx); clearInterval(intervalRef.current); }}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    idx === current ? "w-6 bg-primary" : "w-1.5 bg-border"
-                  }`}
-                />
-              ))}
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+      {offers.length > 1 && (
+        <div className="flex justify-center gap-1.5 mt-3">
+          {offers.map((_: any, idx: number) => (
+            <button
+              key={idx}
+              onClick={() => { setCurrent(idx); clearInterval(intervalRef.current); }}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                idx === current ? "w-6 bg-primary" : "w-1.5 bg-border"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

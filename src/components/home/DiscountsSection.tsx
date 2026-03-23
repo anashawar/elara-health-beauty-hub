@@ -1,7 +1,6 @@
 import { memo, useMemo } from "react";
 import { ChevronRight, Percent } from "lucide-react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import ProductCard from "@/components/ProductCard";
 import type { ProductWithRelations } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -51,13 +50,9 @@ const DiscountsSection = memo(({ products }: DiscountsSectionProps) => {
 
         <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <motion.div
-              animate={{ rotate: [0, -8, 8, 0] }}
-              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-              className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center"
-            >
+            <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center">
               <Percent className="w-[18px] h-[18px] text-primary-foreground" />
-            </motion.div>
+            </div>
             <div>
               <h2 className="text-lg md:text-xl font-sans font-bold text-primary-foreground tracking-tight leading-tight">
                 {t("home.discounts")}

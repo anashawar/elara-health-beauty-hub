@@ -83,26 +83,29 @@ const Index = () => {
       <TopHeader onSearchClick={() => setSearchOpen(true)} />
       {searchOpen && <SearchOverlay isOpen={searchOpen} onClose={handleSearchClose} initialQuery={searchInitialQuery} />}
 
-      <div className="flex-1 pb-24 md:pb-0 scroll-bounce">
+      <div className="flex-1 pb-24 md:pb-0 scroll-bounce" style={{ contain: 'layout style' }}>
         <HeroBanner />
 
         <div className="app-container md:max-w-7xl md:mx-auto">
-          <CategoryGrid />
+          {/* CategoryGrid — reserve min-height to prevent CLS */}
+          <div className="min-h-[120px] md:min-h-[80px]">
+            <CategoryGrid />
+          </div>
 
           {/* MobileAppHeroBanner moved BELOW hero + categories so it doesn't push LCP down */}
           <Suspense fallback={null}>
             <MobileAppHeroBanner />
           </Suspense>
 
-          <Suspense fallback={null}>
+          <Suspense fallback={<div className="h-[130px] mx-4 mt-8 rounded-3xl bg-secondary/30 animate-pulse" />}>
             <AskElaraCard />
           </Suspense>
-          <Suspense fallback={null}>
+          <Suspense fallback={<div className="h-[110px] mx-4 mt-6 rounded-3xl bg-secondary/30 animate-pulse" />}>
             <SkinScanBanner />
           </Suspense>
 
           {discountedProducts.length > 0 && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<ProductSectionSkeleton />}>
               <DiscountsSection products={discountedProducts} />
             </Suspense>
           )}
@@ -112,10 +115,7 @@ const Index = () => {
           </Suspense>
 
           {isLoading ? (
-            <>
-              <ProductSectionSkeleton />
-              <ProductSectionSkeleton />
-            </>
+            <ProductSectionSkeleton />
           ) : (
             <Suspense fallback={<ProductSectionSkeleton />}>
               <ProductSection title={t("home.trendingNow")} subtitle={t("home.mostPopular")} products={trending} viewAllLink="/collection/trending" variant="trending" />
@@ -133,7 +133,7 @@ const Index = () => {
           </div>
 
           {/* Mid-fold: brands, gifts, concerns — deferred */}
-          <div ref={midSection.ref}>
+          <div ref={midSection.ref} style={{ contentVisibility: 'auto', containIntrinsicSize: '0 400px' }}>
             {midSection.visible && (
               <>
                 <Suspense fallback={null}>
@@ -156,7 +156,7 @@ const Index = () => {
           </div>
 
           {/* Bottom-fold: picks, offers, new arrivals — deferred data fetch */}
-          <div ref={bottomSection.ref}>
+          <div ref={bottomSection.ref} style={{ contentVisibility: 'auto', containIntrinsicSize: '0 600px' }}>
             {bottomSection.visible && (
               <Suspense fallback={<ProductSectionSkeleton />}>
                 <DeferredProductSections />

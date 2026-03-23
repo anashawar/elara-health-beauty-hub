@@ -11,9 +11,11 @@ import { LanguageProvider } from "@/i18n/LanguageContext";
 import AuthGuard from "./components/AuthGuard";
 
 // Eagerly loaded — critical path
-import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import ResponsiveHome from "./components/ResponsiveHome";
+
+// Index is heavy — lazy load it so the initial bundle is smaller
+const Index = lazy(() => import("./pages/Index"));
 
 // Lazy loaded — secondary pages
 const CollectionPage = lazy(() => import("./pages/CollectionPage"));
