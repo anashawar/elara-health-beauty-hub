@@ -114,22 +114,13 @@ export default function TodayOffersSlider() {
             </div>
           )}
 
-          {/* Slider */}
+          {/* Slider — no framer-motion to reduce bundle + CLS */}
           <div className="relative">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={current}
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="grid grid-cols-3 gap-2.5"
-              >
-                {currentPair.map((offer, i) => (
-                  <OfferCard key={offer.id} offer={offer} index={current * 3 + i} />
-                ))}
-              </motion.div>
-            </AnimatePresence>
+            <div className="grid grid-cols-3 gap-2.5">
+              {currentPair.map((offer, i) => (
+                <OfferCard key={offer.id} offer={offer} index={current * 3 + i} />
+              ))}
+            </div>
           </div>
 
           {/* Dots */}
