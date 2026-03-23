@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.9bdd477b18ee42b78219b2a5905f72d1',
+  appId: 'com.elarastore.app',
   appName: 'ELARA',
   webDir: 'dist',
   plugins: {
