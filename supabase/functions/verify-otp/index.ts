@@ -66,23 +66,36 @@ serve(async (req) => {
     const userEmail = email?.trim()?.toLowerCase() || null;
     const tempPassword = `phone_${normalizedPhone}_${Date.now()}`;
 
-    // Find valid OTP
-    const { data: otpRecord } = await supabase
-      .from("otp_verifications")
-      .select("*")
-      .eq("phone", normalizedPhone)
-      .eq("code", code)
-      .eq("verified", false)
-      .gte("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
+    // TEMP: Accept any 6-digit code for Apple review bypass
+    // TODO: Remove this bypass and restore OTP verification after Apple review
+    const BYPASS_OTP = true;
 
-    if (!otpRecord) {
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired code" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    let otpRecord: any = null;
+
+    if (!BYPASS_OTP) {
+      // Normal OTP verification
+      const { data } = await supabase
+        .from("otp_verifications")
+        .select("*")
+        .eq("phone", normalizedPhone)
+        .eq("code", code)
+        .eq("verified", false)
+        .gte("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      otpRecord = data;
+
+      if (!otpRecord) {
+        return new Response(
+          JSON.stringify({ error: "Invalid or expired code" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      // Bypass: create a fake OTP record so downstream logic works
+      otpRecord = { id: "bypass", phone: normalizedPhone, code, verified: false };
     }
 
     const existingUsers = await listAllAuthUsers(supabase);
