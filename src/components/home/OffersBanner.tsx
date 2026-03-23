@@ -28,16 +28,7 @@ export default function OffersBanner() {
     },
   });
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('offers-banner-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, () => {
-        qc.invalidateQueries({ queryKey: ["active-offers-gallery"] });
-        qc.invalidateQueries({ queryKey: ["active-offers-hero"] });
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [qc]);
+  // Removed realtime subscription — unnecessary overhead for offers that rarely change
 
   const [current, setCurrent] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
