@@ -11,8 +11,17 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { phone, full_name, email } = await req.json();
+    const { phone } = await req.json();
     if (!phone) throw new Error("Phone number is required");
+
+    // Validate phone format
+    const phoneRegex = /^[\d\s+()-]{7,20}$/;
+    if (!phoneRegex.test(phone)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid phone number format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const ULTRAMSG_INSTANCE_ID = Deno.env.get("ULTRAMSG_INSTANCE_ID");
     if (!ULTRAMSG_INSTANCE_ID) throw new Error("ULTRAMSG_INSTANCE_ID is not configured");
