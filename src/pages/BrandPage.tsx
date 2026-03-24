@@ -21,9 +21,14 @@ const BrandPage = () => {
   const { t, language } = useLanguage();
   const [searchOpen, setSearchOpen] = useState(false);
   const { data: activeOffers = [] } = useActiveOffers();
+  const userCity = useUserCity();
 
   const brand = brands.find((b) => b.slug === id) || brands.find((b) => b.id === id);
-  const { data: brandProducts = [], isLoading } = useBrandProducts(brand?.id);
+
+  // Block access if brand is city-restricted and user is not in allowed city
+  const isBrandRestricted = brand && !isBrandAvailableInCity((brand as any).restricted_cities, userCity);
+  
+  const { data: brandProducts = [], isLoading } = useBrandProducts(isBrandRestricted ? undefined : brand?.id);
 
   const brandCountry = brand?.country_of_origin;
   const productCountries = [...new Set(brandProducts.map(p => p.country_of_origin).filter(Boolean))];

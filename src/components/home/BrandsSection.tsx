@@ -3,6 +3,7 @@ import { Crown, ChevronDown, ChevronUp } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { useUserCity, isBrandAvailableInCity } from "@/hooks/useUserCity";
 
 const DESKTOP_INITIAL = 10;
 
@@ -10,8 +11,9 @@ const BrandsSection = () => {
   const { data: brands = [] } = useBrands();
   const { t } = useLanguage();
   const [showAll, setShowAll] = useState(false);
+  const userCity = useUserCity();
 
-  const featuredBrands = brands.filter((b: any) => b.featured);
+  const featuredBrands = brands.filter((b: any) => b.featured && isBrandAvailableInCity(b.restricted_cities, userCity));
 
   if (featuredBrands.length === 0) return null;
 
