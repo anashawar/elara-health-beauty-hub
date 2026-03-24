@@ -79,7 +79,7 @@ export default function AdminProducts() {
 
   // Quick-add state
   const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const [quickAddItems, setQuickAddItems] = useState<{ name: string; cost: string }[]>([{ name: "", cost: "" }]);
+  const [quickAddItems, setQuickAddItems] = useState<{ name: string; cost: string; price: string }[]>([{ name: "", cost: "", price: "" }]);
 
   // Image state
   const [mainImage, setMainImage] = useState<File | null>(null);
@@ -797,11 +797,15 @@ export default function AdminProducts() {
     setEnrichProgress({ done: 0, total: validItems.length, current: "Creating products..." });
 
     const createdIds: string[] = [];
+    const sellingPriceMap: Record<string, number> = {}; // track products with explicit selling prices
 
     for (let i = 0; i < validItems.length; i++) {
       const item = validItems[i];
       const cost = parseFloat(item.cost);
-      const price = Math.round(cost * 1.35 / 250) * 250; // Round to nearest 250 IQD
+      const hasExplicitPrice = item.price.trim() !== "" && !isNaN(parseFloat(item.price));
+      const price = hasExplicitPrice
+        ? Math.round(parseFloat(item.price) / 250) * 250
+        : Math.round(cost * 1.35 / 250) * 250; // Round to nearest 250 IQD
 
       setEnrichProgress({ done: i, total: validItems.length, current: `Creating: ${item.name}` });
 
@@ -819,6 +823,7 @@ export default function AdminProducts() {
         // Save cost
         await supabase.from("product_costs").upsert({ product_id: data.id, cost }, { onConflict: "product_id" });
         createdIds.push(data.id);
+        if (hasExplicitPrice) sellingPriceMap[data.id] = price;
       } catch (err) {
         console.error("Quick add error:", err);
       }
@@ -847,7 +852,7 @@ export default function AdminProducts() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ product_ids: batch, markup_percent: 35 }),
+          body: JSON.stringify({ product_ids: batch, markup_percent: 35, skip_price_ids: Object.keys(sellingPriceMap) }),
         });
         if (resp.ok) {
           const result = await resp.json();
@@ -880,7 +885,7 @@ export default function AdminProducts() {
     }
 
     setEnriching(false);
-    setQuickAddItems([{ name: "", cost: "" }]);
+    setQuickAddItems([{ name: "", cost: "", price: "" }]);
     qc.invalidateQueries({ queryKey: ["admin-products"] });
     qc.invalidateQueries({ queryKey: ["admin-product-costs-list"] });
     qc.invalidateQueries({ queryKey: ["products"] });
@@ -943,7 +948,7 @@ export default function AdminProducts() {
                 Quick Add Products
               </DialogTitle>
             </DialogHeader>
-            <p className="text-sm text-muted-foreground">Just enter name & cost. AI will fill everything else: description, brand, category, benefits, pricing (+35%), and find images.</p>
+            <p className="text-sm text-muted-foreground">Enter name & cost. AI will fill everything else. Leave "Sell Price" blank to auto-calculate cost +35%.</p>
             <div className="grid gap-3 mt-2 max-h-[50vh] overflow-y-auto pr-1">
               {quickAddItems.map((item, idx) => (
                 <div key={idx} className="flex gap-2 items-center">
@@ -968,6 +973,17 @@ export default function AdminProducts() {
                     }}
                     className="w-28"
                   />
+                  <Input
+                    placeholder="Sell Price"
+                    type="number"
+                    value={item.price}
+                    onChange={(e) => {
+                      const updated = [...quickAddItems];
+                      updated[idx].price = e.target.value;
+                      setQuickAddItems(updated);
+                    }}
+                    className="w-28"
+                  />
                   {quickAddItems.length > 1 && (
                     <Button size="icon" variant="ghost" className="shrink-0" onClick={() => setQuickAddItems(prev => prev.filter((_, i) => i !== idx))}>
                       <X className="h-4 w-4" />
@@ -977,11 +993,11 @@ export default function AdminProducts() {
               ))}
             </div>
             <div className="flex gap-2 mt-2">
-              <Button size="sm" variant="outline" onClick={() => setQuickAddItems(prev => [...prev, { name: "", cost: "" }])}>
+              <Button size="sm" variant="outline" onClick={() => setQuickAddItems(prev => [...prev, { name: "", cost: "", price: "" }])}>
                 <Plus className="h-4 w-4 mr-1" />Add Row
               </Button>
               <Button size="sm" variant="outline" onClick={() => {
-                const rows = Array(10).fill(null).map(() => ({ name: "", cost: "" }));
+                const rows = Array(10).fill(null).map(() => ({ name: "", cost: "", price: "" }));
                 setQuickAddItems(prev => [...prev, ...rows]);
               }}>
                 +10 Rows
