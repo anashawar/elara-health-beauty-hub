@@ -139,7 +139,7 @@ export function useOfferProducts() {
  */
 export function useDiscountedProducts() {
   const { language } = useLanguage();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-discounted", language],
     queryFn: async () => {
