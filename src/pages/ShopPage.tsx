@@ -25,7 +25,7 @@ const CARD_SELECT = `
   is_new, is_trending, is_pick, in_stock,
   brand_id, category_id,
   categories ( slug ),
-  brands ( name ),
+  brands ( name, restricted_cities ),
   product_images ( image_url, sort_order )
 `;
 
