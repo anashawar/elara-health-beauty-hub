@@ -56,7 +56,8 @@ function mapProduct(p: any, language: "en" | "ar" | "ku"): ProductWithRelations 
     skin_type: null,
     condition: null,
     inStock: p.in_stock !== false,
-  };
+    _brandRestrictedCities: p.brands?.restricted_cities || null,
+  } as ProductWithRelations;
 }
 
 async function fetchSection(
