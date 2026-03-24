@@ -5,6 +5,7 @@ import BottomNav from "@/components/layout/BottomNav";
 import { useProducts, useCategories, useBrands, useFormatPrice, concerns } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { getRecentSearches, addRecentSearch, clearRecentSearches } from "@/hooks/useRecentSearches";
+import { useUserCity, isBrandAvailableInCity } from "@/hooks/useUserCity";
 
 interface SearchOverlayProps {
   isOpen: boolean;
@@ -15,7 +16,9 @@ interface SearchOverlayProps {
 const SearchOverlay = ({ isOpen, onClose, initialQuery }: SearchOverlayProps) => {
   const { data: products = [] } = useProducts({ enabled: isOpen });
   const { data: categories = [] } = useCategories();
-  const { data: brands = [] } = useBrands();
+  const { data: allBrands = [] } = useBrands();
+  const userCity = useUserCity();
+  const brands = useMemo(() => allBrands.filter((b: any) => isBrandAvailableInCity(b.restricted_cities, userCity)), [allBrands, userCity]);
   const { t } = useLanguage();
   const formatPrice = useFormatPrice();
   const navigate = useNavigate();
