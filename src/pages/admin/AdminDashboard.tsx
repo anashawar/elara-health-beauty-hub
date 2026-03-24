@@ -8,8 +8,10 @@ import {
 import { formatPrice } from "@/hooks/useProducts";
 import { useMemo } from "react";
 import { motion } from "framer-motion";
+import { useAdmin } from "@/hooks/useAdmin";
 
 export default function AdminDashboard() {
+  const { isFullAdmin } = useAdmin();
   const { data: orders = [] } = useQuery({
     queryKey: ["admin-dashboard-orders"],
     queryFn: async () => {
@@ -188,6 +190,7 @@ export default function AdminDashboard() {
             sub: `${stats.totalOrders} orders delivered`,
             icon: DollarSign, iconBg: "bg-emerald-500/10", iconColor: "text-emerald-600",
             accent: "from-emerald-500/10 to-transparent",
+            adminOnly: true,
           },
           {
             label: "Net Profit", value: formatPrice(stats.totalProfit),
@@ -196,20 +199,23 @@ export default function AdminDashboard() {
             iconBg: stats.totalProfit >= 0 ? "bg-emerald-500/10" : "bg-red-500/10",
             iconColor: stats.totalProfit >= 0 ? "text-emerald-600" : "text-red-600",
             accent: stats.totalProfit >= 0 ? "from-emerald-500/10 to-transparent" : "from-red-500/10 to-transparent",
+            adminOnly: true,
           },
           {
             label: "Today's Orders", value: stats.todayOrders,
             sub: stats.todayRevenue > 0 ? formatPrice(stats.todayRevenue) + " revenue" : "No deliveries today",
             icon: Zap, iconBg: "bg-primary/10", iconColor: "text-primary",
             accent: "from-primary/10 to-transparent",
+            adminOnly: false,
           },
           {
             label: "Avg Order Value", value: formatPrice(stats.avgOrderValue),
             sub: `${stats.totalItemsSold} total items sold`,
             icon: BarChart3, iconBg: "bg-blue-500/10", iconColor: "text-blue-600",
             accent: "from-blue-500/10 to-transparent",
+            adminOnly: false,
           },
-        ].map((card, i) => (
+        ].filter(card => !card.adminOnly || isFullAdmin).map((card, i) => (
           <motion.div
             key={card.label}
             initial={{ opacity: 0, y: 12 }}
@@ -263,7 +269,7 @@ export default function AdminDashboard() {
             { label: "Products", value: productCount, icon: Package, color: "text-primary" },
             { label: "Categories", value: categoryCount, icon: FolderTree, color: "text-pink-600" },
             { label: "Out of Stock", value: stats.outOfStock, icon: XCircle, color: "text-red-600" },
-            { label: "Pending Revenue", value: formatPrice(stats.pendingRevenue), icon: Clock, color: "text-amber-600" },
+            ...(isFullAdmin ? [{ label: "Pending Revenue", value: formatPrice(stats.pendingRevenue), icon: Clock, color: "text-amber-600" }] : []),
           ].map((item) => (
             <div key={item.label} className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -350,7 +356,7 @@ export default function AdminDashboard() {
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">This Week Summary</p>
           <p className="text-xl font-bold text-foreground mt-1">
-            {stats.weekOrders} orders · {formatPrice(stats.weekRevenue)} revenue
+            {stats.weekOrders} orders{isFullAdmin ? ` · ${formatPrice(stats.weekRevenue)} revenue` : ""}
           </p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20">
