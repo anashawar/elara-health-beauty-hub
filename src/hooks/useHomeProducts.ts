@@ -139,10 +139,10 @@ export function useOfferProducts() {
  */
 export function useDiscountedProducts() {
   const { language } = useLanguage();
+  const userCity = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-discounted", language],
     queryFn: async () => {
-      // 1. Get active offers with brand/category targets
       const { data: offers, error: offErr } = await supabase
         .from("offers")
         .select("target_type, target_id, discount_type, discount_value")
@@ -161,11 +161,9 @@ export function useDiscountedProducts() {
         if (o.target_type === "category" && o.target_id) categoryIds.push(o.target_id);
       }
 
-      // 2. Fetch products matching those targets
       let query = supabase.from("products").select(CARD_SELECT) as any;
 
       if (!allProducts) {
-        // Build OR filter for brand and category targets
         const filters: string[] = [];
         if (brandIds.length > 0) filters.push(`brand_id.in.(${brandIds.join(",")})`);
         if (categoryIds.length > 0) filters.push(`category_id.in.(${categoryIds.join(",")})`);
@@ -183,6 +181,7 @@ export function useDiscountedProducts() {
       return (data || []).map((p: any) => mapProduct(p, language));
     },
     staleTime: 5 * 60 * 1000,
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
   });
 }
 
