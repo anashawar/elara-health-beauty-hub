@@ -282,17 +282,27 @@ const CategoryPage = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4 md:px-6">
-          {filteredProducts.map(p => (
-            <ProductCard key={p.id} product={p} offerPricing={getOfferForProduct(p, activeOffers)} />
-          ))}
-        </div>
-
-        {filteredProducts.length === 0 && (
-          <div className="text-center mt-12 px-4">
-            <p className="text-muted-foreground text-sm">{t("categories.noProductsFound")}</p>
-            <button onClick={clearFilters} className="text-primary text-sm font-medium mt-2">{t("categories.clearAllFilters")}</button>
+        {isLoadingProducts ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4 md:px-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-2xl bg-muted animate-pulse aspect-[3/4]" />
+            ))}
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4 md:px-6">
+              {filteredProducts.map(p => (
+                <ProductCard key={p.id} product={p} offerPricing={getOfferForProduct(p, activeOffers)} />
+              ))}
+            </div>
+
+            {filteredProducts.length === 0 && (
+              <div className="text-center mt-12 px-4">
+                <p className="text-muted-foreground text-sm">{t("categories.noProductsFound")}</p>
+                <button onClick={clearFilters} className="text-primary text-sm font-medium mt-2">{t("categories.clearAllFilters")}</button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
