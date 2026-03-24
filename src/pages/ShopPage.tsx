@@ -14,6 +14,7 @@ import { useCategories, useBrands, concerns, type ProductWithRelations } from "@
 import { useLanguage } from "@/i18n/LanguageContext";
 import SEOHead from "@/components/SEOHead";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
+import { useUserCity, isBrandAvailableInCity } from "@/hooks/useUserCity";
 
 type ViewMode = "grid" | "list";
 type SortKey = "relevance" | "name-az" | "newest" | "price-low" | "price-high";
