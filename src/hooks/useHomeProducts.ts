@@ -114,7 +114,7 @@ export function useNewProducts() {
 
 export function useOfferProducts() {
   const { language } = useLanguage();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-offers", language],
     queryFn: async () => {
