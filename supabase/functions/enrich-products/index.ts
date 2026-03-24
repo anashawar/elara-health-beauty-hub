@@ -18,7 +18,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { product_ids, markup_percent = 35 } = await req.json();
+    const { product_ids, markup_percent = 35, skip_price_ids = [] } = await req.json();
 
     if (!product_ids || !Array.isArray(product_ids) || product_ids.length === 0) {
       throw new Error("product_ids array is required");
