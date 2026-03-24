@@ -40,7 +40,7 @@ export function useUserCity() {
     staleTime: 10 * 60 * 1000,
   });
 
-  return userCity;
+  return { userCity, isLoggedIn: !!user };
 }
 
 /**
