@@ -37,7 +37,7 @@ const CartPage = () => {
       const applyPending = async () => {
         setCouponLoading(true);
         const { data, error } = await supabase
-          .from("coupons")
+          .from("coupons_public")
           .select("*")
           .ilike("code", pendingCoupon.trim())
           .eq("is_active", true)
@@ -131,7 +131,7 @@ const CartPage = () => {
     const trimmedCode = coupon.trim().toUpperCase();
 
     const { data, error } = await supabase
-      .from("coupons")
+      .from("coupons_public")
       .select("*")
       .ilike("code", trimmedCode)
       .eq("is_active", true)
@@ -185,13 +185,11 @@ const CartPage = () => {
 
     setCouponLoading(false);
 
-    // Accept the coupon (with influencer tracking info)
+    // Accept the coupon
     setAppliedCoupon({
       code: data.code,
       discount_type: data.discount_type,
       discount_value: data.discount_value,
-      influencer_name: data.influencer_name,
-      influencer_commission: data.influencer_commission,
     });
 
     // On first order: inform user that coupon discount won't apply but is tracked
