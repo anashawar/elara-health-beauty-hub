@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useUserCity, isBrandAvailableInCity } from "@/hooks/useUserCity";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Search, X } from "lucide-react";
 import BottomNav from "@/components/layout/BottomNav";
