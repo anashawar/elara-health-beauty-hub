@@ -117,12 +117,17 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
 
 export function useProducts(options?: { enabled?: boolean }) {
   const { language } = useLanguage();
+  const userCity = useUserCity();
 
   return useQuery<ProductWithRelations[]>({
     queryKey: ["products", language],
     queryFn: () => fetchProducts(language),
     enabled: options?.enabled !== false,
     staleTime: 5 * 60 * 1000,
+    select: (data) => data.filter((p) => {
+      // Find the brand's restricted_cities from raw cache — we store it in _brandRestrictedCities
+      return isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity);
+    }),
   });
 }
 
