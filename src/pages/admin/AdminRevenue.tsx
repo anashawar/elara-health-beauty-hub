@@ -176,8 +176,17 @@ export default function AdminRevenue() {
       dayEntry.revenue += Number(order.total);
       dayEntry.orders++;
 
-      (order.order_items || []).forEach((item: any) => {
-        const itemRevenue = Number(item.price) * item.quantity;
+      // Calculate subtotal from items to distribute discount proportionally
+      const items = order.order_items || [];
+      const orderSubtotal = items.reduce((s: number, it: any) => s + Number(it.price) * it.quantity, 0);
+      const orderDiscount = Number(order.discount || 0);
+
+      items.forEach((item: any) => {
+        const itemGrossRevenue = Number(item.price) * item.quantity;
+        // Distribute discount proportionally: each item bears its share of the discount
+        const itemDiscountShare = orderSubtotal > 0 ? (itemGrossRevenue / orderSubtotal) * orderDiscount : 0;
+        const itemRevenue = itemGrossRevenue - itemDiscountShare;
+
         const hasCost = item.product_id in costMap;
         const itemCost = hasCost ? costMap[item.product_id] * item.quantity : 0;
         totalItemsSold += item.quantity;
