@@ -87,7 +87,8 @@ function mapRawProduct(p: any, language: "en" | "ar" | "ku"): ProductWithRelatio
     skin_type: p.skin_type,
     condition: p.condition || null,
     inStock: p.in_stock !== false,
-  };
+    _brandRestrictedCities: p.brands?.restricted_cities || null,
+  } as ProductWithRelations;
 }
 
 async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithRelations[]> {
