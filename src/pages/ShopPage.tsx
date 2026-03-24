@@ -59,7 +59,7 @@ const ShopPage = () => {
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
   const { t, language } = useLanguage();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
@@ -145,7 +145,7 @@ const ShopPage = () => {
   });
 
   const allProducts = data?.products || [];
-  const products = useMemo(() => allProducts.filter((p: any) => isBrandAvailableInCity(p._brandRestrictedCities, userCity)), [allProducts, userCity]);
+  const products = useMemo(() => allProducts.filter((p: any) => isBrandAvailableInCity(p._brandRestrictedCities, userCity, isLoggedIn)), [allProducts, userCity, isLoggedIn]);
   const totalCount = data?.total || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const { data: activeOffers = [] } = useActiveOffers();

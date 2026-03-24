@@ -77,7 +77,7 @@ const CollectionPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const { data: activeOffers = [] } = useActiveOffers();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
 
   const meta = collectionMeta[type || ""] || collectionMeta.trending;
 
@@ -189,7 +189,7 @@ const CollectionPage = () => {
   });
 
   const allCollectionProducts = data?.products || [];
-  const products = useMemo(() => allCollectionProducts.filter((p: any) => isBrandAvailableInCity(p._brandRestrictedCities, userCity)), [allCollectionProducts, userCity]);
+  const products = useMemo(() => allCollectionProducts.filter((p: any) => isBrandAvailableInCity(p._brandRestrictedCities, userCity, isLoggedIn)), [allCollectionProducts, userCity, isLoggedIn]);
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
 

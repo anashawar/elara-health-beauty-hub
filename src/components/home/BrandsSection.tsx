@@ -11,9 +11,9 @@ const BrandsSection = () => {
   const { data: brands = [] } = useBrands();
   const { t } = useLanguage();
   const [showAll, setShowAll] = useState(false);
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
 
-  const featuredBrands = brands.filter((b: any) => b.featured && isBrandAvailableInCity(b.restricted_cities, userCity));
+  const featuredBrands = brands.filter((b: any) => b.featured && isBrandAvailableInCity(b.restricted_cities, userCity, isLoggedIn));
 
   if (featuredBrands.length === 0) return null;
 

@@ -556,4 +556,10 @@ export const ar = {
     downloadApp: "حمّل تطبيق ELARA",
     continueBrowsing: "تصفح المتجر",
   },
+  brand: {
+    notAvailable: "مو متوفر بمدينتك",
+    notAvailableDesc: "عذراً، هالماركة حالياً مو متوفرة بمدينتك. متوفرة بس بمدن معينة.",
+    updateAddress: "حدّث عنوانك",
+    browseOther: "تصفح ماركات ثانية",
+  },
 };

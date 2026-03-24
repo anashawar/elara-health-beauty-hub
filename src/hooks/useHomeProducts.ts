@@ -81,40 +81,40 @@ async function fetchSection(
 
 export function useTrendingProducts() {
   const { language } = useLanguage();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-trending", language],
     queryFn: () => fetchSection({ is_trending: true }, language),
     staleTime: 5 * 60 * 1000,
-    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity, isLoggedIn)),
   });
 }
 
 export function usePickProducts() {
   const { language } = useLanguage();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-picks", language],
     queryFn: () => fetchSection({ is_pick: true }, language),
     staleTime: 5 * 60 * 1000,
-    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity, isLoggedIn)),
   });
 }
 
 export function useNewProducts() {
   const { language } = useLanguage();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-new", language],
     queryFn: () => fetchSection({ is_new: true }, language),
     staleTime: 5 * 60 * 1000,
-    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity, isLoggedIn)),
   });
 }
 
 export function useOfferProducts() {
   const { language } = useLanguage();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-offers", language],
     queryFn: async () => {
@@ -128,7 +128,7 @@ export function useOfferProducts() {
       return (data || []).map((p: any) => mapProduct(p, language));
     },
     staleTime: 5 * 60 * 1000,
-    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity, isLoggedIn)),
   });
 }
 
@@ -139,7 +139,7 @@ export function useOfferProducts() {
  */
 export function useDiscountedProducts() {
   const { language } = useLanguage();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-discounted", language],
     queryFn: async () => {
@@ -181,13 +181,13 @@ export function useDiscountedProducts() {
       return (data || []).map((p: any) => mapProduct(p, language));
     },
     staleTime: 5 * 60 * 1000,
-    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity, isLoggedIn)),
   });
 }
 
 export function useGiftProducts() {
   const { language } = useLanguage();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-gifts", language],
     queryFn: async () => {
@@ -212,6 +212,6 @@ export function useGiftProducts() {
       return (data || []).map((p: any) => mapProduct(p, language));
     },
     staleTime: 10 * 60 * 1000,
-    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity, isLoggedIn)),
   });
 }

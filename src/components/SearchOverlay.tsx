@@ -17,8 +17,8 @@ const SearchOverlay = ({ isOpen, onClose, initialQuery }: SearchOverlayProps) =>
   const { data: products = [] } = useProducts({ enabled: isOpen });
   const { data: categories = [] } = useCategories();
   const { data: allBrands = [] } = useBrands();
-  const userCity = useUserCity();
-  const brands = useMemo(() => allBrands.filter((b: any) => isBrandAvailableInCity(b.restricted_cities, userCity)), [allBrands, userCity]);
+  const { userCity, isLoggedIn } = useUserCity();
+  const brands = useMemo(() => allBrands.filter((b: any) => isBrandAvailableInCity(b.restricted_cities, userCity, isLoggedIn)), [allBrands, userCity, isLoggedIn]);
   const { t } = useLanguage();
   const formatPrice = useFormatPrice();
   const navigate = useNavigate();

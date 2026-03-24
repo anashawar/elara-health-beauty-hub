@@ -21,12 +21,12 @@ const BrandPage = () => {
   const { t, language } = useLanguage();
   const [searchOpen, setSearchOpen] = useState(false);
   const { data: activeOffers = [] } = useActiveOffers();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
 
   const brand = brands.find((b) => b.slug === id) || brands.find((b) => b.id === id);
 
   // Block access if brand is city-restricted and user is not in allowed city
-  const isBrandRestricted = brand && !isBrandAvailableInCity((brand as any).restricted_cities, userCity);
+  const isBrandRestricted = brand && !isBrandAvailableInCity((brand as any).restricted_cities, userCity, isLoggedIn);
   
   const { data: brandProducts = [], isLoading } = useBrandProducts(isBrandRestricted ? undefined : brand?.id);
 
@@ -101,15 +101,36 @@ const BrandPage = () => {
       </header>
 
       {isBrandRestricted ? (
-        <div className="flex flex-col items-center justify-center py-20 px-4">
-          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
-            <ShieldAlert className="w-8 h-8 text-destructive" />
-          </div>
-          <p className="text-sm font-medium text-foreground mb-1">{t("brand.notAvailable") || "Not available in your area"}</p>
-          <p className="text-xs text-muted-foreground text-center max-w-xs">{t("brand.notAvailableDesc") || "This brand is only available in select cities. Update your delivery address to check availability."}</p>
-          <Link to="/addresses" className="mt-4 text-xs font-semibold text-primary hover:underline">
-            {t("brand.updateAddress") || "Update Address"}
-          </Link>
+        <div className="flex-1 flex flex-col items-center justify-center py-20 px-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center max-w-sm text-center"
+          >
+            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-5">
+              <ShieldAlert className="w-10 h-10 text-muted-foreground" />
+            </div>
+            <h2 className="text-lg font-display font-bold text-foreground mb-2">
+              {t("brand.notAvailable")}
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+              {t("brand.notAvailableDesc")}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <Link
+                to="/addresses"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+              >
+                {t("brand.updateAddress")}
+              </Link>
+              <Link
+                to="/brands"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-secondary text-secondary-foreground text-sm font-semibold hover:bg-secondary/80 transition-colors"
+              >
+                {t("brand.browseOther")}
+              </Link>
+            </div>
+          </motion.div>
         </div>
       ) : (
       <div className="flex-1 pb-24 md:pb-0">
