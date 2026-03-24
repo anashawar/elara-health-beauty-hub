@@ -797,11 +797,15 @@ export default function AdminProducts() {
     setEnrichProgress({ done: 0, total: validItems.length, current: "Creating products..." });
 
     const createdIds: string[] = [];
+    const sellingPriceMap: Record<string, number> = {}; // track products with explicit selling prices
 
     for (let i = 0; i < validItems.length; i++) {
       const item = validItems[i];
       const cost = parseFloat(item.cost);
-      const price = Math.round(cost * 1.35 / 250) * 250; // Round to nearest 250 IQD
+      const hasExplicitPrice = item.price.trim() !== "" && !isNaN(parseFloat(item.price));
+      const price = hasExplicitPrice
+        ? Math.round(parseFloat(item.price) / 250) * 250
+        : Math.round(cost * 1.35 / 250) * 250; // Round to nearest 250 IQD
 
       setEnrichProgress({ done: i, total: validItems.length, current: `Creating: ${item.name}` });
 
