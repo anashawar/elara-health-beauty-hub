@@ -77,6 +77,7 @@ const CollectionPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const { data: activeOffers = [] } = useActiveOffers();
+  const userCity = useUserCity();
 
   const meta = collectionMeta[type || ""] || collectionMeta.trending;
 
