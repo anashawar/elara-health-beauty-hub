@@ -182,7 +182,7 @@ export function useRelatedProducts(categoryId: string | null | undefined, exclud
           id, title, title_ar, title_ku, slug, price, original_price,
           is_new, is_trending, is_pick, in_stock,
           brand_id, category_id, subcategory_id,
-          brands ( name, name_ar, name_ku ),
+          brands ( name, name_ar, name_ku, restricted_cities ),
           categories ( slug ),
           product_images ( image_url, sort_order )
         `)
