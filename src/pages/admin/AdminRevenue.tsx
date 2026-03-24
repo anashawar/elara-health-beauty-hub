@@ -4,7 +4,7 @@ import { formatPrice } from "@/hooks/useProducts";
 import {
   DollarSign, TrendingUp, TrendingDown, Package, ShoppingCart,
   ArrowUpRight, Calendar, Filter, BarChart3, Percent, Wallet,
-  CreditCard, Truck, Clock,
+  CreditCard, Truck, Clock, AlertTriangle,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
