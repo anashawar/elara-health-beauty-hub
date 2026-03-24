@@ -885,7 +885,7 @@ export default function AdminProducts() {
     }
 
     setEnriching(false);
-    setQuickAddItems([{ name: "", cost: "" }]);
+    setQuickAddItems([{ name: "", cost: "", price: "" }]);
     qc.invalidateQueries({ queryKey: ["admin-products"] });
     qc.invalidateQueries({ queryKey: ["admin-product-costs-list"] });
     qc.invalidateQueries({ queryKey: ["products"] });
