@@ -356,7 +356,7 @@ export default function AdminDashboard() {
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">This Week Summary</p>
           <p className="text-xl font-bold text-foreground mt-1">
-            {stats.weekOrders} orders · {formatPrice(stats.weekRevenue)} revenue
+            {stats.weekOrders} orders{isFullAdmin ? ` · ${formatPrice(stats.weekRevenue)} revenue` : ""}
           </p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20">
