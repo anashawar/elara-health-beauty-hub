@@ -213,7 +213,9 @@ export default function AdminDashboard() {
           },
           {
             label: "Net Profit", value: formatPrice(stats.totalProfit),
-            sub: `${stats.profitMargin.toFixed(1)}% margin`,
+            sub: stats.missingCostCount > 0
+              ? `${stats.profitMargin.toFixed(1)}% margin · ${stats.missingCostCount} products missing cost`
+              : `${stats.profitMargin.toFixed(1)}% margin`,
             icon: TrendingUp,
             iconBg: stats.totalProfit >= 0 ? "bg-emerald-500/10" : "bg-red-500/10",
             iconColor: stats.totalProfit >= 0 ? "text-emerald-600" : "text-red-600",

@@ -301,12 +301,31 @@ export default function AdminRevenue() {
         )}
       </div>
 
+      {/* Missing cost warning */}
+      {stats.missingCostCount > 0 && (
+        <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              {stats.missingCostCount} products have no cost data
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {formatPrice(stats.revenueWithoutCost)} in revenue ({stats.itemsMissingCost} items sold) cannot be included in profit calculations.
+              Add costs in the Warehouse Costs page to get accurate profit numbers.
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Profit shown below is calculated only from the {formatPrice(stats.revenueWithCost)} revenue where cost data exists.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Total Revenue", value: formatPrice(stats.totalRevenue), sub: `${stats.totalOrders} delivered`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-500/10", accent: "from-emerald-500/10" },
-          { label: "Total Cost (COGS)", value: formatPrice(stats.totalCost), sub: `${stats.totalItemsSold} items`, icon: TrendingDown, color: "text-red-600", bg: "bg-red-500/10", accent: "from-red-500/10" },
-          { label: "Net Profit", value: formatPrice(stats.totalProfit), sub: `${stats.profitMargin.toFixed(1)}% margin`, icon: TrendingUp, color: stats.totalProfit >= 0 ? "text-emerald-600" : "text-red-600", bg: stats.totalProfit >= 0 ? "bg-emerald-500/10" : "bg-red-500/10", accent: stats.totalProfit >= 0 ? "from-emerald-500/10" : "from-red-500/10" },
+          { label: "Total Cost (COGS)", value: formatPrice(stats.totalCost), sub: `${stats.totalItemsSold - stats.itemsMissingCost} items with cost data`, icon: TrendingDown, color: "text-red-600", bg: "bg-red-500/10", accent: "from-red-500/10" },
+          { label: "Net Profit", value: formatPrice(stats.totalProfit), sub: `${stats.profitMargin.toFixed(1)}% margin (from costed items)`, icon: TrendingUp, color: stats.totalProfit >= 0 ? "text-emerald-600" : "text-red-600", bg: stats.totalProfit >= 0 ? "bg-emerald-500/10" : "bg-red-500/10", accent: stats.totalProfit >= 0 ? "from-emerald-500/10" : "from-red-500/10" },
           { label: "Avg Order Value", value: formatPrice(stats.avgOrderValue), sub: `${stats.allOrders} total orders`, icon: BarChart3, color: "text-blue-600", bg: "bg-blue-500/10", accent: "from-blue-500/10" },
         ].map((card, i) => (
           <motion.div
