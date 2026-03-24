@@ -60,9 +60,21 @@ export default function AdminRevenue() {
   const { data: productCosts = [] } = useQuery({
     queryKey: ["admin-product-costs"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("product_costs").select("product_id, cost");
-      if (error) throw error;
-      return data || [];
+      const allCosts: any[] = [];
+      let from = 0;
+      const PAGE = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("product_costs")
+          .select("product_id, cost")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allCosts.push(...data);
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
+      return allCosts;
     },
   });
 
