@@ -103,7 +103,7 @@ export function usePickProducts() {
 
 export function useNewProducts() {
   const { language } = useLanguage();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-new", language],
     queryFn: () => fetchSection({ is_new: true }, language),
