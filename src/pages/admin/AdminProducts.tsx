@@ -948,7 +948,7 @@ export default function AdminProducts() {
                 Quick Add Products
               </DialogTitle>
             </DialogHeader>
-            <p className="text-sm text-muted-foreground">Just enter name & cost. AI will fill everything else: description, brand, category, benefits, pricing (+35%), and find images.</p>
+            <p className="text-sm text-muted-foreground">Enter name & cost. AI will fill everything else. Leave "Sell Price" blank to auto-calculate cost +35%.</p>
             <div className="grid gap-3 mt-2 max-h-[50vh] overflow-y-auto pr-1">
               {quickAddItems.map((item, idx) => (
                 <div key={idx} className="flex gap-2 items-center">
@@ -969,6 +969,17 @@ export default function AdminProducts() {
                     onChange={(e) => {
                       const updated = [...quickAddItems];
                       updated[idx].cost = e.target.value;
+                      setQuickAddItems(updated);
+                    }}
+                    className="w-28"
+                  />
+                  <Input
+                    placeholder="Sell Price"
+                    type="number"
+                    value={item.price}
+                    onChange={(e) => {
+                      const updated = [...quickAddItems];
+                      updated[idx].price = e.target.value;
                       setQuickAddItems(updated);
                     }}
                     className="w-28"
