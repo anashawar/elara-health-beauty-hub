@@ -215,12 +215,9 @@ serve(async (req) => {
       session = sessionData.session;
     }
 
-    // Mark OTP as verified only after successful auth flow
-    if (!BYPASS_OTP && otpRecord.id !== "bypass") {
-      await supabase.from("otp_verifications").update({ verified: true }).eq("id", otpRecord.id);
-      // Clean up old OTPs
-      await supabase.from("otp_verifications").delete().eq("phone", normalizedPhone);
-    }
+    // Mark OTP as verified and clean up
+    await supabase.from("otp_verifications").update({ verified: true }).eq("id", otpRecord.id);
+    await supabase.from("otp_verifications").delete().eq("phone", normalizedPhone).neq("id", otpRecord.id);
 
     return new Response(
       JSON.stringify({ success: true, session, isNewUser: !existingUser }),

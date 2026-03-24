@@ -38,6 +38,15 @@ serve(async (req) => {
       normalizedPhone = "+964" + normalizedPhone;
     }
 
+    // Rate limit: max 5 OTPs per phone per hour
+    const { data: rateOk } = await supabase.rpc("check_otp_rate_limit", { _phone: normalizedPhone });
+    if (rateOk === false) {
+      return new Response(
+        JSON.stringify({ error: "Too many OTP requests. Please try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Delete old unverified OTPs for this phone
     await supabase.from("otp_verifications").delete().eq("phone", normalizedPhone).eq("verified", false);
 
