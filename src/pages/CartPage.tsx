@@ -131,7 +131,7 @@ const CartPage = () => {
     const trimmedCode = coupon.trim().toUpperCase();
 
     const { data, error } = await supabase
-      .from("coupons")
+      .from("coupons_public")
       .select("*")
       .ilike("code", trimmedCode)
       .eq("is_active", true)
