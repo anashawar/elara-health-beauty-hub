@@ -79,7 +79,7 @@ export default function AdminProducts() {
 
   // Quick-add state
   const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const [quickAddItems, setQuickAddItems] = useState<{ name: string; cost: string }[]>([{ name: "", cost: "" }]);
+  const [quickAddItems, setQuickAddItems] = useState<{ name: string; cost: string; price: string }[]>([{ name: "", cost: "", price: "" }]);
 
   // Image state
   const [mainImage, setMainImage] = useState<File | null>(null);
