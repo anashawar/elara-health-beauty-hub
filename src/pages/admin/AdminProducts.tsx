@@ -823,6 +823,7 @@ export default function AdminProducts() {
         // Save cost
         await supabase.from("product_costs").upsert({ product_id: data.id, cost }, { onConflict: "product_id" });
         createdIds.push(data.id);
+        if (hasExplicitPrice) sellingPriceMap[data.id] = price;
       } catch (err) {
         console.error("Quick add error:", err);
       }
