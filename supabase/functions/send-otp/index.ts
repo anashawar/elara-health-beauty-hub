@@ -11,8 +11,17 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { phone, full_name, email } = await req.json();
+    const { phone } = await req.json();
     if (!phone) throw new Error("Phone number is required");
+
+    // Validate phone format
+    const phoneRegex = /^[\d\s+()-]{7,20}$/;
+    if (!phoneRegex.test(phone)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid phone number format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const ULTRAMSG_INSTANCE_ID = Deno.env.get("ULTRAMSG_INSTANCE_ID");
     if (!ULTRAMSG_INSTANCE_ID) throw new Error("ULTRAMSG_INSTANCE_ID is not configured");
@@ -27,6 +36,15 @@ serve(async (req) => {
     let normalizedPhone = phone.replace(/\s+/g, "").replace(/^0/, "");
     if (!normalizedPhone.startsWith("+")) {
       normalizedPhone = "+964" + normalizedPhone;
+    }
+
+    // Rate limit: max 5 OTPs per phone per hour
+    const { data: rateOk } = await supabase.rpc("check_otp_rate_limit", { _phone: normalizedPhone });
+    if (rateOk === false) {
+      return new Response(
+        JSON.stringify({ error: "Too many OTP requests. Please try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Delete old unverified OTPs for this phone
