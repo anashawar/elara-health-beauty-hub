@@ -557,4 +557,10 @@ export const en = {
     downloadApp: "Download ELARA App",
     continueBrowsing: "Continue Browsing",
   },
+  brand: {
+    notAvailable: "Not Available in Your City",
+    notAvailableDesc: "Sorry, this brand is currently not available in your city. It's only available in select locations.",
+    updateAddress: "Update Your Address",
+    browseOther: "Browse Other Brands",
+  },
 };

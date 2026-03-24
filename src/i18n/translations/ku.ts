@@ -556,4 +556,10 @@ export const ku = {
     downloadApp: "ئەپی ELARA دابەزێنە",
     continueBrowsing: "گەڕان لە فرۆشگا",
   },
+  brand: {
+    notAvailable: "لە شارەکەت بەردەست نییە",
+    notAvailableDesc: "ببوورە، ئەم براندە لە شارەکەت بەردەست نییە. تەنها لە هەندێک شار بەردەستە.",
+    updateAddress: "ناونیشانەکەت نوێ بکەرەوە",
+    browseOther: "براندەکانی تر ببینە",
+  },
 };
