@@ -7,11 +7,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Loader2, Tag, Sparkles, ImageIcon, Search, Warehouse } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Tag, Sparkles, ImageIcon, Search, Warehouse, MapPin } from "lucide-react";
 import { toast } from "sonner";
+import { iraqCities } from "@/data/iraqCities";
 
-interface BrandForm { id?: string; name: string; slug: string; logo_url: string; country_of_origin: string; featured: boolean; warehouse_ids: string[]; }
-const emptyForm: BrandForm = { name: "", slug: "", logo_url: "", country_of_origin: "", featured: false, warehouse_ids: [] };
+interface BrandForm { id?: string; name: string; slug: string; logo_url: string; country_of_origin: string; featured: boolean; warehouse_ids: string[]; restricted_cities: string[]; }
+const emptyForm: BrandForm = { name: "", slug: "", logo_url: "", country_of_origin: "", featured: false, warehouse_ids: [], restricted_cities: [] };
 
 export default function AdminBrands() {
   const qc = useQueryClient();
