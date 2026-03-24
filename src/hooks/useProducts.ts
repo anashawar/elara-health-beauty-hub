@@ -289,6 +289,8 @@ export interface BrandRow {
   slug: string;
   logo_url: string | null;
   country_of_origin?: string | null;
+  featured?: boolean;
+  restricted_cities?: string[] | null;
 }
 
 export function useBrands() {
