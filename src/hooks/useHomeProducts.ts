@@ -128,7 +128,7 @@ export function useOfferProducts() {
       return (data || []).map((p: any) => mapProduct(p, language));
     },
     staleTime: 5 * 60 * 1000,
-    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity, isLoggedIn)),
   });
 }
 
