@@ -81,7 +81,7 @@ async function fetchSection(
 
 export function useTrendingProducts() {
   const { language } = useLanguage();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-trending", language],
     queryFn: () => fetchSection({ is_trending: true }, language),
