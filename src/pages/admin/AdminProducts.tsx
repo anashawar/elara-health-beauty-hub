@@ -852,7 +852,7 @@ export default function AdminProducts() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ product_ids: batch, markup_percent: 35 }),
+          body: JSON.stringify({ product_ids: batch, markup_percent: 35, skip_price_ids: Object.keys(sellingPriceMap) }),
         });
         if (resp.ok) {
           const result = await resp.json();
