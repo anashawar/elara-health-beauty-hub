@@ -8,7 +8,7 @@ import FloatingSearch from "@/components/layout/FloatingSearch";
 import DesktopFooter from "@/components/layout/DesktopFooter";
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
-import { useProducts, useCategories, useSubcategories, concerns } from "@/hooks/useProducts";
+import { useProducts, useCategoryProducts, useCategories, useSubcategories, concerns } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 import SEOHead, { breadcrumbJsonLd } from "@/components/SEOHead";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
@@ -46,14 +46,23 @@ const CategoryPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeSubId = searchParams.get("sub") || null;
 
-  const { data: allProducts = [] } = useProducts();
+  // For concern routes we need all products (client-side keyword matching)
+  // For category routes we query only that category's products directly
+  const { data: categoryProducts = [], isLoading: loadingCatProducts } = useCategoryProducts(
+    !isConcernRoute ? id : undefined,
+    !isConcernRoute ? activeSubId : null
+  );
+  const { data: allProducts = [], isLoading: loadingAllProducts } = useProducts({ enabled: isConcernRoute });
+
   const { data: categories = [] } = useCategories();
   const { data: subcategories = [] } = useSubcategories();
   const { t, language } = useLanguage();
   const [searchOpen, setSearchOpen] = useState(false);
   const category = !isConcernRoute ? categories.find(c => c.slug === id) : null;
   const activeConcern = isConcernRoute ? concerns.find(c => c.id === id) : null;
-  const BRANDS = [...new Set(allProducts.map(p => p.brand))];
+  const baseProducts = isConcernRoute ? allProducts : categoryProducts;
+  const isLoadingProducts = isConcernRoute ? loadingAllProducts : loadingCatProducts;
+  const BRANDS = [...new Set(baseProducts.map(p => p.brand))];
   const { data: activeOffers = [] } = useActiveOffers();
 
   const categorySubs = useMemo(() => {
@@ -92,15 +101,13 @@ const CategoryPage = () => {
   };
 
   const filteredProducts = useMemo(() => {
-    let result: typeof allProducts;
+    let result: typeof baseProducts;
     if (isConcernRoute && id) {
-      result = allProducts.filter(p => matchesConcern(p, id));
-    } else if (id) {
-      result = allProducts.filter(p => p.category_slug === id);
+      result = baseProducts.filter(p => matchesConcern(p, id));
     } else {
-      result = [...allProducts];
+      // Already filtered by category + subcategory from the DB query
+      result = [...baseProducts];
     }
-    if (activeSubId) result = result.filter(p => p.subcategory_id === activeSubId);
     if (searchQuery.length > 1) {
       const q = searchQuery.toLowerCase();
       result = result.filter(p => p.title.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q));
@@ -115,7 +122,7 @@ const CategoryPage = () => {
       case "price-high": result.sort((a, b) => b.price - a.price); break;
     }
     return result;
-  }, [id, isConcernRoute, activeSubId, searchQuery, sortBy, selectedBrands, priceRange, selectedConditions, allProducts]);
+  }, [id, isConcernRoute, searchQuery, sortBy, selectedBrands, priceRange, selectedConditions, baseProducts]);
 
   const toggleBrand = (brand: string) => setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
   const toggleCondition = (condition: string) => setSelectedConditions(prev => prev.includes(condition) ? prev.filter(c => c !== condition) : [...prev, condition]);
@@ -275,17 +282,27 @@ const CategoryPage = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4 md:px-6">
-          {filteredProducts.map(p => (
-            <ProductCard key={p.id} product={p} offerPricing={getOfferForProduct(p, activeOffers)} />
-          ))}
-        </div>
-
-        {filteredProducts.length === 0 && (
-          <div className="text-center mt-12 px-4">
-            <p className="text-muted-foreground text-sm">{t("categories.noProductsFound")}</p>
-            <button onClick={clearFilters} className="text-primary text-sm font-medium mt-2">{t("categories.clearAllFilters")}</button>
+        {isLoadingProducts ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4 md:px-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-2xl bg-muted animate-pulse aspect-[3/4]" />
+            ))}
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4 md:px-6">
+              {filteredProducts.map(p => (
+                <ProductCard key={p.id} product={p} offerPricing={getOfferForProduct(p, activeOffers)} />
+              ))}
+            </div>
+
+            {filteredProducts.length === 0 && (
+              <div className="text-center mt-12 px-4">
+                <p className="text-muted-foreground text-sm">{t("categories.noProductsFound")}</p>
+                <button onClick={clearFilters} className="text-primary text-sm font-medium mt-2">{t("categories.clearAllFilters")}</button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

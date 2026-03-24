@@ -205,6 +205,53 @@ export function useRelatedProducts(categoryId: string | null | undefined, exclud
 /**
  * Fetch products by brand_id — direct DB query, no client-side filtering.
  */
+/**
+ * Fetch products filtered by category slug + optional subcategory — direct DB query.
+ */
+export function useCategoryProducts(categorySlug: string | undefined, subcategoryId: string | null) {
+  const { language } = useLanguage();
+  const { userCity, isLoggedIn } = useUserCity();
+
+  return useQuery<ProductWithRelations[]>({
+    queryKey: ["category-products", categorySlug, subcategoryId, language],
+    queryFn: async () => {
+      if (!categorySlug) return [];
+      // Resolve category id from slug
+      const { data: catRow } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("slug", categorySlug)
+        .maybeSingle();
+      if (!catRow) return [];
+
+      let query = supabase
+        .from("products")
+        .select(`
+          *,
+          brands ( name, name_ar, name_ku, restricted_cities ),
+          categories ( slug ),
+          product_images ( image_url, sort_order ),
+          product_tags ( tag )
+        `)
+        .eq("category_id", catRow.id)
+        .order("created_at", { ascending: false });
+
+      if (subcategoryId) {
+        query = query.eq("subcategory_id", subcategoryId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []).map((p: any) => mapRawProduct(p, language));
+    },
+    enabled: !!categorySlug,
+    staleTime: 5 * 60 * 1000,
+    select: (data) => data.filter((p) => {
+      return isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity, isLoggedIn);
+    }),
+  });
+}
+
 export function useBrandProducts(brandId: string | undefined) {
   const { language } = useLanguage();
 
