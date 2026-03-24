@@ -37,7 +37,7 @@ const CartPage = () => {
       const applyPending = async () => {
         setCouponLoading(true);
         const { data, error } = await supabase
-          .from("coupons")
+          .from("coupons_public")
           .select("*")
           .ilike("code", pendingCoupon.trim())
           .eq("is_active", true)
