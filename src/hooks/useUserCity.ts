@@ -46,16 +46,20 @@ export function useUserCity() {
 /**
  * Check if a brand is available for the given user city.
  * If brand has no restricted_cities (null/empty), it's available everywhere.
- * If user has no city (guest), they can see unrestricted brands only.
+ * Guests (not logged in) can always see all brands.
+ * Only logged-in users outside the allowed cities are blocked.
  */
 export function isBrandAvailableInCity(
   brandRestrictedCities: string[] | null | undefined,
-  userCity: string | null
+  userCity: string | null,
+  isLoggedIn?: boolean
 ): boolean {
   // No restriction = available everywhere
   if (!brandRestrictedCities || brandRestrictedCities.length === 0) return true;
-  // Has restriction but user has no city = hide restricted brands
-  if (!userCity) return false;
+  // Guests can see all brands (including restricted ones)
+  if (!isLoggedIn) return true;
+  // Logged in but no city set = show restricted brands (benefit of the doubt)
+  if (!userCity) return true;
   // Check if user's city is in the allowed list (case-insensitive)
   return brandRestrictedCities.some(
     (c) => c.toLowerCase() === userCity.toLowerCase()
