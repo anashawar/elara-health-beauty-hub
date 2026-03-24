@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageContext";
 import type { ProductWithRelations } from "./useProducts";
+import { useUserCity, isBrandAvailableInCity } from "./useUserCity";
 
 /**
  * Lightweight product queries for the home page.
