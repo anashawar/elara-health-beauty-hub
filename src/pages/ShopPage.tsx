@@ -50,7 +50,8 @@ function mapProduct(p: any, language: "en" | "ar" | "ku"): ProductWithRelations 
     country_of_origin: null, form: null, gender: null,
     volume_ml: null, volume_unit: "ml", application: null,
     skin_type: null, condition: null,
-  };
+    _brandRestrictedCities: p.brands?.restricted_cities || null,
+  } as ProductWithRelations;
 }
 
 const ShopPage = () => {
