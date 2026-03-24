@@ -90,7 +90,7 @@ export default function AdminBrands() {
 
   const save = useMutation({
     mutationFn: async (f: BrandForm) => {
-      const payload = { name: f.name, slug: f.slug || f.name.toLowerCase().replace(/\s+/g, "-"), logo_url: f.logo_url || null, country_of_origin: f.country_of_origin || null, featured: f.featured };
+      const payload = { name: f.name, slug: f.slug || f.name.toLowerCase().replace(/\s+/g, "-"), logo_url: f.logo_url || null, country_of_origin: f.country_of_origin || null, featured: f.featured, restricted_cities: f.restricted_cities.length > 0 ? f.restricted_cities : null };
       let brandId = f.id;
       if (f.id) {
         const { error } = await supabase.from("brands").update(payload).eq("id", f.id);
