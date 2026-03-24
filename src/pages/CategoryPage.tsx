@@ -101,15 +101,13 @@ const CategoryPage = () => {
   };
 
   const filteredProducts = useMemo(() => {
-    let result: typeof allProducts;
+    let result: typeof baseProducts;
     if (isConcernRoute && id) {
-      result = allProducts.filter(p => matchesConcern(p, id));
-    } else if (id) {
-      result = allProducts.filter(p => p.category_slug === id);
+      result = baseProducts.filter(p => matchesConcern(p, id));
     } else {
-      result = [...allProducts];
+      // Already filtered by category + subcategory from the DB query
+      result = [...baseProducts];
     }
-    if (activeSubId) result = result.filter(p => p.subcategory_id === activeSubId);
     if (searchQuery.length > 1) {
       const q = searchQuery.toLowerCase();
       result = result.filter(p => p.title.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q));
@@ -124,7 +122,7 @@ const CategoryPage = () => {
       case "price-high": result.sort((a, b) => b.price - a.price); break;
     }
     return result;
-  }, [id, isConcernRoute, activeSubId, searchQuery, sortBy, selectedBrands, priceRange, selectedConditions, allProducts]);
+  }, [id, isConcernRoute, searchQuery, sortBy, selectedBrands, priceRange, selectedConditions, baseProducts]);
 
   const toggleBrand = (brand: string) => setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
   const toggleCondition = (condition: string) => setSelectedConditions(prev => prev.includes(condition) ? prev.filter(c => c !== condition) : [...prev, condition]);
