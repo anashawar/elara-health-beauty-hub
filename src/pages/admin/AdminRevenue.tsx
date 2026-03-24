@@ -131,7 +131,11 @@ export default function AdminRevenue() {
     let totalItemsSold = 0;
     let totalDeliveryFees = 0;
     let totalDiscounts = 0;
-    const productStats: Record<string, { sold: number; revenue: number; cost: number }> = {};
+    let revenueWithCost = 0;
+    let revenueWithoutCost = 0;
+    let itemsMissingCost = 0;
+    const missingCostProductIds = new Set<string>();
+    const productStats: Record<string, { sold: number; revenue: number; cost: number; hasCost: boolean }> = {};
     const brandStats: Record<string, { sold: number; revenue: number; cost: number; profit: number }> = {};
     const dailyRevenue = new Map<string, { revenue: number; cost: number; orders: number; profit: number }>();
     const paymentMethods: Record<string, number> = {};
@@ -162,15 +166,24 @@ export default function AdminRevenue() {
 
       (order.order_items || []).forEach((item: any) => {
         const itemRevenue = Number(item.price) * item.quantity;
-        const itemCost = (costMap[item.product_id] || 0) * item.quantity;
-        totalCost += itemCost;
+        const hasCost = item.product_id in costMap;
+        const itemCost = hasCost ? costMap[item.product_id] * item.quantity : 0;
         totalItemsSold += item.quantity;
+
+        if (hasCost) {
+          totalCost += itemCost;
+          revenueWithCost += itemRevenue;
+        } else {
+          revenueWithoutCost += itemRevenue;
+          itemsMissingCost += item.quantity;
+          missingCostProductIds.add(item.product_id);
+        }
 
         dayEntry.cost += itemCost;
         dayEntry.profit = dayEntry.revenue - dayEntry.cost;
 
         if (!productStats[item.product_id]) {
-          productStats[item.product_id] = { sold: 0, revenue: 0, cost: 0 };
+          productStats[item.product_id] = { sold: 0, revenue: 0, cost: 0, hasCost };
         }
         productStats[item.product_id].sold += item.quantity;
         productStats[item.product_id].revenue += itemRevenue;
@@ -188,14 +201,26 @@ export default function AdminRevenue() {
       });
     });
 
-    const totalProfit = totalRevenue - totalCost;
-    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    // Profit only from products with known cost data
+    const totalProfit = revenueWithCost - totalCost;
+    const profitMargin = revenueWithCost > 0 ? (totalProfit / revenueWithCost) * 100 : 0;
     const avgOrderValue = deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
 
     // Products sorted by profit
     const topProducts = Object.entries(productStats)
-      .map(([id, s]) => ({ id, name: productNameMap[id] || "Unknown", ...s, profit: s.revenue - s.cost, margin: s.revenue > 0 ? ((s.revenue - s.cost) / s.revenue * 100) : 0 }))
-      .sort((a, b) => b.profit - a.profit);
+      .map(([id, s]) => ({
+        id,
+        name: productNameMap[id] || "Unknown",
+        ...s,
+        profit: s.hasCost ? s.revenue - s.cost : null as number | null,
+        margin: s.hasCost && s.revenue > 0 ? ((s.revenue - s.cost) / s.revenue * 100) : null as number | null,
+      }))
+      .sort((a, b) => {
+        // Products with cost data first, sorted by profit
+        if (a.hasCost && !b.hasCost) return -1;
+        if (!a.hasCost && b.hasCost) return 1;
+        return (b.profit ?? 0) - (a.profit ?? 0);
+      });
 
     // Brands sorted by revenue
     const topBrands = Object.entries(brandStats)
@@ -220,6 +245,10 @@ export default function AdminRevenue() {
       topProducts, topBrands, dailyData, paymentMethods, couponLeaderboard,
       pendingRevenue: allActive.filter((o: any) => o.status !== "delivered").reduce((s: number, o: any) => s + Number(o.total), 0),
       pendingCount: allActive.filter((o: any) => o.status !== "delivered").length,
+      revenueWithCost,
+      revenueWithoutCost,
+      itemsMissingCost,
+      missingCostCount: missingCostProductIds.size,
     };
   }, [orders, costMap, productNameMap, productBrandMap, brandNameMap, datePreset, dateFrom, dateTo]);
 

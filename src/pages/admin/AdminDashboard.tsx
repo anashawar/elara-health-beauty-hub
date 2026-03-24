@@ -80,15 +80,31 @@ export default function AdminDashboard() {
 
     let totalCost = 0;
     let totalItemsSold = 0;
+    let revenueWithCost = 0; // revenue from products that have cost data
+    let revenueWithoutCost = 0; // revenue from products missing cost data
+    let itemsMissingCost = 0;
+    const missingCostProductIds = new Set<string>();
+
     deliveredOrders.forEach((order: any) => {
       (order.order_items || []).forEach((item: any) => {
-        totalCost += (costMap[item.product_id] || 0) * item.quantity;
+        const hasCost = item.product_id in costMap;
+        const itemRevenue = Number(item.price) * item.quantity;
         totalItemsSold += item.quantity;
+
+        if (hasCost) {
+          totalCost += costMap[item.product_id] * item.quantity;
+          revenueWithCost += itemRevenue;
+        } else {
+          revenueWithoutCost += itemRevenue;
+          itemsMissingCost += item.quantity;
+          missingCostProductIds.add(item.product_id);
+        }
       });
     });
 
-    const totalProfit = totalRevenue - totalCost;
-    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    // Profit only from products with known costs
+    const totalProfit = revenueWithCost - totalCost;
+    const profitMargin = revenueWithCost > 0 ? (totalProfit / revenueWithCost) * 100 : 0;
     const avgOrderValue = deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
 
     // Today's stats
@@ -167,6 +183,9 @@ export default function AdminDashboard() {
       topProducts,
       statusPipeline,
       outOfStock,
+      revenueWithoutCost,
+      itemsMissingCost,
+      missingCostCount: missingCostProductIds.size,
     };
   }, [orders, costMap, products]);
 
