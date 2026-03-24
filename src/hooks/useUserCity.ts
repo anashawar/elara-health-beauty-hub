@@ -1,0 +1,63 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./useAuth";
+
+/**
+ * Returns the city from the user's default delivery address.
+ * Used to filter city-restricted brands and their products.
+ * Returns null if no address or not logged in.
+ */
+export function useUserCity() {
+  const { user } = useAuth();
+
+  const { data: userCity = null } = useQuery({
+    queryKey: ["user-city", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+
+      // Try default address first
+      const { data: defaultAddr } = await supabase
+        .from("addresses")
+        .select("city")
+        .eq("user_id", user.id)
+        .eq("is_default", true)
+        .maybeSingle();
+
+      if (defaultAddr?.city) return defaultAddr.city;
+
+      // Fall back to most recent address
+      const { data: anyAddr } = await supabase
+        .from("addresses")
+        .select("city")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      return anyAddr?.city || null;
+    },
+    enabled: !!user,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  return userCity;
+}
+
+/**
+ * Check if a brand is available for the given user city.
+ * If brand has no restricted_cities (null/empty), it's available everywhere.
+ * If user has no city (guest), they can see unrestricted brands only.
+ */
+export function isBrandAvailableInCity(
+  brandRestrictedCities: string[] | null | undefined,
+  userCity: string | null
+): boolean {
+  // No restriction = available everywhere
+  if (!brandRestrictedCities || brandRestrictedCities.length === 0) return true;
+  // Has restriction but user has no city = hide restricted brands
+  if (!userCity) return false;
+  // Check if user's city is in the allowed list (case-insensitive)
+  return brandRestrictedCities.some(
+    (c) => c.toLowerCase() === userCity.toLowerCase()
+  );
+}
