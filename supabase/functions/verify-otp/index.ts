@@ -222,8 +222,10 @@ serve(async (req) => {
     }
 
     // Mark OTP as verified and clean up
-    await supabase.from("otp_verifications").update({ verified: true }).eq("id", otpRecord.id);
-    await supabase.from("otp_verifications").delete().eq("phone", normalizedPhone).neq("id", otpRecord.id);
+    if (otpRecord) {
+      await supabase.from("otp_verifications").update({ verified: true }).eq("id", otpRecord.id);
+      await supabase.from("otp_verifications").delete().eq("phone", normalizedPhone).neq("id", otpRecord.id);
+    }
 
     return new Response(
       JSON.stringify({ success: true, session, isNewUser: !existingUser }),
