@@ -519,17 +519,26 @@ export default function AdminRevenue() {
               </thead>
               <tbody>
                 {filteredProducts.map((p, i) => (
-                  <tr key={p.id} className="border-b border-border/20 hover:bg-muted/20 transition-colors">
+                  <tr key={p.id} className={`border-b border-border/20 hover:bg-muted/20 transition-colors ${!p.hasCost ? "bg-amber-500/5" : ""}`}>
                     <td className="py-2.5 px-2 text-xs text-muted-foreground">{i + 1}</td>
-                    <td className="py-2.5 px-2 font-medium text-foreground max-w-[200px] truncate text-xs">{p.name}</td>
+                    <td className="py-2.5 px-2 font-medium text-foreground max-w-[200px] text-xs">
+                      <span className="truncate block">{p.name}</span>
+                      {!p.hasCost && (
+                        <span className="text-[9px] text-amber-600 font-semibold flex items-center gap-1 mt-0.5">
+                          <AlertTriangle className="w-3 h-3" /> No cost data
+                        </span>
+                      )}
+                    </td>
                     <td className="py-2.5 px-2 text-right text-xs text-muted-foreground">{p.sold}</td>
                     <td className="py-2.5 px-2 text-right text-xs font-medium text-foreground">{formatPrice(p.revenue)}</td>
-                    <td className="py-2.5 px-2 text-right text-xs font-medium text-red-500">{formatPrice(p.cost)}</td>
-                    <td className={`py-2.5 px-2 text-right text-xs font-bold ${p.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                      {formatPrice(p.profit)}
+                    <td className="py-2.5 px-2 text-right text-xs font-medium text-red-500">
+                      {p.hasCost ? formatPrice(p.cost) : "—"}
                     </td>
-                    <td className={`py-2.5 px-2 text-right text-xs font-medium ${p.margin >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                      {p.margin.toFixed(1)}%
+                    <td className={`py-2.5 px-2 text-right text-xs font-bold ${p.profit === null ? "text-muted-foreground" : p.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                      {p.profit === null ? "—" : formatPrice(p.profit)}
+                    </td>
+                    <td className={`py-2.5 px-2 text-right text-xs font-medium ${p.margin === null ? "text-muted-foreground" : p.margin >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                      {p.margin === null ? "—" : `${p.margin.toFixed(1)}%`}
                     </td>
                   </tr>
                 ))}
