@@ -51,28 +51,34 @@ export default function WarehouseSystemPage() {
   const handleLogin = async () => {
     if (!username || !password) return;
     setLogging(true);
-    const { data, error } = await supabase
-      .from("warehouse_users")
-      .select("*")
-      .eq("username", username)
-      .eq("is_active", true)
-      .maybeSingle();
+    
+    // Use secure RPC function instead of direct table query
+    const { data, error } = await supabase.rpc("validate_warehouse_login", {
+      _username: username,
+    }) as { data: any; error: any };
     setLogging(false);
 
-    if (error || !data) {
+    if (error || !data?.valid) {
       toast.error("Invalid credentials");
       return;
     }
 
-    // Simple password check (hashed with pgcrypto in production, here plain for MVP)
+    // Compare password (plain text comparison for MVP - should use bcrypt in production)
     if (data.password_hash !== password) {
       toast.error("Invalid credentials");
       return;
     }
 
-    setUser(data as WarehouseUser);
+    const userData = {
+      id: data.id,
+      username: data.username,
+      full_name: data.full_name,
+      warehouse_id: data.warehouse_id,
+    } as WarehouseUser;
+    
+    setUser(userData);
     setAuthed(true);
-    localStorage.setItem("warehouse_user", JSON.stringify(data));
+    localStorage.setItem("warehouse_user", JSON.stringify(userData));
   };
 
   useEffect(() => {
