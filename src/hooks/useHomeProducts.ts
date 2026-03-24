@@ -92,7 +92,7 @@ export function useTrendingProducts() {
 
 export function usePickProducts() {
   const { language } = useLanguage();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-picks", language],
     queryFn: () => fetchSection({ is_pick: true }, language),
