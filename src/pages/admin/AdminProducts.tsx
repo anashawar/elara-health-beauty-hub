@@ -993,11 +993,11 @@ export default function AdminProducts() {
               ))}
             </div>
             <div className="flex gap-2 mt-2">
-              <Button size="sm" variant="outline" onClick={() => setQuickAddItems(prev => [...prev, { name: "", cost: "" }])}>
+              <Button size="sm" variant="outline" onClick={() => setQuickAddItems(prev => [...prev, { name: "", cost: "", price: "" }])}>
                 <Plus className="h-4 w-4 mr-1" />Add Row
               </Button>
               <Button size="sm" variant="outline" onClick={() => {
-                const rows = Array(10).fill(null).map(() => ({ name: "", cost: "" }));
+                const rows = Array(10).fill(null).map(() => ({ name: "", cost: "", price: "" }));
                 setQuickAddItems(prev => [...prev, ...rows]);
               }}>
                 +10 Rows
