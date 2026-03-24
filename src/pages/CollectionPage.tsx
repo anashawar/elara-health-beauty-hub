@@ -188,7 +188,8 @@ const CollectionPage = () => {
     placeholderData: (prev) => prev,
   });
 
-  const products = data?.products || [];
+  const allCollectionProducts = data?.products || [];
+  const products = useMemo(() => allCollectionProducts.filter((p: any) => isBrandAvailableInCity(p._brandRestrictedCities, userCity)), [allCollectionProducts, userCity]);
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
