@@ -187,10 +187,10 @@ export function useDiscountedProducts() {
 
 export function useGiftProducts() {
   const { language } = useLanguage();
+  const userCity = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-gifts", language],
     queryFn: async () => {
-      // First get product IDs tagged as "gift"
       const { data: tagData, error: tagErr } = await supabase
         .from("product_tags")
         .select("product_id")
@@ -211,6 +211,7 @@ export function useGiftProducts() {
       if (error) throw error;
       return (data || []).map((p: any) => mapProduct(p, language));
     },
-    staleTime: 10 * 60 * 1000, // gift tags change less frequently
+    staleTime: 10 * 60 * 1000,
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
   });
 }
