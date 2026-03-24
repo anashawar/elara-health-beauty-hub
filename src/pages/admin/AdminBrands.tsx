@@ -249,6 +249,42 @@ export default function AdminBrands() {
                   </div>
                 )}
 
+                {/* City restriction */}
+                <div className="border-t border-border/50 pt-3">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5" /> City Restriction
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mb-2">Leave empty to make available everywhere. Select cities to restrict this brand to only those cities.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {iraqCities.map((city) => {
+                      const checked = form.restricted_cities.includes(city);
+                      return (
+                        <label key={city} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border cursor-pointer text-sm transition-all ${checked ? "border-primary bg-primary/5 text-primary font-medium" : "border-border/50 bg-card text-foreground"}`}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              setForm(prev => ({
+                                ...prev,
+                                restricted_cities: checked
+                                  ? prev.restricted_cities.filter(c => c !== city)
+                                  : [...prev.restricted_cities, city],
+                              }));
+                            }}
+                            className="h-3.5 w-3.5 rounded border-border accent-primary"
+                          />
+                          {city}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {form.restricted_cities.length > 0 && (
+                    <p className="text-[11px] text-primary font-medium mt-2">
+                      ⚠️ This brand will ONLY be visible to users in: {form.restricted_cities.join(", ")}
+                    </p>
+                  )}
+                </div>
+
                 <Button className="rounded-xl" onClick={() => save.mutate(form)} disabled={!form.name || save.isPending}>
                   {save.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}{editing ? "Update" : "Create"}
                 </Button>
