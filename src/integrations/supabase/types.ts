@@ -348,6 +348,13 @@ export type Database = {
             referencedRelation: "coupons"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "coupon_allowed_users_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       coupons: {
@@ -1788,7 +1795,45 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      coupons_public: {
+        Row: {
+          code: string | null
+          created_at: string | null
+          current_uses: number | null
+          discount_type: string | null
+          discount_value: number | null
+          expires_at: string | null
+          id: string | null
+          is_active: boolean | null
+          max_uses: number | null
+          min_order_amount: number | null
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string | null
+          current_uses?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
+          expires_at?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          max_uses?: number | null
+          min_order_amount?: number | null
+        }
+        Update: {
+          code?: string | null
+          created_at?: string | null
+          current_uses?: number | null
+          discount_type?: string | null
+          discount_value?: number | null
+          expires_at?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          max_uses?: number | null
+          min_order_amount?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       award_loyalty_points: {
@@ -1800,6 +1845,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      check_otp_rate_limit: { Args: { _phone: string }; Returns: boolean }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1841,6 +1887,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      validate_prep_token: {
+        Args: { _token: string; _username: string }
+        Returns: Json
+      }
+      validate_warehouse_login: { Args: { _username: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "operations" | "data_entry"
