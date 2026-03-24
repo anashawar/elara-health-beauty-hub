@@ -184,6 +184,7 @@ const BrandPage = () => {
           )}
         </div>
       </div>
+      )}
 
       <div className="hidden md:block">
         <DesktopFooter />
