@@ -4,7 +4,7 @@ import { formatPrice } from "@/hooks/useProducts";
 import {
   DollarSign, TrendingUp, TrendingDown, Package, ShoppingCart,
   ArrowUpRight, Calendar, Filter, BarChart3, Percent, Wallet,
-  CreditCard, Truck, Clock,
+  CreditCard, Truck, Clock, AlertTriangle,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
@@ -131,7 +131,11 @@ export default function AdminRevenue() {
     let totalItemsSold = 0;
     let totalDeliveryFees = 0;
     let totalDiscounts = 0;
-    const productStats: Record<string, { sold: number; revenue: number; cost: number }> = {};
+    let revenueWithCost = 0;
+    let revenueWithoutCost = 0;
+    let itemsMissingCost = 0;
+    const missingCostProductIds = new Set<string>();
+    const productStats: Record<string, { sold: number; revenue: number; cost: number; hasCost: boolean }> = {};
     const brandStats: Record<string, { sold: number; revenue: number; cost: number; profit: number }> = {};
     const dailyRevenue = new Map<string, { revenue: number; cost: number; orders: number; profit: number }>();
     const paymentMethods: Record<string, number> = {};
@@ -162,15 +166,24 @@ export default function AdminRevenue() {
 
       (order.order_items || []).forEach((item: any) => {
         const itemRevenue = Number(item.price) * item.quantity;
-        const itemCost = (costMap[item.product_id] || 0) * item.quantity;
-        totalCost += itemCost;
+        const hasCost = item.product_id in costMap;
+        const itemCost = hasCost ? costMap[item.product_id] * item.quantity : 0;
         totalItemsSold += item.quantity;
+
+        if (hasCost) {
+          totalCost += itemCost;
+          revenueWithCost += itemRevenue;
+        } else {
+          revenueWithoutCost += itemRevenue;
+          itemsMissingCost += item.quantity;
+          missingCostProductIds.add(item.product_id);
+        }
 
         dayEntry.cost += itemCost;
         dayEntry.profit = dayEntry.revenue - dayEntry.cost;
 
         if (!productStats[item.product_id]) {
-          productStats[item.product_id] = { sold: 0, revenue: 0, cost: 0 };
+          productStats[item.product_id] = { sold: 0, revenue: 0, cost: 0, hasCost };
         }
         productStats[item.product_id].sold += item.quantity;
         productStats[item.product_id].revenue += itemRevenue;
@@ -188,14 +201,26 @@ export default function AdminRevenue() {
       });
     });
 
-    const totalProfit = totalRevenue - totalCost;
-    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    // Profit only from products with known cost data
+    const totalProfit = revenueWithCost - totalCost;
+    const profitMargin = revenueWithCost > 0 ? (totalProfit / revenueWithCost) * 100 : 0;
     const avgOrderValue = deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
 
     // Products sorted by profit
     const topProducts = Object.entries(productStats)
-      .map(([id, s]) => ({ id, name: productNameMap[id] || "Unknown", ...s, profit: s.revenue - s.cost, margin: s.revenue > 0 ? ((s.revenue - s.cost) / s.revenue * 100) : 0 }))
-      .sort((a, b) => b.profit - a.profit);
+      .map(([id, s]) => ({
+        id,
+        name: productNameMap[id] || "Unknown",
+        ...s,
+        profit: s.hasCost ? s.revenue - s.cost : null as number | null,
+        margin: s.hasCost && s.revenue > 0 ? ((s.revenue - s.cost) / s.revenue * 100) : null as number | null,
+      }))
+      .sort((a, b) => {
+        // Products with cost data first, sorted by profit
+        if (a.hasCost && !b.hasCost) return -1;
+        if (!a.hasCost && b.hasCost) return 1;
+        return (b.profit ?? 0) - (a.profit ?? 0);
+      });
 
     // Brands sorted by revenue
     const topBrands = Object.entries(brandStats)
@@ -220,6 +245,10 @@ export default function AdminRevenue() {
       topProducts, topBrands, dailyData, paymentMethods, couponLeaderboard,
       pendingRevenue: allActive.filter((o: any) => o.status !== "delivered").reduce((s: number, o: any) => s + Number(o.total), 0),
       pendingCount: allActive.filter((o: any) => o.status !== "delivered").length,
+      revenueWithCost,
+      revenueWithoutCost,
+      itemsMissingCost,
+      missingCostCount: missingCostProductIds.size,
     };
   }, [orders, costMap, productNameMap, productBrandMap, brandNameMap, datePreset, dateFrom, dateTo]);
 
@@ -272,12 +301,31 @@ export default function AdminRevenue() {
         )}
       </div>
 
+      {/* Missing cost warning */}
+      {stats.missingCostCount > 0 && (
+        <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              {stats.missingCostCount} products have no cost data
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {formatPrice(stats.revenueWithoutCost)} in revenue ({stats.itemsMissingCost} items sold) cannot be included in profit calculations.
+              Add costs in the Warehouse Costs page to get accurate profit numbers.
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Profit shown below is calculated only from the {formatPrice(stats.revenueWithCost)} revenue where cost data exists.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Total Revenue", value: formatPrice(stats.totalRevenue), sub: `${stats.totalOrders} delivered`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-500/10", accent: "from-emerald-500/10" },
-          { label: "Total Cost (COGS)", value: formatPrice(stats.totalCost), sub: `${stats.totalItemsSold} items`, icon: TrendingDown, color: "text-red-600", bg: "bg-red-500/10", accent: "from-red-500/10" },
-          { label: "Net Profit", value: formatPrice(stats.totalProfit), sub: `${stats.profitMargin.toFixed(1)}% margin`, icon: TrendingUp, color: stats.totalProfit >= 0 ? "text-emerald-600" : "text-red-600", bg: stats.totalProfit >= 0 ? "bg-emerald-500/10" : "bg-red-500/10", accent: stats.totalProfit >= 0 ? "from-emerald-500/10" : "from-red-500/10" },
+          { label: "Total Cost (COGS)", value: formatPrice(stats.totalCost), sub: `${stats.totalItemsSold - stats.itemsMissingCost} items with cost data`, icon: TrendingDown, color: "text-red-600", bg: "bg-red-500/10", accent: "from-red-500/10" },
+          { label: "Net Profit", value: formatPrice(stats.totalProfit), sub: `${stats.profitMargin.toFixed(1)}% margin (from costed items)`, icon: TrendingUp, color: stats.totalProfit >= 0 ? "text-emerald-600" : "text-red-600", bg: stats.totalProfit >= 0 ? "bg-emerald-500/10" : "bg-red-500/10", accent: stats.totalProfit >= 0 ? "from-emerald-500/10" : "from-red-500/10" },
           { label: "Avg Order Value", value: formatPrice(stats.avgOrderValue), sub: `${stats.allOrders} total orders`, icon: BarChart3, color: "text-blue-600", bg: "bg-blue-500/10", accent: "from-blue-500/10" },
         ].map((card, i) => (
           <motion.div
@@ -471,17 +519,26 @@ export default function AdminRevenue() {
               </thead>
               <tbody>
                 {filteredProducts.map((p, i) => (
-                  <tr key={p.id} className="border-b border-border/20 hover:bg-muted/20 transition-colors">
+                  <tr key={p.id} className={`border-b border-border/20 hover:bg-muted/20 transition-colors ${!p.hasCost ? "bg-amber-500/5" : ""}`}>
                     <td className="py-2.5 px-2 text-xs text-muted-foreground">{i + 1}</td>
-                    <td className="py-2.5 px-2 font-medium text-foreground max-w-[200px] truncate text-xs">{p.name}</td>
+                    <td className="py-2.5 px-2 font-medium text-foreground max-w-[200px] text-xs">
+                      <span className="truncate block">{p.name}</span>
+                      {!p.hasCost && (
+                        <span className="text-[9px] text-amber-600 font-semibold flex items-center gap-1 mt-0.5">
+                          <AlertTriangle className="w-3 h-3" /> No cost data
+                        </span>
+                      )}
+                    </td>
                     <td className="py-2.5 px-2 text-right text-xs text-muted-foreground">{p.sold}</td>
                     <td className="py-2.5 px-2 text-right text-xs font-medium text-foreground">{formatPrice(p.revenue)}</td>
-                    <td className="py-2.5 px-2 text-right text-xs font-medium text-red-500">{formatPrice(p.cost)}</td>
-                    <td className={`py-2.5 px-2 text-right text-xs font-bold ${p.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                      {formatPrice(p.profit)}
+                    <td className="py-2.5 px-2 text-right text-xs font-medium text-red-500">
+                      {p.hasCost ? formatPrice(p.cost) : "—"}
                     </td>
-                    <td className={`py-2.5 px-2 text-right text-xs font-medium ${p.margin >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                      {p.margin.toFixed(1)}%
+                    <td className={`py-2.5 px-2 text-right text-xs font-bold ${p.profit === null ? "text-muted-foreground" : p.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                      {p.profit === null ? "—" : formatPrice(p.profit)}
+                    </td>
+                    <td className={`py-2.5 px-2 text-right text-xs font-medium ${p.margin === null ? "text-muted-foreground" : p.margin >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                      {p.margin === null ? "—" : `${p.margin.toFixed(1)}%`}
                     </td>
                   </tr>
                 ))}
