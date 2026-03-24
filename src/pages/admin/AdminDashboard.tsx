@@ -8,8 +8,10 @@ import {
 import { formatPrice } from "@/hooks/useProducts";
 import { useMemo } from "react";
 import { motion } from "framer-motion";
+import { useAdmin } from "@/hooks/useAdmin";
 
 export default function AdminDashboard() {
+  const { isFullAdmin } = useAdmin();
   const { data: orders = [] } = useQuery({
     queryKey: ["admin-dashboard-orders"],
     queryFn: async () => {
