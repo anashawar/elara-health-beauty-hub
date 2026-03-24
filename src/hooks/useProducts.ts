@@ -217,7 +217,7 @@ export function useBrandProducts(brandId: string | undefined) {
         .from("products")
         .select(`
           *,
-          brands ( name, name_ar, name_ku ),
+          brands ( name, name_ar, name_ku, restricted_cities ),
           categories ( slug ),
           product_images ( image_url, sort_order ),
           product_tags ( tag )
