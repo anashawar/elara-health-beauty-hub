@@ -184,12 +184,13 @@ CRITICAL:
             gender: enriched.gender || null,
             application: enriched.application || null,
             is_trending: enriched.is_trending || false,
+            slug: enriched.slug || correctedTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+          };
+
           // Only update price if this product doesn't have an explicit selling price
           if (!skip_price_ids.includes(product.id)) {
             updatePayload.price = sellingPrice;
           }
-          updatePayload.slug = enriched.slug || correctedTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-          };
 
           if (brandId) updatePayload.brand_id = brandId;
           if (enriched.category_id) updatePayload.category_id = enriched.category_id;
