@@ -187,7 +187,7 @@ export function useDiscountedProducts() {
 
 export function useGiftProducts() {
   const { language } = useLanguage();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-gifts", language],
     queryFn: async () => {
