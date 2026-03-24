@@ -46,14 +46,23 @@ const CategoryPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeSubId = searchParams.get("sub") || null;
 
-  const { data: allProducts = [] } = useProducts();
+  // For concern routes we need all products (client-side keyword matching)
+  // For category routes we query only that category's products directly
+  const { data: categoryProducts = [], isLoading: loadingCatProducts } = useCategoryProducts(
+    !isConcernRoute ? id : undefined,
+    !isConcernRoute ? activeSubId : null
+  );
+  const { data: allProducts = [], isLoading: loadingAllProducts } = useProducts({ enabled: isConcernRoute });
+
   const { data: categories = [] } = useCategories();
   const { data: subcategories = [] } = useSubcategories();
   const { t, language } = useLanguage();
   const [searchOpen, setSearchOpen] = useState(false);
   const category = !isConcernRoute ? categories.find(c => c.slug === id) : null;
   const activeConcern = isConcernRoute ? concerns.find(c => c.id === id) : null;
-  const BRANDS = [...new Set(allProducts.map(p => p.brand))];
+  const baseProducts = isConcernRoute ? allProducts : categoryProducts;
+  const isLoadingProducts = isConcernRoute ? loadingAllProducts : loadingCatProducts;
+  const BRANDS = [...new Set(baseProducts.map(p => p.brand))];
   const { data: activeOffers = [] } = useActiveOffers();
 
   const categorySubs = useMemo(() => {
