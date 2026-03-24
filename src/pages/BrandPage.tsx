@@ -1,5 +1,5 @@
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Package } from "lucide-react";
+import { useParams, Link, Navigate } from "react-router-dom";
+import { ArrowLeft, Package, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 import { useBrands, useBrandProducts } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
@@ -13,6 +13,7 @@ import SEOHead, { breadcrumbJsonLd, SITE_BASE } from "@/components/SEOHead";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 import { useMemo, useState } from "react";
+import { useUserCity, isBrandAvailableInCity } from "@/hooks/useUserCity";
 
 const BrandPage = () => {
   const { id } = useParams<{ id: string }>();
