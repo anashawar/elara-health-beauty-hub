@@ -269,7 +269,7 @@ export default function AdminDashboard() {
             { label: "Products", value: productCount, icon: Package, color: "text-primary" },
             { label: "Categories", value: categoryCount, icon: FolderTree, color: "text-pink-600" },
             { label: "Out of Stock", value: stats.outOfStock, icon: XCircle, color: "text-red-600" },
-            { label: "Pending Revenue", value: formatPrice(stats.pendingRevenue), icon: Clock, color: "text-amber-600" },
+            ...(isFullAdmin ? [{ label: "Pending Revenue", value: formatPrice(stats.pendingRevenue), icon: Clock, color: "text-amber-600" }] : []),
           ].map((item) => (
             <div key={item.label} className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
