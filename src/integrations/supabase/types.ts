@@ -165,6 +165,7 @@ export type Database = {
           name: string
           name_ar: string | null
           name_ku: string | null
+          restricted_cities: string[] | null
           slug: string
         }
         Insert: {
@@ -176,6 +177,7 @@ export type Database = {
           name: string
           name_ar?: string | null
           name_ku?: string | null
+          restricted_cities?: string[] | null
           slug: string
         }
         Update: {
@@ -187,6 +189,7 @@ export type Database = {
           name?: string
           name_ar?: string | null
           name_ku?: string | null
+          restricted_cities?: string[] | null
           slug?: string
         }
         Relationships: []
