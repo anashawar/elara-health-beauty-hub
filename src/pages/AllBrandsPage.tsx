@@ -9,12 +9,17 @@ import FloatingSearch from "@/components/layout/FloatingSearch";
 import SEOHead from "@/components/SEOHead";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useUserCity, isBrandAvailableInCity } from "@/hooks/useUserCity";
 
 const AllBrandsPage = () => {
-  const { data: brands = [], isLoading } = useBrands();
+  const { data: allBrands = [], isLoading } = useBrands();
   const { t, language } = useLanguage();
   const [search, setSearch] = useState("");
   const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
+  const userCity = useUserCity();
+
+  // Filter out city-restricted brands the user can't see
+  const brands = useMemo(() => allBrands.filter((b: any) => isBrandAvailableInCity(b.restricted_cities, userCity)), [allBrands, userCity]);
 
   const getBrandName = (b: any) => {
     if (language === "ar" && b.name_ar) return b.name_ar;

@@ -7,11 +7,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Loader2, Tag, Sparkles, ImageIcon, Search, Warehouse } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Tag, Sparkles, ImageIcon, Search, Warehouse, MapPin } from "lucide-react";
 import { toast } from "sonner";
+import { iraqCities } from "@/data/iraqCities";
 
-interface BrandForm { id?: string; name: string; slug: string; logo_url: string; country_of_origin: string; featured: boolean; warehouse_ids: string[]; }
-const emptyForm: BrandForm = { name: "", slug: "", logo_url: "", country_of_origin: "", featured: false, warehouse_ids: [] };
+interface BrandForm { id?: string; name: string; slug: string; logo_url: string; country_of_origin: string; featured: boolean; warehouse_ids: string[]; restricted_cities: string[]; }
+const emptyForm: BrandForm = { name: "", slug: "", logo_url: "", country_of_origin: "", featured: false, warehouse_ids: [], restricted_cities: [] };
 
 export default function AdminBrands() {
   const qc = useQueryClient();
@@ -89,7 +90,7 @@ export default function AdminBrands() {
 
   const save = useMutation({
     mutationFn: async (f: BrandForm) => {
-      const payload = { name: f.name, slug: f.slug || f.name.toLowerCase().replace(/\s+/g, "-"), logo_url: f.logo_url || null, country_of_origin: f.country_of_origin || null, featured: f.featured };
+      const payload = { name: f.name, slug: f.slug || f.name.toLowerCase().replace(/\s+/g, "-"), logo_url: f.logo_url || null, country_of_origin: f.country_of_origin || null, featured: f.featured, restricted_cities: f.restricted_cities.length > 0 ? f.restricted_cities : null };
       let brandId = f.id;
       if (f.id) {
         const { error } = await supabase.from("brands").update(payload).eq("id", f.id);
@@ -248,6 +249,42 @@ export default function AdminBrands() {
                   </div>
                 )}
 
+                {/* City restriction */}
+                <div className="border-t border-border/50 pt-3">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5" /> City Restriction
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mb-2">Leave empty to make available everywhere. Select cities to restrict this brand to only those cities.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {iraqCities.map((city) => {
+                      const checked = form.restricted_cities.includes(city);
+                      return (
+                        <label key={city} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border cursor-pointer text-sm transition-all ${checked ? "border-primary bg-primary/5 text-primary font-medium" : "border-border/50 bg-card text-foreground"}`}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              setForm(prev => ({
+                                ...prev,
+                                restricted_cities: checked
+                                  ? prev.restricted_cities.filter(c => c !== city)
+                                  : [...prev.restricted_cities, city],
+                              }));
+                            }}
+                            className="h-3.5 w-3.5 rounded border-border accent-primary"
+                          />
+                          {city}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {form.restricted_cities.length > 0 && (
+                    <p className="text-[11px] text-primary font-medium mt-2">
+                      ⚠️ This brand will ONLY be visible to users in: {form.restricted_cities.join(", ")}
+                    </p>
+                  )}
+                </div>
+
                 <Button className="rounded-xl" onClick={() => save.mutate(form)} disabled={!form.name || save.isPending}>
                   {save.isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}{editing ? "Update" : "Create"}
                 </Button>
@@ -333,6 +370,12 @@ export default function AdminBrands() {
               <p className="text-sm font-bold text-foreground text-center">{b.name}</p>
               {b.featured && <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">FEATURED</span>}
               {b.country_of_origin && <p className="text-[10px] text-muted-foreground">{b.country_of_origin}</p>}
+              {b.restricted_cities && b.restricted_cities.length > 0 && (
+                <div className="flex items-center gap-0.5 mt-0.5">
+                  <MapPin className="w-2.5 h-2.5 text-amber-500" />
+                  <span className="text-[8px] font-semibold text-amber-600">{b.restricted_cities.join(", ")}</span>
+                </div>
+              )}
               <p className="text-[10px] text-muted-foreground">{b.slug}</p>
               {(() => {
                 const whIds = getWarehouseIdsForBrand(b.id);
@@ -349,7 +392,7 @@ export default function AdminBrands() {
               {!multiSelect && (
                 <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg" onClick={() => {
-                    setForm({ id: b.id, name: b.name, slug: b.slug, logo_url: b.logo_url || "", country_of_origin: b.country_of_origin || "", featured: b.featured || false, warehouse_ids: getWarehouseIdsForBrand(b.id) });
+                    setForm({ id: b.id, name: b.name, slug: b.slug, logo_url: b.logo_url || "", country_of_origin: b.country_of_origin || "", featured: b.featured || false, warehouse_ids: getWarehouseIdsForBrand(b.id), restricted_cities: b.restricted_cities || [] });
                     setEditing(true); setOpen(true);
                   }}><Pencil className="h-3 w-3" /></Button>
                   <Button size="icon" variant="ghost" className="h-7 w-7 rounded-lg text-destructive" onClick={() => {

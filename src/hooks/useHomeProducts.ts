@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageContext";
 import type { ProductWithRelations } from "./useProducts";
+import { useUserCity, isBrandAvailableInCity } from "./useUserCity";
 
 /**
  * Lightweight product queries for the home page.
@@ -16,7 +17,7 @@ const CARD_SELECT = `
   id, title, title_ar, title_ku, slug, price, original_price,
   is_new, is_trending, is_pick, in_stock,
   brand_id, category_id,
-  brands ( name ),
+  brands ( name, restricted_cities ),
   product_images ( image_url, sort_order )
 `;
 
@@ -55,7 +56,8 @@ function mapProduct(p: any, language: "en" | "ar" | "ku"): ProductWithRelations 
     skin_type: null,
     condition: null,
     inStock: p.in_stock !== false,
-  };
+    _brandRestrictedCities: p.brands?.restricted_cities || null,
+  } as ProductWithRelations;
 }
 
 async function fetchSection(
@@ -79,33 +81,40 @@ async function fetchSection(
 
 export function useTrendingProducts() {
   const { language } = useLanguage();
+  const userCity = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-trending", language],
     queryFn: () => fetchSection({ is_trending: true }, language),
     staleTime: 5 * 60 * 1000,
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
   });
 }
 
 export function usePickProducts() {
   const { language } = useLanguage();
+  const userCity = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-picks", language],
     queryFn: () => fetchSection({ is_pick: true }, language),
     staleTime: 5 * 60 * 1000,
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
   });
 }
 
 export function useNewProducts() {
   const { language } = useLanguage();
+  const userCity = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-new", language],
     queryFn: () => fetchSection({ is_new: true }, language),
     staleTime: 5 * 60 * 1000,
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
   });
 }
 
 export function useOfferProducts() {
   const { language } = useLanguage();
+  const userCity = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-offers", language],
     queryFn: async () => {
@@ -119,6 +128,7 @@ export function useOfferProducts() {
       return (data || []).map((p: any) => mapProduct(p, language));
     },
     staleTime: 5 * 60 * 1000,
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
   });
 }
 
@@ -129,10 +139,10 @@ export function useOfferProducts() {
  */
 export function useDiscountedProducts() {
   const { language } = useLanguage();
+  const userCity = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-discounted", language],
     queryFn: async () => {
-      // 1. Get active offers with brand/category targets
       const { data: offers, error: offErr } = await supabase
         .from("offers")
         .select("target_type, target_id, discount_type, discount_value")
@@ -151,11 +161,9 @@ export function useDiscountedProducts() {
         if (o.target_type === "category" && o.target_id) categoryIds.push(o.target_id);
       }
 
-      // 2. Fetch products matching those targets
       let query = supabase.from("products").select(CARD_SELECT) as any;
 
       if (!allProducts) {
-        // Build OR filter for brand and category targets
         const filters: string[] = [];
         if (brandIds.length > 0) filters.push(`brand_id.in.(${brandIds.join(",")})`);
         if (categoryIds.length > 0) filters.push(`category_id.in.(${categoryIds.join(",")})`);
@@ -173,15 +181,16 @@ export function useDiscountedProducts() {
       return (data || []).map((p: any) => mapProduct(p, language));
     },
     staleTime: 5 * 60 * 1000,
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
   });
 }
 
 export function useGiftProducts() {
   const { language } = useLanguage();
+  const userCity = useUserCity();
   return useQuery<ProductWithRelations[]>({
     queryKey: ["home-gifts", language],
     queryFn: async () => {
-      // First get product IDs tagged as "gift"
       const { data: tagData, error: tagErr } = await supabase
         .from("product_tags")
         .select("product_id")
@@ -202,6 +211,7 @@ export function useGiftProducts() {
       if (error) throw error;
       return (data || []).map((p: any) => mapProduct(p, language));
     },
-    staleTime: 10 * 60 * 1000, // gift tags change less frequently
+    staleTime: 10 * 60 * 1000,
+    select: (data) => data.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity)),
   });
 }

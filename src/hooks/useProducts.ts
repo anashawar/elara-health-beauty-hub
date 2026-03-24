@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserCity, isBrandAvailableInCity } from "./useUserCity";
 
 export interface ProductWithRelations {
   id: string;
@@ -86,7 +87,8 @@ function mapRawProduct(p: any, language: "en" | "ar" | "ku"): ProductWithRelatio
     skin_type: p.skin_type,
     condition: p.condition || null,
     inStock: p.in_stock !== false,
-  };
+    _brandRestrictedCities: p.brands?.restricted_cities || null,
+  } as ProductWithRelations;
 }
 
 async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithRelations[]> {
@@ -98,7 +100,7 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
       .from("products")
       .select(`
         *,
-        brands ( name, name_ar, name_ku ),
+        brands ( name, name_ar, name_ku, restricted_cities ),
         categories ( slug ),
         product_images ( image_url, sort_order ),
         product_tags ( tag )
@@ -116,12 +118,17 @@ async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithR
 
 export function useProducts(options?: { enabled?: boolean }) {
   const { language } = useLanguage();
+  const userCity = useUserCity();
 
   return useQuery<ProductWithRelations[]>({
     queryKey: ["products", language],
     queryFn: () => fetchProducts(language),
     enabled: options?.enabled !== false,
     staleTime: 5 * 60 * 1000,
+    select: (data) => data.filter((p) => {
+      // Find the brand's restricted_cities from raw cache — we store it in _brandRestrictedCities
+      return isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity);
+    }),
   });
 }
 
@@ -142,7 +149,7 @@ export function useProduct(id: string | undefined) {
         .from("products")
         .select(`
           *,
-          brands ( name, name_ar, name_ku ),
+          brands ( name, name_ar, name_ku, restricted_cities ),
           categories ( slug ),
           product_images ( image_url, sort_order ),
           product_tags ( tag )
@@ -175,7 +182,7 @@ export function useRelatedProducts(categoryId: string | null | undefined, exclud
           id, title, title_ar, title_ku, slug, price, original_price,
           is_new, is_trending, is_pick, in_stock,
           brand_id, category_id, subcategory_id,
-          brands ( name, name_ar, name_ku ),
+          brands ( name, name_ar, name_ku, restricted_cities ),
           categories ( slug ),
           product_images ( image_url, sort_order )
         `)
@@ -210,7 +217,7 @@ export function useBrandProducts(brandId: string | undefined) {
         .from("products")
         .select(`
           *,
-          brands ( name, name_ar, name_ku ),
+          brands ( name, name_ar, name_ku, restricted_cities ),
           categories ( slug ),
           product_images ( image_url, sort_order ),
           product_tags ( tag )
@@ -282,6 +289,8 @@ export interface BrandRow {
   slug: string;
   logo_url: string | null;
   country_of_origin?: string | null;
+  featured?: boolean;
+  restricted_cities?: string[] | null;
 }
 
 export function useBrands() {

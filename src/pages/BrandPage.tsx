@@ -1,5 +1,5 @@
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Package } from "lucide-react";
+import { useParams, Link, Navigate } from "react-router-dom";
+import { ArrowLeft, Package, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 import { useBrands, useBrandProducts } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
@@ -13,6 +13,7 @@ import SEOHead, { breadcrumbJsonLd, SITE_BASE } from "@/components/SEOHead";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 import { useMemo, useState } from "react";
+import { useUserCity, isBrandAvailableInCity } from "@/hooks/useUserCity";
 
 const BrandPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,9 +21,14 @@ const BrandPage = () => {
   const { t, language } = useLanguage();
   const [searchOpen, setSearchOpen] = useState(false);
   const { data: activeOffers = [] } = useActiveOffers();
+  const userCity = useUserCity();
 
   const brand = brands.find((b) => b.slug === id) || brands.find((b) => b.id === id);
-  const { data: brandProducts = [], isLoading } = useBrandProducts(brand?.id);
+
+  // Block access if brand is city-restricted and user is not in allowed city
+  const isBrandRestricted = brand && !isBrandAvailableInCity((brand as any).restricted_cities, userCity);
+  
+  const { data: brandProducts = [], isLoading } = useBrandProducts(isBrandRestricted ? undefined : brand?.id);
 
   const brandCountry = brand?.country_of_origin;
   const productCountries = [...new Set(brandProducts.map(p => p.country_of_origin).filter(Boolean))];
@@ -94,6 +100,18 @@ const BrandPage = () => {
         </div>
       </header>
 
+      {isBrandRestricted ? (
+        <div className="flex flex-col items-center justify-center py-20 px-4">
+          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+            <ShieldAlert className="w-8 h-8 text-destructive" />
+          </div>
+          <p className="text-sm font-medium text-foreground mb-1">{t("brand.notAvailable") || "Not available in your area"}</p>
+          <p className="text-xs text-muted-foreground text-center max-w-xs">{t("brand.notAvailableDesc") || "This brand is only available in select cities. Update your delivery address to check availability."}</p>
+          <Link to="/addresses" className="mt-4 text-xs font-semibold text-primary hover:underline">
+            {t("brand.updateAddress") || "Update Address"}
+          </Link>
+        </div>
+      ) : (
       <div className="flex-1 pb-24 md:pb-0">
         <div className="max-w-7xl mx-auto w-full">
           {/* Desktop breadcrumb */}
@@ -166,6 +184,7 @@ const BrandPage = () => {
           )}
         </div>
       </div>
+      )}
 
       <div className="hidden md:block">
         <DesktopFooter />

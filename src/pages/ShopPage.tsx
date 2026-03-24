@@ -14,6 +14,7 @@ import { useCategories, useBrands, concerns, type ProductWithRelations } from "@
 import { useLanguage } from "@/i18n/LanguageContext";
 import SEOHead from "@/components/SEOHead";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
+import { useUserCity, isBrandAvailableInCity } from "@/hooks/useUserCity";
 
 type ViewMode = "grid" | "list";
 type SortKey = "relevance" | "name-az" | "newest" | "price-low" | "price-high";
@@ -25,7 +26,7 @@ const CARD_SELECT = `
   is_new, is_trending, is_pick, in_stock,
   brand_id, category_id,
   categories ( slug ),
-  brands ( name ),
+  brands ( name, restricted_cities ),
   product_images ( image_url, sort_order )
 `;
 
@@ -49,7 +50,8 @@ function mapProduct(p: any, language: "en" | "ar" | "ku"): ProductWithRelations 
     country_of_origin: null, form: null, gender: null,
     volume_ml: null, volume_unit: "ml", application: null,
     skin_type: null, condition: null,
-  };
+    _brandRestrictedCities: p.brands?.restricted_cities || null,
+  } as ProductWithRelations;
 }
 
 const ShopPage = () => {
@@ -57,6 +59,7 @@ const ShopPage = () => {
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
   const { t, language } = useLanguage();
+  const userCity = useUserCity();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
@@ -141,7 +144,8 @@ const ShopPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  const products = data?.products || [];
+  const allProducts = data?.products || [];
+  const products = useMemo(() => allProducts.filter((p: any) => isBrandAvailableInCity(p._brandRestrictedCities, userCity)), [allProducts, userCity]);
   const totalCount = data?.total || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const { data: activeOffers = [] } = useActiveOffers();

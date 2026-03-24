@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useUserCity, isBrandAvailableInCity } from "@/hooks/useUserCity";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Search, X } from "lucide-react";
 import BottomNav from "@/components/layout/BottomNav";
@@ -27,7 +28,7 @@ const CARD_SELECT = `
   id, title, title_ar, title_ku, slug, price, original_price,
   is_new, is_trending, is_pick, in_stock,
   brand_id, category_id,
-  brands ( name ),
+  brands ( name, restricted_cities ),
   product_images ( image_url, sort_order )
 `;
 
@@ -65,7 +66,8 @@ function mapProduct(p: any, language: string) {
     skin_type: null,
     condition: null,
     inStock: p.in_stock !== false,
-  };
+    _brandRestrictedCities: p.brands?.restricted_cities || null,
+  } as any;
 }
 
 const CollectionPage = () => {
@@ -75,6 +77,7 @@ const CollectionPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const { data: activeOffers = [] } = useActiveOffers();
+  const userCity = useUserCity();
 
   const meta = collectionMeta[type || ""] || collectionMeta.trending;
 
@@ -185,7 +188,8 @@ const CollectionPage = () => {
     placeholderData: (prev) => prev,
   });
 
-  const products = data?.products || [];
+  const allCollectionProducts = data?.products || [];
+  const products = useMemo(() => allCollectionProducts.filter((p: any) => isBrandAvailableInCity(p._brandRestrictedCities, userCity)), [allCollectionProducts, userCity]);
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
