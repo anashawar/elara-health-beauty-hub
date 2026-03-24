@@ -66,7 +66,8 @@ function mapProduct(p: any, language: string) {
     skin_type: null,
     condition: null,
     inStock: p.in_stock !== false,
-  };
+    _brandRestrictedCities: p.brands?.restricted_cities || null,
+  } as any;
 }
 
 const CollectionPage = () => {
