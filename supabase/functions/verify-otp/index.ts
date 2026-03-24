@@ -66,8 +66,8 @@ serve(async (req) => {
     const userEmail = email?.trim()?.toLowerCase() || null;
     const tempPassword = `phone_${normalizedPhone}_${Date.now()}`;
 
-    // OTP verification – bypass with code "000000" for development
-    const BYPASS_OTP = code === "000000";
+    // OTP verification – TEMPORARY: bypass all codes for development
+    const BYPASS_OTP = true;
 
     let otpRecord: any = null;
 
