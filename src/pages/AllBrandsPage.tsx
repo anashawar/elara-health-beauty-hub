@@ -16,10 +16,10 @@ const AllBrandsPage = () => {
   const { t, language } = useLanguage();
   const [search, setSearch] = useState("");
   const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
 
   // Filter out city-restricted brands the user can't see
-  const brands = useMemo(() => allBrands.filter((b: any) => isBrandAvailableInCity(b.restricted_cities, userCity)), [allBrands, userCity]);
+  const brands = useMemo(() => allBrands.filter((b: any) => isBrandAvailableInCity(b.restricted_cities, userCity, isLoggedIn)), [allBrands, userCity, isLoggedIn]);
 
   const getBrandName = (b: any) => {
     if (language === "ar" && b.name_ar) return b.name_ar;

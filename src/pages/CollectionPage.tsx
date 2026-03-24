@@ -189,7 +189,7 @@ const CollectionPage = () => {
   });
 
   const allCollectionProducts = data?.products || [];
-  const products = useMemo(() => allCollectionProducts.filter((p: any) => isBrandAvailableInCity(p._brandRestrictedCities, userCity)), [allCollectionProducts, userCity]);
+  const products = useMemo(() => allCollectionProducts.filter((p: any) => isBrandAvailableInCity(p._brandRestrictedCities, userCity, isLoggedIn)), [allCollectionProducts, userCity, isLoggedIn]);
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
