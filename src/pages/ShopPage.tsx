@@ -59,7 +59,7 @@ const ShopPage = () => {
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
   const { t, language } = useLanguage();
-  const userCity = useUserCity();
+  const { userCity, isLoggedIn } = useUserCity();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
