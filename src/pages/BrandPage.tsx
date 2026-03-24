@@ -100,6 +100,18 @@ const BrandPage = () => {
         </div>
       </header>
 
+      {isBrandRestricted ? (
+        <div className="flex flex-col items-center justify-center py-20 px-4">
+          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+            <ShieldAlert className="w-8 h-8 text-destructive" />
+          </div>
+          <p className="text-sm font-medium text-foreground mb-1">{t("brand.notAvailable") || "Not available in your area"}</p>
+          <p className="text-xs text-muted-foreground text-center max-w-xs">{t("brand.notAvailableDesc") || "This brand is only available in select cities. Update your delivery address to check availability."}</p>
+          <Link to="/addresses" className="mt-4 text-xs font-semibold text-primary hover:underline">
+            {t("brand.updateAddress") || "Update Address"}
+          </Link>
+        </div>
+      ) : (
       <div className="flex-1 pb-24 md:pb-0">
         <div className="max-w-7xl mx-auto w-full">
           {/* Desktop breadcrumb */}
