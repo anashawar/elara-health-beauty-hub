@@ -132,15 +132,17 @@ const SettingsPage = () => {
     enabled: !!user,
   });
 
+  // Only sync from profile/user once profile query has settled (not undefined)
+  const profileLoaded = profile !== undefined;
   useEffect(() => {
-    if (!user) return;
+    if (!user || !profileLoaded) return;
 
     setFullName(profile?.full_name || user.user_metadata?.full_name || "");
     setPhone(profile?.phone || user.phone || user.user_metadata?.phone || "");
     setGender(profile?.gender || user.user_metadata?.gender || "");
     setBirthdate(profile?.birthdate || user.user_metadata?.birthdate || "");
     setAvatarPreview(profile?.avatar_url || null);
-  }, [profile, user]);
+  }, [profile, user, profileLoaded]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
