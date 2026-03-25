@@ -137,7 +137,7 @@ export default function FAQPage() {
             <MessageCircle className="w-4 h-4" />
             {c.chatBtn}
           </a>
-          <p className="text-xs text-muted-foreground mt-3">+964 750 722 9002</p>
+          <p className="text-xs text-muted-foreground mt-3">+964 770 3 836 836</p>
         </motion.div>
       </div>
     </PageShell>
