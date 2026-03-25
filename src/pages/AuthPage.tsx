@@ -86,10 +86,13 @@ const AuthPage = () => {
     if (!phone.trim()) { toast(t("auth.enterPhone")); return; }
     if (authMode === "signup" && !email.trim()) { toast(t("auth.enterEmail") || "Please enter your email"); return; }
     if (authMode === "signup" && !fullName.trim()) { toast(t("auth.enterFullName") || "Please enter your name"); return; }
+    if (authMode === "signup" && !gender) { toast(t("auth.selectGender") || "Please select your gender"); return; }
+    if (authMode === "signup" && !birthdate) { toast(t("auth.enterBirthdate") || "Please enter your date of birth"); return; }
 
     setLoading(true);
     try {
-      const body: any = { phone: phone.trim() };
+      const fullPhone = countryCode.code + phone.trim().replace(/^0/, "");
+      const body: any = { phone: fullPhone };
       if (authMode === "signup") {
         body.full_name = fullName.trim();
         body.email = email.trim();
@@ -359,6 +362,9 @@ const AuthPage = () => {
                     >
                       <div className="space-y-1.5 pb-1">
                         <label className="text-xs font-medium text-muted-foreground">{t("auth.gender") || "Gender"}</label>
+                        <p className="text-[10px] text-muted-foreground -mt-1">
+                          {t("auth.genderPurpose") || "Used to personalize product recommendations for you"}
+                        </p>
                         <div className="flex gap-2">
                           {[
                             { value: "female", label: t("auth.female") || "Female", emoji: "👩" },
@@ -396,6 +402,9 @@ const AuthPage = () => {
                     >
                       <div className="space-y-1.5 pb-1">
                         <label className="text-xs font-medium text-muted-foreground">{t("auth.birthdate") || "Date of Birth"}</label>
+                        <p className="text-[10px] text-muted-foreground -mt-1">
+                          {t("auth.birthdatePurpose") || "Used to recommend age-appropriate skincare products"}
+                        </p>
                         <div className="relative">
                           <Calendar className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
@@ -414,20 +423,57 @@ const AuthPage = () => {
                 {/* Phone — always */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">{t("auth.phoneNumber")}</label>
-                  <div className="relative">
-                    <div className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                      <span className="text-base leading-none">🇮🇶</span>
-                      <span className="text-xs font-semibold text-foreground">+964</span>
-                    </div>
+                  <div className="flex gap-2">
+                    {/* Country code selector */}
+                    <button
+                      type="button"
+                      onClick={() => setShowCountryPicker(!showCountryPicker)}
+                      className="relative h-12 px-3 rounded-2xl border border-border/60 bg-muted/40 hover:bg-muted/60 transition-colors flex items-center gap-1.5 shrink-0"
+                    >
+                      <span className="text-base leading-none">{countryCode.flag}</span>
+                      <span className="text-xs font-semibold text-foreground">{countryCode.code}</span>
+                      <svg className="w-3 h-3 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                    </button>
                     <Input
                       value={phone}
                       onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ""))}
-                      placeholder="7XX XXX XXXX"
+                      placeholder={countryCode.placeholder}
                       type="tel"
-                      className="pl-[4.5rem] rtl:pl-3 rtl:pr-[4.5rem] h-12 rounded-2xl border-border/60 bg-muted/40 focus:bg-card transition-colors"
-                      maxLength={11}
+                      className="h-12 rounded-2xl border-border/60 bg-muted/40 focus:bg-card transition-colors flex-1"
+                      maxLength={countryCode.maxLen}
                     />
                   </div>
+                  {/* Country picker dropdown */}
+                  <AnimatePresence>
+                    {showCountryPicker && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="grid grid-cols-2 gap-1.5 p-2 bg-muted/30 rounded-xl border border-border/40">
+                          {COUNTRY_CODES.map(cc => (
+                            <button
+                              key={cc.code}
+                              type="button"
+                              onClick={() => { setCountryCode(cc); setShowCountryPicker(false); setPhone(""); }}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                                countryCode.code === cc.code
+                                  ? "bg-primary text-primary-foreground"
+                                  : "hover:bg-muted/60 text-foreground"
+                              }`}
+                            >
+                              <span>{cc.flag}</span>
+                              <span>{cc.name}</span>
+                              <span className="text-muted-foreground ml-auto">{cc.code}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                   <p className="text-[10px] text-muted-foreground">
                     {t("auth.whatsappNote") || "A verification code will be sent via WhatsApp"}
                   </p>

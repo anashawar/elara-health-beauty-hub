@@ -32,10 +32,11 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Normalize phone: ensure +964 prefix
-    let normalizedPhone = phone.replace(/\s+/g, "").replace(/^0/, "");
+    // Normalize phone: accept full international numbers or default to +964
+    let normalizedPhone = phone.replace(/\s+/g, "").replace(/^00/, "+");
     if (!normalizedPhone.startsWith("+")) {
-      normalizedPhone = "+964" + normalizedPhone;
+      // If no country code, strip leading 0 and assume Iraq
+      normalizedPhone = "+964" + normalizedPhone.replace(/^0/, "");
     }
 
     // Rate limit: max 5 OTPs per phone per hour
