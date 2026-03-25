@@ -52,19 +52,14 @@ export default function WarehouseSystemPage() {
     if (!username || !password) return;
     setLogging(true);
     
-    // Use secure RPC function instead of direct table query
+    // Use secure RPC with server-side password verification
     const { data, error } = await supabase.rpc("validate_warehouse_login", {
       _username: username,
+      _password: password,
     }) as { data: any; error: any };
     setLogging(false);
 
     if (error || !data?.valid) {
-      toast.error("Invalid credentials");
-      return;
-    }
-
-    // Compare password (plain text comparison for MVP - should use bcrypt in production)
-    if (data.password_hash !== password) {
       toast.error("Invalid credentials");
       return;
     }
