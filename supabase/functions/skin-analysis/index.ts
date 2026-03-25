@@ -236,10 +236,6 @@ IMPORTANT:
 
     // Save skin tone to user profile for future makeup recommendations
     if (analysis.skin_tone) {
-      const adminClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-      );
       const { error: profileError } = await adminClient.from("profiles").update({
         skin_tone: analysis.skin_tone.category,
         skin_tone_hex: analysis.skin_tone.hex_color,
