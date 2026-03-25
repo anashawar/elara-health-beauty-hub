@@ -222,6 +222,8 @@ export const ku = {
     faq: "پرسیارە باوەکان",
     termsConditions: "مەرج و ڕێساکان",
     privacyPolicy: "سیاسەتی تایبەتمەندی",
+    followUs: "ئێمە بشوێنبکەوە",
+    followUsDesc: "لەگەڵ ELARA لە تۆڕە کۆمەڵایەتییەکان نوێ بە",
   },
   auth: {
     welcomeBack: "بەخێربێیتەوە",

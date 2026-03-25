@@ -222,6 +222,8 @@ export const en = {
     faq: "FAQ",
     termsConditions: "Terms & Conditions",
     privacyPolicy: "Privacy Policy",
+    followUs: "Follow Us",
+    followUsDesc: "Stay updated with ELARA on social media",
   },
   auth: {
     welcomeBack: "Welcome Back",
