@@ -14,22 +14,25 @@ const BottomNav = memo(() => {
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" style={{ contain: 'layout style paint' }}>
       <div className="app-container">
         <div className="bg-card border-t border-border/40 shadow-[0_-1px_3px_hsl(20_10%_12%/0.04)] bottom-nav-safe">
-          <div className="flex items-center justify-around py-1">
+          <div className="grid grid-cols-5 py-1">
             <NavItem to="/home" icon={Home} label={t("nav.home")} isActive={path === "/home" || path === "/"} />
             <NavItem to="/categories" icon={LayoutGrid} label={t("nav.categories")} isActive={path === "/categories"} />
             
-            {/* AI tab — inline with gradient icon bg */}
-            <Link to="/elara-ai" className="relative flex flex-col items-center gap-0.5 px-4 py-2 active:opacity-70 transition-opacity duration-75">
-              <div className={`w-[22px] h-[22px] rounded-lg flex items-center justify-center ${
-                path === "/elara-ai"
-                  ? "bg-primary"
-                  : "bg-gradient-to-br from-primary to-violet-600"
-              }`}>
-                <Sparkles className="w-3.5 h-3.5 text-primary-foreground" />
+            {/* AI tab — same layout, gradient icon distinguishes it */}
+            <Link to="/elara-ai" className="relative flex flex-col items-center justify-center gap-0.5 py-2 active:opacity-70 transition-opacity duration-75">
+              <div className="relative">
+                {path === "/elara-ai" && <div className="absolute -inset-2.5 bg-primary/10 rounded-2xl" />}
+                <div className={`relative w-[22px] h-[22px] rounded-md flex items-center justify-center ${
+                  path === "/elara-ai"
+                    ? "bg-primary"
+                    : "bg-gradient-to-br from-primary to-violet-600"
+                }`}>
+                  <Sparkles className="w-3.5 h-3.5 text-primary-foreground" />
+                </div>
               </div>
               <span className={`text-[10px] leading-tight transition-colors duration-75 ${
                 path === "/elara-ai" ? "text-primary font-bold" : "text-primary/70 font-medium"
-              }`}>ELARA AI</span>
+              }`}>AI</span>
             </Link>
 
             <NavItem to="/cart" icon={ShoppingBag} label={t("nav.cart")} isActive={path === "/cart"} badge={cartCount > 0 ? cartCount : undefined} />
@@ -45,7 +48,7 @@ const BottomNav = memo(() => {
 const NavItem = memo(({ to, icon: Icon, label, isActive, badge }: {
   to: string; icon: any; label: string; isActive: boolean; badge?: number;
 }) => (
-  <Link to={to} className="relative flex flex-col items-center gap-0.5 px-4 py-2 active:opacity-70 transition-opacity duration-75">
+  <Link to={to} className="relative flex flex-col items-center justify-center gap-0.5 py-2 active:opacity-70 transition-opacity duration-75">
     <div className="relative">
       {isActive && <div className="absolute -inset-2.5 bg-primary/10 rounded-2xl" />}
       <Icon className={`relative w-[22px] h-[22px] transition-colors duration-75 ${
