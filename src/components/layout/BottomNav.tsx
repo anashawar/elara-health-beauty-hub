@@ -12,25 +12,30 @@ const BottomNav = memo(() => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" style={{ contain: 'layout style paint' }}>
-      <div className="app-container">
+      <div className="app-container relative">
+        {/* Floating AI button — positioned above the bar */}
+        <div className="absolute left-1/2 -translate-x-1/2 -top-5 z-10">
+          <Link to="/elara-ai" className="flex flex-col items-center">
+            <div className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-lg ring-[3px] ring-card transition-all duration-75 ${
+              path === "/elara-ai"
+                ? "bg-primary scale-105"
+                : "bg-gradient-to-br from-primary to-violet-600"
+            }`}>
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <span className={`text-[9px] leading-tight mt-1 font-bold ${
+              path === "/elara-ai" ? "text-primary" : "text-primary/70"
+            }`}>ELARA AI</span>
+          </Link>
+        </div>
+
         <div className="bg-card border-t border-border/40 shadow-[0_-1px_3px_hsl(20_10%_12%/0.04)] bottom-nav-safe">
           <div className="flex items-center justify-around py-1">
             <NavItem to="/home" icon={Home} label={t("nav.home")} isActive={path === "/home" || path === "/"} />
             <NavItem to="/categories" icon={LayoutGrid} label={t("nav.categories")} isActive={path === "/categories"} />
             
-            {/* AI center button */}
-            <Link to="/elara-ai" className="relative flex flex-col items-center gap-0.5 px-4 -mt-4">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-float border-2 transition-colors duration-75 ${
-                path === "/elara-ai"
-                  ? "bg-primary border-primary/30"
-                  : "bg-gradient-to-br from-primary to-violet-600 border-primary/20"
-              }`}>
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span className={`text-[9px] leading-tight mt-0.5 font-bold ${
-                path === "/elara-ai" ? "text-primary" : "text-primary/70"
-              }`}>ELARA AI</span>
-            </Link>
+            {/* Spacer for center AI button */}
+            <div className="w-16" />
 
             <NavItem to="/cart" icon={ShoppingBag} label={t("nav.cart")} isActive={path === "/cart"} badge={cartCount > 0 ? cartCount : undefined} />
             <NavItem to="/profile" icon={UserRound} label={t("nav.me")} isActive={path === "/profile"} />
