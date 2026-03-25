@@ -14,13 +14,11 @@ function isKurdistanRegion(city: string | null): boolean {
   return KURDISTAN_CITIES.some(k => city.toLowerCase().includes(k));
 }
 
-// Female-oriented categories/keywords
 const FEMALE_KEYWORDS = ["makeup", "lipstick", "mascara", "foundation", "blush", "eyeshadow", "concealer", "eyeliner", "nail polish", "feminine", "women", "woman", "her", "ladies"];
 const MALE_KEYWORDS = ["beard", "shaving", "aftershave", "men", "man", "his", "masculine", "barber"];
 
 function isProductForGender(product: any, userGender: string | null): boolean {
-  if (!userGender) return true; // Show all if no gender set
-  
+  if (!userGender) return true;
   const prodGender = (product.gender || "").toLowerCase();
   const title = (product.title || "").toLowerCase();
   const desc = (product.description || "").toLowerCase();
@@ -29,13 +27,11 @@ function isProductForGender(product: any, userGender: string | null): boolean {
   const allText = `${title} ${desc} ${category} ${tags.join(" ")}`;
 
   if (userGender === "male") {
-    // Exclude explicitly female products
     if (prodGender === "female" || prodGender === "women") return false;
     if (FEMALE_KEYWORDS.some(kw => allText.includes(kw))) return false;
     return true;
   }
   if (userGender === "female") {
-    // Exclude explicitly male products
     if (prodGender === "male" || prodGender === "men") return false;
     if (MALE_KEYWORDS.some(kw => allText.includes(kw))) return false;
     return true;
@@ -43,11 +39,7 @@ function isProductForGender(product: any, userGender: string | null): boolean {
   return true;
 }
 
-async function getProductCatalog(userGender: string | null): Promise<string> {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
+async function getProductCatalog(supabase: any, userGender: string | null): Promise<string> {
   const { data: products } = await supabase
     .from("products")
     .select("id, title, slug, price, original_price, description, skin_type, condition, form, volume_ml, country_of_origin, benefits, gender, brands(name), categories(name, slug), product_tags(tag)")
@@ -69,7 +61,87 @@ async function getProductCatalog(userGender: string | null): Promise<string> {
   }).join("\n");
 }
 
-function buildSystemPrompt(catalog: string, userName: string | null, userGender: string | null, userAge: number | null, isKurdistan: boolean, userLanguage: string): string {
+async function getUserPersonalization(supabase: any, userId: string) {
+  // Fetch all personalization data in parallel
+  const [skinRes, ordersRes, wishlistRes, loyaltyRes] = await Promise.all([
+    // Latest skin analysis
+    supabase
+      .from("skin_analyses")
+      .select("skin_type, overall_score, hydration_score, clarity_score, elasticity_score, texture_score, problems, routine, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    // Recent orders with product details
+    supabase
+      .from("orders")
+      .select("id, status, created_at, order_items(quantity, price, products(title, brands(name), categories(name)))")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(5),
+    // Wishlist items
+    supabase
+      .from("wishlist_items")
+      .select("products(title, price, brands(name), categories(name))")
+      .eq("user_id", userId)
+      .limit(10),
+    // Loyalty tier
+    supabase
+      .from("loyalty_points")
+      .select("balance, tier, lifetime_earned")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+
+  const result: string[] = [];
+
+  // Skin analysis context
+  const skin = skinRes.data;
+  if (skin) {
+    const problems = skin.problems ? JSON.stringify(skin.problems) : "none detected";
+    const routine = skin.routine ? JSON.stringify(skin.routine) : "not set";
+    const scanDate = new Date(skin.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    result.push(`🔬 SKIN ANALYSIS (from ${scanDate}):
+- Skin type: ${skin.skin_type || "Unknown"}
+- Overall score: ${skin.overall_score}/100
+- Hydration: ${skin.hydration_score ?? "N/A"}/100 | Clarity: ${skin.clarity_score ?? "N/A"}/100 | Texture: ${skin.texture_score ?? "N/A"}/100 | Elasticity: ${skin.elasticity_score ?? "N/A"}/100
+- Detected problems: ${problems}
+- Recommended routine: ${routine}
+USE THIS DATA to personalize product recommendations. Reference their skin score and specific concerns naturally. If their hydration is low, prioritize hydrating products. If clarity is low, suggest brightening products. Etc.`);
+  }
+
+  // Order history context
+  const orders = ordersRes.data;
+  if (orders && orders.length > 0) {
+    const orderSummary = orders.map((o: any) => {
+      const items = (o.order_items || []).map((i: any) => `${i.products?.title || "Unknown"} (${i.quantity}x)`).join(", ");
+      return `- ${new Date(o.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}: ${items} [${o.status}]`;
+    }).join("\n");
+    result.push(`🛒 PURCHASE HISTORY (last ${orders.length} orders):
+${orderSummary}
+Use this to: avoid recommending products they already own (unless they might need a refill), suggest complementary products, and reference past purchases naturally like a friend would ("I see you got X last time — how are you liking it?").`);
+  }
+
+  // Wishlist context
+  const wishlist = wishlistRes.data;
+  if (wishlist && wishlist.length > 0) {
+    const wishlistItems = wishlist.map((w: any) => `- ${w.products?.title || "Unknown"} by ${w.products?.brands?.name || "Unknown"} (${Number(w.products?.price || 0).toLocaleString()} IQD)`).join("\n");
+    result.push(`💝 WISHLIST (items they want):
+${wishlistItems}
+Use this to: proactively mention wishlist items when relevant ("I noticed you have X on your wishlist — it's perfect for your skin type!"). Suggest deals or similar alternatives if they're browsing related products.`);
+  }
+
+  // Loyalty context
+  const loyalty = loyaltyRes.data;
+  if (loyalty) {
+    result.push(`⭐ LOYALTY STATUS: ${loyalty.tier.toUpperCase()} tier | ${loyalty.balance} points available | ${loyalty.lifetime_earned} lifetime points
+Mention their loyalty status naturally ("As a ${loyalty.tier} member, you're getting great value!"). If they have enough points, suggest redeeming them.`);
+  }
+
+  return result.length > 0 ? result.join("\n\n") : "";
+}
+
+function buildSystemPrompt(catalog: string, userName: string | null, userGender: string | null, userAge: number | null, isKurdistan: boolean, userLanguage: string, personalizationContext: string): string {
   const langMap: Record<string, string> = {
     en: "English",
     ar: "Arabic (Iraqi Baghdadi dialect)",
@@ -113,6 +185,16 @@ function buildSystemPrompt(catalog: string, userName: string | null, userGender:
     ? "\n⚠️ IMPORTANT: The catalog below has been PRE-FILTERED to show only products suitable for women. ONLY recommend products from this list."
     : "";
 
+  const personalizationBlock = personalizationContext
+    ? `\n\n📊 PERSONALIZED USER DATA (use this to make recommendations more personal and relevant):\n${personalizationContext}\n\nIMPORTANT PERSONALIZATION RULES:
+- Reference their skin analysis results when recommending products. If they did a skin scan, you KNOW their skin. Use it!
+- If they bought something before, ask how it's working for them before recommending the same category.
+- If something is on their wishlist, proactively bring it up when relevant.
+- Remember their loyalty tier and make them feel valued.
+- Be like a friend who remembers everything about them — their skin type, what they bought, what they want.
+- NEVER say "I see from your data" or "according to your profile" — just naturally incorporate the knowledge like a real friend would.`
+    : "";
+
   if (isKurdistan) {
     return `You are ELARA — a warm, friendly Kurdish ${userGender === "male" ? "pharmacist" : "woman"} from Erbil (هەولێر) who works as a beauty consultant and pharmacist at ELARA health & beauty store. You are FROM Kurdistan and you understand Kurdish culture deeply.
 
@@ -129,6 +211,7 @@ PERSONALITY & IDENTITY:
 ${nameInstruction}
 ${genderInstruction}
 ${ageInstruction}
+${personalizationBlock}
 
 LANGUAGES:
 ${langInstruction}
@@ -171,6 +254,7 @@ PERSONALITY & IDENTITY:
 ${nameInstruction}
 ${genderInstruction}
 ${ageInstruction}
+${personalizationBlock}
 
 LANGUAGES:
 ${langInstruction}
@@ -213,9 +297,11 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const authClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
+    const adminClient = createClient(supabaseUrl, serviceKey);
 
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
@@ -225,6 +311,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const userId = (claimsData.claims as any).sub;
 
     const { messages, user_name, user_gender, user_birthdate, user_city, user_language } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -241,9 +329,15 @@ serve(async (req) => {
     }
 
     const isKurdistan = isKurdistanRegion(user_city || null);
-    const catalog = await getProductCatalog(user_gender || null);
+
+    // Fetch catalog and personalization data in parallel
+    const [catalog, personalizationContext] = await Promise.all([
+      getProductCatalog(adminClient, user_gender || null),
+      userId ? getUserPersonalization(adminClient, userId) : Promise.resolve(""),
+    ]);
+
     const firstName = user_name ? user_name.split(" ")[0] : null;
-    const systemPrompt = buildSystemPrompt(catalog, firstName, user_gender || null, userAge, isKurdistan, user_language || "en");
+    const systemPrompt = buildSystemPrompt(catalog, firstName, user_gender || null, userAge, isKurdistan, user_language || "en", personalizationContext);
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
