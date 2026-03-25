@@ -42,9 +42,10 @@ function isProductForGender(product: any, userGender: string | null): boolean {
 async function getProductCatalog(supabase: any, userGender: string | null): Promise<string> {
   const { data: products } = await supabase
     .from("products")
-    .select("id, title, slug, price, original_price, description, skin_type, condition, form, volume_ml, country_of_origin, benefits, gender, brands(name), categories(name, slug), product_tags(tag)")
+    .select("id, title, slug, price, original_price, skin_type, condition, form, volume_ml, gender, brands(name), categories(name), product_tags(tag)")
+    .eq("in_stock", true)
     .order("created_at", { ascending: false })
-    .limit(80);
+    .limit(60);
 
   if (!products || products.length === 0) return "No products available.";
 
@@ -56,8 +57,7 @@ async function getProductCatalog(supabase: any, userGender: string | null): Prom
     const category = p.categories?.name || "";
     const price = `${Number(p.price).toLocaleString()} IQD`;
     const originalPrice = p.original_price ? ` (was ${Number(p.original_price).toLocaleString()} IQD)` : "";
-    const gender = p.gender ? ` | Gender: ${p.gender}` : "";
-    return `- **${p.title}** by ${brand} | ${price}${originalPrice} | ${p.volume_ml || ""}${p.form ? " " + p.form : ""}${gender} | ID: ${p.id} | Slug: ${p.slug} | Category: ${category} | Skin type: ${p.skin_type || "All"} | Tags: ${tags} | ${p.description || ""}`;
+    return `- ${p.title} by ${brand} | ${price}${originalPrice} | ${p.volume_ml || ""} ${p.form || ""} | ID:${p.id} | Slug:${p.slug} | Cat:${category} | Skin:${p.skin_type || "All"} | Tags:${tags}`;
   }).join("\n");
 }
 
@@ -350,7 +350,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: "google/gemini-2.5-flash",
           messages: [
             { role: "system", content: systemPrompt },
             ...messages,

@@ -394,14 +394,22 @@ const ElaraChatPage = () => {
   }, [conversationId, user, queryClient]);
 
   const renderAssistantContent = (content: string) => {
-    const productRegex = /\[PRODUCT:([^:]+):([^:]+):([^\]]+?):([^\]]+?)\]/g;
+    // Match both 4-part [PRODUCT:id:slug:title:price] and 3-part [PRODUCT:id:slug:price] formats
+    const productRegex = /\[PRODUCT:([0-9a-f-]{36}):([a-z0-9][a-z0-9-]*[a-z0-9]):([^\]]+?)(?::([^\]]+?))?\]/gi;
     const parts: (string | { id: string; slug: string; title: string; price: string })[] = [];
     let lastIndex = 0;
     let match;
 
     while ((match = productRegex.exec(content)) !== null) {
       if (match.index > lastIndex) parts.push(content.slice(lastIndex, match.index));
-      parts.push({ id: match[1], slug: match[2], title: match[3], price: match[4] });
+      const id = match[1];
+      const slug = match[2];
+      // If 4 groups matched, group 3=title, group 4=price; if 3 groups, group 3=price, derive title from product data
+      const hasTitle = !!match[4];
+      const product = products.find(p => p.id === id);
+      const title = hasTitle ? match[3] : (product?.title || slug.replace(/-/g, ' '));
+      const price = hasTitle ? match[4] : match[3];
+      parts.push({ id, slug, title, price });
       lastIndex = match.index + match[0].length;
     }
     if (lastIndex < content.length) parts.push(content.slice(lastIndex));
