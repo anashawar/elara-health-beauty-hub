@@ -48,7 +48,7 @@ const BottomNav = memo(() => {
 const NavItem = memo(({ to, icon: Icon, label, isActive, badge }: {
   to: string; icon: any; label: string; isActive: boolean; badge?: number;
 }) => (
-  <Link to={to} className="relative flex flex-col items-center gap-0.5 px-4 py-2 active:opacity-70 transition-opacity duration-75">
+  <Link to={to} className="relative flex flex-col items-center justify-center gap-0.5 py-2 active:opacity-70 transition-opacity duration-75">
     <div className="relative">
       {isActive && <div className="absolute -inset-2.5 bg-primary/10 rounded-2xl" />}
       <Icon className={`relative w-[22px] h-[22px] transition-colors duration-75 ${
