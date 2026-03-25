@@ -222,6 +222,8 @@ export const ar = {
     faq: "الأسئلة الشائعة",
     termsConditions: "الشروط والأحكام",
     privacyPolicy: "سياسة الخصوصية",
+    followUs: "تابعنا",
+    followUsDesc: "ابقَ على اطلاع مع ELARA على وسائل التواصل",
   },
   auth: {
     welcomeBack: "أهلاً بعودتك",
