@@ -12,7 +12,7 @@ interface Section {
   footer?: string;
 }
 
-const sectionIcons: LucideIcon[] = [Users, Database, Eye, Share2, UserCheck, Cookie, ShieldCheck, Users, Link2, FileText];
+const sectionIcons: LucideIcon[] = [Users, Database, Eye, Share2, UserCheck, Cookie, ShieldCheck, Users, Link2, FileText, Eye];
 
 const content = {
   en: {
