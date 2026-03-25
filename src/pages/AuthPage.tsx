@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, ArrowRight, Loader2, ShieldCheck, Mail, Sparkles, Calendar, MapPin, Globe, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import MapPicker from "@/components/MapPicker";
+import { lazy, Suspense } from "react";
+const MapPicker = lazy(() => import("@/components/MapPicker"));
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
@@ -759,13 +760,15 @@ const AuthPage = () => {
       <div className="px-5 py-4 text-center">
         <p className="text-[10px] text-muted-foreground">ELARA — {t("common.tagline")}</p>
       </div>
-      <MapPicker
-        open={mapOpen}
-        onClose={() => setMapOpen(false)}
-        onConfirm={handleMapConfirm}
-        initialLat={gpsLat}
-        initialLng={gpsLng}
-      />
+      <Suspense fallback={null}>
+        <MapPicker
+          open={mapOpen}
+          onClose={() => setMapOpen(false)}
+          onConfirm={handleMapConfirm}
+          initialLat={gpsLat}
+          initialLng={gpsLng}
+        />
+      </Suspense>
       </div>
     </div>
   );

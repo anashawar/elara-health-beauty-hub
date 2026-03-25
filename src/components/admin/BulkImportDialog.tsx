@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Upload, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle, Download } from "lucide-react";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
+// Lazy-load xlsx (~300KB) — only when user imports a spreadsheet
+const loadXLSX = () => import("xlsx");
 
 export interface ColumnMapping {
   /** The key used in the parsed row object */
@@ -45,6 +46,7 @@ export default function BulkImportDialog({ open, onOpenChange, title, columns, o
   };
 
   const parseFile = async (f: File) => {
+    const XLSX = await loadXLSX();
     const data = await f.arrayBuffer();
     const workbook = XLSX.read(data, { type: "array" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -96,6 +98,7 @@ export default function BulkImportDialog({ open, onOpenChange, title, columns, o
     setImporting(true);
     setResult(null);
     try {
+      const XLSX = await loadXLSX();
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data, { type: "array" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -120,11 +123,11 @@ export default function BulkImportDialog({ open, onOpenChange, title, columns, o
     }
   };
 
-  const downloadTemplate = () => {
+  const downloadTemplate = async () => {
+    const XLSX = await loadXLSX();
     const ws = XLSX.utils.json_to_sheet([
       Object.fromEntries(columns.map((c) => [c.label, c.example || ""])),
     ]);
-    // Set header row to use labels
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Template");
     XLSX.writeFile(wb, `${title.toLowerCase().replace(/\s+/g, "-")}-template.xlsx`);

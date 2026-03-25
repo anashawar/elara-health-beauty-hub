@@ -12,7 +12,8 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "@/components/ui/sonner";
 import BottomNav from "@/components/layout/BottomNav";
 import NativeAppGate from "@/components/NativeAppGate";
-import { generateSkinReportPdf } from "@/lib/generateSkinReportPdf";
+// Lazy-load jsPDF (~200KB) — only when user taps "Download Report"
+const lazyGenerateSkinReportPdf = () => import("@/lib/generateSkinReportPdf").then(m => m.generateSkinReportPdf);
 import { savePdfBlob } from "@/lib/savePdfBlob";
 import { useQuery } from "@tanstack/react-query";
 
@@ -682,7 +683,8 @@ function SkinScanContent() {
                 onClick={async () => {
                   try {
                     toast.info(language === "ar" ? "جاري إنشاء التقرير..." : "Generating report...");
-                    const blob = await generateSkinReportPdf(analysis as any, user?.user_metadata?.full_name || "", language);
+                    const generateFn = await lazyGenerateSkinReportPdf();
+                    const blob = await generateFn(analysis as any, user?.user_metadata?.full_name || "", language);
                     const fileName = `ELARA-Skin-Report-${new Date().toISOString().slice(0, 10)}.pdf`;
                     await savePdfBlob(blob, fileName);
                     toast.success(language === "ar" ? "تم تحميل التقرير!" : "Report downloaded!");
@@ -1101,7 +1103,8 @@ function SkinScanContent() {
               onClick={async () => {
                 try {
                   toast.info(language === "ar" ? "جاري إنشاء التقرير..." : "Generating report...");
-                  const blob = await generateSkinReportPdf(analysis as any, user?.user_metadata?.full_name || "", language);
+                  const generateFn = await lazyGenerateSkinReportPdf();
+                  const blob = await generateFn(analysis as any, user?.user_metadata?.full_name || "", language);
                   const fileName = `ELARA-Skin-Report-${new Date().toISOString().slice(0, 10)}.pdf`;
                   await savePdfBlob(blob, fileName);
                   toast.success(language === "ar" ? "تم تحميل التقرير!" : "Report downloaded!");
