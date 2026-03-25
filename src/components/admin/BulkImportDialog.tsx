@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Upload, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle, Download } from "lucide-react";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
+// Lazy-load xlsx (~300KB) — only when user imports a spreadsheet
+const loadXLSX = () => import("xlsx");
 
 export interface ColumnMapping {
   /** The key used in the parsed row object */

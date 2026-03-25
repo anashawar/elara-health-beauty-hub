@@ -14,7 +14,8 @@ import SearchOverlay from "@/components/SearchOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { iraqCities } from "@/data/iraqCities";
-import MapPicker from "@/components/MapPicker";
+import { lazy, Suspense } from "react";
+const MapPicker = lazy(() => import("@/components/MapPicker"));
 
 type AddressType = "House" | "Apartment" | "Office";
 
