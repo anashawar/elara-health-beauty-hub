@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Bell, CheckCheck, Package, Tag, Sparkles, Gift, ChevronRight, X, Megaphone } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { useNotifications, type Notification } from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -61,6 +61,39 @@ function NotificationCard({ notification, onRead, index }: { notification: Notif
   );
 }
 
+/** Lock body scroll on iOS/Android when panel is open */
+function useBodyScrollLock(locked: boolean) {
+  useEffect(() => {
+    if (!locked) return;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const html = document.documentElement;
+
+    // Save current styles
+    const originalBodyOverflow = body.style.overflow;
+    const originalBodyPosition = body.style.position;
+    const originalBodyTop = body.style.top;
+    const originalBodyWidth = body.style.width;
+    const originalHtmlOverflow = html.style.overflow;
+
+    // Lock
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    html.style.overflow = "hidden";
+
+    return () => {
+      body.style.overflow = originalBodyOverflow;
+      body.style.position = originalBodyPosition;
+      body.style.top = originalBodyTop;
+      body.style.width = originalBodyWidth;
+      html.style.overflow = originalHtmlOverflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [locked]);
+}
+
 function MobileNotificationPanel({ open, onClose, notifications, unreadCount, onRead, onMarkAllRead }: {
   open: boolean;
   onClose: () => void;
@@ -69,43 +102,77 @@ function MobileNotificationPanel({ open, onClose, notifications, unreadCount, on
   onRead: (n: Notification) => void;
   onMarkAllRead: () => void;
 }) {
+  useBodyScrollLock(open);
+
+  // Swipe-down-to-close
+  const y = useMotionValue(0);
+  const backdropOpacity = useTransform(y, [0, 300], [1, 0]);
+
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    if (info.offset.y > 120 || info.velocity.y > 500) {
+      onClose();
+    }
+  };
+
+  // Android back button
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: PopStateEvent) => {
+      e.preventDefault();
+      onClose();
+    };
+    window.history.pushState({ notificationPanel: true }, "");
+    window.addEventListener("popstate", handler);
+    return () => {
+      window.removeEventListener("popstate", handler);
+      // Clean up the history entry if panel closes normally (not via back)
+      if (window.history.state?.notificationPanel) {
+        window.history.back();
+      }
+    };
+  }, [open, onClose]);
+
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[9999] md:hidden" style={{ touchAction: "none" }}>
+        <div className="fixed inset-0 z-[9999] md:hidden">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
+            style={{ opacity: backdropOpacity }}
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={onClose}
           />
 
-          {/* Panel */}
+          {/* Panel — swipeable */}
           <motion.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 32, stiffness: 380 }}
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.6 }}
+            onDragEnd={handleDragEnd}
+            style={{ y, touchAction: "none" }}
             className="absolute inset-0 flex flex-col bg-background/95 backdrop-blur-xl"
-            style={{
-              paddingTop: "env(safe-area-inset-top, 0px)",
-              paddingBottom: "env(safe-area-inset-bottom, 0px)",
-            }}
-            onClick={(e) => e.stopPropagation()}
           >
+            {/* Safe area top spacer */}
+            <div style={{ height: "env(safe-area-inset-top, 0px)" }} className="flex-shrink-0 bg-background/95" />
+
             {/* Drag handle */}
-            <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-              <div className="w-10 h-1 rounded-full bg-muted-foreground/15" />
+            <div className="flex justify-center pt-3 pb-1 flex-shrink-0 cursor-grab active:cursor-grabbing">
+              <div className="w-10 h-1 rounded-full bg-muted-foreground/20" />
             </div>
 
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Bell className="w-4.5 h-4.5 text-primary" />
+                  <Bell className="w-[18px] h-[18px] text-primary" />
                 </div>
                 <div>
                   <h2 className="text-lg font-display font-bold text-foreground">Notifications</h2>
@@ -130,7 +197,7 @@ function MobileNotificationPanel({ open, onClose, notifications, unreadCount, on
                   onClick={onClose}
                   className="w-9 h-9 rounded-xl bg-secondary/80 flex items-center justify-center active:scale-90 transition-transform"
                 >
-                  <X className="w-4.5 h-4.5 text-muted-foreground" />
+                  <X className="w-[18px] h-[18px] text-muted-foreground" />
                 </button>
               </div>
             </div>
@@ -138,8 +205,12 @@ function MobileNotificationPanel({ open, onClose, notifications, unreadCount, on
             {/* Divider */}
             <div className="h-px bg-border/30 mx-5 flex-shrink-0" />
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 space-y-2" style={{ WebkitOverflowScrolling: "touch" }}>
+            {/* Content — separate touch area so scrolling works */}
+            <div
+              className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 space-y-2"
+              style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
+              onPointerDownCapture={(e) => e.stopPropagation()}
+            >
               {notifications.length === 0 ? (
                 <EmptyState />
               ) : (
@@ -148,6 +219,9 @@ function MobileNotificationPanel({ open, onClose, notifications, unreadCount, on
                 ))
               )}
             </div>
+
+            {/* Safe area bottom spacer */}
+            <div style={{ height: "env(safe-area-inset-bottom, 0px)" }} className="flex-shrink-0 bg-background/95" />
           </motion.div>
         </div>
       )}
