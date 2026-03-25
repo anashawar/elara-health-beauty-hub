@@ -66,8 +66,16 @@ serve(async (req) => {
     const userEmail = email?.trim()?.toLowerCase() || null;
     const tempPassword = `phone_${normalizedPhone}_${Date.now()}`;
 
+    // Demo account for Apple review — accept static code
+    const DEMO_PHONES: Record<string, string> = { "+9647510535548": "112233" };
+    const isDemoAccount = DEMO_PHONES[normalizedPhone] && code === DEMO_PHONES[normalizedPhone];
+
     // OTP verification
-    const { data: otpData } = await supabase
+    let otpRecord: any = null;
+    if (isDemoAccount) {
+      otpRecord = { id: "demo", phone: normalizedPhone, code, verified: false };
+    } else {
+      const { data: otpData } = await supabase
       .from("otp_verifications")
       .select("*")
       .eq("phone", normalizedPhone)

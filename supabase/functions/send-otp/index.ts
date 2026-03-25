@@ -34,6 +34,15 @@ serve(async (req) => {
 
     // Normalize phone: accept full international numbers or default to +964
     let normalizedPhone = phone.replace(/\s+/g, "").replace(/^00/, "+");
+
+    // Demo account for Apple review — skip actual OTP sending
+    const DEMO_PHONES = ["+9647510535548"];
+    if (DEMO_PHONES.includes(normalizedPhone)) {
+      return new Response(
+        JSON.stringify({ success: true, phone: normalizedPhone }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     if (!normalizedPhone.startsWith("+")) {
       // If no country code, strip leading 0 and assume Iraq
       normalizedPhone = "+964" + normalizedPhone.replace(/^0/, "");
