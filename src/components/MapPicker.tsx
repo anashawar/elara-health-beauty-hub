@@ -5,12 +5,19 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Fix default marker icon issue with bundlers
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+// Custom ELARA-branded marker icon (SVG data URI)
+const elaraMarkerIcon = L.divIcon({
+  className: "",
+  html: `<div style="display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 4px 12px rgba(139,92,246,0.4));">
+    <svg width="40" height="52" viewBox="0 0 40 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 0C8.954 0 0 8.954 0 20c0 14 20 32 20 32s20-18 20-32C40 8.954 31.046 0 20 0z" fill="hsl(271,76%,53%)"/>
+      <circle cx="20" cy="19" r="8" fill="white" opacity="0.95"/>
+      <circle cx="20" cy="19" r="4" fill="hsl(271,76%,53%)"/>
+    </svg>
+  </div>`,
+  iconSize: [40, 52],
+  iconAnchor: [20, 52],
+  popupAnchor: [0, -52],
 });
 
 interface MapPickerProps {
@@ -21,9 +28,9 @@ interface MapPickerProps {
   initialLng?: number | null;
 }
 
-// Default to Baghdad, Iraq
-const DEFAULT_LAT = 33.3152;
-const DEFAULT_LNG = 44.3661;
+// Default to Erbil, Kurdistan Region, Iraq
+const DEFAULT_LAT = 36.191;
+const DEFAULT_LNG = 44.0119;
 const DEFAULT_ZOOM = 13;
 
 const MapPicker = ({ open, onClose, onConfirm, initialLat, initialLng }: MapPickerProps) => {
@@ -37,63 +44,7 @@ const MapPicker = ({ open, onClose, onConfirm, initialLat, initialLng }: MapPick
   });
   const [locating, setLocating] = useState(false);
   const [mapReady, setMapReady] = useState(false);
-
-  // Initialize map
-  useEffect(() => {
-    if (!open || !mapContainerRef.current || mapRef.current) return;
-
-    const startLat = initialLat || DEFAULT_LAT;
-    const startLng = initialLng || DEFAULT_LNG;
-
-    const map = L.map(mapContainerRef.current, {
-      center: [startLat, startLng],
-      zoom: initialLat ? 16 : DEFAULT_ZOOM,
-      zoomControl: false,
-      attributionControl: false,
-    });
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-    }).addTo(map);
-
-    // Add zoom control to bottom-right
-    L.control.zoom({ position: "bottomright" }).addTo(map);
-
-    const marker = L.marker([startLat, startLng], {
-      draggable: true,
-      autoPan: true,
-    }).addTo(map);
-
-    marker.on("dragend", () => {
-      const pos = marker.getLatLng();
-      setPosition({ lat: pos.lat, lng: pos.lng });
-    });
-
-    // Click on map to move marker
-    map.on("click", (e: L.LeafletMouseEvent) => {
-      marker.setLatLng(e.latlng);
-      setPosition({ lat: e.latlng.lat, lng: e.latlng.lng });
-    });
-
-    mapRef.current = map;
-    markerRef.current = marker;
-    setMapReady(true);
-
-    // If no initial location, try to get current position
-    if (!initialLat) {
-      locateUser(map, marker);
-    }
-
-    // Force a resize after mount for proper rendering
-    setTimeout(() => map.invalidateSize(), 100);
-
-    return () => {
-      map.remove();
-      mapRef.current = null;
-      markerRef.current = null;
-      setMapReady(false);
-    };
-  }, [open]);
+  const [geoResolved, setGeoResolved] = useState(false);
 
   const locateUser = useCallback(async (map?: L.Map, marker?: L.Marker) => {
     const m = map || mapRef.current;
@@ -106,20 +57,80 @@ const MapPicker = ({ open, onClose, onConfirm, initialLat, initialLng }: MapPick
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
           timeout: 15000,
-          maximumAge: 0,
+          maximumAge: 60000,
         })
       );
       const { latitude, longitude } = pos.coords;
       m.setView([latitude, longitude], 16, { animate: true });
       mk.setLatLng([latitude, longitude]);
       setPosition({ lat: latitude, lng: longitude });
+      setGeoResolved(true);
     } catch (err) {
-      console.error("Geolocation error:", err);
-      // Stay at default/current position
+      console.warn("Geolocation unavailable, using default location");
     } finally {
       setLocating(false);
     }
   }, []);
+
+  // Initialize map
+  useEffect(() => {
+    if (!open || !mapContainerRef.current || mapRef.current) return;
+
+    const hasInitial = initialLat != null && initialLng != null;
+    const startLat = hasInitial ? initialLat : DEFAULT_LAT;
+    const startLng = hasInitial ? initialLng : DEFAULT_LNG;
+
+    const map = L.map(mapContainerRef.current, {
+      center: [startLat, startLng],
+      zoom: hasInitial ? 16 : DEFAULT_ZOOM,
+      zoomControl: false,
+      attributionControl: false,
+    });
+
+    // Modern clean map tiles (CartoDB Voyager)
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+      maxZoom: 19,
+      subdomains: "abcd",
+    }).addTo(map);
+
+    // Add zoom control to bottom-right
+    L.control.zoom({ position: "bottomright" }).addTo(map);
+
+    const marker = L.marker([startLat, startLng], {
+      draggable: true,
+      autoPan: true,
+      icon: elaraMarkerIcon,
+    }).addTo(map);
+
+    marker.on("dragend", () => {
+      const pos = marker.getLatLng();
+      setPosition({ lat: pos.lat, lng: pos.lng });
+    });
+
+    map.on("click", (e: L.LeafletMouseEvent) => {
+      marker.setLatLng(e.latlng);
+      setPosition({ lat: e.latlng.lat, lng: e.latlng.lng });
+    });
+
+    mapRef.current = map;
+    markerRef.current = marker;
+    setMapReady(true);
+
+    // Auto-locate to user's GPS if no initial coords provided
+    if (!hasInitial) {
+      locateUser(map, marker);
+    }
+
+    setTimeout(() => map.invalidateSize(), 100);
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      markerRef.current = null;
+      setMapReady(false);
+      setGeoResolved(false);
+    };
+  }, [open]);
 
   const handleConfirm = () => {
     onConfirm(position.lat, position.lng);
