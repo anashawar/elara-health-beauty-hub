@@ -66,19 +66,27 @@ serve(async (req) => {
     const userEmail = email?.trim()?.toLowerCase() || null;
     const tempPassword = `phone_${normalizedPhone}_${Date.now()}`;
 
-    // OTP verification
-    const { data: otpData } = await supabase
-      .from("otp_verifications")
-      .select("*")
-      .eq("phone", normalizedPhone)
-      .eq("code", code)
-      .eq("verified", false)
-      .gte("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
+    // Demo account for Apple review — accept static code
+    const DEMO_PHONES: Record<string, string> = { "+9647510535548": "112233" };
+    const isDemoAccount = DEMO_PHONES[normalizedPhone] && code === DEMO_PHONES[normalizedPhone];
 
-    const otpRecord = otpData;
+    // OTP verification
+    let otpRecord: any = null;
+    if (isDemoAccount) {
+      otpRecord = { id: "demo", phone: normalizedPhone, code, verified: false };
+    } else {
+      const { data: otpData } = await supabase
+        .from("otp_verifications")
+        .select("*")
+        .eq("phone", normalizedPhone)
+        .eq("code", code)
+        .eq("verified", false)
+        .gte("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      otpRecord = otpData;
+    }
 
     if (!otpRecord) {
       return new Response(
@@ -215,8 +223,8 @@ serve(async (req) => {
       session = sessionData.session;
     }
 
-    // Mark OTP as verified and clean up
-    if (otpRecord) {
+    // Mark OTP as verified and clean up (skip for demo accounts)
+    if (otpRecord && !isDemoAccount) {
       await supabase.from("otp_verifications").update({ verified: true }).eq("id", otpRecord.id);
       await supabase.from("otp_verifications").delete().eq("phone", normalizedPhone).neq("id", otpRecord.id);
     }
