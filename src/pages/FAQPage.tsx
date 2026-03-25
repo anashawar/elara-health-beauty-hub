@@ -133,11 +133,11 @@ export default function FAQPage() {
           </div>
           <h2 className="text-lg font-display font-bold text-foreground">{c.stillTitle}</h2>
           <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{c.stillDesc}</p>
-          <a href="https://wa.me/9647507229002" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 mt-5 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-2xl text-sm hover:opacity-90 transition-opacity">
+          <a href="https://wa.me/9647703836836" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 mt-5 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-2xl text-sm hover:opacity-90 transition-opacity">
             <MessageCircle className="w-4 h-4" />
             {c.chatBtn}
           </a>
-          <p className="text-xs text-muted-foreground mt-3">+964 750 722 9002</p>
+          <p className="text-xs text-muted-foreground mt-3">+964 770 3 836 836</p>
         </motion.div>
       </div>
     </PageShell>

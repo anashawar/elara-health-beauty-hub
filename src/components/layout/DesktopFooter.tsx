@@ -25,7 +25,7 @@ const DesktopFooter = () => {
               <a href="https://facebook.com/elara.iq" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-xl bg-secondary hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-all">
                 <Facebook className="w-4 h-4" />
               </a>
-              <a href="https://wa.me/9647800000000" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-xl bg-secondary hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-all">
+              <a href="https://wa.me/9647703836836" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-xl bg-secondary hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-all">
                 <MessageCircle className="w-4 h-4" />
               </a>
             </div>
@@ -65,7 +65,7 @@ const DesktopFooter = () => {
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-sm text-muted-foreground">+964 750 722 9002</span>
+                <span className="text-sm text-muted-foreground">+964 770 3 836 836</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-primary flex-shrink-0" />

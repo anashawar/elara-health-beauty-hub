@@ -157,8 +157,8 @@ export default function PrivacyPage() {
             <a href="mailto:info@elarastore.co" className="inline-flex items-center gap-2 text-sm text-primary font-semibold">
               <Mail className="w-4 h-4" /> info@elarastore.co
             </a>
-            <a href="tel:+9647507229002" className="inline-flex items-center gap-2 text-sm text-primary font-semibold">
-              <Phone className="w-4 h-4" /> +964 750 722 9002
+            <a href="tel:+9647703836836" className="inline-flex items-center gap-2 text-sm text-primary font-semibold">
+              <Phone className="w-4 h-4" /> +964 770 3 836 836
             </a>
           </div>
         </motion.div>
