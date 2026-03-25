@@ -22,11 +22,19 @@ const PageShell = ({ title, backTo = "/home", children, rightAction, hideDesktop
       {!hideDesktopHeader && <DesktopHeader onSearchClick={() => setSearchOpen(true)} />}
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
-      {/* Mobile header */}
-      <header className="sticky top-0 z-40 bg-card/95 border-b border-border/30 md:hidden" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      {/* Mobile header — hardware-accelerated for smooth transitions */}
+      <header
+        className="sticky top-0 z-40 bg-card/95 border-b border-border/30 md:hidden will-change-transform"
+        style={{
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          transform: 'translateZ(0)',
+        }}
+      >
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <Link to={backTo} className="p-2 -ml-2 rounded-xl hover:bg-secondary active:bg-secondary active:scale-90 transition-all">
+            <Link to={backTo} className="p-2 -ml-2 rounded-xl hover:bg-secondary active:bg-secondary active:scale-90 transition-all duration-75">
               <ArrowLeft className="w-5 h-5 text-foreground rtl:rotate-180" />
             </Link>
             <h1 className="text-lg font-display font-bold text-foreground">{title}</h1>
