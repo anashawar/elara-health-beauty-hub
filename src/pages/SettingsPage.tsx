@@ -406,7 +406,7 @@ const SettingsPage = () => {
               </div>
 
               {/* Delete Account - Multi-step */}
-              <DeleteAccountSection user={user} signOut={signOut} navigate={navigate} t={t} />
+              <DeleteAccountSection user={user} phone={phone} signOut={signOut} navigate={navigate} t={t} />
             </motion.div>
           )}
         </div>
@@ -418,42 +418,77 @@ const SettingsPage = () => {
 };
 
 /* ─── Delete Account Multi-Step Flow ─── */
-function DeleteAccountSection({ user, signOut, navigate, t }: { user: any; signOut: () => Promise<void>; navigate: (path: string) => void; t: (key: string) => string }) {
+function DeleteAccountSection({ user, phone, signOut, navigate, t }: { user: any; phone: string; signOut: () => Promise<void>; navigate: (path: string) => void; t: (key: string) => string }) {
   const [step, setStep] = useState<"idle" | "confirm" | "otp">("idle");
   const [otp, setOtp] = useState("");
-  const [generatedCode, setGeneratedCode] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+
+  const userPhone = phone || user?.phone || user?.user_metadata?.phone || "";
+
+  // Normalize phone to +964 format
+  const normalizePhone = (p: string) => {
+    let n = p.replace(/[\s\-()]/g, "");
+    if (n.startsWith("00964")) n = "+" + n.slice(2);
+    if (n.startsWith("0964")) n = "+" + n;
+    if (n.startsWith("964")) n = "+" + n;
+    if (n.startsWith("07")) n = "+964" + n.slice(1);
+    if (!n.startsWith("+")) n = "+964" + n;
+    return n;
+  };
 
   const openFlow = () => {
     setStep("confirm");
     setOtp("");
-    setGeneratedCode("");
   };
 
-  const proceedToOtp = () => {
-    // Generate a random 6-digit code and send it to user's email
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    setGeneratedCode(code);
-    setStep("otp");
-    // Show code via toast since this is a self-verification step
-    toast(`Your verification code: ${code}`, { duration: 30000 });
+  const proceedToOtp = async () => {
+    if (!userPhone) {
+      toast(t("settings.noPhoneForOtp") || "No phone number found on your account. Please add a phone number first.");
+      return;
+    }
+    setSendingOtp(true);
+    try {
+      const normalized = normalizePhone(userPhone);
+      const { data, error } = await supabase.functions.invoke("send-otp", {
+        body: { phone: normalized },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setStep("otp");
+      const masked = normalized.slice(0, 4) + "****" + normalized.slice(-3);
+      toast(t("settings.otpSentWhatsApp") || `Verification code sent to ${masked} via WhatsApp`);
+    } catch (err: any) {
+      console.error("Send OTP error:", err);
+      toast(err.message || "Failed to send verification code. Please try again.");
+    } finally {
+      setSendingOtp(false);
+    }
   };
 
   const handleDelete = async () => {
-    if (otp !== generatedCode) {
-      toast(t("settings.incorrectCode") || "Incorrect verification code. Please try again.");
-      return;
-    }
+    if (otp.length !== 6) return;
     setDeleting(true);
     try {
+      // Verify OTP first
+      const normalized = normalizePhone(userPhone);
+      const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-otp", {
+        body: { phone: normalized, code: otp },
+      });
+      if (verifyError) throw verifyError;
+      if (verifyData?.error) throw new Error(verifyData.error);
+      if (!verifyData?.valid) {
+        toast(t("settings.incorrectCode") || "Incorrect verification code. Please try again.");
+        setDeleting(false);
+        return;
+      }
+
+      // OTP verified, proceed with deletion
       const { data, error } = await supabase.functions.invoke("delete-account");
       if (error) throw error;
-      // User is already deleted server-side, signOut may fail with 403 — that's OK
       try { await signOut(); } catch (_) { /* ignore */ }
-      // Force-clear any lingering local session
       try { localStorage.removeItem("sb-mycpfwnfvtsgshdzggrm-auth-token"); } catch (_) { /* ignore */ }
       toast(t("settings.accountDeleted") || "Your account has been permanently deleted. We're sorry to see you go.");
-      // Hard reload to fully reset app state
       window.location.href = "/home";
     } catch (err: any) {
       console.error("Account deletion error:", err);
@@ -462,7 +497,7 @@ function DeleteAccountSection({ user, signOut, navigate, t }: { user: any; signO
     }
   };
 
-  const close = () => { setStep("idle"); setOtp(""); setGeneratedCode(""); };
+  const close = () => { setStep("idle"); setOtp(""); };
 
   return (
     <>
@@ -506,9 +541,13 @@ function DeleteAccountSection({ user, signOut, navigate, t }: { user: any; signO
           <AlertDialogFooter className="flex-col sm:flex-col gap-2">
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full"
+              disabled={sendingOtp}
               onClick={(e) => { e.preventDefault(); proceedToOtp(); }}
             >
-              {t("settings.continueDelete") || "I understand, continue with deletion"}
+              {sendingOtp
+                ? <><Loader2 className="w-4 h-4 animate-spin me-2" />{t("settings.sendingCode") || "Sending verification code..."}</>
+                : t("settings.continueDelete") || "I understand, continue with deletion"
+              }
             </AlertDialogAction>
             <AlertDialogCancel className="w-full mt-0">
               {t("settings.keepAccount") || "No, keep my account"}
@@ -528,7 +567,7 @@ function DeleteAccountSection({ user, signOut, navigate, t }: { user: any; signO
               {t("settings.verifyIdentity") || "Verify your identity"}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              <p>{t("settings.otpSentDesc") || "For your security, please enter the 6-digit verification code to confirm account deletion."}</p>
+              <p>{t("settings.otpSentDescWhatsApp") || "We sent a 6-digit verification code to your phone via WhatsApp. Enter it below to confirm account deletion."}</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
 
