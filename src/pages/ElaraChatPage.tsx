@@ -448,11 +448,20 @@ const ElaraChatPage = () => {
 
   const streamChat = async (allMessages: Msg[]) => {
     isStreamingRef.current = true;
+    
+    // Get the user's session token for authentication
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    const accessToken = currentSession?.access_token;
+    if (!accessToken) {
+      isStreamingRef.current = false;
+      throw new Error("Please sign in to use ELARA AI");
+    }
+
     const resp = await fetch(CHAT_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         messages: allMessages,
