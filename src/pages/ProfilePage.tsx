@@ -243,6 +243,42 @@ const ProfilePage = () => {
             </div>
           )}
 
+          {/* Follow Us on Social Media */}
+          <div className="mx-4 md:mx-6 mt-4 bg-card rounded-2xl shadow-premium p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-display font-bold text-foreground">{t("profile.followUs")}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{t("profile.followUsDesc")}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              <a href={language === "ku" ? "https://www.facebook.com/elara.krd" : "https://www.facebook.com/elara.iq"} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1.5 group">
+                <div className="w-12 h-12 rounded-2xl bg-[#1877F2]/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Facebook className="w-5 h-5 text-[#1877F2]" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">Facebook</span>
+              </a>
+              <a href={language === "ku" ? "https://instagram.com/elara.krd" : "https://instagram.com/elara_iq"} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1.5 group">
+                <div className="w-12 h-12 rounded-2xl bg-[#E4405F]/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Instagram className="w-5 h-5 text-[#E4405F]" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">Instagram</span>
+              </a>
+              <a href={language === "ku" ? "https://www.tiktok.com/@elara_krd" : "https://www.tiktok.com/@elara_iq"} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1.5 group">
+                <div className="w-12 h-12 rounded-2xl bg-foreground/5 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-foreground"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.75a8.18 8.18 0 0 0 4.76 1.52V6.84a4.83 4.83 0 0 1-1-.15Z"/></svg>
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">TikTok</span>
+              </a>
+              <a href="https://www.linkedin.com/company/elarastore" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1.5 group">
+                <div className="w-12 h-12 rounded-2xl bg-[#0A66C2]/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-[#0A66C2]"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">LinkedIn</span>
+              </a>
+            </div>
+          </div>
+
           <div className="mx-4 md:mx-6 mt-4 text-center">
             <p className="text-[10px] text-muted-foreground">ELARA {t("common.version")} — {t("common.tagline")}</p>
           </div>
