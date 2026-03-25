@@ -138,6 +138,18 @@ function SkinScanContent() {
   const [cameraActive, setCameraActive] = useState(false);
   const [expandedRoutine, setExpandedRoutine] = useState<string | null>("morning");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+
+  // Fetch user gender to conditionally show makeup sections
+  const { data: userGender } = useQuery({
+    queryKey: ["user-gender", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase.from("profiles").select("gender").eq("user_id", user.id).maybeSingle();
+      return data?.gender || user.user_metadata?.gender || null;
+    },
+    enabled: !!user?.id,
+  });
+  const showMakeupSections = userGender !== "male";
   const [useFrontCamera, setUseFrontCamera] = useState(true);
   const [showNativeScanner, setShowNativeScanner] = useState(false);
   const isNative = Capacitor.isNativePlatform();
