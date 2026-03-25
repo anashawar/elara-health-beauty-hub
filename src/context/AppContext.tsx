@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { ProductWithRelations } from "@/hooks/useProducts";
 
 interface CartItem {
@@ -31,6 +31,31 @@ interface AppContextType {
   setAppliedCoupon: (coupon: AppliedCoupon | null) => void;
 }
 
+const CART_STORAGE_KEY = "elara_cart";
+const WISHLIST_STORAGE_KEY = "elara_wishlist";
+
+function loadCart(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return [];
+}
+
+function loadWishlist(): string[] {
+  try {
+    const raw = localStorage.getItem(WISHLIST_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return [];
+}
+
 const AppContext = createContext<AppContextType | null>(null);
 
 export const useApp = () => {
@@ -40,10 +65,34 @@ export const useApp = () => {
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(loadCart);
+  const [wishlist, setWishlist] = useState<string[]>(loadWishlist);
   const [pendingCoupon, setPendingCoupon] = useState<string | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+
+  // Persist cart to localStorage on every change
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    } catch {}
+  }, [cart]);
+
+  // Persist wishlist to localStorage
+  const wishlistInitial = useRef(true);
+  useEffect(() => {
+    if (wishlistInitial.current) {
+      wishlistInitial.current = false;
+      return;
+    }
+    try {
+      localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlist));
+    } catch {}
+  }, [wishlist]);
 
   const addToCart = useCallback((product: ProductWithRelations) => {
     setCart(prev => {
@@ -73,7 +122,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const isInWishlist = useCallback((productId: string) => wishlist.includes(productId), [wishlist]);
 
-  // Memoize derived values to prevent re-computation on unrelated state changes
   const cartTotal = useMemo(() => cart.reduce((sum, i) => sum + i.product.price * i.quantity, 0), [cart]);
   const cartCount = useMemo(() => cart.reduce((sum, i) => sum + i.quantity, 0), [cart]);
 
