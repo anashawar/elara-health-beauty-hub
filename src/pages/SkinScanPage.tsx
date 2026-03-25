@@ -138,6 +138,18 @@ function SkinScanContent() {
   const [cameraActive, setCameraActive] = useState(false);
   const [expandedRoutine, setExpandedRoutine] = useState<string | null>("morning");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+
+  // Fetch user gender to conditionally show makeup sections
+  const { data: userGender } = useQuery({
+    queryKey: ["user-gender", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase.from("profiles").select("gender").eq("user_id", user.id).maybeSingle();
+      return data?.gender || user.user_metadata?.gender || null;
+    },
+    enabled: !!user?.id,
+  });
+  const showMakeupSections = userGender !== "male";
   const [useFrontCamera, setUseFrontCamera] = useState(true);
   const [showNativeScanner, setShowNativeScanner] = useState(false);
   const isNative = Capacitor.isNativePlatform();
@@ -740,8 +752,8 @@ function SkinScanContent() {
             )}
           </motion.div>
 
-          {/* Skin Tone & Makeup Match */}
-          {analysis.skin_tone && (
+          {/* Skin Tone & Makeup Match - only for non-male users */}
+          {showMakeupSections && analysis.skin_tone && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-card rounded-2xl border border-border/50 shadow-premium p-5">
               <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
                 <span className="text-base">🎨</span>
@@ -1032,8 +1044,8 @@ function SkinScanContent() {
             </motion.div>
           )}
 
-          {/* Makeup Products Matched by Skin Tone */}
-          {makeupProducts.length > 0 && (
+          {/* Makeup Products Matched by Skin Tone - only for non-male users */}
+          {showMakeupSections && makeupProducts.length > 0 && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="bg-card rounded-2xl border border-border/50 shadow-premium p-5">
               <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
                 <span className="text-base">💄</span>
