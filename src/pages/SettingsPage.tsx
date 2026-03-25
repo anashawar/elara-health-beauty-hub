@@ -567,7 +567,7 @@ function DeleteAccountSection({ user, phone, signOut, navigate, t }: { user: any
               {t("settings.verifyIdentity") || "Verify your identity"}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              <p>{t("settings.otpSentDesc") || "For your security, please enter the 6-digit verification code to confirm account deletion."}</p>
+              <p>{t("settings.otpSentDescWhatsApp") || "We sent a 6-digit verification code to your phone via WhatsApp. Enter it below to confirm account deletion."}</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
 
