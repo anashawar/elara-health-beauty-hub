@@ -223,8 +223,8 @@ serve(async (req) => {
       session = sessionData.session;
     }
 
-    // Mark OTP as verified and clean up
-    if (otpRecord) {
+    // Mark OTP as verified and clean up (skip for demo accounts)
+    if (otpRecord && !isDemoAccount) {
       await supabase.from("otp_verifications").update({ verified: true }).eq("id", otpRecord.id);
       await supabase.from("otp_verifications").delete().eq("phone", normalizedPhone).neq("id", otpRecord.id);
     }
