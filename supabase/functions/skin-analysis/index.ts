@@ -194,6 +194,28 @@ IMPORTANT:
       });
     }
 
+    // Upload scan image to storage
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    let imageUrl: string | null = null;
+    try {
+      const imageBytes = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
+      const filePath = `${user.id}/${crypto.randomUUID()}.jpg`;
+      const { error: uploadError } = await adminClient.storage
+        .from("skin-scans")
+        .upload(filePath, imageBytes, { contentType: "image/jpeg", upsert: false });
+      if (uploadError) {
+        console.error("Image upload error:", uploadError);
+      } else {
+        imageUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/auth/skin-scans/${filePath}`;
+      }
+    } catch (uploadErr) {
+      console.error("Image upload failed:", uploadErr);
+    }
+
     // Save to database
     const { error: saveError } = await supabase.from("skin_analyses").insert({
       user_id: user.id,
@@ -207,6 +229,7 @@ IMPORTANT:
       routine: analysis.routine || {},
       recommended_product_ids: analysis.recommended_product_ids || [],
       full_analysis: analysis,
+      image_url: imageUrl,
     });
 
     if (saveError) console.error("Save error:", saveError);
