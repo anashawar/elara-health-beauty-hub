@@ -760,13 +760,15 @@ const AuthPage = () => {
       <div className="px-5 py-4 text-center">
         <p className="text-[10px] text-muted-foreground">ELARA — {t("common.tagline")}</p>
       </div>
-      <MapPicker
-        open={mapOpen}
-        onClose={() => setMapOpen(false)}
-        onConfirm={handleMapConfirm}
-        initialLat={gpsLat}
-        initialLng={gpsLng}
-      />
+      <Suspense fallback={null}>
+        <MapPicker
+          open={mapOpen}
+          onClose={() => setMapOpen(false)}
+          onConfirm={handleMapConfirm}
+          initialLat={gpsLat}
+          initialLng={gpsLng}
+        />
+      </Suspense>
       </div>
     </div>
   );

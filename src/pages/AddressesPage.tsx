@@ -403,13 +403,15 @@ const AddressesPage = () => {
 
       <BottomNav />
 
-      <MapPicker
-        open={mapOpen}
-        onClose={() => setMapOpen(false)}
-        onConfirm={handleMapConfirm}
-        initialLat={form.latitude}
-        initialLng={form.longitude}
-      />
+      <Suspense fallback={null}>
+        <MapPicker
+          open={mapOpen}
+          onClose={() => setMapOpen(false)}
+          onConfirm={handleMapConfirm}
+          initialLat={form.latitude}
+          initialLng={form.longitude}
+        />
+      </Suspense>
     </div>
   );
 };
