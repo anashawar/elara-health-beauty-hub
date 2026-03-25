@@ -31,6 +31,15 @@ const content = {
       { title: "8. Children's Privacy", items: ["ELARA is intended for users aged 18+. We do not knowingly collect data from minors."] },
       { title: "9. Third-Party Links", items: ["Our app and website may include links to external services (like Instagram, YouTube). These platforms have their own privacy policies — we encourage you to review them separately."] },
       { title: "10. Changes to This Policy", items: ["We may update this Privacy Policy from time to time. You will be notified in-app or via email when major changes are made."] },
+      { title: "11. Face Data & AI Skin Analysis", intro: "Our AI Skin Analyzer feature uses your device's camera to capture a photo of your face for skin analysis. Here is how we handle face data:", items: [
+        "Collection: When you use the AI Skin Analyzer, a single photo of your face is captured. The photo is processed to generate a skin health report including skin type, hydration, texture, clarity, and elasticity scores.",
+        "Use: Face data is used exclusively to provide you with a personalized skin analysis and product recommendations. It is never used for facial recognition, identification, advertising targeting, or any purpose other than skin health analysis.",
+        "Storage: The captured photo may be stored securely in your account's analysis history so you can track skin progress over time. The AI analysis results (scores, skin type, concerns) are stored in our database linked to your user account.",
+        "Third-Party Sharing: Your face data and photos are NOT shared with any third parties. The AI analysis is performed using secure server-side processing. No face data is sold, licensed, or disclosed to advertisers or data brokers.",
+        "On-Device Processing: The face tracking overlay shown during camera use (face mesh, landmark points) is processed entirely on your device using MediaPipe and is never transmitted to our servers.",
+        "Retention: Face photos and analysis results are retained for as long as your account is active or until you request deletion. You can delete individual skin analyses from your Skin Scan History page at any time. When you delete your account, all face data and analysis history are permanently deleted.",
+        "User Control: You can opt out of the AI Skin Analyzer at any time simply by not using the feature. Camera access is only requested when you navigate to the Skin Scan page. You can revoke camera permissions at any time in your device settings."
+      ] },
     ],
     contactTitle: "Contact Us",
     contactDesc: "If you have questions or concerns, feel free to contact:",
