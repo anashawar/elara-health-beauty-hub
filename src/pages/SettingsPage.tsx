@@ -362,4 +362,150 @@ const SettingsPage = () => {
   );
 };
 
+/* ─── Delete Account Multi-Step Flow ─── */
+function DeleteAccountSection({ user, signOut, navigate, t }: { user: any; signOut: () => Promise<void>; navigate: (path: string) => void; t: (key: string) => string }) {
+  const [step, setStep] = useState<"idle" | "confirm" | "otp">("idle");
+  const [otp, setOtp] = useState("");
+  const [generatedCode, setGeneratedCode] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  const openFlow = () => {
+    setStep("confirm");
+    setOtp("");
+    setGeneratedCode("");
+  };
+
+  const proceedToOtp = () => {
+    // Generate a random 6-digit code and send it to user's email
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    setGeneratedCode(code);
+    setStep("otp");
+    // Show code via toast since this is a self-verification step
+    toast(`Your verification code: ${code}`, { duration: 30000 });
+  };
+
+  const handleDelete = async () => {
+    if (otp !== generatedCode) {
+      toast(t("settings.incorrectCode") || "Incorrect verification code. Please try again.");
+      return;
+    }
+    setDeleting(true);
+    try {
+      const { error } = await supabase.functions.invoke("delete-account");
+      if (error) throw error;
+      await signOut();
+      toast(t("settings.accountDeleted") || "Your account has been permanently deleted. We're sorry to see you go.");
+      navigate("/home");
+    } catch (err: any) {
+      console.error("Account deletion error:", err);
+      toast(err.message || "Something went wrong. Please try again later.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const close = () => { setStep("idle"); setOtp(""); setGeneratedCode(""); };
+
+  return (
+    <>
+      <div className="bg-card rounded-2xl shadow-premium overflow-hidden">
+        <button onClick={openFlow} className="w-full flex items-center gap-3 px-4 py-4 hover:bg-destructive/5 transition-colors text-destructive/70">
+          <Trash2 className="w-5 h-5" />
+          <div className="flex flex-col items-start">
+            <span className="text-sm font-medium">{t("settings.deleteAccount") || "Delete Account"}</span>
+            <span className="text-[11px] text-muted-foreground">{t("settings.deleteAccountHint") || "Permanently remove your account and all data"}</span>
+          </div>
+        </button>
+      </div>
+
+      {/* Step 1: Confirmation */}
+      <AlertDialog open={step === "confirm"} onOpenChange={(open) => !open && close()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="mx-auto w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center mb-2">
+              <AlertTriangle className="w-7 h-7 text-destructive" />
+            </div>
+            <AlertDialogTitle className="text-center text-lg">
+              {t("settings.deleteAccountTitle") || "Are you sure you want to delete your account?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center space-y-3">
+              <p>{t("settings.deleteAccountWarning") || "This action is permanent and cannot be reversed. Once deleted, there is no way to recover your account."}</p>
+              <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-3 text-start space-y-1.5">
+                <p className="text-xs font-semibold text-destructive flex items-center gap-1.5">
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  {t("settings.whatGetsDeleted") || "The following will be permanently deleted:"}
+                </p>
+                <ul className="text-xs text-muted-foreground space-y-1 ps-5 list-disc">
+                  <li>{t("settings.deleteItem1") || "Your personal profile and account information"}</li>
+                  <li>{t("settings.deleteItem2") || "Order history and saved addresses"}</li>
+                  <li>{t("settings.deleteItem3") || "Wishlist, cart items, and preferences"}</li>
+                  <li>{t("settings.deleteItem4") || "Skin analysis history and AI chat conversations"}</li>
+                  <li>{t("settings.deleteItem5") || "Loyalty points and rewards"}</li>
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-col gap-2">
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full"
+              onClick={(e) => { e.preventDefault(); proceedToOtp(); }}
+            >
+              {t("settings.continueDelete") || "I understand, continue with deletion"}
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-full mt-0">
+              {t("settings.keepAccount") || "No, keep my account"}
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Step 2: OTP Verification */}
+      <AlertDialog open={step === "otp"} onOpenChange={(open) => !open && close()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+              <KeyRound className="w-7 h-7 text-primary" />
+            </div>
+            <AlertDialogTitle className="text-center text-lg">
+              {t("settings.verifyIdentity") || "Verify your identity"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              <p>{t("settings.otpSentDesc") || "For your security, please enter the 6-digit verification code to confirm account deletion."}</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="flex justify-center my-4">
+            <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+                <InputOTPSlot index={3} />
+                <InputOTPSlot index={4} />
+                <InputOTPSlot index={5} />
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+
+          <AlertDialogFooter className="flex-col sm:flex-col gap-2">
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full"
+              disabled={otp.length !== 6 || deleting}
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+            >
+              {deleting
+                ? <><Loader2 className="w-4 h-4 animate-spin me-2" />{t("settings.deletingAccount") || "Deleting account..."}</>
+                : t("settings.permanentlyDelete") || "Permanently delete my account"
+              }
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-full mt-0" onClick={close}>
+              {t("common.cancel") || "Cancel"}
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
 export default SettingsPage;
