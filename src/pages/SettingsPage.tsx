@@ -325,16 +325,7 @@ const SettingsPage = () => {
                 {/* Birthdate */}
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-muted-foreground">{t("auth.birthdate") || "Date of Birth"}</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      type="date"
-                      value={birthdate}
-                      onChange={e => setBirthdate(e.target.value)}
-                      max={new Date().toISOString().split("T")[0]}
-                      className="ps-10 h-11 rounded-xl bg-secondary border-border text-sm"
-                    />
-                  </div>
+                  <BirthdatePicker value={birthdate} onChange={setBirthdate} />
                 </div>
                 <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full h-11 rounded-xl text-sm font-semibold gap-2">
                   <Save className="w-4 h-4" />
