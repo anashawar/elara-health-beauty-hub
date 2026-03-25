@@ -289,6 +289,7 @@ serve(async (req) => {
     // Validate JWT - require authenticated user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
+      console.error("Missing or invalid Authorization header");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -303,16 +304,17 @@ serve(async (req) => {
     });
     const adminClient = createClient(supabaseUrl, serviceKey);
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    // Use getUser() for reliable auth validation across all platforms
+    const { data: { user: authUser }, error: authError } = await authClient.auth.getUser();
+    if (authError || !authUser) {
+      console.error("Auth validation failed:", authError?.message || "No user");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = (claimsData.claims as any).sub;
+    const userId = authUser.id;
 
     const { messages, user_name, user_gender, user_birthdate, user_city, user_language } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
