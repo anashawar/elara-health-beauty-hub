@@ -1,6 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Phone, Save, LogOut, Globe, Calendar, Camera, Loader2 } from "lucide-react";
+import { ArrowLeft, User, Phone, Save, LogOut, Globe, Calendar, Camera, Loader2, Trash2, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -337,6 +348,50 @@ const SettingsPage = () => {
                   <LogOut className="w-5 h-5" />
                   <span className="text-sm font-medium">{t("common.signOut")}</span>
                 </button>
+              </div>
+
+              {/* Delete Account */}
+              <div className="bg-card rounded-2xl shadow-premium overflow-hidden">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button className="w-full flex items-center gap-3 px-4 py-4 hover:bg-destructive/5 transition-colors text-destructive">
+                      <Trash2 className="w-5 h-5" />
+                      <span className="text-sm font-medium">{t("settings.deleteAccount") || "Delete Account"}</span>
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="flex items-center gap-2">
+                        <AlertTriangle className="w-5 h-5 text-destructive" />
+                        {t("settings.deleteAccountTitle") || "Delete Your Account?"}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t("settings.deleteAccountDesc") || "This action is permanent and cannot be undone. All your data including orders, addresses, wishlist, and personal information will be permanently deleted."}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t("common.cancel") || "Cancel"}</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={async () => {
+                          try {
+                            // Call edge function to delete user data and auth account
+                            const { error } = await supabase.functions.invoke("delete-account");
+                            if (error) throw error;
+                            await signOut();
+                            toast(t("settings.accountDeleted") || "Your account has been deleted.");
+                            navigate("/home");
+                          } catch (err: any) {
+                            console.error("Account deletion error:", err);
+                            toast(err.message || "Failed to delete account. Please try again.");
+                          }
+                        }}
+                      >
+                        {t("settings.confirmDelete") || "Yes, Delete My Account"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </motion.div>
           )}

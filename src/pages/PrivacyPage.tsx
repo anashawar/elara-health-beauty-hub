@@ -12,7 +12,7 @@ interface Section {
   footer?: string;
 }
 
-const sectionIcons: LucideIcon[] = [Users, Database, Eye, Share2, UserCheck, Cookie, ShieldCheck, Users, Link2, FileText];
+const sectionIcons: LucideIcon[] = [Users, Database, Eye, Share2, UserCheck, Cookie, ShieldCheck, Users, Link2, FileText, Eye];
 
 const content = {
   en: {
@@ -31,6 +31,15 @@ const content = {
       { title: "8. Children's Privacy", items: ["ELARA is intended for users aged 18+. We do not knowingly collect data from minors."] },
       { title: "9. Third-Party Links", items: ["Our app and website may include links to external services (like Instagram, YouTube). These platforms have their own privacy policies — we encourage you to review them separately."] },
       { title: "10. Changes to This Policy", items: ["We may update this Privacy Policy from time to time. You will be notified in-app or via email when major changes are made."] },
+      { title: "11. Face Data & AI Skin Analysis", intro: "Our AI Skin Analyzer feature uses your device's camera to capture a photo of your face for skin analysis. Here is how we handle face data:", items: [
+        "Collection: When you use the AI Skin Analyzer, a single photo of your face is captured. The photo is processed to generate a skin health report including skin type, hydration, texture, clarity, and elasticity scores.",
+        "Use: Face data is used exclusively to provide you with a personalized skin analysis and product recommendations. It is never used for facial recognition, identification, advertising targeting, or any purpose other than skin health analysis.",
+        "Storage: The captured photo may be stored securely in your account's analysis history so you can track skin progress over time. The AI analysis results (scores, skin type, concerns) are stored in our database linked to your user account.",
+        "Third-Party Sharing: Your face data and photos are NOT shared with any third parties. The AI analysis is performed using secure server-side processing. No face data is sold, licensed, or disclosed to advertisers or data brokers.",
+        "On-Device Processing: The face tracking overlay shown during camera use (face mesh, landmark points) is processed entirely on your device using MediaPipe and is never transmitted to our servers.",
+        "Retention: Face photos and analysis results are retained for as long as your account is active or until you request deletion. You can delete individual skin analyses from your Skin Scan History page at any time. When you delete your account, all face data and analysis history are permanently deleted.",
+        "User Control: You can opt out of the AI Skin Analyzer at any time simply by not using the feature. Camera access is only requested when you navigate to the Skin Scan page. You can revoke camera permissions at any time in your device settings."
+      ] },
     ],
     contactTitle: "Contact Us",
     contactDesc: "If you have questions or concerns, feel free to contact:",
@@ -51,6 +60,15 @@ const content = {
       { title: "8. خصوصية الأطفال", items: ["إيلارا مخصصة للمستخدمين بعمر 18+ سنة. ما نجمع بيانات من القاصرين عن عمد."] },
       { title: "9. روابط أطراف ثالثة", items: ["تطبيقنا وموقعنا ممكن يحتوي على روابط لخدمات خارجية (مثل إنستغرام، يوتيوب). هذي المنصات عندها سياسات خصوصية خاصة بيها — ننصحك تراجعها بشكل منفصل."] },
       { title: "10. تغييرات على هذي السياسة", items: ["ممكن نحدّث سياسة الخصوصية هذي من وقت لآخر. راح يتم إبلاغك داخل التطبيق أو عبر الإيميل لما تصير تغييرات كبيرة."] },
+      { title: "11. بيانات الوجه وتحليل البشرة بالذكاء الاصطناعي", intro: "ميزة تحليل البشرة بالذكاء الاصطناعي تستخدم كاميرا جهازك لالتقاط صورة لوجهك لتحليل البشرة. هنا كيف نتعامل مع بيانات الوجه:", items: [
+        "الجمع: لما تستخدم محلل البشرة، يتم التقاط صورة وحدة لوجهك. يتم معالجة الصورة لإنتاج تقرير صحة البشرة يشمل نوع البشرة، الترطيب، الملمس، الصفاء، ودرجات المرونة.",
+        "الاستخدام: بيانات الوجه تُستخدم فقط لتقديم تحليل بشرة مخصص وتوصيات منتجات. ما تُستخدم أبداً للتعرف على الوجه أو التعريف أو استهداف الإعلانات أو أي غرض غير تحليل صحة البشرة.",
+        "التخزين: الصورة الملتقطة ممكن تُخزّن بأمان في سجل التحليل بحسابك عشان تتابع تقدم بشرتك. نتائج التحليل (الدرجات، نوع البشرة، المشاكل) تُخزّن في قاعدة بياناتنا مرتبطة بحساب المستخدم.",
+        "المشاركة مع أطراف ثالثة: بيانات وجهك وصورك ما تُشارك مع أي طرف ثالث. التحليل بالذكاء الاصطناعي يتم باستخدام معالجة آمنة من جانب الخادم. ما يتم بيع أو ترخيص أو الكشف عن بيانات الوجه للمعلنين.",
+        "المعالجة على الجهاز: تراكب تتبع الوجه المعروض أثناء استخدام الكاميرا (شبكة الوجه، نقاط المعالم) يُعالج بالكامل على جهازك باستخدام MediaPipe وما يُرسل أبداً لخوادمنا.",
+        "الاحتفاظ: صور الوجه ونتائج التحليل تُحتفظ طالما حسابك نشط أو لحد ما تطلب الحذف. تگدر تحذف تحليلات بشرة فردية من صفحة سجل فحص البشرة بأي وقت. لما تحذف حسابك، كل بيانات الوجه وسجل التحليل تُحذف نهائياً.",
+        "تحكم المستخدم: تگدر تتوقف عن استخدام محلل البشرة بأي وقت ببساطة بعدم استخدام الميزة. إذن الكاميرا يُطلب فقط لما تروح لصفحة فحص البشرة. تگدر تلغي أذونات الكاميرا بأي وقت من إعدادات جهازك."
+      ] },
     ],
     contactTitle: "تواصل وياانا",
     contactDesc: "إذا عندك أسئلة أو مخاوف، لا تتردد تتواصل:",
@@ -71,6 +89,15 @@ const content = {
       { title: "8. تایبەتمەندیی منداڵان", items: ["ئێلارا بۆ بەکارهێنەرانی تەمەنی 18+ ساڵ دروستکراوە. بە ئەنقەست داتا لە منداڵان کۆ ناکەینەوە."] },
       { title: "9. بەستەرەکانی لایەنی سێیەم", items: ["بەرنامە و ماڵپەڕەکەمان لەوانەیە بەستەری خزمەتگوزاری دەرەکی لەخۆ بگرێت (وەک ئینستاگرام، یوتیوب). ئەم پلاتفۆرمانە سیاسەتی تایبەتمەندیی تایبەتی خۆیان هەیە — هاندەدەین بە جیا پێیان بچیتەوە."] },
       { title: "10. گۆڕانکاری لەم سیاسەتەدا", items: ["لەوانەیە ئەم سیاسەتی تایبەتمەندییە لە کاتێک بۆ کاتێکی تر نوێ بکەینەوە. لەناو بەرنامەکەدا یان لە ڕێگای ئیمەیڵەوە ئاگادارت دەکەینەوە کاتێک گۆڕانکاریی گەورە ڕوودەدات."] },
+      { title: "11. داتای دەموچاو و شیکاری پێستی AI", intro: "تایبەتمەندیی شیکاری پێست بە AI کامێرای ئامێرەکەت بەکاردەهێنێت بۆ وێنەگرتن لە ڕووخسارت بۆ شیکاری پێست. لێرەدا چۆن مامەڵە لەگەڵ داتای دەموچاو دەکەین:", items: [
+        "کۆکردنەوە: کاتێک شیکەری پێست بەکاردەهێنیت، تاکە وێنەیەک لە ڕووخسارت دەگیرێت. وێنەکە دەکارێزرێت بۆ دروستکردنی ڕاپۆرتی تەندروستیی پێست.",
+        "بەکارهێنان: داتای دەموچاو تەنها بۆ شیکاری پێستی تایبەتکراو و پێشنیاری بەرهەم بەکاردەهێنرێت. هەرگیز بۆ ناسینەوەی ڕووخسار، ئامانجکردنی ڕیکلام، یان هیچ مەبەستێکی تر بەکارناهێنرێت.",
+        "خەزنکردن: وێنەی گیراو لەوانەیە بە سەلامەتی لە مێژووی شیکاری ئەکاونتەکەت خەزن بکرێت. ئەنجامەکانی شیکاری AI لە داتابەیسەکەمان خەزن دەکرێت.",
+        "هاوبەشکردن لەگەڵ لایەنی سێیەم: داتای دەموچاو و وێنەکانت لەگەڵ هیچ لایەنی سێیەمێک هاوبەش ناکرێت. شیکاری AI لە ڕێگای کارکردنی سەلامەتی سێرڤەرەوە ئەنجام دەدرێت.",
+        "کارکردن لەسەر ئامێر: تراکبی شوێنکەوتنی دەموچاو کە لە کاتی بەکارهێنانی کامێرا نیشان دەدرێت بە تەواوی لەسەر ئامێرەکەت کاردەکات و هەرگیز بۆ سێرڤەرەکانمان نانێردرێت.",
+        "ماوەی هەڵگرتن: وێنەی دەموچاو و ئەنجامی شیکاری تا کاتێک ئەکاونتەکەت چالاکە یان تا داوای سڕینەوە بکەیت دەمێنێتەوە. کاتێک ئەکاونتەکەت دەسڕیتەوە، هەموو داتای دەموچاو بە تەواوی دەسڕێتەوە.",
+        "کۆنترۆڵی بەکارهێنەر: دەتوانیت لە هەر کاتێکدا شیکەری پێست بەکارنەهێنیت. ئیزنی کامێرا تەنها کاتێک داوادەکرێت کە بچیتە پەڕەی فحسی پێست."
+      ] },
     ],
     contactTitle: "پەیوەندیمان پێوە بکە",
     contactDesc: "ئەگەر پرسیار یان نیگەرانیت هەیە، بە ئازادی پەیوەندی بکە:",
