@@ -31,10 +31,25 @@ function BirthdatePicker({ value, onChange }: { value: string; onChange: (v: str
   const today = new Date();
   const currentYear = today.getFullYear();
 
-  const parsed = useMemo(() => {
-    if (!value) return { year: "", month: "", day: "" };
-    const [y, m, d] = value.split("-");
-    return { year: y || "", month: m || "", day: d || "" };
+  // Track partial selections internally so dropdowns don't reset
+  const [localYear, setLocalYear] = useState("");
+  const [localMonth, setLocalMonth] = useState("");
+  const [localDay, setLocalDay] = useState("");
+  const initializedRef = useRef(false);
+
+  // Sync from prop on first load or when value changes externally
+  useEffect(() => {
+    if (value && value.includes("-")) {
+      const [y, m, d] = value.split("-");
+      setLocalYear(y || "");
+      setLocalMonth(m || "");
+      setLocalDay(d || "");
+      initializedRef.current = true;
+    } else if (!value && initializedRef.current) {
+      setLocalYear("");
+      setLocalMonth("");
+      setLocalDay("");
+    }
   }, [value]);
 
   const years = useMemo(() => {
@@ -50,19 +65,23 @@ function BirthdatePicker({ value, onChange }: { value: string; onChange: (v: str
     })), []);
 
   const daysInMonth = useMemo(() => {
-    if (!parsed.year || !parsed.month) return 31;
-    return new Date(Number(parsed.year), Number(parsed.month), 0).getDate();
-  }, [parsed.year, parsed.month]);
+    if (!localYear || !localMonth) return 31;
+    return new Date(Number(localYear), Number(localMonth), 0).getDate();
+  }, [localYear, localMonth]);
 
-  const update = (field: "year" | "month" | "day", val: string) => {
-    const next = { ...parsed, [field]: val };
-    if (next.year && next.month && next.day) {
-      // Clamp day if needed
-      const maxDay = new Date(Number(next.year), Number(next.month), 0).getDate();
-      if (Number(next.day) > maxDay) next.day = String(maxDay).padStart(2, "0");
-      onChange(`${next.year}-${next.month}-${next.day}`);
-    } else if (!val) {
-      onChange("");
+  const handleChange = (field: "year" | "month" | "day", val: string) => {
+    let nextYear = localYear, nextMonth = localMonth, nextDay = localDay;
+    if (field === "year") { nextYear = val; setLocalYear(val); }
+    if (field === "month") { nextMonth = val; setLocalMonth(val); }
+    if (field === "day") { nextDay = val; setLocalDay(val); }
+
+    if (nextYear && nextMonth && nextDay) {
+      const maxDay = new Date(Number(nextYear), Number(nextMonth), 0).getDate();
+      if (Number(nextDay) > maxDay) {
+        nextDay = String(maxDay).padStart(2, "0");
+        setLocalDay(nextDay);
+      }
+      onChange(`${nextYear}-${nextMonth}-${nextDay}`);
     }
   };
 
@@ -70,18 +89,18 @@ function BirthdatePicker({ value, onChange }: { value: string; onChange: (v: str
 
   return (
     <div className="flex gap-2">
-      <select value={parsed.day} onChange={e => update("day", e.target.value)} className={selectClass}>
+      <select value={localDay} onChange={e => handleChange("day", e.target.value)} className={selectClass}>
         <option value="">{t("auth.day") || "Day"}</option>
         {Array.from({ length: daysInMonth }, (_, i) => {
           const d = String(i + 1).padStart(2, "0");
           return <option key={d} value={d}>{i + 1}</option>;
         })}
       </select>
-      <select value={parsed.month} onChange={e => update("month", e.target.value)} className={selectClass}>
+      <select value={localMonth} onChange={e => handleChange("month", e.target.value)} className={selectClass}>
         <option value="">{t("auth.month") || "Month"}</option>
         {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
       </select>
-      <select value={parsed.year} onChange={e => update("year", e.target.value)} className={selectClass}>
+      <select value={localYear} onChange={e => handleChange("year", e.target.value)} className={selectClass}>
         <option value="">{t("auth.year") || "Year"}</option>
         {years.map(y => <option key={y} value={y}>{y}</option>)}
       </select>
