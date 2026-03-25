@@ -220,8 +220,8 @@ function getContextualTips(language: string, isKurdistan: boolean, gender: strin
       } else if (month >= 10 || month <= 2) {
         tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: isMale ? "الجو بارد وجاف هالفترة ❄️ بشرتك تحتاج ترطيب مكثف!" : "الجو بارد وجاف هالفترة ❄️ بشرتچ تحتاج ترطيب مكثف!" });
       }
-      if (month === 2 || month === 3) {
-        tips.push({ icon: <Heart className="w-4 h-4 text-primary" />, text: isMale ? "رمضان كريم 🌙 خليني أساعدك تحافظ على بشرتك خلال الصيام" : "رمضان كريم 🌙 خليني أساعدچ تحافظين على بشرتچ خلال الصيام" });
+      if (month >= 2 && month <= 4) {
+        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: isMale ? "الربيع وصل! 🌸 لا تنسى واقي الشمس مع بداية الحر" : "الربيع وصل! 🌸 لا تنسي واقي الشمس مع بداية الحر" });
       }
       tips.push({ icon: isMale ? <Dumbbell className="w-4 h-4 text-blue-500" /> : <Heart className="w-4 h-4 text-pink-400" />, text: isMale ? "اسألني عن العناية بالبشرة واللحية والشعر يا بطل 💪" : "اسأليني عن أي شي يخص بشرتچ وشعرچ وجمالچ يا گلبي 💆‍♀️" });
     } else if (language === "ku") {
@@ -237,8 +237,8 @@ function getContextualTips(language: string, isKurdistan: boolean, gender: strin
       } else if (month >= 10 || month <= 2) {
         tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "Cold & dry weather in Iraq ❄️ Your skin needs extra hydration!" });
       }
-      if (month === 2 || month === 3) {
-        tips.push({ icon: <Heart className="w-4 h-4 text-primary" />, text: "Ramadan Kareem 🌙 Let me help you maintain your skin routine during fasting" });
+      if (month >= 2 && month <= 4) {
+        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "Spring is here! 🌸 Start wearing sunscreen as it gets warmer" });
       }
       tips.push({ icon: isMale ? <Dumbbell className="w-4 h-4 text-blue-500" /> : <Heart className="w-4 h-4 text-pink-400" />, text: isMale ? "Ask me about skincare, beard care, or grooming 💪" : "Ask me anything about skincare, hair care, or beauty 💆‍♀️" });
     }
@@ -448,11 +448,20 @@ const ElaraChatPage = () => {
 
   const streamChat = async (allMessages: Msg[]) => {
     isStreamingRef.current = true;
+    
+    // Get the user's session token for authentication
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    const accessToken = currentSession?.access_token;
+    if (!accessToken) {
+      isStreamingRef.current = false;
+      throw new Error("Please sign in to use ELARA AI");
+    }
+
     const resp = await fetch(CHAT_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         messages: allMessages,
