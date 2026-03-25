@@ -84,19 +84,29 @@ const SwipeBackWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 /**
- * Deferred push notification init — only after idle + 5s delay.
- * Firebase SDK is ~100KB+ and should never block initial render.
+ * Deferred push notification init.
+ * On native: runs quickly (permission already requested in main.tsx).
+ * On web: delayed to avoid blocking initial render with Firebase SDK (~100KB+).
  */
 const DeferredPushInit = () => {
   useEffect(() => {
+    const isNative = (window as any).Capacitor?.isNativePlatform?.();
+    const delay = isNative ? 500 : 5000; // Native: fast, Web: deferred
+
     const timer = setTimeout(() => {
-      const idle = (window as any).requestIdleCallback || ((cb: any) => setTimeout(cb, 200));
-      idle(() => {
+      const run = () => {
         import("@/hooks/usePushNotifications").then(({ initPushNotifications }) => {
           initPushNotifications();
         });
-      });
-    }, 5000);
+      };
+
+      if (isNative) {
+        run();
+      } else {
+        const idle = (window as any).requestIdleCallback || ((cb: any) => setTimeout(cb, 200));
+        idle(run);
+      }
+    }, delay);
     return () => clearTimeout(timer);
   }, []);
   return null;

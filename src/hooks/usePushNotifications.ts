@@ -107,18 +107,32 @@ export function usePushNotifications() {
 export async function initPushNotifications() {
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
 
     if (isNativePlatform()) {
-      const token = await registerNativePush();
-      if (token) {
-        await saveNativeToken(session.user.id, token);
+      // On native, permission was already requested in main.tsx.
+      // Here we just save the token if user is logged in.
+      if (!session?.user) {
+        // Listen for future sign-in to save token
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+          if (event === 'SIGNED_IN' && newSession?.user) {
+            subscription.unsubscribe();
+            const token = await registerNativePush();
+            if (token) await saveNativeToken(newSession.user.id, token);
+            setupNativeListeners();
+          }
+        });
+        return;
       }
+
+      const token = await registerNativePush();
+      if (token) await saveNativeToken(session.user.id, token);
       setupNativeListeners();
       return;
     }
 
-    // Web path
+    // Web path — only if logged in
+    if (!session?.user) return;
+
     const { getFirebaseConfig, onForegroundMessage, requestFCMToken } = await import("@/lib/firebase");
 
     if ("serviceWorker" in navigator) {
