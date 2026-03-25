@@ -1,12 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import { Search, MapPin, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import NotificationCenter from "@/components/notifications/NotificationCenter";
-import elaraLogo from "@/assets/elara-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import elaraLogo from "@/assets/elara-logo.png";
 
 function getTimeGreeting(lang: string): string {
   const hour = new Date().getHours();
@@ -50,7 +49,6 @@ function getRandomGreeting(lang: string, name: string): string {
     ],
   };
   const list = templates[lang] || templates.en;
-  // Use day-of-year so it changes daily but stays consistent within a session
   const dayIndex = Math.floor((Date.now() / 86400000)) % list.length;
   return list[dayIndex];
 }
@@ -59,10 +57,14 @@ interface TopHeaderProps {
   onSearchClick: () => void;
 }
 
-const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
+// Lazy-load NotificationCenter — it pulls in framer-motion + date-fns
+import { lazy, Suspense } from "react";
+const NotificationCenter = lazy(() => import("@/components/notifications/NotificationCenter"));
+
+const TopHeader = memo(({ onSearchClick }: TopHeaderProps) => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
-  
+
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || t("common.guest");
   const greeting = useMemo(() => getRandomGreeting(language, firstName), [language, firstName]);
 
@@ -95,7 +97,15 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
   const avatarUrl = (profile as any)?.avatar_url;
 
   return (
-    <header className="sticky top-0 z-40 glass-heavy border-b border-border/40 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <header
+      className="sticky top-0 z-40 bg-card/95 border-b border-border/40 md:hidden will-change-transform"
+      style={{
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        transform: 'translateZ(0)',
+      }}
+    >
       <div className="app-container px-4 py-3 space-y-2.5">
         {/* Top row: Logo + Welcome */}
         <div className="flex items-center justify-between">
@@ -106,7 +116,9 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
           <div className="flex items-center gap-1.5">
             {user ? (
               <>
-                <NotificationCenter />
+                <Suspense fallback={<div className="w-9 h-9" />}>
+                  <NotificationCenter />
+                </Suspense>
                 <div className="flex flex-col items-end rtl:items-start">
                   <span className="text-xs font-medium text-foreground">
                     {greeting}
@@ -138,14 +150,14 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
         <div className="flex items-center gap-2.5">
           <button
             onClick={onSearchClick}
-            className="flex-1 flex items-center gap-2.5 px-4 py-2.5 bg-secondary/60 rounded-2xl border border-border/60 hover:border-primary/20 hover:bg-secondary/80 transition-all duration-300"
+            className="flex-1 flex items-center gap-2.5 px-4 py-2.5 bg-secondary/60 rounded-2xl border border-border/60 hover:border-primary/20 hover:bg-secondary/80 transition-all duration-150"
           >
             <Search className="w-4 h-4 text-muted-foreground/70" />
             <span className="text-[13px] text-muted-foreground/70">{t("common.search")}</span>
           </button>
           <Link
             to="/elara-ai"
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-br from-primary to-primary/80 rounded-2xl shadow-float hover:shadow-premium-lg transition-all duration-300 flex-shrink-0 active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-br from-primary to-primary/80 rounded-2xl shadow-float flex-shrink-0 active:scale-95 transition-transform duration-75"
           >
             <Sparkles className="w-4 h-4 text-primary-foreground" />
             <span className="text-xs font-bold text-primary-foreground tracking-wide">AI</span>
@@ -154,6 +166,8 @@ const TopHeader = ({ onSearchClick }: TopHeaderProps) => {
       </div>
     </header>
   );
-};
+});
+
+TopHeader.displayName = "TopHeader";
 
 export default TopHeader;

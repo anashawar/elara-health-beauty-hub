@@ -13,6 +13,7 @@ import SEOHead, { organizationJsonLd, websiteJsonLd, storeJsonLd } from "@/compo
 import { useTrendingProducts, useDiscountedProducts } from "@/hooks/useHomeProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useLazySection } from "@/hooks/useLazySection";
+import { Capacitor } from "@capacitor/core";
 
 // Lazy loaded — secondary sections
 const AskElaraCard = lazy(() => import("@/components/home/AskElaraCard"));
@@ -25,8 +26,17 @@ const ConcernsSection = lazy(() => import("@/components/home/ConcernsSection"));
 const DealsBanner = lazy(() => import("@/components/home/DealsBanner"));
 const AppDownloadBanner = lazy(() => import("@/components/home/AppDownloadBanner"));
 const WhyElaraBanner = lazy(() => import("@/components/home/WhyElaraBanner"));
-const MobileAppBanners = lazy(() => import("@/components/home/MobileAppBanners").then(m => ({ default: m.MobileAppInlineBanner })));
-const MobileAppHeroBanner = lazy(() => import("@/components/home/MobileAppBanners").then(m => ({ default: m.MobileAppHeroBanner })));
+
+const isNativeApp = Capacitor.isNativePlatform();
+
+// Only load mobile app banners on web (not native)
+const MobileAppBanners = isNativeApp
+  ? () => null
+  : lazy(() => import("@/components/home/MobileAppBanners").then(m => ({ default: m.MobileAppInlineBanner })));
+const MobileAppHeroBanner = isNativeApp
+  ? () => null
+  : lazy(() => import("@/components/home/MobileAppBanners").then(m => ({ default: m.MobileAppHeroBanner })));
+
 import { MobileAppTopStrip } from "@/components/home/MobileAppBanners";
 
 const DiscountsSection = lazy(() => import("@/components/home/DiscountsSection"));
@@ -78,7 +88,7 @@ const Index = () => {
         keywords="beauty iraq, skincare iraq, makeup iraq, cosmetics iraq, health products iraq, online beauty store iraq, elara beauty, erbil beauty shop, baghdad skincare, buy cosmetics iraq, original beauty products iraq"
         jsonLd={[organizationJsonLd, websiteJsonLd, storeJsonLd]}
       />
-      <MobileAppTopStrip />
+      {!isNativeApp && <MobileAppTopStrip />}
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />
       <TopHeader onSearchClick={() => setSearchOpen(true)} />
       {searchOpen && <SearchOverlay isOpen={searchOpen} onClose={handleSearchClose} initialQuery={searchInitialQuery} />}
@@ -92,15 +102,17 @@ const Index = () => {
             <CategoryGrid />
           </div>
 
-          {/* MobileAppHeroBanner moved BELOW hero + categories so it doesn't push LCP down */}
-          <Suspense fallback={null}>
-            <MobileAppHeroBanner />
-          </Suspense>
+          {/* MobileAppHeroBanner — only on web */}
+          {!isNativeApp && (
+            <Suspense fallback={null}>
+              <MobileAppHeroBanner />
+            </Suspense>
+          )}
 
-          <Suspense fallback={<div className="h-[130px] mx-4 mt-8 rounded-3xl bg-secondary/30 animate-pulse" />}>
+          <Suspense fallback={null}>
             <AskElaraCard />
           </Suspense>
-          <Suspense fallback={<div className="h-[110px] mx-4 mt-6 rounded-3xl bg-secondary/30 animate-pulse" />}>
+          <Suspense fallback={null}>
             <SkinScanBanner />
           </Suspense>
 
@@ -144,9 +156,11 @@ const Index = () => {
                   <ConcernsSection />
                 </Suspense>
 
-                <Suspense fallback={null}>
-                  <MobileAppBanners />
-                </Suspense>
+                {!isNativeApp && (
+                  <Suspense fallback={null}>
+                    <MobileAppBanners />
+                  </Suspense>
+                )}
 
                 <Suspense fallback={null}>
                   <DealsBanner />

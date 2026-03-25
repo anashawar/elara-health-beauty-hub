@@ -10,7 +10,7 @@ import { useUserCity, isBrandAvailableInCity } from "./useUserCity";
  * with a server-side limit and minimal joins.
  */
 
-const SECTION_LIMIT = 20;
+const SECTION_LIMIT = 12; // Reduced from 20 — fewer cards = faster render
 
 // Minimal select for card display — only what ProductCard needs
 const CARD_SELECT = `
@@ -134,8 +134,6 @@ export function useOfferProducts() {
 
 /**
  * Fetches products that belong to brands/categories targeted by active offers.
- * This dynamically syncs with the offers system — when an offer is added or removed,
- * the discounted products list updates automatically.
  */
 export function useDiscountedProducts() {
   const { language } = useLanguage();
@@ -195,7 +193,7 @@ export function useGiftProducts() {
         .from("product_tags")
         .select("product_id")
         .eq("tag", "gift")
-        .limit(30);
+        .limit(20);
 
       if (tagErr) throw tagErr;
       const giftIds = (tagData || []).map((t: any) => t.product_id);

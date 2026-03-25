@@ -116,12 +116,16 @@ export default defineConfig(({ mode }) => ({
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-query': ['@tanstack/react-query'],
           'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-motion': ['framer-motion'],
+          'vendor-ui': ['embla-carousel-react', 'sonner', 'date-fns'],
         },
       },
     },
     // Ensure hashed filenames for long-term caching
     cssCodeSplit: true,
     sourcemap: false,
+    target: 'es2020',
+    minify: 'esbuild',
   },
   resolve: {
     alias: {

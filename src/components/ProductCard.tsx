@@ -59,7 +59,7 @@ const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }
 
   if (variant === "horizontal") {
     return (
-      <div className="flex-shrink-0 w-[152px] rounded-3xl border border-border/30 bg-card shadow-sm overflow-hidden group">
+      <div className="flex-shrink-0 w-[152px] rounded-3xl border border-border/30 bg-card shadow-sm overflow-hidden">
         <Link to={url} className="block">
           <div className="relative aspect-square overflow-hidden bg-secondary/40">
             <img src={product.image} alt={product.title} width={152} height={152} className="w-full h-full object-cover" loading="lazy" decoding="async" />
@@ -94,13 +94,13 @@ const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }
             <button
               onClick={handleAddToCart}
               disabled={outOfStock}
-              className={`flex-1 flex items-center justify-center gap-1 text-[11px] font-semibold py-2 rounded-xl transition-colors duration-100 active:scale-95 ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground shadow-sm"}`}
+              className={`flex-1 flex items-center justify-center gap-1 text-[11px] font-semibold py-2 rounded-xl transition-colors duration-75 active:scale-95 ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground shadow-sm"}`}
             >
               {outOfStock ? (t("product.outOfStock") || "Out of Stock") : <><Plus className="w-3 h-3" /> {t("product.add")}</>}
             </button>
             <button
               onClick={handleToggleWishlist}
-              className="p-2 rounded-xl bg-secondary/60 transition-colors duration-100 active:scale-90"
+              className="p-2 rounded-xl bg-secondary/60 transition-colors duration-75 active:scale-90"
             >
               <Heart className={`w-3.5 h-3.5 ${wishlisted ? "fill-primary text-primary" : "text-muted-foreground/50"}`} />
             </button>
@@ -111,7 +111,7 @@ const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }
   }
 
   return (
-    <div className="rounded-3xl border border-border/30 bg-card shadow-sm overflow-hidden group">
+    <div className="rounded-3xl border border-border/30 bg-card shadow-sm overflow-hidden">
       <Link to={url} className="block">
         <div className="relative aspect-square overflow-hidden bg-secondary/40">
           <img src={product.image} alt={product.title} width={200} height={200} className="w-full h-full object-cover" loading="lazy" decoding="async" />
@@ -128,7 +128,7 @@ const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }
           )}
           <button
             onClick={handleToggleWishlist}
-            className="absolute top-2.5 right-2.5 rtl:right-auto rtl:left-2.5 p-2 rounded-full bg-card/80 shadow-sm transition-colors duration-100 active:scale-90"
+            className="absolute top-2.5 right-2.5 rtl:right-auto rtl:left-2.5 p-2 rounded-full bg-card/80 shadow-sm transition-colors duration-75 active:scale-90"
           >
             <Heart className={`w-4 h-4 ${wishlisted ? "fill-primary text-primary" : "text-muted-foreground/60"}`} />
           </button>
@@ -151,7 +151,7 @@ const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }
         <button
           onClick={handleAddToCart}
           disabled={outOfStock}
-          className={`w-full flex items-center justify-center gap-1 text-xs font-semibold py-2.5 rounded-2xl mt-3 transition-colors duration-100 active:scale-[0.97] ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground shadow-sm"}`}
+          className={`w-full flex items-center justify-center gap-1 text-xs font-semibold py-2.5 rounded-2xl mt-3 transition-colors duration-75 active:scale-[0.97] ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground shadow-sm"}`}
         >
           {outOfStock ? (t("product.outOfStock") || "Out of Stock") : <><Plus className="w-3.5 h-3.5" /> {t("product.addToCart")}</>}
         </button>

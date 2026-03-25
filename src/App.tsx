@@ -112,10 +112,21 @@ const DeferredPushInit = () => {
   return null;
 };
 
-// Minimal loading fallback — keeps the screen from flashing
+/**
+ * Native-optimized page loading skeleton.
+ * Shows an instant shell instead of a spinner — feels more native.
+ */
 const PageFallback = (
-  <div className="min-h-screen bg-background flex items-center justify-center">
-    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  <div className="min-h-screen bg-background">
+    {/* Simulated header bar */}
+    <div className="h-14 bg-card/95 border-b border-border/30" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} />
+    {/* Content skeleton */}
+    <div className="px-4 pt-4 space-y-3">
+      <div className="h-5 w-32 bg-secondary/50 rounded-lg animate-pulse" />
+      <div className="h-40 bg-secondary/30 rounded-2xl animate-pulse" />
+      <div className="h-4 w-48 bg-secondary/40 rounded-lg animate-pulse" />
+      <div className="h-4 w-36 bg-secondary/30 rounded-lg animate-pulse" />
+    </div>
   </div>
 );
 
