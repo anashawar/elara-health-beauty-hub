@@ -66,31 +66,25 @@ serve(async (req) => {
     const userEmail = email?.trim()?.toLowerCase() || null;
     const tempPassword = `phone_${normalizedPhone}_${Date.now()}`;
 
-    // OTP verification – TEMPORARY: bypass all codes for development
-    const BYPASS_OTP = true;
+    // OTP verification
+    const { data: otpData } = await supabase
+      .from("otp_verifications")
+      .select("*")
+      .eq("phone", normalizedPhone)
+      .eq("code", code)
+      .eq("verified", false)
+      .gte("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
 
-    let otpRecord: any = null;
+    const otpRecord = otpData;
 
-    if (!BYPASS_OTP) {
-      const { data: otpData } = await supabase
-        .from("otp_verifications")
-        .select("*")
-        .eq("phone", normalizedPhone)
-        .eq("code", code)
-        .eq("verified", false)
-        .gte("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      otpRecord = otpData;
-
-      if (!otpRecord) {
-        return new Response(
-          JSON.stringify({ error: "Invalid or expired code" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+    if (!otpRecord) {
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired code" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const existingUsers = await listAllAuthUsers(supabase);

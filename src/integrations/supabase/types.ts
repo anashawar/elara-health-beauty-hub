@@ -1861,6 +1861,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      hash_warehouse_password: {
+        Args: { _plain_password: string }
+        Returns: string
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -1891,7 +1895,9 @@ export type Database = {
         Args: { _token: string; _username: string }
         Returns: Json
       }
-      validate_warehouse_login: { Args: { _username: string }; Returns: Json }
+      validate_warehouse_login:
+        | { Args: { _username: string }; Returns: Json }
+        | { Args: { _password?: string; _username: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "operations" | "data_entry"
