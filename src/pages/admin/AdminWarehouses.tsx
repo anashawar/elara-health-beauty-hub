@@ -95,12 +95,19 @@ export default function AdminWarehouses() {
         warehouse_id: f.warehouse_id || null,
         is_active: f.is_active,
       };
+      // Hash password server-side via pgcrypto function
+      if (f.password) {
+        const { data: hashed, error: hashErr } = await supabase.rpc("hash_warehouse_password", {
+          _plain_password: f.password,
+        });
+        if (hashErr) throw hashErr;
+        payload.password_hash = hashed;
+      }
       if (f.id) {
-        if (f.password) payload.password_hash = f.password;
         const { error } = await supabase.from("warehouse_users").update(payload).eq("id", f.id);
         if (error) throw error;
       } else {
-        payload.password_hash = f.password;
+        if (!payload.password_hash) throw new Error("Password is required");
         const { error } = await supabase.from("warehouse_users").insert(payload);
         if (error) throw error;
       }
