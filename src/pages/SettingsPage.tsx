@@ -23,7 +23,71 @@ import DesktopHeader from "@/components/layout/DesktopHeader";
 import SearchOverlay from "@/components/SearchOverlay";
 import { motion } from "framer-motion";
 import { useLanguage, type Language } from "@/i18n/LanguageContext";
+import { useMemo } from "react";
 
+/* ─── Birthdate Picker (3 dropdowns: Day / Month / Year) ─── */
+function BirthdatePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { t } = useLanguage();
+  const today = new Date();
+  const currentYear = today.getFullYear();
+
+  const parsed = useMemo(() => {
+    if (!value) return { year: "", month: "", day: "" };
+    const [y, m, d] = value.split("-");
+    return { year: y || "", month: m || "", day: d || "" };
+  }, [value]);
+
+  const years = useMemo(() => {
+    const arr: number[] = [];
+    for (let y = currentYear; y >= currentYear - 100; y--) arr.push(y);
+    return arr;
+  }, [currentYear]);
+
+  const months = useMemo(() =>
+    Array.from({ length: 12 }, (_, i) => ({
+      value: String(i + 1).padStart(2, "0"),
+      label: new Date(2000, i).toLocaleString(undefined, { month: "long" }),
+    })), []);
+
+  const daysInMonth = useMemo(() => {
+    if (!parsed.year || !parsed.month) return 31;
+    return new Date(Number(parsed.year), Number(parsed.month), 0).getDate();
+  }, [parsed.year, parsed.month]);
+
+  const update = (field: "year" | "month" | "day", val: string) => {
+    const next = { ...parsed, [field]: val };
+    if (next.year && next.month && next.day) {
+      // Clamp day if needed
+      const maxDay = new Date(Number(next.year), Number(next.month), 0).getDate();
+      if (Number(next.day) > maxDay) next.day = String(maxDay).padStart(2, "0");
+      onChange(`${next.year}-${next.month}-${next.day}`);
+    } else if (!val) {
+      onChange("");
+    }
+  };
+
+  const selectClass = "h-11 flex-1 rounded-xl bg-secondary border border-border text-sm px-3 text-foreground appearance-none";
+
+  return (
+    <div className="flex gap-2">
+      <select value={parsed.day} onChange={e => update("day", e.target.value)} className={selectClass}>
+        <option value="">{t("auth.day") || "Day"}</option>
+        {Array.from({ length: daysInMonth }, (_, i) => {
+          const d = String(i + 1).padStart(2, "0");
+          return <option key={d} value={d}>{i + 1}</option>;
+        })}
+      </select>
+      <select value={parsed.month} onChange={e => update("month", e.target.value)} className={selectClass}>
+        <option value="">{t("auth.month") || "Month"}</option>
+        {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+      </select>
+      <select value={parsed.year} onChange={e => update("year", e.target.value)} className={selectClass}>
+        <option value="">{t("auth.year") || "Year"}</option>
+        {years.map(y => <option key={y} value={y}>{y}</option>)}
+      </select>
+    </div>
+  );
+}
 
 const SettingsPage = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -325,16 +389,7 @@ const SettingsPage = () => {
                 {/* Birthdate */}
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-muted-foreground">{t("auth.birthdate") || "Date of Birth"}</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      type="date"
-                      value={birthdate}
-                      onChange={e => setBirthdate(e.target.value)}
-                      max={new Date().toISOString().split("T")[0]}
-                      className="ps-10 h-11 rounded-xl bg-secondary border-border text-sm"
-                    />
-                  </div>
+                  <BirthdatePicker value={birthdate} onChange={setBirthdate} />
                 </div>
                 <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full h-11 rounded-xl text-sm font-semibold gap-2">
                   <Save className="w-4 h-4" />
