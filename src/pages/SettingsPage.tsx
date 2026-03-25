@@ -391,15 +391,18 @@ function DeleteAccountSection({ user, signOut, navigate, t }: { user: any; signO
     }
     setDeleting(true);
     try {
-      const { error } = await supabase.functions.invoke("delete-account");
+      const { data, error } = await supabase.functions.invoke("delete-account");
       if (error) throw error;
-      await signOut();
+      // User is already deleted server-side, signOut may fail with 403 — that's OK
+      try { await signOut(); } catch (_) { /* ignore */ }
+      // Force-clear any lingering local session
+      try { localStorage.removeItem("sb-mycpfwnfvtsgshdzggrm-auth-token"); } catch (_) { /* ignore */ }
       toast(t("settings.accountDeleted") || "Your account has been permanently deleted. We're sorry to see you go.");
-      navigate("/home");
+      // Hard reload to fully reset app state
+      window.location.href = "/home";
     } catch (err: any) {
       console.error("Account deletion error:", err);
       toast(err.message || "Something went wrong. Please try again later.");
-    } finally {
       setDeleting(false);
     }
   };

@@ -42,7 +42,20 @@ Deno.serve(async (req) => {
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     // Delete user data from all tables (cascade will handle some, but be explicit)
+    // Delete order items first (they reference orders)
+    const { data: userOrders } = await adminClient
+      .from("orders")
+      .select("id")
+      .eq("user_id", userId);
+    
+    if (userOrders && userOrders.length > 0) {
+      const orderIds = userOrders.map((o: any) => o.id);
+      await adminClient.from("order_items").delete().in("order_id", orderIds);
+    }
+
     const tablesToClean = [
+      "order_ratings",
+      "orders",
       "skin_analyses",
       "chat_messages", // via conversation cascade
       "chat_conversations",
@@ -54,9 +67,10 @@ Deno.serve(async (req) => {
       "reviews",
       "notifications",
       "push_subscriptions",
+      "support_messages",
+      "support_conversations",
       "addresses",
       "profiles",
-      "order_ratings",
     ];
 
     for (const table of tablesToClean) {
