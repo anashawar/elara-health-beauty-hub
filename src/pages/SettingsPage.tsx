@@ -412,8 +412,8 @@ function DeleteAccountSection({ user, signOut, navigate, t }: { user: any; signO
         <button onClick={openFlow} className="w-full flex items-center gap-3 px-4 py-4 hover:bg-destructive/5 transition-colors text-destructive/70">
           <Trash2 className="w-5 h-5" />
           <div className="flex flex-col items-start">
-            <span className="text-sm font-medium">{t("settings.deleteAccount") || "Delete Account"}</span>
-            <span className="text-[11px] text-muted-foreground">{t("settings.deleteAccountHint") || "Permanently remove your account and all data"}</span>
+            <span className="text-sm font-medium">Delete Account</span>
+            <span className="text-[11px] text-muted-foreground">Permanently remove your account and all data</span>
           </div>
         </button>
       </div>
