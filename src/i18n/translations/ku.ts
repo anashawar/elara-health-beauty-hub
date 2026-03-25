@@ -272,6 +272,13 @@ export const ku = {
     female: "مێ",
     male: "نێر",
     birthdate: "بەرواری لەدایکبوون",
+    day: "ڕۆژ",
+    month: "مانگ",
+    year: "ساڵ",
+    selectGender: "تکایە ڕەگەز هەڵبژێرە",
+    enterBirthdate: "تکایە بەرواری لەدایکبوون بنووسە",
+    genderPurpose: "بۆ تایبەتکردنی پێشنیارەکانی بەرهەمەکان بۆ تۆ",
+    birthdatePurpose: "بۆ پێشنیارکردنی بەرهەمەکانی چاودێری پێست کە گونجاوی تەمەنتە",
   },
   wishlist: {
     title: "دڵخوازەکان",
