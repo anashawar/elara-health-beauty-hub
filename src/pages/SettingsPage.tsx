@@ -541,9 +541,13 @@ function DeleteAccountSection({ user, phone, signOut, navigate, t }: { user: any
           <AlertDialogFooter className="flex-col sm:flex-col gap-2">
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full"
+              disabled={sendingOtp}
               onClick={(e) => { e.preventDefault(); proceedToOtp(); }}
             >
-              {t("settings.continueDelete") || "I understand, continue with deletion"}
+              {sendingOtp
+                ? <><Loader2 className="w-4 h-4 animate-spin me-2" />{t("settings.sendingCode") || "Sending verification code..."}</>
+                : t("settings.continueDelete") || "I understand, continue with deletion"
+              }
             </AlertDialogAction>
             <AlertDialogCancel className="w-full mt-0">
               {t("settings.keepAccount") || "No, keep my account"}
