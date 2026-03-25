@@ -406,7 +406,7 @@ const SettingsPage = () => {
               </div>
 
               {/* Delete Account - Multi-step */}
-              <DeleteAccountSection user={user} signOut={signOut} navigate={navigate} t={t} />
+              <DeleteAccountSection user={user} phone={phone} signOut={signOut} navigate={navigate} t={t} />
             </motion.div>
           )}
         </div>
