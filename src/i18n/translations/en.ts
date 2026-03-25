@@ -272,6 +272,13 @@ export const en = {
     female: "Female",
     male: "Male",
     birthdate: "Date of Birth",
+    day: "Day",
+    month: "Month",
+    year: "Year",
+    selectGender: "Please select your gender",
+    enterBirthdate: "Please enter your date of birth",
+    genderPurpose: "Used to personalize product recommendations for you",
+    birthdatePurpose: "Used to recommend age-appropriate skincare products",
   },
   wishlist: {
     title: "Wishlist",

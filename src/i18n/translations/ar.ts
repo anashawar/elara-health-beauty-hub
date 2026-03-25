@@ -272,6 +272,13 @@ export const ar = {
     female: "أنثى",
     male: "ذكر",
     birthdate: "تاريخ الميلاد",
+    day: "اليوم",
+    month: "الشهر",
+    year: "السنة",
+    selectGender: "يرجى اختيار الجنس",
+    enterBirthdate: "يرجى إدخال تاريخ الميلاد",
+    genderPurpose: "يُستخدم لتخصيص توصيات المنتجات لك",
+    birthdatePurpose: "يُستخدم لتوصية منتجات العناية بالبشرة المناسبة لعمرك",
   },
   wishlist: {
     title: "المفضلة",
