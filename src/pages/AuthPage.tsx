@@ -20,6 +20,16 @@ type AuthMode = "signup" | "signin";
 
 const OTP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
+const COUNTRY_CODES = [
+  { code: "+964", flag: "🇮🇶", name: "Iraq", placeholder: "7XX XXX XXXX", maxLen: 11 },
+  { code: "+1", flag: "🇺🇸", name: "US", placeholder: "XXX XXX XXXX", maxLen: 10 },
+  { code: "+44", flag: "🇬🇧", name: "UK", placeholder: "7XXX XXXXXX", maxLen: 11 },
+  { code: "+971", flag: "🇦🇪", name: "UAE", placeholder: "5X XXX XXXX", maxLen: 10 },
+  { code: "+962", flag: "🇯🇴", name: "Jordan", placeholder: "7X XXX XXXX", maxLen: 10 },
+  { code: "+90", flag: "🇹🇷", name: "Turkey", placeholder: "5XX XXX XXXX", maxLen: 11 },
+  { code: "+966", flag: "🇸🇦", name: "KSA", placeholder: "5X XXX XXXX", maxLen: 10 },
+];
+
 const AuthPage = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -42,6 +52,8 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
+  const [countryCode, setCountryCode] = useState(COUNTRY_CODES[0]);
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [city, setCity] = useState("");
   const [area, setArea] = useState("");
   const [street, setStreet] = useState("");
