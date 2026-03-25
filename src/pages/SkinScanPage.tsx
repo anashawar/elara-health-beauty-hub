@@ -683,7 +683,8 @@ function SkinScanContent() {
                 onClick={async () => {
                   try {
                     toast.info(language === "ar" ? "جاري إنشاء التقرير..." : "Generating report...");
-                    const blob = await generateSkinReportPdf(analysis as any, user?.user_metadata?.full_name || "", language);
+                    const generateFn = await lazyGenerateSkinReportPdf();
+                    const blob = await generateFn(analysis as any, user?.user_metadata?.full_name || "", language);
                     const fileName = `ELARA-Skin-Report-${new Date().toISOString().slice(0, 10)}.pdf`;
                     await savePdfBlob(blob, fileName);
                     toast.success(language === "ar" ? "تم تحميل التقرير!" : "Report downloaded!");
@@ -1102,7 +1103,8 @@ function SkinScanContent() {
               onClick={async () => {
                 try {
                   toast.info(language === "ar" ? "جاري إنشاء التقرير..." : "Generating report...");
-                  const blob = await generateSkinReportPdf(analysis as any, user?.user_metadata?.full_name || "", language);
+                  const generateFn = await lazyGenerateSkinReportPdf();
+                  const blob = await generateFn(analysis as any, user?.user_metadata?.full_name || "", language);
                   const fileName = `ELARA-Skin-Report-${new Date().toISOString().slice(0, 10)}.pdf`;
                   await savePdfBlob(blob, fileName);
                   toast.success(language === "ar" ? "تم تحميل التقرير!" : "Report downloaded!");
