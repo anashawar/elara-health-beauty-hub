@@ -76,17 +76,17 @@ serve(async (req) => {
       otpRecord = { id: "demo", phone: normalizedPhone, code, verified: false };
     } else {
       const { data: otpData } = await supabase
-      .from("otp_verifications")
-      .select("*")
-      .eq("phone", normalizedPhone)
-      .eq("code", code)
-      .eq("verified", false)
-      .gte("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-
-    const otpRecord = otpData;
+        .from("otp_verifications")
+        .select("*")
+        .eq("phone", normalizedPhone)
+        .eq("code", code)
+        .eq("verified", false)
+        .gte("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      otpRecord = otpData;
+    }
 
     if (!otpRecord) {
       return new Response(
