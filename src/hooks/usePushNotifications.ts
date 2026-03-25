@@ -1,16 +1,29 @@
 import { useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { isNativePlatform, registerNativePush, saveNativeToken, setupNativeListeners, removeNativeListeners } from "@/lib/nativePush";
 
 /**
- * Hook version — kept for backward compatibility if used elsewhere.
+ * Unified push notification hook.
+ * - On native iOS/Android: uses Capacitor PushNotifications plugin
+ * - On web: uses Firebase Cloud Messaging (FCM)
  */
 export function usePushNotifications() {
   const { user } = useAuth();
   const initialized = useRef(false);
+  const navigate = useNavigate();
 
-  const subscribe = useCallback(async () => {
+  const subscribeNative = useCallback(async () => {
+    if (!user) return;
+    const token = await registerNativePush();
+    if (token) {
+      await saveNativeToken(user.id, token);
+    }
+  }, [user]);
+
+  const subscribeWeb = useCallback(async () => {
     if (!user) return;
     const { requestFCMToken } = await import("@/lib/firebase");
     const token = await requestFCMToken();
@@ -38,59 +51,76 @@ export function usePushNotifications() {
     if (!user || initialized.current) return;
     initialized.current = true;
 
-    // Defer Firebase import
-    const init = async () => {
-      const { getFirebaseConfig, onForegroundMessage } = await import("@/lib/firebase");
+    if (isNativePlatform()) {
+      // Native iOS/Android path
+      subscribeNative();
+      setupNativeListeners((url) => navigate(url));
 
-      // Init service worker
-      if ("serviceWorker" in navigator) {
-        try {
-          const config = await getFirebaseConfig();
-          if (config) {
-            const reg = await navigator.serviceWorker.ready;
-            reg.active?.postMessage({
-              type: "FIREBASE_CONFIG",
-              config: {
-                apiKey: config.apiKey,
-                projectId: config.projectId,
-                messagingSenderId: config.messagingSenderId,
-                appId: config.appId,
-              },
-            });
+      return () => {
+        removeNativeListeners();
+      };
+    } else {
+      // Web/PWA path — Firebase
+      const init = async () => {
+        const { getFirebaseConfig, onForegroundMessage } = await import("@/lib/firebase");
+
+        if ("serviceWorker" in navigator) {
+          try {
+            const config = await getFirebaseConfig();
+            if (config) {
+              const reg = await navigator.serviceWorker.ready;
+              reg.active?.postMessage({
+                type: "FIREBASE_CONFIG",
+                config: {
+                  apiKey: config.apiKey,
+                  projectId: config.projectId,
+                  messagingSenderId: config.messagingSenderId,
+                  appId: config.appId,
+                },
+              });
+            }
+          } catch (e) {
+            console.warn("SW init failed:", e);
           }
-        } catch (e) {
-          console.warn("SW init failed:", e);
         }
-      }
 
-      subscribe();
+        subscribeWeb();
 
-      onForegroundMessage((payload: any) => {
-        const { title, body } = payload.notification || payload.data || {};
-        if (title) {
-          toast(title, { description: body });
-        }
-      });
-    };
+        onForegroundMessage((payload: any) => {
+          const { title, body } = payload.notification || payload.data || {};
+          if (title) {
+            toast(title, { description: body });
+          }
+        });
+      };
 
-    init();
-  }, [user, subscribe]);
+      init();
+    }
+  }, [user, subscribeNative, subscribeWeb, navigate]);
 
-  return { subscribe };
+  return { subscribe: isNativePlatform() ? subscribeNative : subscribeWeb };
 }
 
 /**
  * Standalone init — called from deferred App init.
- * Dynamically imports firebase only when actually needed.
  */
 export async function initPushNotifications() {
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return; // No user — skip entirely
+    if (!session?.user) return;
 
+    if (isNativePlatform()) {
+      const token = await registerNativePush();
+      if (token) {
+        await saveNativeToken(session.user.id, token);
+      }
+      setupNativeListeners();
+      return;
+    }
+
+    // Web path
     const { getFirebaseConfig, onForegroundMessage, requestFCMToken } = await import("@/lib/firebase");
 
-    // Init service worker
     if ("serviceWorker" in navigator) {
       const config = await getFirebaseConfig();
       if (config) {
@@ -107,7 +137,6 @@ export async function initPushNotifications() {
       }
     }
 
-    // Subscribe
     const token = await requestFCMToken();
     if (token) {
       const { data: existing } = await supabase
@@ -128,9 +157,7 @@ export async function initPushNotifications() {
       }
     }
 
-    // Foreground messages
-    const { onForegroundMessage: onMsg } = await import("@/lib/firebase");
-    onMsg((payload: any) => {
+    onForegroundMessage((payload: any) => {
       const { title, body } = payload.notification || payload.data || {};
       if (title) {
         import("sonner").then(({ toast: t }) => {
@@ -139,7 +166,6 @@ export async function initPushNotifications() {
       }
     });
   } catch (e) {
-    // Silent — push is non-critical
     console.warn("Deferred push init failed:", e);
   }
 }
