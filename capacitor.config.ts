@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const isDevMode = process.env.NODE_ENV === 'development';
 
 const config: CapacitorConfig = {
-  appId: 'com.elarastore.app',
+  appId: 'com.elarashop.app',
   appName: 'ELARA',
   webDir: 'dist',
   // Only use live-reload server in development — production loads from local bundle
