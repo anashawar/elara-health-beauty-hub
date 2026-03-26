@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Phone, Save, LogOut, Globe, Calendar, Camera, Loader2, Trash2, AlertTriangle, ShieldAlert, KeyRound } from "lucide-react";
+import { ArrowLeft, User, Phone, Save, LogOut, Globe, Calendar, Camera, Loader2, Trash2, AlertTriangle, ShieldAlert, KeyRound, Mail, Pencil } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -120,6 +120,9 @@ const SettingsPage = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailUpdating, setEmailUpdating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profile, isLoading } = useQuery({
@@ -363,8 +366,15 @@ const SettingsPage = () => {
                 <h3 className="text-sm font-bold text-foreground">{t("settings.profileInfo")}</h3>
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-muted-foreground">{t("auth.email")}</label>
-                  <div className="h-11 px-4 rounded-xl bg-muted flex items-center">
-                    <span className="text-sm text-muted-foreground">{user.email}</span>
+                  <div className="h-11 px-4 rounded-xl bg-muted flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground truncate">{user.email}</span>
+                    <button
+                      onClick={() => setEmailDialogOpen(true)}
+                      className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors shrink-0 ms-2"
+                    >
+                      <Pencil className="w-3 h-3" />
+                      {t("settings.changeEmail")}
+                    </button>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -430,6 +440,67 @@ const SettingsPage = () => {
               <DeleteAccountSection user={user} phone={phone} signOut={signOut} navigate={navigate} t={t} />
             </motion.div>
           )}
+
+          {/* Email Change Dialog */}
+          <AlertDialog open={emailDialogOpen} onOpenChange={(open) => { if (!open) { setEmailDialogOpen(false); setNewEmail(""); } }}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                  <Mail className="w-7 h-7 text-primary" />
+                </div>
+                <AlertDialogTitle className="text-center text-lg">
+                  {t("settings.changeEmail")}
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-center">
+                  {t("settings.changeEmailDesc")}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="my-4 space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">{t("settings.newEmail")}</label>
+                <Input
+                  type="email"
+                  value={newEmail}
+                  onChange={e => setNewEmail(e.target.value)}
+                  placeholder="new@email.com"
+                  className="h-11 rounded-xl"
+                />
+              </div>
+              <AlertDialogFooter className="flex-col sm:flex-col gap-2">
+                <AlertDialogAction
+                  className="w-full"
+                  disabled={!newEmail || emailUpdating}
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    if (newEmail === user?.email) {
+                      toast(t("settings.emailSameAsCurrent"));
+                      return;
+                    }
+                    setEmailUpdating(true);
+                    try {
+                      const { error } = await supabase.auth.updateUser({ email: newEmail });
+                      if (error) throw error;
+                      toast(t("settings.emailChangeRequested"));
+                      setEmailDialogOpen(false);
+                      setNewEmail("");
+                    } catch (err: any) {
+                      console.error("Email change error:", err);
+                      toast(err.message || t("settings.emailChangeError"));
+                    } finally {
+                      setEmailUpdating(false);
+                    }
+                  }}
+                >
+                  {emailUpdating
+                    ? <><Loader2 className="w-4 h-4 animate-spin me-2" />{t("settings.updating")}</>
+                    : t("settings.changeEmail")
+                  }
+                </AlertDialogAction>
+                <AlertDialogCancel className="w-full mt-0">
+                  {t("common.cancel")}
+                </AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 

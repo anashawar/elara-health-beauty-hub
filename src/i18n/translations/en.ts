@@ -417,6 +417,13 @@ export const en = {
     permanentlyDelete: "Permanently delete my account",
     accountDeleted: "Your account has been permanently deleted. We're sorry to see you go.",
     goBack: "Go Back",
+    changeEmail: "Change Email",
+    changeEmailDesc: "Enter your new email address. A confirmation link will be sent to both your current and new email.",
+    newEmail: "New email address",
+    emailChangeRequested: "Confirmation email sent! Please check both your old and new email to confirm the change.",
+    emailChangeError: "Failed to update email. Please try again.",
+    emailSameAsCurrent: "This is already your current email.",
+    updating: "Updating...",
   },
   categories: {
     title: "Categories",
