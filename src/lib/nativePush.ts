@@ -11,8 +11,10 @@ export function isNativePlatform(): boolean {
 }
 
 /**
- * Register for native push notifications on iOS/Android.
- * Returns the device token, or null if registration fails.
+ * Get an FCM token on native iOS/Android.
+ * On iOS, Capacitor gives an APNs token — we pass it to Firebase SDK 
+ * which converts it to an FCM registration token that Firebase campaigns can target.
+ * On Android, Capacitor already gives an FCM token directly.
  */
 export async function registerNativePush(): Promise<string | null> {
   if (!isNativePlatform()) return null;
@@ -33,13 +35,13 @@ export async function registerNativePush(): Promise<string | null> {
     // Register with OS
     await PushNotifications.register();
 
-    // Wait for registration token
-    return new Promise<string | null>((resolve) => {
+    // Get the native token (APNs on iOS, FCM on Android)
+    const nativeToken = await new Promise<string | null>((resolve) => {
       const timeout = setTimeout(() => resolve(null), 10000);
 
       PushNotifications.addListener("registration", (token: Token) => {
         clearTimeout(timeout);
-        console.log("Native push token:", token.value);
+        console.log("Native push token received:", token.value.substring(0, 10) + "...");
         resolve(token.value);
       });
 
@@ -49,6 +51,32 @@ export async function registerNativePush(): Promise<string | null> {
         resolve(null);
       });
     });
+
+    if (!nativeToken) return null;
+
+    const platform = Capacitor.getPlatform();
+
+    // On iOS, the native token is an APNs token.
+    // We need to use Firebase SDK to get the FCM registration token.
+    if (platform === "ios") {
+      try {
+        const { requestFCMToken } = await import("@/lib/firebase");
+        const fcmToken = await requestFCMToken();
+        if (fcmToken) {
+          console.log("iOS FCM token obtained via Firebase SDK");
+          return fcmToken;
+        }
+        // Fallback: store the APNs token anyway (won't work with Firebase campaigns)
+        console.warn("Could not get FCM token on iOS, falling back to APNs token");
+        return nativeToken;
+      } catch (e) {
+        console.warn("Firebase SDK not available on iOS, using APNs token:", e);
+        return nativeToken;
+      }
+    }
+
+    // On Android, Capacitor already returns an FCM token
+    return nativeToken;
   } catch (err) {
     console.error("Native push registration failed:", err);
     return null;
@@ -56,7 +84,7 @@ export async function registerNativePush(): Promise<string | null> {
 }
 
 /**
- * Save a native push token to the database for the given user.
+ * Save a push token to the database for the given user.
  */
 export async function saveNativeToken(userId: string, token: string): Promise<void> {
   const platform = Capacitor.getPlatform(); // 'ios' | 'android'
