@@ -120,6 +120,9 @@ const SettingsPage = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailUpdating, setEmailUpdating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profile, isLoading } = useQuery({
