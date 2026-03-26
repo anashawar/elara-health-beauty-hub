@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Phone, Save, LogOut, Globe, Calendar, Camera, Loader2, Trash2, AlertTriangle, ShieldAlert, KeyRound } from "lucide-react";
+import { ArrowLeft, User, Phone, Save, LogOut, Globe, Calendar, Camera, Loader2, Trash2, AlertTriangle, ShieldAlert, KeyRound, Mail, Pencil } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -363,8 +363,15 @@ const SettingsPage = () => {
                 <h3 className="text-sm font-bold text-foreground">{t("settings.profileInfo")}</h3>
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-muted-foreground">{t("auth.email")}</label>
-                  <div className="h-11 px-4 rounded-xl bg-muted flex items-center">
-                    <span className="text-sm text-muted-foreground">{user.email}</span>
+                  <div className="h-11 px-4 rounded-xl bg-muted flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground truncate">{user.email}</span>
+                    <button
+                      onClick={() => setEmailDialogOpen(true)}
+                      className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors shrink-0 ms-2"
+                    >
+                      <Pencil className="w-3 h-3" />
+                      {t("settings.changeEmail")}
+                    </button>
                   </div>
                 </div>
                 <div className="space-y-2">
