@@ -23,7 +23,8 @@ export const MobileAppTopStrip = () => {
         <p className="text-[10px] text-white/50 leading-tight">Get 15% OFF your first order</p>
       </div>
       <a
-        href="#"
+        href="https://apps.apple.com/us/app/elara-beauty-health/id6761014159"
+        target="_blank" rel="noopener noreferrer"
         className="flex-shrink-0 px-3.5 py-1.5 bg-primary rounded-full text-[11px] font-bold text-primary-foreground hover:opacity-90 transition-opacity"
       >
         GET
@@ -108,7 +109,8 @@ export const MobileAppInlineBanner = () => {
           <p className="text-[10px] text-white/60 leading-tight mt-0.5">15% OFF + exclusive app-only deals</p>
         </div>
         <a
-          href="#"
+          href="https://apps.apple.com/us/app/elara-beauty-health/id6761014159"
+          target="_blank" rel="noopener noreferrer"
           className="relative flex-shrink-0 px-4 py-2 bg-white rounded-xl text-xs font-bold text-primary hover:bg-white/90 transition-colors"
         >
           Install
@@ -137,7 +139,8 @@ export const ProductPageAppBanner = () => {
           <p className="text-[9px] text-white/40 leading-tight mt-0.5">15% OFF first order • Faster checkout</p>
         </div>
         <a
-          href="#"
+          href="https://apps.apple.com/us/app/elara-beauty-health/id6761014159"
+          target="_blank" rel="noopener noreferrer"
           className="flex-shrink-0 px-3 py-1.5 bg-primary rounded-full text-[10px] font-bold text-primary-foreground hover:opacity-90 transition-opacity"
         >
           Open App
