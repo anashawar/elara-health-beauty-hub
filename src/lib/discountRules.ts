@@ -55,11 +55,11 @@ export function getEligibleSubtotal(
   }, 0);
 }
 
-/** Calculate first-order discount. */
-export function calcFirstOrderDiscount(cartTotal: number, isFirstOrder: boolean): number {
+/** Calculate first-order discount. Applies to the subtotal passed in (should be offer-adjusted). */
+export function calcFirstOrderDiscount(subtotal: number, isFirstOrder: boolean): number {
   if (!isFirstOrder) return 0;
-  if (cartTotal < FIRST_ORDER_MIN_AMOUNT) return 0;
-  return Math.round((cartTotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250;
+  if (subtotal < FIRST_ORDER_MIN_AMOUNT) return 0;
+  return Math.round((subtotal * FIRST_ORDER_DISCOUNT_PERCENT) / 100 / 250) * 250;
 }
 
 /**
