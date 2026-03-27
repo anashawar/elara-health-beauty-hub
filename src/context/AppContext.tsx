@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import type { ProductWithRelations } from "@/hooks/useProducts";
 
 interface CartItem {
@@ -69,6 +70,80 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [wishlist, setWishlist] = useState<string[]>(loadWishlist);
   const [pendingCoupon, setPendingCoupon] = useState<string | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+
+  // Refresh old/stale cart items from backend so offers always have current product metadata.
+  useEffect(() => {
+    const staleIds = cart
+      .filter((item) => !item.product.brand_id || !item.product.category_id)
+      .map((item) => item.product.id);
+
+    if (staleIds.length === 0) return;
+
+    let cancelled = false;
+
+    const refreshCartProducts = async () => {
+      const uniqueIds = Array.from(new Set(staleIds));
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          id,
+          title,
+          title_ar,
+          title_ku,
+          slug,
+          price,
+          original_price,
+          brand_id,
+          category_id,
+          subcategory_id,
+          in_stock,
+          product_images(image_url),
+          brands(name, name_ar, name_ku),
+          categories(name, name_ar, name_ku)
+        `)
+        .in("id", uniqueIds);
+
+      if (error || !data || cancelled) return;
+
+      const productMap = new Map(
+        data.map((product: any) => [
+          product.id,
+          {
+            id: product.id,
+            title: product.title,
+            titleAr: product.title_ar,
+            titleKu: product.title_ku,
+            slug: product.slug,
+            price: Number(product.price),
+            originalPrice: product.original_price ? Number(product.original_price) : null,
+            image: product.product_images?.[0]?.image_url || "/placeholder.svg",
+            images: product.product_images?.map((img: any) => img.image_url) || [],
+            brand: product.brands?.name || "",
+            brandAr: product.brands?.name_ar || null,
+            brandKu: product.brands?.name_ku || null,
+            brand_id: product.brand_id,
+            category: product.categories?.name || "",
+            categoryAr: product.categories?.name_ar || null,
+            categoryKu: product.categories?.name_ku || null,
+            category_id: product.category_id,
+            subcategory_id: product.subcategory_id,
+            inStock: product.in_stock,
+          } satisfies ProductWithRelations,
+        ]),
+      );
+
+      setCart((prev) => prev.map((item) => {
+        const freshProduct = productMap.get(item.product.id);
+        return freshProduct ? { ...item, product: freshProduct } : item;
+      }));
+    };
+
+    refreshCartProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cart]);
 
   // Persist cart to localStorage on every change
   const isInitialMount = useRef(true);
