@@ -500,6 +500,20 @@ const CheckoutPage = () => {
               );
             })}
 
+            {/* Offer savings line */}
+            {offerSavings > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="border-t border-border pt-2 mt-2 flex justify-between text-sm"
+              >
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                  🏷️ {language === "ar" ? "خصومات العروض" : language === "ku" ? "داشکانی ئۆفەرەکان" : "Offer Discounts"}
+                </span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">-{formatPrice(offerSavings)}</span>
+              </motion.div>
+            )}
+
             {/* First order discount line */}
             {firstOrderDiscount > 0 && (
               <motion.div
