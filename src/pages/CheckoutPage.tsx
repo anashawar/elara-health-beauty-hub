@@ -53,7 +53,7 @@ const CheckoutPage = () => {
   });
 
   const isFirstOrder = existingOrderCount === 0 && !ordersCountLoading;
-  const meetsMinimum = cartTotal >= FIRST_ORDER_MIN_AMOUNT;
+  const meetsMinimum = (cartTotal - (discounts?.offerSavings ?? 0)) >= FIRST_ORDER_MIN_AMOUNT;
 
   // Active offers for determining already-discounted products
   const { data: activeOffers = [] } = useActiveOffers();
