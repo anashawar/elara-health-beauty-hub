@@ -53,7 +53,6 @@ const CheckoutPage = () => {
   });
 
   const isFirstOrder = existingOrderCount === 0 && !ordersCountLoading;
-  const meetsMinimum = (cartTotal - (discounts?.offerSavings ?? 0)) >= FIRST_ORDER_MIN_AMOUNT;
 
   // Active offers for determining already-discounted products
   const { data: activeOffers = [] } = useActiveOffers();
@@ -62,6 +61,8 @@ const CheckoutPage = () => {
   // Use centralized discount rules engine
   const discounts = calcOrderDiscounts(cart, cartTotal, isFirstOrder, appliedCoupon, offerLookup);
   const { offerSavings, firstOrderDiscount, couponDiscount, totalDiscount, offerAdjustedSubtotal } = discounts;
+
+  const meetsMinimum = offerAdjustedSubtotal >= FIRST_ORDER_MIN_AMOUNT;
 
   const { data: addresses = [], isLoading: addressesLoading } = useQuery({
     queryKey: ["addresses", user?.id],
