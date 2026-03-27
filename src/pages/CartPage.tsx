@@ -15,7 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { getDeliveryFee, FREE_DELIVERY_MIN } from "@/lib/deliveryFee";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
-import { calcCouponDiscount, getEligibleSubtotal, calcOfferSavings } from "@/lib/discountRules";
+import { calcCouponDiscount, getEligibleSubtotal, calcOfferSavings, getEffectivePrice } from "@/lib/discountRules";
 import CartFrequentlyBought from "@/components/cart/CartFrequentlyBought";
 
 const CartPage = () => {
@@ -338,7 +338,18 @@ const CartPage = () => {
                           <p className="text-sm font-semibold text-foreground truncate mt-0.5">{item.product.title}</p>
                         </div>
                         <div className="flex items-center justify-between">
-                          <p className="text-base font-extrabold text-foreground">{formatPrice(item.product.price * item.quantity)}</p>
+                          {(() => {
+                            const effectivePrice = getEffectivePrice(item.product, offerLookup);
+                            const hasOffer = effectivePrice < item.product.price;
+                            return (
+                              <div className="flex items-center gap-1.5">
+                                {hasOffer && (
+                                  <p className="text-xs text-muted-foreground line-through">{formatPrice(item.product.price * item.quantity)}</p>
+                                )}
+                                <p className={`text-base font-extrabold ${hasOffer ? "text-primary" : "text-foreground"}`}>{formatPrice(effectivePrice * item.quantity)}</p>
+                              </div>
+                            );
+                          })()}
                           <div className="flex items-center bg-secondary rounded-xl overflow-hidden border border-border/30">
                             <button
                               onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
@@ -440,6 +451,14 @@ const CartPage = () => {
                     <span className="text-muted-foreground">{t("cart.subtotal")} ({cartCount} {t("common.items")})</span>
                     <span className="font-semibold text-foreground">{formatPrice(cartTotal)}</span>
                   </div>
+                  {offerSavings > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                        🏷️ {language === "ar" ? "خصومات العروض" : language === "ku" ? "داشکانی ئۆفەرەکان" : "Offer Discounts"}
+                      </span>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">-{formatPrice(offerSavings)}</span>
+                    </div>
+                  )}
                   {discount > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-primary font-medium">{t("cart.coupon")} ({appliedCoupon?.code})</span>
@@ -454,7 +473,12 @@ const CartPage = () => {
                   </div>
                   <div className="border-t border-border/50 pt-3 flex justify-between items-baseline">
                     <span className="font-bold text-foreground">{t("cart.total")}</span>
-                    <span className="text-xl font-extrabold text-foreground">{formatPrice(total)}</span>
+                    <div className="text-right">
+                      {(offerSavings > 0 || discount > 0) && (
+                        <span className="text-xs text-muted-foreground line-through mr-2">{formatPrice(cartTotal + deliveryFee)}</span>
+                      )}
+                      <span className="text-xl font-extrabold text-foreground">{formatPrice(total)}</span>
+                    </div>
                   </div>
                 </div>
 
