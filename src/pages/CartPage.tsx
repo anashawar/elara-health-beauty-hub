@@ -15,7 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { getDeliveryFee, FREE_DELIVERY_MIN } from "@/lib/deliveryFee";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
-import { calcCouponDiscount, getEligibleSubtotal } from "@/lib/discountRules";
+import { calcCouponDiscount, getEligibleSubtotal, calcOfferSavings } from "@/lib/discountRules";
 import CartFrequentlyBought from "@/components/cart/CartFrequentlyBought";
 
 const CartPage = () => {
@@ -114,11 +114,12 @@ const CartPage = () => {
   const { data: activeOffers = [] } = useActiveOffers();
   const offerLookup = (p: any) => getOfferForProduct(p, activeOffers);
 
-  // Calculate discount using the rules engine (coupon only on non-discounted items, 0 on first order)
+  // Calculate offer savings and coupon discount
+  const offerSavings = calcOfferSavings(cart, offerLookup);
   const discount = calcCouponDiscount(appliedCoupon, cart, isFirstOrder, offerLookup);
   const eligibleSubtotal = getEligibleSubtotal(cart, offerLookup);
 
-  const subtotalAfterDiscount = Math.max(cartTotal - discount, 0);
+  const subtotalAfterDiscount = Math.max(cartTotal - offerSavings - discount, 0);
   const deliveryFee = getDeliveryFee(defaultAddress?.city, subtotalAfterDiscount);
   const freeDeliveryLeft = FREE_DELIVERY_MIN - subtotalAfterDiscount;
   const freeDeliveryProgress = Math.min((subtotalAfterDiscount / FREE_DELIVERY_MIN) * 100, 100);
