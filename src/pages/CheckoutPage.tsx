@@ -520,17 +520,10 @@ const CheckoutPage = () => {
                     <span className="text-primary font-bold">-{formatPrice(couponDiscount)}</span>
                   ) : (
                     <span className="text-muted-foreground text-xs">
-                      {isFirstOrder
-                        ? (language === "ar" ? "من الطلب الثاني" : "From 2nd order")
-                        : (language === "ar" ? "لا منتجات مؤهلة" : "No eligible items")}
+                      {language === "ar" ? "لا منتجات مؤهلة" : "No eligible items"}
                     </span>
                   )}
                 </div>
-                {isFirstOrder && appliedCoupon.influencer_name && (
-                  <p className="text-[9px] text-muted-foreground mt-1">
-                    ✓ {language === "ar" ? `مسجّل عبر ${appliedCoupon.influencer_name}` : `Tracked via ${appliedCoupon.influencer_name}`}
-                  </p>
-                )}
               </motion.div>
             )}
 
