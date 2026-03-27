@@ -90,9 +90,20 @@ const CheckoutPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user || !selectedAddress) {
-      console.error("Missing user or address");
+    if (!user) {
+      console.error("Missing user");
       return;
+    }
+
+    if (!selectedAddress) {
+      const { toast } = await import("@/components/ui/sonner");
+      toast.error(
+        language === "ar" ? "يرجى إضافة عنوان توصيل أولاً" :
+        language === "ku" ? "تکایە سەرەتا ناونیشانی گەیاندن زیاد بکە" :
+        "Please add a delivery address first"
+      );
+      return;
+    }
     }
 
     // Re-verify first order status at submit time to prevent race conditions
