@@ -484,12 +484,21 @@ const CheckoutPage = () => {
         <div className="bg-card rounded-2xl p-4 shadow-premium">
           <h3 className="text-sm font-bold text-foreground mb-3">{t("cart.orderSummary")}</h3>
           <div className="space-y-1.5">
-            {cart.map(item => (
-              <div key={item.product.id} className="flex justify-between text-sm">
-                <span className="text-muted-foreground truncate max-w-[200px]">{item.product.title} ×{item.quantity}</span>
-                <span className="text-foreground font-medium">{formatPrice(item.product.price * item.quantity)}</span>
-              </div>
-            ))}
+            {cart.map(item => {
+              const effectivePrice = getEffectivePrice(item.product, offerLookup);
+              const hasOffer = effectivePrice < item.product.price;
+              return (
+                <div key={item.product.id} className="flex justify-between text-sm">
+                  <span className="text-muted-foreground truncate max-w-[200px]">{item.product.title} ×{item.quantity}</span>
+                  <div className="flex items-center gap-1.5">
+                    {hasOffer && (
+                      <span className="text-muted-foreground line-through text-xs">{formatPrice(item.product.price * item.quantity)}</span>
+                    )}
+                    <span className="text-foreground font-medium">{formatPrice(effectivePrice * item.quantity)}</span>
+                  </div>
+                </div>
+              );
+            })}
 
             {/* First order discount line */}
             {firstOrderDiscount > 0 && (
