@@ -192,18 +192,7 @@ const CartPage = () => {
       discount_value: data.discount_value,
     });
 
-    // On first order: inform user that coupon discount won't apply but is tracked
-    if (isFirstOrder) {
-      toast(language === "ar"
-        ? "تم قبول الكوبون! خصم 15% للطلب الأول يُطبّق تلقائياً. خصم الكوبون سيعمل من الطلب الثاني."
-        : language === "ku"
-          ? "کوپۆنەکە وەرگیرا! داشکانی 15% بۆ داواکاری یەکەم خۆکارانە دادەنرێت. داشکانی کوپۆن لە داواکاری دووەمەوە کار دەکات."
-          : "Coupon accepted! Your 15% first-order discount is applied automatically. Coupon discount will work from your second order.",
-        { duration: 6000 }
-      );
-    } else {
-      toast(t("cart.couponApplied"));
-    }
+    toast(t("cart.couponApplied"));
   };
 
   const removeCoupon = () => {
@@ -385,21 +374,11 @@ const CartPage = () => {
                   <div>
                         <p className="text-xs font-bold text-primary">{appliedCoupon.code}</p>
                         <p className="text-[10px] text-muted-foreground">
-                          {isFirstOrder
-                            ? (language === "ar" ? "مسجّل للتتبع • خصم الكوبون من الطلب الثاني" : "Tracked • Coupon discount from 2nd order")
-                            : (
-                              appliedCoupon.discount_type === "percentage"
-                                ? `${appliedCoupon.discount_value}% ${t("common.off").toLowerCase()}`
-                                : `${formatPrice(appliedCoupon.discount_value)} ${t("common.off").toLowerCase()}`
-                            ) + (discount > 0 ? ` · ${t("cart.youSave")} ${formatPrice(discount)}` : "")
-                          }
+                          {appliedCoupon.discount_type === "percentage"
+                            ? `${appliedCoupon.discount_value}% ${t("common.off").toLowerCase()}`
+                            : `${formatPrice(appliedCoupon.discount_value)} ${t("common.off").toLowerCase()}`
+                          }{discount > 0 ? ` · ${t("cart.youSave")} ${formatPrice(discount)}` : ""}
                         </p>
-                        {isFirstOrder && (
-                          <p className="text-[9px] text-amber-600 dark:text-amber-400 mt-0.5 flex items-center gap-1">
-                            <Info className="w-3 h-3" />
-                            {language === "ar" ? "خصم 15% للطلب الأول يُطبّق تلقائياً في الدفع" : "15% first-order discount applied at checkout"}
-                          </p>
-                        )}
                       </div>
                     </div>
                     <button onClick={removeCoupon} className="p-1.5 hover:bg-primary/10 rounded-lg transition-colors">

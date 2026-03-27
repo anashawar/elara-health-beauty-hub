@@ -75,8 +75,6 @@ export function calcCouponDiscount(
   getOfferForProduct?: (p: ProductWithRelations) => OfferPricing | null
 ): number {
   if (!coupon) return 0;
-  // First order: no coupon discount for user (influencer still tracked)
-  if (isFirstOrder) return 0;
 
   const eligibleSubtotal = getEligibleSubtotal(cart, getOfferForProduct);
   if (eligibleSubtotal <= 0) return 0;
