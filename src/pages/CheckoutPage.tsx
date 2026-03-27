@@ -104,7 +104,6 @@ const CheckoutPage = () => {
       );
       return;
     }
-    }
 
     // Re-verify first order status at submit time to prevent race conditions
     const { count: freshCount } = await supabase
