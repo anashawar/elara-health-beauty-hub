@@ -95,6 +95,51 @@ export function calcCouponDiscount(
   return Math.min(rawDiscount, maxDiscount);
 }
 
+/**
+ * Calculate total offer savings for the cart (difference between original prices and offer prices).
+ */
+export function calcOfferSavings(
+  cart: CartItem[],
+  getOfferForProduct?: (p: ProductWithRelations) => OfferPricing | null
+): number {
+  if (!getOfferForProduct) return 0;
+  return cart.reduce((sum, item) => {
+    const offer = getOfferForProduct(item.product);
+    if (offer && offer.discountedPrice < item.product.price) {
+      return sum + (item.product.price - offer.discountedPrice) * item.quantity;
+    }
+    return sum;
+  }, 0);
+}
+
+/**
+ * Get the effective price for a product (offer price if applicable, otherwise product.price).
+ */
+export function getEffectivePrice(
+  product: ProductWithRelations,
+  getOfferForProduct?: (p: ProductWithRelations) => OfferPricing | null
+): number {
+  if (getOfferForProduct) {
+    const offer = getOfferForProduct(product);
+    if (offer && offer.discountedPrice < product.price) {
+      return offer.discountedPrice;
+    }
+  }
+  return product.price;
+}
+
+/**
+ * Calculate the offer-adjusted subtotal (using offer prices where applicable).
+ */
+export function calcOfferAdjustedSubtotal(
+  cart: CartItem[],
+  getOfferForProduct?: (p: ProductWithRelations) => OfferPricing | null
+): number {
+  return cart.reduce((sum, item) => {
+    return sum + getEffectivePrice(item.product, getOfferForProduct) * item.quantity;
+  }, 0);
+}
+
 /** Full discount summary for an order. */
 export function calcOrderDiscounts(
   cart: CartItem[],
@@ -103,14 +148,21 @@ export function calcOrderDiscounts(
   coupon: AppliedCouponFull | null,
   getOfferForProduct?: (p: ProductWithRelations) => OfferPricing | null
 ) {
-  const firstOrderDiscount = calcFirstOrderDiscount(cartTotal, isFirstOrder);
+  // Calculate offer savings (25% brand discounts, etc.)
+  const offerSavings = calcOfferSavings(cart, getOfferForProduct);
+  const offerAdjustedSubtotal = cartTotal - offerSavings;
+
+  // First-order discount applies AFTER offer discounts (on reduced subtotal)
+  const firstOrderDiscount = calcFirstOrderDiscount(offerAdjustedSubtotal, isFirstOrder);
   const couponDiscount = calcCouponDiscount(coupon, cart, isFirstOrder, getOfferForProduct);
-  const totalDiscount = firstOrderDiscount + couponDiscount;
+  const totalDiscount = offerSavings + firstOrderDiscount + couponDiscount;
 
   return {
+    offerSavings,
     firstOrderDiscount,
     couponDiscount,
     totalDiscount,
+    offerAdjustedSubtotal,
     isFirstOrder,
     /** Whether coupon is accepted (for influencer tracking) even if discount = 0. */
     couponAccepted: !!coupon,
