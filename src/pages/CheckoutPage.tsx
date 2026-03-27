@@ -90,8 +90,18 @@ const CheckoutPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user || !selectedAddress) {
-      console.error("Missing user or address");
+    if (!user) {
+      console.error("Missing user");
+      return;
+    }
+
+    if (!selectedAddress) {
+      const { toast } = await import("@/components/ui/sonner");
+      toast.error(
+        language === "ar" ? "يرجى إضافة عنوان توصيل أولاً" :
+        language === "ku" ? "تکایە سەرەتا ناونیشانی گەیاندن زیاد بکە" :
+        "Please add a delivery address first"
+      );
       return;
     }
 
@@ -379,9 +389,16 @@ const CheckoutPage = () => {
               </div>
             </div>
           ) : (
-            <div className="text-center py-4">
-              <p className="text-xs text-muted-foreground mb-2">{t("checkout.noAddresses")}</p>
-              <Link to="/addresses" className="text-xs text-primary font-medium">{t("checkout.addAddress")}</Link>
+            <div className="text-center py-4 bg-destructive/10 rounded-xl border border-destructive/20">
+              <MapPin className="w-6 h-6 text-destructive mx-auto mb-2" />
+              <p className="text-sm font-semibold text-foreground mb-1">
+                {language === "ar" ? "يرجى إضافة عنوان توصيل" : language === "ku" ? "تکایە ناونیشانی گەیاندن زیاد بکە" : "Please add a delivery address"}
+              </p>
+              <p className="text-xs text-muted-foreground mb-3">{t("checkout.noAddresses")}</p>
+              <Link to="/addresses" className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-xl">
+                <MapPin className="w-3.5 h-3.5" />
+                {t("checkout.addAddress")}
+              </Link>
             </div>
           )}
 
