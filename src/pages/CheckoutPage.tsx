@@ -20,6 +20,7 @@ import {
   FIRST_ORDER_DISCOUNT_PERCENT,
   FIRST_ORDER_MIN_AMOUNT,
   calcOrderDiscounts,
+  getEffectivePrice,
 } from "@/lib/discountRules";
 
 const CheckoutPage = () => {
@@ -52,7 +53,6 @@ const CheckoutPage = () => {
   });
 
   const isFirstOrder = existingOrderCount === 0 && !ordersCountLoading;
-  const meetsMinimum = cartTotal >= FIRST_ORDER_MIN_AMOUNT;
 
   // Active offers for determining already-discounted products
   const { data: activeOffers = [] } = useActiveOffers();
@@ -60,7 +60,9 @@ const CheckoutPage = () => {
 
   // Use centralized discount rules engine
   const discounts = calcOrderDiscounts(cart, cartTotal, isFirstOrder, appliedCoupon, offerLookup);
-  const { firstOrderDiscount, couponDiscount, totalDiscount } = discounts;
+  const { offerSavings, firstOrderDiscount, couponDiscount, totalDiscount, offerAdjustedSubtotal } = discounts;
+
+  const meetsMinimum = offerAdjustedSubtotal >= FIRST_ORDER_MIN_AMOUNT;
 
   const { data: addresses = [], isLoading: addressesLoading } = useQuery({
     queryKey: ["addresses", user?.id],
@@ -142,7 +144,7 @@ const CheckoutPage = () => {
       order_id: order.id,
       product_id: item.product.id,
       quantity: item.quantity,
-      price: item.product.price,
+      price: getEffectivePrice(item.product, offerLookup),
     }));
     await supabase.from("order_items").insert(items);
 
@@ -483,12 +485,35 @@ const CheckoutPage = () => {
         <div className="bg-card rounded-2xl p-4 shadow-premium">
           <h3 className="text-sm font-bold text-foreground mb-3">{t("cart.orderSummary")}</h3>
           <div className="space-y-1.5">
-            {cart.map(item => (
-              <div key={item.product.id} className="flex justify-between text-sm">
-                <span className="text-muted-foreground truncate max-w-[200px]">{item.product.title} ×{item.quantity}</span>
-                <span className="text-foreground font-medium">{formatPrice(item.product.price * item.quantity)}</span>
-              </div>
-            ))}
+            {cart.map(item => {
+              const effectivePrice = getEffectivePrice(item.product, offerLookup);
+              const hasOffer = effectivePrice < item.product.price;
+              return (
+                <div key={item.product.id} className="flex justify-between text-sm">
+                  <span className="text-muted-foreground truncate max-w-[200px]">{item.product.title} ×{item.quantity}</span>
+                  <div className="flex items-center gap-1.5">
+                    {hasOffer && (
+                      <span className="text-muted-foreground line-through text-xs">{formatPrice(item.product.price * item.quantity)}</span>
+                    )}
+                    <span className="text-foreground font-medium">{formatPrice(effectivePrice * item.quantity)}</span>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Offer savings line */}
+            {offerSavings > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="border-t border-border pt-2 mt-2 flex justify-between text-sm"
+              >
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                  🏷️ {language === "ar" ? "خصومات العروض" : language === "ku" ? "داشکانی ئۆفەرەکان" : "Offer Discounts"}
+                </span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">-{formatPrice(offerSavings)}</span>
+              </motion.div>
+            )}
 
             {/* First order discount line */}
             {firstOrderDiscount > 0 && (
