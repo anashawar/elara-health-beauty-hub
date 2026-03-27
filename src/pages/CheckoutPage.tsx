@@ -20,6 +20,7 @@ import {
   FIRST_ORDER_DISCOUNT_PERCENT,
   FIRST_ORDER_MIN_AMOUNT,
   calcOrderDiscounts,
+  getEffectivePrice,
 } from "@/lib/discountRules";
 
 const CheckoutPage = () => {
@@ -60,7 +61,7 @@ const CheckoutPage = () => {
 
   // Use centralized discount rules engine
   const discounts = calcOrderDiscounts(cart, cartTotal, isFirstOrder, appliedCoupon, offerLookup);
-  const { firstOrderDiscount, couponDiscount, totalDiscount } = discounts;
+  const { offerSavings, firstOrderDiscount, couponDiscount, totalDiscount, offerAdjustedSubtotal } = discounts;
 
   const { data: addresses = [], isLoading: addressesLoading } = useQuery({
     queryKey: ["addresses", user?.id],
@@ -142,7 +143,7 @@ const CheckoutPage = () => {
       order_id: order.id,
       product_id: item.product.id,
       quantity: item.quantity,
-      price: item.product.price,
+      price: getEffectivePrice(item.product, offerLookup),
     }));
     await supabase.from("order_items").insert(items);
 
