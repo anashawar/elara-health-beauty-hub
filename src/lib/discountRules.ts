@@ -75,6 +75,9 @@ export function calcCouponDiscount(
   getOfferForProduct?: (p: ProductWithRelations) => OfferPricing | null
 ): number {
   if (!coupon) return 0;
+  // First order: no coupon discount (user gets 15% first-order discount instead)
+  // Coupon is still accepted for influencer commission tracking
+  if (isFirstOrder) return 0;
 
   const eligibleSubtotal = getEligibleSubtotal(cart, getOfferForProduct);
   if (eligibleSubtotal <= 0) return 0;
