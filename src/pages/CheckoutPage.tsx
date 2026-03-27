@@ -116,6 +116,11 @@ const CheckoutPage = () => {
     const confirmedTotalDiscount = confirmedDiscounts.totalDiscount;
     const confirmedFirstDiscount = confirmedDiscounts.firstOrderDiscount;
 
+    console.log("[Checkout] activeOffers:", activeOffers.length, "cartTotal:", cartTotal, 
+      "offerSavings:", confirmedDiscounts.offerSavings, "firstOrderDiscount:", confirmedFirstDiscount,
+      "couponDiscount:", confirmedDiscounts.couponDiscount, "totalDiscount:", confirmedTotalDiscount,
+      "isFirstOrder:", confirmedFirstOrder);
+
     // Build notes and coupon_code
     const notesParts: string[] = [];
     if (notes) notesParts.push(notes);
