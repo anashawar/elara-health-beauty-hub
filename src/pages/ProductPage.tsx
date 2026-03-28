@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/components/ui/sonner";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/hooks/useAuth";
-import { useProduct, useBrands, useFormatPrice } from "@/hooks/useProducts";
+import { useProduct, useFormatPrice } from "@/hooks/useProducts";
 const RelatedProducts = lazy(() => import("@/components/product/RelatedProducts"));
 const FrequentlyBoughtTogether = lazy(() => import("@/components/product/FrequentlyBoughtTogether"));
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
@@ -62,7 +62,6 @@ const ProductPage = () => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const { data: product, isLoading: productLoading } = useProduct(id);
   const { data: activeOffers = [] } = useActiveOffers();
-  const { data: brands = [] } = useBrands();
   // Related products are now handled by the RelatedProducts component
 
   if (productLoading) {
@@ -115,8 +114,9 @@ const ProductPage = () => {
     if (sliderRef.current) setCurrentSlide(Math.round(sliderRef.current.scrollLeft / sliderRef.current.offsetWidth));
   };
 
-  const brandObj = brands.find((b: any) => b.id === product.brand_id);
-  const brandName = brandObj?.name || "";
+  const brandName = product.brand || "";
+  const brandLogoUrl = (product as any)._brandLogoUrl || null;
+  const brandSlugVal = (product as any)._brandSlug || product.brand_id;
   const productImage = images[0] || "";
   const seoTitle = `${product.title}${brandName ? ` by ${brandName}` : ""} — Buy in Iraq`;
   const seoDesc = product.description
@@ -157,7 +157,7 @@ const ProductPage = () => {
           breadcrumbJsonLd([
             { name: "ELARA", url: "https://elarastore.co" },
             { name: "Shop", url: "https://elarastore.co/shop" },
-            ...(brandName ? [{ name: brandName, url: `https://elarastore.co/brand/${brandObj?.slug || product.brand_id}` }] : []),
+            ...(brandName ? [{ name: brandName, url: `https://elarastore.co/brand/${brandSlugVal}` }] : []),
             { name: product.title, url: `https://elarastore.co/product/${product.slug}` },
           ]),
         ]}
@@ -276,8 +276,8 @@ const ProductPage = () => {
 
           {/* Product Info */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="px-4 md:px-0 pt-5 md:pt-0">
-            <Link to={`/brand/${product.brand_id}`} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-secondary/50 hover:bg-secondary/80 border border-border/30 transition-all group/brand">
-              {(() => { const b = brands.find(b => b.id === product.brand_id); return b?.logo_url ? <img src={b.logo_url} alt={product.brand} className="w-8 h-8 object-contain rounded-lg bg-card p-0.5" /> : null; })()}
+            <Link to={`/brand/${brandSlugVal}`} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-secondary/50 hover:bg-secondary/80 border border-border/30 transition-all group/brand">
+              {brandLogoUrl ? <img src={brandLogoUrl} alt={product.brand} className="w-8 h-8 object-contain rounded-lg bg-card p-0.5" /> : null}
               <span className="text-xs font-bold uppercase tracking-widest text-primary group-hover/brand:underline">{product.brand}</span>
             </Link>
             <h1 className="text-xl md:text-2xl font-display font-bold text-foreground mt-1.5 leading-tight">{product.title}</h1>

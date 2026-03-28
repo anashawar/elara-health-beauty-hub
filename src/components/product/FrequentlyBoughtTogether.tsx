@@ -35,47 +35,54 @@ export default function FrequentlyBoughtTogether({ productId, categoryId, brandI
   const { data: bundleProducts = [] } = useQuery({
     queryKey: ["frequently-bought", productId, language],
     queryFn: async () => {
-      // Find orders that contain this product
+      // Single query: find orders with this product, then co-purchased products
       const { data: orderIds } = await supabase
         .from("order_items")
         .select("order_id")
         .eq("product_id", productId)
-        .limit(50);
+        .limit(30);
 
       if (!orderIds?.length) return [];
 
-      const ids = [...new Set(orderIds.map(o => o.order_id))];
+      const ids = [...new Set(orderIds.map(o => o.order_id))].slice(0, 20);
 
-      // Find other products in those same orders
+      // Get co-purchased products with their details in one query
       const { data: coItems } = await supabase
         .from("order_items")
-        .select("product_id")
+        .select(`
+          product_id,
+          products!inner (
+            id, title, title_ar, title_ku, slug, price, original_price,
+            in_stock, brand_id, category_id,
+            brands ( name ),
+            product_images ( image_url, sort_order )
+          )
+        `)
         .in("order_id", ids)
-        .neq("product_id", productId);
+        .neq("product_id", productId)
+        .eq("products.in_stock", true);
 
       if (!coItems?.length) return [];
 
-      // Count co-occurrences
-      const counts = new Map<string, number>();
+      // Count co-occurrences and deduplicate
+      const productMap = new Map<string, { count: number; product: any }>();
       for (const item of coItems) {
-        counts.set(item.product_id, (counts.get(item.product_id) || 0) + 1);
+        const p = (item as any).products;
+        if (!p) continue;
+        const existing = productMap.get(p.id);
+        if (existing) {
+          existing.count++;
+        } else {
+          productMap.set(p.id, { count: 1, product: p });
+        }
       }
 
       // Get top 3
-      const topIds = [...counts.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-        .map(([id]) => id);
+      const top = [...productMap.entries()]
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 3);
 
-      if (!topIds.length) return [];
-
-      const { data: products } = await supabase
-        .from("products")
-        .select(CARD_SELECT)
-        .in("id", topIds)
-        .eq("in_stock", true);
-
-      return (products || []).map((p: any) => {
+      return top.map(([, { product: p }]) => {
         const localTitle = language === "ar" ? (p.title_ar || p.title) : language === "ku" ? (p.title_ku || p.title) : p.title;
         return {
           id: p.id,
