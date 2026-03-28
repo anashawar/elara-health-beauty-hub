@@ -12,55 +12,39 @@ export function isNativePlatform(): boolean {
 
 /**
  * Initialize OneSignal on native platforms.
- * OneSignal handles all APNs/FCM token management automatically.
+ * On iOS, OneSignal is initialized natively in AppDelegate.swift.
+ * This function is a no-op on native — init happens in Swift.
  */
 export async function initOneSignal(): Promise<void> {
   if (!isNativePlatform()) return;
-
-  try {
-    const OneSignal = (window as any).plugins?.OneSignal;
-    if (!OneSignal) {
-      console.warn("[Push] OneSignal plugin not available");
-      return;
-    }
-
-    OneSignal.initialize(ONESIGNAL_APP_ID);
-    OneSignal.Notifications.requestPermission(true);
-
-    console.log("[Push] OneSignal initialized on", Capacitor.getPlatform());
-  } catch (err) {
-    console.error("[Push] OneSignal init failed:", err);
-  }
+  console.log("[Push] OneSignal native init handled by AppDelegate on", Capacitor.getPlatform());
 }
 
 /**
- * Get the OneSignal player/subscription ID and save it to our database.
+ * Set external user ID via OneSignal and save subscription to DB.
+ * Uses the native bridge if available, otherwise logs a warning.
  */
 export async function saveOneSignalToken(userId: string): Promise<void> {
   if (!isNativePlatform()) return;
 
   try {
-    const OneSignal = (window as any).plugins?.OneSignal;
-    if (!OneSignal) return;
+    const OneSignal = (window as any).plugins?.OneSignal ?? (window as any).OneSignalPlugin;
 
-    // Get the subscription ID (player ID)
-    const subId = OneSignal.User?.pushSubscription?.id;
-    const token = OneSignal.User?.pushSubscription?.token;
-
-    const endpoint = subId || token;
-    if (!endpoint) {
-      console.warn("[Push] No OneSignal subscription ID yet");
-      return;
+    // Login sets the external user ID for targeting
+    if (OneSignal?.login) {
+      OneSignal.login(userId);
+      console.log(`[Push] OneSignal login called for user ${userId.substring(0, 8)}`);
+    } else {
+      console.log("[Push] OneSignal JS bridge not available — native SDK handles registration");
     }
 
-    // Set external user ID for targeting
-    OneSignal.login(userId);
-
+    // Save a record to our DB for tracking
     const platform = Capacitor.getPlatform();
+    const endpoint = `onesignal_${platform}_${userId}`;
 
     const { data: existing } = await supabase
       .from("push_subscriptions")
-      .select("id, endpoint")
+      .select("id")
       .eq("user_id", userId)
       .eq("endpoint", endpoint)
       .maybeSingle();
@@ -73,45 +57,23 @@ export async function saveOneSignalToken(userId: string): Promise<void> {
         auth: "onesignal",
         is_active: true,
       });
-      console.log(`[Push] OneSignal token saved for ${platform} user ${userId.substring(0, 8)}`);
+      console.log(`[Push] Subscription record saved for ${platform}`);
     }
   } catch (err) {
-    console.error("[Push] Failed to save OneSignal token:", err);
+    console.error("[Push] saveOneSignalToken error:", err);
   }
 }
 
 /**
- * Set up foreground notification listeners on native.
+ * Set up notification tap listeners (deep linking).
  */
 export async function setupNativeListeners(onNavigate?: (url: string) => void): Promise<void> {
   if (!isNativePlatform()) return;
-
-  try {
-    const OneSignal = (window as any).plugins?.OneSignal;
-    if (!OneSignal) return;
-
-    // Foreground display: show notification
-    OneSignal.Notifications.addEventListener("foregroundWillDisplay", (event: any) => {
-      // Let OneSignal display the notification natively
-      event.getNotification().display();
-    });
-
-    // Tap handler: navigate if link provided
-    OneSignal.Notifications.addEventListener("click", (event: any) => {
-      const data = event.notification?.additionalData;
-      const linkUrl = data?.link_url || data?.url;
-      if (linkUrl && onNavigate) {
-        onNavigate(linkUrl);
-      }
-    });
-  } catch (err) {
-    console.error("[Push] Failed to set up OneSignal listeners:", err);
-  }
+  // Deep link handling is done natively; JS-side navigation handled via URL scheme
+  console.log("[Push] Native listeners handled by OneSignal SDK");
 }
 
 /**
- * Remove all native push listeners (cleanup).
+ * Cleanup — no-op, OneSignal manages its own lifecycle.
  */
-export async function removeNativeListeners(): Promise<void> {
-  // OneSignal manages its own listeners; no explicit cleanup needed
-}
+export async function removeNativeListeners(): Promise<void> {}
