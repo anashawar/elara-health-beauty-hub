@@ -251,6 +251,8 @@ export function useRelatedProducts(categoryId: string | null | undefined, exclud
 /**
  * Fetch products filtered by category slug + optional subcategory — direct DB query.
  */
+const CATEGORY_PAGE_SIZE = 20;
+
 export function useCategoryProducts(categorySlug: string | undefined, subcategoryId: string | null) {
   const { language } = useLanguage();
   const { userCity, isLoggedIn } = useUserCity();
@@ -259,7 +261,6 @@ export function useCategoryProducts(categorySlug: string | undefined, subcategor
     queryKey: ["category-products", categorySlug, subcategoryId, language],
     queryFn: async () => {
       if (!categorySlug) return [];
-      // Resolve category id from slug
       const { data: catRow } = await supabase
         .from("categories")
         .select("id")
@@ -286,6 +287,78 @@ export function useCategoryProducts(categorySlug: string | undefined, subcategor
     select: (data) => data.filter((p) => {
       return isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity, isLoggedIn);
     }),
+  });
+}
+
+export function useCategoryProductsPaginated(categorySlug: string | undefined, subcategoryId: string | null, page: number) {
+  const { language } = useLanguage();
+  const { userCity, isLoggedIn } = useUserCity();
+  const from = page * CATEGORY_PAGE_SIZE;
+  const to = from + CATEGORY_PAGE_SIZE - 1;
+
+  return useQuery<{ products: ProductWithRelations[]; hasMore: boolean }>({
+    queryKey: ["category-products-page", categorySlug, subcategoryId, page, language],
+    queryFn: async () => {
+      if (!categorySlug) return { products: [], hasMore: false };
+      const { data: catRow } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("slug", categorySlug)
+        .maybeSingle();
+      if (!catRow) return { products: [], hasMore: false };
+
+      let query = supabase
+        .from("products")
+        .select(CARD_SELECT)
+        .eq("category_id", catRow.id)
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (subcategoryId) {
+        query = query.eq("subcategory_id", subcategoryId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      const products = (data || []).map((p: any) => mapCardProduct(p, language));
+      return { products, hasMore: products.length === CATEGORY_PAGE_SIZE };
+    },
+    enabled: !!categorySlug,
+    staleTime: 5 * 60 * 1000,
+    select: (result) => ({
+      products: result.products.filter((p) => isBrandAvailableInCity((p as any)._brandRestrictedCities, userCity, isLoggedIn)),
+      hasMore: result.hasMore,
+    }),
+  });
+}
+
+export function useCategoryProductCount(categorySlug: string | undefined, subcategoryId: string | null) {
+  return useQuery<number>({
+    queryKey: ["category-product-count", categorySlug, subcategoryId],
+    queryFn: async () => {
+      if (!categorySlug) return 0;
+      const { data: catRow } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("slug", categorySlug)
+        .maybeSingle();
+      if (!catRow) return 0;
+
+      let query = supabase
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .eq("category_id", catRow.id);
+
+      if (subcategoryId) {
+        query = query.eq("subcategory_id", subcategoryId);
+      }
+
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!categorySlug,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

@@ -8,7 +8,7 @@ import FloatingSearch from "@/components/layout/FloatingSearch";
 import DesktopFooter from "@/components/layout/DesktopFooter";
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
-import { useCategoryProducts, useCategories, useSubcategories, concerns, type ProductWithRelations } from "@/hooks/useProducts";
+import { useCategoryProductsPaginated, useCategoryProductCount, useCategories, useSubcategories, concerns, type ProductWithRelations } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 import SEOHead, { breadcrumbJsonLd } from "@/components/SEOHead";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
@@ -101,15 +101,31 @@ const CategoryPage = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // For category routes we query only that category's products directly
-  const { data: categoryProducts = [], isLoading: loadingCatProducts } = useCategoryProducts(
+  // Pagination state for category products
+  const [catPage, setCatPage] = useState(0);
+
+  // Reset page when category or subcategory changes
+  const catPageKey = `${id}-${activeSubId}`;
+  const [prevKey, setPrevKey] = useState(catPageKey);
+  if (catPageKey !== prevKey) {
+    setCatPage(0);
+    setPrevKey(catPageKey);
+  }
+
+  const { data: catPaginated, isLoading: loadingCatProducts } = useCategoryProductsPaginated(
+    !isConcernRoute ? id : undefined,
+    !isConcernRoute ? activeSubId : null,
+    catPage
+  );
+  const { data: catTotalCount = 0 } = useCategoryProductCount(
     !isConcernRoute ? id : undefined,
     !isConcernRoute ? activeSubId : null
   );
+  const categoryProducts = catPaginated?.products || [];
+  const catHasMore = catPaginated?.hasMore || false;
 
   const { data: categories = [] } = useCategories();
   const { data: subcategories = [] } = useSubcategories();
-  // language already declared above
   const [searchOpen, setSearchOpen] = useState(false);
   const category = !isConcernRoute ? categories.find(c => c.slug === id) : null;
   const activeConcern = isConcernRoute ? concerns.find(c => c.id === id) : null;
@@ -325,7 +341,11 @@ const CategoryPage = () => {
         )}
 
         <div className="px-4 md:px-6 mt-3 mb-2 flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">{filteredProducts.length} {t("common.products").toLowerCase()}</p>
+          <p className="text-xs text-muted-foreground">
+            {!isConcernRoute && catTotalCount > 0
+              ? `${catPage * 20 + 1}–${Math.min((catPage + 1) * 20, catTotalCount)} of ${catTotalCount} ${t("common.products").toLowerCase()}`
+              : `${filteredProducts.length} ${t("common.products").toLowerCase()}`}
+          </p>
           {activeFilterCount > 0 && (
             <button onClick={clearFilters} className="text-xs text-primary font-medium">{t("categories.clearFilters")}</button>
           )}
@@ -344,6 +364,28 @@ const CategoryPage = () => {
                 <ProductCard key={p.id} product={p} offerPricing={getOfferForProduct(p, activeOffers)} />
               ))}
             </div>
+
+            {!isConcernRoute && (catPage > 0 || catHasMore) && (
+              <div className="flex items-center justify-center gap-3 px-4 mt-6 mb-4">
+                <button
+                  onClick={() => { setCatPage(p => Math.max(0, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  disabled={catPage === 0}
+                  className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-secondary text-foreground disabled:opacity-40 hover:bg-accent transition-colors"
+                >
+                  ← {language === "ar" ? "السابق" : language === "ku" ? "پێشوو" : "Previous"}
+                </button>
+                <span className="text-sm text-muted-foreground font-medium">
+                  {language === "ar" ? `صفحة ${catPage + 1}` : language === "ku" ? `لاپەڕە ${catPage + 1}` : `Page ${catPage + 1}`}
+                </span>
+                <button
+                  onClick={() => { setCatPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  disabled={!catHasMore}
+                  className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-secondary text-foreground disabled:opacity-40 hover:bg-accent transition-colors"
+                >
+                  {language === "ar" ? "التالي" : language === "ku" ? "دواتر" : "Next"} →
+                </button>
+              </div>
+            )}
 
             {filteredProducts.length === 0 && (
               <div className="text-center mt-12 px-4">
