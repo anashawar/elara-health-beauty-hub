@@ -34,24 +34,7 @@ export default function ForceUpdateGate({ children }: { children: React.ReactNod
   const platform = Capacitor.getPlatform(); // 'ios' | 'android' | 'web'
   const isNative = Capacitor.isNativePlatform();
 
-  // TEMP PREVIEW: show the update gate regardless of platform
-  const PREVIEW_MODE = true;
-
   useEffect(() => {
-    if (PREVIEW_MODE) {
-      setConfig({
-        min_ios_version: "99.0.0",
-        min_android_version: "99.0.0",
-        update_message: "A new version of ELARA is available with exciting new features and improvements. Please update to continue shopping.",
-        update_message_ar: "يتوفر إصدار جديد من إيلارا مع ميزات وتحسينات جديدة ومثيرة. يرجى التحديث للمتابعة.",
-        update_message_ku: "وەشانێکی نوێی ئیلارا بەردەستە لەگەڵ تایبەتمەندی و باشترکردنی نوێ. تکایە نوێ بکەرەوە بۆ بەردەوامبوون.",
-        ios_store_url: "https://apps.apple.com/app/elara",
-        android_store_url: "https://play.google.com/store/apps/details?id=com.elarashop.app",
-      });
-      setNeedsUpdate(true);
-      return;
-    }
-
     if (!isNative) return;
 
     supabase
