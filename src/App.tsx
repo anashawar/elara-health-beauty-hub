@@ -203,6 +203,7 @@ const App = () => (
             </Suspense>
             </SwipeBackWrapper>
           </BrowserRouter>
+          </ForceUpdateGate>
         </AppProvider>
       </LanguageProvider>
     </TooltipProvider>
