@@ -201,6 +201,11 @@ export default function AdminRevenue() {
       totalDeliveryFees += Number(order.delivery_fee || 0);
       totalDiscounts += Number(order.discount || 0);
 
+      // Actual delivery cost we pay (based on city, ignoring free threshold)
+      const orderCity = order.address_id ? addressCityMap[order.address_id] : null;
+      const actualDeliveryCost = getDeliveryFee(orderCity, 0); // pass 0 subtotal to always get the fee
+      totalActualDeliveryCost += actualDeliveryCost;
+
       // Payment method
       const pm = order.payment_method || "cod";
       paymentMethods[pm] = (paymentMethods[pm] || 0) + 1;
