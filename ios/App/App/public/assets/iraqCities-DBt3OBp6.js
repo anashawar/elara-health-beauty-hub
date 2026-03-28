@@ -1,0 +1,1 @@
+const a=["Erbil","Sulaymaniyah","Duhok","Halabja","Baghdad","Basra","Nasiriyah","Amarah","Kut","Diwaniyah","Samawah","Hillah","Karbala","Najaf","Ramadi","Fallujah","Mosul","Kirkuk","Tikrit","Samarra","Baqubah","Rutba"];export{a as i};

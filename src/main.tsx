@@ -9,11 +9,6 @@ if (Capacitor.isNativePlatform()) {
     StatusBar.setOverlaysWebView({ overlay: true });
     StatusBar.setStyle({ style: Style.Dark });
   }).catch(() => {});
-
-  // Initialize OneSignal on native
-  import('@/lib/nativePush').then(({ initOneSignal }) => {
-    initOneSignal();
-  }).catch((e) => console.warn("Early native push init failed:", e));
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
