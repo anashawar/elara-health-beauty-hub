@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/hooks/useProducts";
+import { getDeliveryFee } from "@/lib/deliveryFee";
 import {
   DollarSign, TrendingUp, TrendingDown, Package, ShoppingCart,
   ArrowUpRight, Calendar, Filter, BarChart3, Percent, Wallet,
@@ -135,6 +136,12 @@ export default function AdminRevenue() {
     productCosts.forEach((pc: any) => { map[pc.product_id] = Number(pc.cost); });
     return map;
   }, [productCosts]);
+
+  const addressCityMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    addresses.forEach((a: any) => { map[a.id] = a.city; });
+    return map;
+  }, [addresses]);
 
   const productNameMap = useMemo(() => {
     const map: Record<string, string> = {};
