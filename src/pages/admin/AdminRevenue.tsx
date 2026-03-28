@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/hooks/useProducts";
+import { getDeliveryFee } from "@/lib/deliveryFee";
 import {
   DollarSign, TrendingUp, TrendingDown, Package, ShoppingCart,
   ArrowUpRight, Calendar, Filter, BarChart3, Percent, Wallet,
@@ -50,10 +51,32 @@ export default function AdminRevenue() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("id, total, subtotal, delivery_fee, discount, status, created_at, coupon_code, payment_method, order_items(product_id, quantity, price)")
+        .select("id, total, subtotal, delivery_fee, discount, status, created_at, coupon_code, payment_method, address_id, order_items(product_id, quantity, price)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
+    },
+  });
+
+  // Fetch addresses to determine city for actual delivery cost
+  const { data: addresses = [] } = useQuery({
+    queryKey: ["admin-revenue-addresses"],
+    queryFn: async () => {
+      const allAddresses: any[] = [];
+      let from = 0;
+      const PAGE = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("addresses")
+          .select("id, city")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allAddresses.push(...data);
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
+      return allAddresses;
     },
   });
 
@@ -114,6 +137,12 @@ export default function AdminRevenue() {
     return map;
   }, [productCosts]);
 
+  const addressCityMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    addresses.forEach((a: any) => { map[a.id] = a.city; });
+    return map;
+  }, [addresses]);
+
   const productNameMap = useMemo(() => {
     const map: Record<string, string> = {};
     products.forEach((p: any) => { map[p.id] = p.title; });
@@ -153,7 +182,8 @@ export default function AdminRevenue() {
     let totalRevenue = 0;
     let totalCost = 0;
     let totalItemsSold = 0;
-    let totalDeliveryFees = 0;
+    let totalDeliveryFees = 0; // What customer paid
+    let totalActualDeliveryCost = 0; // What we actually pay (always calculated by city)
     let totalDiscounts = 0;
     let revenueWithCost = 0;
     let revenueWithoutCost = 0;
@@ -164,12 +194,17 @@ export default function AdminRevenue() {
     const dailyRevenue = new Map<string, { revenue: number; cost: number; orders: number; profit: number }>();
     const paymentMethods: Record<string, number> = {};
     const couponUsage: Record<string, { count: number; discount: number }> = {};
-    const orderDetails: { id: string; date: string; revenue: number; cost: number; profit: number; items: number; status: string; hasMissingCost: boolean }[] = [];
+    const orderDetails: { id: string; date: string; revenue: number; cost: number; deliveryCost: number; profit: number; items: number; status: string; hasMissingCost: boolean }[] = [];
 
     deliveredOrders.forEach((order: any) => {
       totalRevenue += Number(order.total);
       totalDeliveryFees += Number(order.delivery_fee || 0);
       totalDiscounts += Number(order.discount || 0);
+
+      // Actual delivery cost we pay (based on city, ignoring free threshold)
+      const orderCity = order.address_id ? addressCityMap[order.address_id] : null;
+      const actualDeliveryCost = getDeliveryFee(orderCity, 0); // pass 0 subtotal to always get the fee
+      totalActualDeliveryCost += actualDeliveryCost;
 
       // Payment method
       const pm = order.payment_method || "cod";
@@ -234,31 +269,34 @@ export default function AdminRevenue() {
         }
       });
 
-      // Per-order cost & profit
-      let orderCost = 0;
+      // Per-order cost & profit (including delivery cost we absorb)
+      let orderProductCost = 0;
       let orderHasMissing = false;
       items.forEach((item: any) => {
         const hasCost = item.product_id in costMap;
         if (hasCost) {
-          orderCost += costMap[item.product_id] * item.quantity;
+          orderProductCost += costMap[item.product_id] * item.quantity;
         } else {
           orderHasMissing = true;
         }
       });
+      const orderTotalCost = orderProductCost + actualDeliveryCost;
       orderDetails.push({
         id: order.id,
         date: order.created_at.split("T")[0],
         revenue: Number(order.total),
-        cost: orderCost,
-        profit: Number(order.total) - orderCost,
+        cost: orderTotalCost,
+        deliveryCost: actualDeliveryCost,
+        profit: Number(order.total) - orderTotalCost,
         items: items.reduce((s: number, it: any) => s + it.quantity, 0),
         status: order.status,
         hasMissingCost: orderHasMissing,
       });
     });
 
-    // Profit only from products with known cost data
-    const totalProfit = revenueWithCost - totalCost;
+    // Profit: product cost + actual delivery cost we pay
+    const totalProfit = revenueWithCost - totalCost - totalActualDeliveryCost;
+    const totalCostWithDelivery = totalCost + totalActualDeliveryCost;
     const profitMargin = revenueWithCost > 0 ? (totalProfit / revenueWithCost) * 100 : 0;
     const avgOrderValue = deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
 
@@ -295,9 +333,9 @@ export default function AdminRevenue() {
       .sort((a, b) => b.count - a.count);
 
     return {
-      totalRevenue, totalCost, totalProfit, profitMargin, avgOrderValue,
+      totalRevenue, totalCost: totalCostWithDelivery, totalProfit, profitMargin, avgOrderValue,
       totalOrders: deliveredOrders.length, allOrders: allActive.length,
-      totalItemsSold, totalDeliveryFees, totalDiscounts,
+      totalItemsSold, totalDeliveryFees, totalActualDeliveryCost, totalDiscounts,
       topProducts, topBrands, dailyData, paymentMethods, couponLeaderboard,
       orderDetails: orderDetails.sort((a, b) => b.date.localeCompare(a.date)),
       pendingRevenue: allActive.filter((o: any) => o.status !== "delivered").reduce((s: number, o: any) => s + Number(o.total), 0),
@@ -307,7 +345,7 @@ export default function AdminRevenue() {
       itemsMissingCost,
       missingCostCount: missingCostProductIds.size,
     };
-  }, [orders, costMap, productNameMap, productBrandMap, brandNameMap, datePreset, dateFrom, dateTo]);
+  }, [orders, costMap, productNameMap, productBrandMap, brandNameMap, addressCityMap, datePreset, dateFrom, dateTo]);
 
   const maxDailyRevenue = Math.max(...stats.dailyData.map((d) => d.revenue), 1);
 
@@ -408,7 +446,7 @@ export default function AdminRevenue() {
       {/* Secondary metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Delivery Fees", value: formatPrice(stats.totalDeliveryFees), icon: Truck },
+          { label: "Delivery Cost (Ours)", value: formatPrice(stats.totalActualDeliveryCost), icon: Truck },
           { label: "Discounts Given", value: formatPrice(stats.totalDiscounts), icon: Percent },
           { label: "Pending Revenue", value: formatPrice(stats.pendingRevenue), icon: Clock },
           { label: "Pending Orders", value: stats.pendingCount, icon: ShoppingCart },
@@ -639,7 +677,9 @@ export default function AdminRevenue() {
                   <th className="text-left py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Date</th>
                   <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Items</th>
                   <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Revenue</th>
-                  <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Cost</th>
+                  <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Product Cost</th>
+                  <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Delivery</th>
+                  <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Cost</th>
                   <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Profit</th>
                   <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Margin</th>
                 </tr>
@@ -657,8 +697,14 @@ export default function AdminRevenue() {
                       <td className="py-2.5 px-2 text-right text-xs text-muted-foreground">{o.items}</td>
                       <td className="py-2.5 px-2 text-right text-xs font-medium text-foreground">{formatPrice(o.revenue)}</td>
                       <td className="py-2.5 px-2 text-right text-xs font-medium text-red-500">
-                        {formatPrice(o.cost)}
+                        {formatPrice(o.cost - o.deliveryCost)}
                         {o.hasMissingCost && <span className="text-amber-500 ml-1">*</span>}
+                      </td>
+                      <td className="py-2.5 px-2 text-right text-xs font-medium text-red-500">
+                        {formatPrice(o.deliveryCost)}
+                      </td>
+                      <td className="py-2.5 px-2 text-right text-xs font-bold text-red-500">
+                        {formatPrice(o.cost)}
                       </td>
                       <td className={`py-2.5 px-2 text-right text-xs font-bold ${o.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                         {formatPrice(o.profit)}
