@@ -81,9 +81,21 @@ export default function AdminRevenue() {
   const { data: products = [] } = useQuery({
     queryKey: ["admin-revenue-products"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("id, title, price, brand_id");
-      if (error) throw error;
-      return data || [];
+      const allProducts: any[] = [];
+      let from = 0;
+      const PAGE = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, title, price, brand_id")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allProducts.push(...data);
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
+      return allProducts;
     },
   });
 
