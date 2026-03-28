@@ -130,8 +130,46 @@ Deno.serve(async (req) => {
       return json({ error: "Invalid action" }, 400);
     }
 
+    // --- Warehouse portal actions (authenticated via warehouse_users) ---
+    if (req.method === "POST") {
+      // This block was already handled above, but let's add warehouse-specific actions
+    }
+
     // --- GET requests ---
     if (req.method === "GET") {
+      const action = new URL(req.url).searchParams.get("action");
+
+      // Warehouse data endpoints (authenticated by warehouse_id in query)
+      if (action === "warehouse-data") {
+        const warehouseId = url.searchParams.get("warehouse_id");
+        const userId = url.searchParams.get("user_id");
+        if (!warehouseId || !userId) return json({ error: "Missing warehouse_id or user_id" }, 400);
+
+        // Verify the user exists and is active
+        const { data: wUser } = await supabase
+          .from("warehouse_users")
+          .select("id, warehouse_id")
+          .eq("id", userId)
+          .eq("warehouse_id", warehouseId)
+          .eq("is_active", true)
+          .maybeSingle();
+        if (!wUser) return json({ error: "Unauthorized" }, 401);
+
+        const [reqRes, notifRes] = await Promise.all([
+          supabase.from("warehouse_requests").select("*").order("created_at", { ascending: false }),
+          supabase.from("warehouse_notifications")
+            .select("*")
+            .eq("warehouse_id", warehouseId)
+            .order("created_at", { ascending: false })
+            .limit(50),
+        ]);
+
+        return json({
+          requests: reqRes.data || [],
+          notifications: notifRes.data || [],
+        });
+      }
+
       const { data: tokenRow } = await supabase
         .from("prep_access_tokens")
         .select("id, is_active, excluded_brand_ids, excluded_product_ids, label")
