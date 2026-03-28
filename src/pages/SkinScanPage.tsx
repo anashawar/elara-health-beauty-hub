@@ -383,6 +383,8 @@ function SkinScanContent() {
     setMakeupProducts([]);
     setCapturedImage(null);
     setScanProgress(0);
+    webAutoCapturedRef.current = false;
+    setWebCountdown(null);
   };
 
   const getScoreColor = (score: number) => {
