@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { CameraPreview } from "@capgo/camera-preview";
 import { Camera as CapCamera } from "@capacitor/camera";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
@@ -15,6 +15,8 @@ const LEFT_EYEBROW = [276,283,282,295,285,300,293,334,296,336];
 const RIGHT_EYEBROW = [46,53,52,65,55,70,63,105,66,107];
 const CROSS_HAIR_POINTS = [168,6,195,4,1,2,98,327];
 
+const AUTO_CAPTURE_SECONDS = 5;
+
 interface NativeFaceScannerProps {
   onCapture: (base64DataUrl: string) => void;
   onClose: () => void;
@@ -28,6 +30,9 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
   const [useFront, setUseFront] = useState(true);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoCapturingRef = useRef(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const landmarkerRef = useRef<FaceLandmarker | null>(null);
   const captureIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
