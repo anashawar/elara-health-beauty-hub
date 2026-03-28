@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 /** Current app version — bump this with each native release */
-const APP_VERSION = "1.1.0";
+const APP_VERSION = "1.0.0";
 
 function compareVersions(current: string, minimum: string): boolean {
   const c = current.split(".").map(Number);
