@@ -156,7 +156,6 @@ const CategoryPage = () => {
     let result: typeof baseProducts;
     // For concerns, products are already filtered server-side
     result = [...baseProducts];
-    }
     if (searchQuery.length > 1) {
       const q = searchQuery.toLowerCase();
       result = result.filter(p => p.title.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q));
