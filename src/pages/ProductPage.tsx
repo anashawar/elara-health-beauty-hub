@@ -452,11 +452,17 @@ const ProductPage = () => {
 
             <ProductPageAppBanner />
 
-            <ReviewSection productId={product.id} />
+            <Suspense fallback={null}>
+              <ReviewSection productId={product.id} />
+            </Suspense>
 
-            <FrequentlyBoughtTogether productId={product.id} categoryId={product.category_id} brandId={product.brand_id} />
+            <Suspense fallback={null}>
+              <FrequentlyBoughtTogether productId={product.id} categoryId={product.category_id} brandId={product.brand_id} />
+            </Suspense>
 
-            <RelatedProducts productId={product.id} categoryId={product.category_id} brandId={product.brand_id} />
+            <Suspense fallback={null}>
+              <RelatedProducts productId={product.id} categoryId={product.category_id} brandId={product.brand_id} />
+            </Suspense>
 
             {/* Desktop: App Download Banner */}
             <div className="mt-8">
