@@ -310,6 +310,12 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
         drawOverlay(ctx, results.faceLandmarks[0], img.naturalWidth, img.naturalHeight, displayW, displayH);
       } else {
         setFaceDetected(false);
+        // Reset countdown if face lost
+        if (countdownTimerRef.current) {
+          clearInterval(countdownTimerRef.current);
+          countdownTimerRef.current = null;
+          setCountdown(null);
+        }
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
     } catch {
