@@ -233,7 +233,28 @@ export default function AdminRevenue() {
           brandStats[brandId].profit = brandStats[brandId].revenue - brandStats[brandId].cost;
         }
       });
-    });
+
+      // Per-order cost & profit
+      let orderCost = 0;
+      let orderHasMissing = false;
+      items.forEach((item: any) => {
+        const hasCost = item.product_id in costMap;
+        if (hasCost) {
+          orderCost += costMap[item.product_id] * item.quantity;
+        } else {
+          orderHasMissing = true;
+        }
+      });
+      orderDetails.push({
+        id: order.id,
+        date: order.created_at.split("T")[0],
+        revenue: Number(order.total),
+        cost: orderCost,
+        profit: Number(order.total) - orderCost,
+        items: items.reduce((s: number, it: any) => s + it.quantity, 0),
+        status: order.status,
+        hasMissingCost: orderHasMissing,
+      });
 
     // Profit only from products with known cost data
     const totalProfit = revenueWithCost - totalCost;
