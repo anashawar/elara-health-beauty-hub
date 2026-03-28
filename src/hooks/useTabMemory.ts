@@ -57,18 +57,40 @@ const tabHistory: Record<TabKey, string> = {
   profile: "/profile",
 };
 
+// Scroll position memory per route (path+search → scrollY)
+const scrollMemory: Record<string, number> = {};
+
 let currentTab: TabKey | null = "home";
+let previousRoute: string | null = null;
 
 /** Call this hook once in a layout component to track route changes. */
 export function useTabMemoryTracker() {
   const location = useLocation();
 
   useEffect(() => {
+    const currentRoute = location.pathname + location.search;
+
+    // Save scroll position of the route we're leaving
+    if (previousRoute && previousRoute !== currentRoute) {
+      scrollMemory[previousRoute] = window.scrollY;
+    }
+
     const tab = getTabForPath(location.pathname);
     if (tab) {
-      tabHistory[tab] = location.pathname + location.search;
+      tabHistory[tab] = currentRoute;
       currentTab = tab;
     }
+
+    // Restore scroll position for the route we're entering
+    const savedScroll = scrollMemory[currentRoute];
+    if (savedScroll != null) {
+      // Use rAF to let the DOM render first, then scroll
+      requestAnimationFrame(() => {
+        window.scrollTo(0, savedScroll);
+      });
+    }
+
+    previousRoute = currentRoute;
   }, [location.pathname, location.search]);
 }
 
