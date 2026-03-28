@@ -48,13 +48,62 @@ const CategoryPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeSubId = searchParams.get("sub") || null;
 
-  // For concern routes we need all products (client-side keyword matching)
+  // For concern routes, use a fast server-side query instead of loading all products
+  const { data: concernProducts = [], isLoading: loadingConcernProducts } = useQuery<ProductWithRelations[]>({
+    queryKey: ["concern-products", id, language],
+    queryFn: async () => {
+      if (!id) return [];
+      const keywords = concernKeywords[id] || [id];
+      // Build an OR filter: condition matches OR title/description contains keywords
+      const orFilters = [
+        `condition.ilike.%${id}%`,
+        ...keywords.slice(0, 3).map(kw => `title.ilike.%${kw}%`),
+        ...keywords.slice(0, 3).map(kw => `description.ilike.%${kw}%`),
+      ];
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          *, brands ( name, name_ar, name_ku, restricted_cities ),
+          categories ( slug ),
+          product_images ( image_url, sort_order ),
+          product_tags ( tag )
+        `)
+        .or(orFilters.join(","))
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []).map((p: any) => {
+        const lt = language === "ar" ? (p.title_ar || p.title) : language === "ku" ? (p.title_ku || p.title) : p.title;
+        const ld = language === "ar" ? (p.description_ar || p.description || "") : language === "ku" ? (p.description_ku || p.description || "") : (p.description || "");
+        const lb = language === "ar" ? (p.benefits_ar || p.benefits || []) : language === "ku" ? (p.benefits_ku || p.benefits || []) : (p.benefits || []);
+        const lu = language === "ar" ? (p.usage_instructions_ar || p.usage_instructions || "") : language === "ku" ? (p.usage_instructions_ku || p.usage_instructions || "") : (p.usage_instructions || "");
+        return {
+          id: p.id, title: lt, slug: p.slug,
+          brand: p.brands?.name || "", brand_id: p.brand_id,
+          category_id: p.category_id, category_slug: p.categories?.slug || null,
+          subcategory_id: p.subcategory_id || null,
+          price: Number(p.price), originalPrice: p.original_price ? Number(p.original_price) : null,
+          image: p.product_images?.[0]?.image_url || "/placeholder.svg",
+          images: (p.product_images || []).sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)).map((img: any) => img.image_url),
+          tags: (p.product_tags || []).map((t: any) => t.tag),
+          description: ld, benefits: lb, usage: lu,
+          isNew: p.is_new || false, isTrending: p.is_trending || false, isPick: p.is_pick || false,
+          country_of_origin: p.country_of_origin, form: p.form, gender: p.gender,
+          volume_ml: p.volume_ml, volume_unit: p.volume_unit || "ml",
+          application: p.application, skin_type: p.skin_type, condition: p.condition || null,
+          inStock: p.in_stock !== false,
+          _brandRestrictedCities: p.brands?.restricted_cities || null,
+        } as any;
+      });
+    },
+    enabled: isConcernRoute && !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+
   // For category routes we query only that category's products directly
   const { data: categoryProducts = [], isLoading: loadingCatProducts } = useCategoryProducts(
     !isConcernRoute ? id : undefined,
     !isConcernRoute ? activeSubId : null
   );
-  const { data: allProducts = [], isLoading: loadingAllProducts } = useProducts({ enabled: isConcernRoute });
 
   const { data: categories = [] } = useCategories();
   const { data: subcategories = [] } = useSubcategories();
@@ -62,8 +111,8 @@ const CategoryPage = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const category = !isConcernRoute ? categories.find(c => c.slug === id) : null;
   const activeConcern = isConcernRoute ? concerns.find(c => c.id === id) : null;
-  const baseProducts = isConcernRoute ? allProducts : categoryProducts;
-  const isLoadingProducts = isConcernRoute ? loadingAllProducts : loadingCatProducts;
+  const baseProducts = isConcernRoute ? concernProducts : categoryProducts;
+  const isLoadingProducts = isConcernRoute ? loadingConcernProducts : loadingCatProducts;
   const BRANDS = [...new Set(baseProducts.map(p => p.brand))];
   const { data: activeOffers = [] } = useActiveOffers();
 
