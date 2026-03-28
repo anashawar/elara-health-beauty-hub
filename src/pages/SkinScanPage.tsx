@@ -489,16 +489,32 @@ function SkinScanContent() {
               </div>
 
               {/* Controls */}
-              <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-6">
-                <button onClick={stopCamera} className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <button onClick={capturePhoto} className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg border-4 border-background/50">
-                  <Camera className="w-7 h-7 text-primary-foreground" />
-                </button>
-                <button onClick={() => { stopCamera(); setUseFrontCamera(p => !p); setTimeout(startCamera, 100); }} className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
-                  <RotateCcw className="w-5 h-5" />
-                </button>
+              <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2">
+                {/* Countdown text */}
+                {webCountdown != null && webCountdown > 0 && (
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-xs font-semibold text-white bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full"
+                  >
+                    {language === "ar" ? `التقاط تلقائي خلال ${webCountdown}` : `Auto-capture in ${webCountdown}s`}
+                  </motion.span>
+                )}
+                <div className="flex items-center justify-center gap-6">
+                  <button onClick={() => { if (webCountdownRef.current) clearInterval(webCountdownRef.current); stopCamera(); }} className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <button onClick={capturePhoto} className="relative w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg border-4 border-background/50">
+                    {webCountdown != null && webCountdown > 0 ? (
+                      <motion.span key={webCountdown} initial={{ scale: 1.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-lg font-display font-black text-primary-foreground">{webCountdown}</motion.span>
+                    ) : (
+                      <Camera className="w-7 h-7 text-primary-foreground" />
+                    )}
+                  </button>
+                  <button onClick={() => { if (webCountdownRef.current) clearInterval(webCountdownRef.current); stopCamera(); setUseFrontCamera(p => !p); webAutoCapturedRef.current = false; setTimeout(startCamera, 100); }} className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
+                    <RotateCcw className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
