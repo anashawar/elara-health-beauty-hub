@@ -154,11 +154,8 @@ const CategoryPage = () => {
 
   const filteredProducts = useMemo(() => {
     let result: typeof baseProducts;
-    if (isConcernRoute && id) {
-      result = baseProducts.filter(p => matchesConcern(p, id));
-    } else {
-      // Already filtered by category + subcategory from the DB query
-      result = [...baseProducts];
+    // For concerns, products are already filtered server-side
+    result = [...baseProducts];
     }
     if (searchQuery.length > 1) {
       const q = searchQuery.toLowerCase();
