@@ -138,6 +138,9 @@ function SkinScanContent() {
   const [cameraActive, setCameraActive] = useState(false);
   const [expandedRoutine, setExpandedRoutine] = useState<string | null>("morning");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [webCountdown, setWebCountdown] = useState<number | null>(null);
+  const webCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const webAutoCapturedRef = useRef(false);
 
   // Fetch user gender to conditionally show makeup sections
   const { data: userGender } = useQuery({
