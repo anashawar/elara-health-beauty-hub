@@ -1,0 +1,25 @@
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /checkout
+Disallow: /reset-password
+Disallow: /prep/
+Disallow: /warehouse
+
+Sitemap: https://mycpfwnfvtsgshdzggrm.supabase.co/functions/v1/sitemap
+Sitemap: https://mycpfwnfvtsgshdzggrm.supabase.co/functions/v1/google-merchant-feed

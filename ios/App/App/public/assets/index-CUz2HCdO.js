@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/web-CegZ637R.js","assets/vendor-capacitor-DZwdZLvt.js"])))=>i.map(i=>d[i]);
+import{_ as e}from"./index-DZaK7Awv.js";import{r as o}from"./vendor-capacitor-DZwdZLvt.js";import"./vendor-query-CA47YMh6.js";import"./vendor-react-g2nWZWGg.js";import"./vendor-ui-C3ooRMrA.js";import"./vendor-supabase-ZdSbhI3i.js";const h=o("Share",{web:()=>e(()=>import("./web-CegZ637R.js"),__vite__mapDeps([0,1])).then(r=>new r.ShareWeb)});export{h as Share};

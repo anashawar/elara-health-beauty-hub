@@ -1,0 +1,33 @@
+{
+	"appId": "com.elarashop.app",
+	"appName": "ELARA",
+	"webDir": "dist",
+	"ios": {
+		"handleApplicationNotifications": false
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 2000,
+			"launchAutoHide": true,
+			"backgroundColor": "#a855f7",
+			"showSpinner": false,
+			"splashFullScreen": true,
+			"splashImmersive": true
+		},
+		"StatusBar": {
+			"overlaysWebView": true,
+			"style": "DARK"
+		}
+	},
+	"packageClassList": [
+		"AppIconPlugin",
+		"CAPCameraPlugin",
+		"FilesystemPlugin",
+		"GeolocationPlugin",
+		"SharePlugin",
+		"SplashScreenPlugin",
+		"StatusBarPlugin",
+		"CameraPreview",
+		"CDVPlugin"
+	]
+}
