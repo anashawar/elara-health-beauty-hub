@@ -222,6 +222,12 @@ function SkinScanContent() {
   // Capture photo from camera
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
+    // Clear web countdown
+    if (webCountdownRef.current) {
+      clearInterval(webCountdownRef.current);
+      webCountdownRef.current = null;
+    }
+    setWebCountdown(null);
     const v = videoRef.current;
     const c = canvasRef.current;
     c.width = v.videoWidth;
@@ -237,6 +243,30 @@ function SkinScanContent() {
     stopCamera();
     analyzeSkin(dataUrl);
   }, [stopCamera, useFrontCamera]);
+
+  // Web camera auto-capture: start 5s countdown when camera becomes active
+  useEffect(() => {
+    if (cameraActive && !isNative && !webAutoCapturedRef.current) {
+      setWebCountdown(5);
+      let remaining = 5;
+      webCountdownRef.current = setInterval(() => {
+        remaining -= 1;
+        setWebCountdown(remaining);
+        if (remaining <= 0) {
+          if (webCountdownRef.current) clearInterval(webCountdownRef.current);
+          webCountdownRef.current = null;
+          webAutoCapturedRef.current = true;
+          capturePhoto();
+        }
+      }, 1000);
+    }
+    return () => {
+      if (webCountdownRef.current) {
+        clearInterval(webCountdownRef.current);
+        webCountdownRef.current = null;
+      }
+    };
+  }, [cameraActive, isNative, capturePhoto]);
 
   // Handle file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
