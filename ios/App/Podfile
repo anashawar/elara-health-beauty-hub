@@ -12,6 +12,7 @@ end
 
 target 'App' do
   capacitor_pods
+  pod 'CapacitorFirebaseMessaging', :path => '../../node_modules/@capacitor-firebase/messaging'
   pod 'FirebaseCore'
   pod 'FirebaseMessaging'
 end
