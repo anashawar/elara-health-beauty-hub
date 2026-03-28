@@ -617,6 +617,63 @@ export default function AdminRevenue() {
             </table>
           </div>
         )}
+      {/* Order Profitability */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-card rounded-2xl border border-border/50 p-5"
+      >
+        <h2 className="text-sm font-bold text-foreground mb-4">Order Profitability</h2>
+        {stats.orderDetails.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-8 text-center">No delivered orders for this period.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">#</th>
+                  <th className="text-left py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Order ID</th>
+                  <th className="text-left py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Date</th>
+                  <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Items</th>
+                  <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Revenue</th>
+                  <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Cost</th>
+                  <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Profit</th>
+                  <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Margin</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.orderDetails.map((o, i) => {
+                  const margin = o.revenue > 0 ? ((o.profit) / o.revenue * 100) : 0;
+                  return (
+                    <tr key={o.id} className={`border-b border-border/20 hover:bg-muted/20 transition-colors ${o.hasMissingCost ? "bg-amber-500/5" : ""}`}>
+                      <td className="py-2.5 px-2 text-xs text-muted-foreground">{i + 1}</td>
+                      <td className="py-2.5 px-2 text-xs font-mono text-muted-foreground">{o.id.slice(0, 8)}…</td>
+                      <td className="py-2.5 px-2 text-xs text-muted-foreground">
+                        {new Date(o.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </td>
+                      <td className="py-2.5 px-2 text-right text-xs text-muted-foreground">{o.items}</td>
+                      <td className="py-2.5 px-2 text-right text-xs font-medium text-foreground">{formatPrice(o.revenue)}</td>
+                      <td className="py-2.5 px-2 text-right text-xs font-medium text-red-500">
+                        {formatPrice(o.cost)}
+                        {o.hasMissingCost && <span className="text-amber-500 ml-1">*</span>}
+                      </td>
+                      <td className={`py-2.5 px-2 text-right text-xs font-bold ${o.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        {formatPrice(o.profit)}
+                      </td>
+                      <td className={`py-2.5 px-2 text-right text-xs font-medium ${margin >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        {margin.toFixed(1)}%
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {stats.orderDetails.some(o => o.hasMissingCost) && (
+              <p className="text-[10px] text-amber-600 mt-2">* Some products in this order have no cost data — profit may be higher than shown.</p>
+            )}
+          </div>
+        )}
       </motion.div>
     </div>
   );
