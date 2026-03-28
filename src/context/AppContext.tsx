@@ -72,7 +72,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
   // Refresh old/stale cart items from backend so offers always have current product metadata.
+  // Use a ref to avoid re-running after the first refresh (prevents infinite loops).
+  const cartRefreshed = useRef(false);
   useEffect(() => {
+    if (cartRefreshed.current) return;
     const staleIds = cart
       .filter((item) => (
         typeof item.product.brand_id === "undefined" ||
@@ -82,6 +85,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .map((item) => item.product.id);
 
     if (staleIds.length === 0) return;
+    cartRefreshed.current = true;
 
     let cancelled = false;
 

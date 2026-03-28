@@ -34,6 +34,54 @@ export interface ProductWithRelations {
   inStock: boolean;
 }
 
+// Minimal select for list/card views — only what ProductCard needs
+const CARD_SELECT = `
+  id, title, title_ar, title_ku, slug, price, original_price,
+  is_new, is_trending, is_pick, in_stock,
+  brand_id, category_id, subcategory_id,
+  brands ( name, restricted_cities ),
+  categories ( slug ),
+  product_images ( image_url, sort_order )
+`;
+
+function mapCardProduct(p: any, language: "en" | "ar" | "ku"): ProductWithRelations {
+  const localizedTitle =
+    language === "ar" ? (p.title_ar || p.title) : language === "ku" ? (p.title_ku || p.title) : p.title;
+  return {
+    id: p.id,
+    title: localizedTitle,
+    slug: p.slug,
+    brand: p.brands?.name || "",
+    brand_id: p.brand_id,
+    category_id: p.category_id,
+    category_slug: p.categories?.slug || null,
+    subcategory_id: p.subcategory_id || null,
+    price: Number(p.price),
+    originalPrice: p.original_price ? Number(p.original_price) : null,
+    image: p.product_images?.[0]?.image_url || "/placeholder.svg",
+    images: (p.product_images || [])
+      .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+      .map((img: any) => img.image_url),
+    tags: [],
+    description: "",
+    benefits: [],
+    usage: "",
+    isNew: p.is_new || false,
+    isTrending: p.is_trending || false,
+    isPick: p.is_pick || false,
+    country_of_origin: null,
+    form: null,
+    gender: null,
+    volume_ml: null,
+    volume_unit: "ml",
+    application: null,
+    skin_type: null,
+    condition: null,
+    inStock: p.in_stock !== false,
+    _brandRestrictedCities: p.brands?.restricted_cities || null,
+  } as ProductWithRelations;
+}
+
 function mapRawProduct(p: any, language: "en" | "ar" | "ku"): ProductWithRelations {
   const localizedTitle =
     language === "ar" ? (p.title_ar || p.title) : language === "ku" ? (p.title_ku || p.title) : p.title;
@@ -91,38 +139,22 @@ function mapRawProduct(p: any, language: "en" | "ar" | "ku"): ProductWithRelatio
   } as ProductWithRelations;
 }
 
-async function fetchProducts(language: "en" | "ar" | "ku"): Promise<ProductWithRelations[]> {
-  let allProducts: any[] = [];
-  let from = 0;
-  const PAGE = 1000;
-  while (true) {
-    const { data, error } = await supabase
-      .from("products")
-      .select(`
-        *,
-        brands ( name, name_ar, name_ku, restricted_cities ),
-        categories ( slug ),
-        product_images ( image_url, sort_order ),
-        product_tags ( tag )
-      `)
-      .order("created_at", { ascending: false })
-      .range(from, from + PAGE - 1);
-    if (error) throw error;
-    allProducts = allProducts.concat(data || []);
-    if (!data || data.length < PAGE) break;
-    from += PAGE;
-  }
-
-  return allProducts.map((p: any) => mapRawProduct(p, language));
-}
-
 export function useProducts(options?: { enabled?: boolean }) {
   const { language } = useLanguage();
   const { userCity, isLoggedIn } = useUserCity();
 
   return useQuery<ProductWithRelations[]>({
     queryKey: ["products", language],
-    queryFn: () => fetchProducts(language),
+    queryFn: async () => {
+      // Use card-level select — much lighter than fetching all columns
+      const { data, error } = await supabase
+        .from("products")
+        .select(CARD_SELECT)
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return (data || []).map((p: any) => mapCardProduct(p, language));
+    },
     enabled: options?.enabled !== false,
     staleTime: 5 * 60 * 1000,
     select: (data) => data.filter((p) => {
@@ -226,13 +258,7 @@ export function useCategoryProducts(categorySlug: string | undefined, subcategor
 
       let query = supabase
         .from("products")
-        .select(`
-          *,
-          brands ( name, name_ar, name_ku, restricted_cities ),
-          categories ( slug ),
-          product_images ( image_url, sort_order ),
-          product_tags ( tag )
-        `)
+        .select(CARD_SELECT)
         .eq("category_id", catRow.id)
         .order("created_at", { ascending: false });
 
@@ -242,7 +268,7 @@ export function useCategoryProducts(categorySlug: string | undefined, subcategor
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []).map((p: any) => mapRawProduct(p, language));
+      return (data || []).map((p: any) => mapCardProduct(p, language));
     },
     enabled: !!categorySlug,
     staleTime: 5 * 60 * 1000,
@@ -261,19 +287,14 @@ export function useBrandProducts(brandId: string | undefined) {
       if (!brandId) return [];
       const { data, error } = await supabase
         .from("products")
-        .select(`
-          *,
-          brands ( name, name_ar, name_ku, restricted_cities ),
-          categories ( slug ),
-          product_images ( image_url, sort_order ),
-          product_tags ( tag )
-        `)
+        .select(CARD_SELECT)
         .eq("brand_id", brandId)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data || []).map((p: any) => mapRawProduct(p, language));
+      return (data || []).map((p: any) => mapCardProduct(p, language));
     },
     enabled: !!brandId,
+    staleTime: 5 * 60 * 1000,
   });
 }
 
