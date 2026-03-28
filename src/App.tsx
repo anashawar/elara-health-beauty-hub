@@ -137,6 +137,7 @@ const App = () => (
     <TooltipProvider>
       <LanguageProvider>
         <AppProvider>
+          <ForceUpdateGate>
           <Toaster />
           <Sonner />
           <BrowserRouter>
