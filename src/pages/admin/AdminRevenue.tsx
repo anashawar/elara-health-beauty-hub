@@ -164,6 +164,7 @@ export default function AdminRevenue() {
     const dailyRevenue = new Map<string, { revenue: number; cost: number; orders: number; profit: number }>();
     const paymentMethods: Record<string, number> = {};
     const couponUsage: Record<string, { count: number; discount: number }> = {};
+    const orderDetails: { id: string; date: string; revenue: number; cost: number; profit: number; items: number; status: string; hasMissingCost: boolean }[] = [];
 
     deliveredOrders.forEach((order: any) => {
       totalRevenue += Number(order.total);
