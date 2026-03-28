@@ -1,5 +1,3 @@
-/// <reference types="@capacitor-firebase/messaging" />
-
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const isDevMode = process.env.NODE_ENV === 'development';
@@ -27,9 +25,6 @@ const config: CapacitorConfig = {
     StatusBar: {
       overlaysWebView: true,
       style: 'DARK',
-    },
-    FirebaseMessaging: {
-      presentationOptions: ['badge', 'sound', 'alert'],
     },
   },
 };
