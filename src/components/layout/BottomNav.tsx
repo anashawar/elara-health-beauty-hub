@@ -1,13 +1,14 @@
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { Home, LayoutGrid, ShoppingBag, UserRound, Sparkles } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { useTabMemoryTracker, getTabRoute, getActiveTab } from "@/hooks/useTabMemory";
+import { useTabMemoryTracker, getTabRoute, getActiveTab, getTabRoot } from "@/hooks/useTabMemory";
 import type { TabKey } from "@/hooks/useTabMemory";
 
 const BottomNav = memo(() => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { cartCount } = useApp();
   const { t } = useLanguage();
   const path = location.pathname;
@@ -17,17 +18,29 @@ const BottomNav = memo(() => {
 
   const activeTab = getActiveTab(path);
 
+  /** If tapping the tab you're already in, go to root; otherwise go to last remembered route */
+  const handleTabClick = useCallback((tab: TabKey, e: React.MouseEvent) => {
+    e.preventDefault();
+    if (activeTab === tab) {
+      // Already in this tab — go to root
+      navigate(getTabRoot(tab));
+    } else {
+      navigate(getTabRoute(tab));
+    }
+  }, [activeTab, navigate]);
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden" style={{ contain: "layout style paint" }}>
       <div className="app-container">
         <div className="bg-card border-t border-border/40 shadow-[0_-1px_3px_hsl(20_10%_12%/0.04)] bottom-nav-safe">
           <div className="grid grid-cols-5 py-1">
-            <NavItem to={getTabRoute("home")} icon={Home} label={t("nav.home")} isActive={activeTab === "home"} />
-            <NavItem to={getTabRoute("categories")} icon={LayoutGrid} label={t("nav.categories")} isActive={activeTab === "categories"} />
+            <NavItem to={getTabRoute("home")} icon={Home} label={t("nav.home")} isActive={activeTab === "home"} onClick={(e) => handleTabClick("home", e)} />
+            <NavItem to={getTabRoute("categories")} icon={LayoutGrid} label={t("nav.categories")} isActive={activeTab === "categories"} onClick={(e) => handleTabClick("categories", e)} />
 
             {/* AI tab */}
-            <Link
-              to={getTabRoute("ai")}
+            <a
+              href={getTabRoute("ai")}
+              onClick={(e) => handleTabClick("ai", e)}
               className="relative flex flex-col items-center justify-center gap-0.5 py-2 active:opacity-70 transition-opacity duration-75"
             >
               <div className="relative">
@@ -47,7 +60,7 @@ const BottomNav = memo(() => {
               >
                 ELARA AI
               </span>
-            </Link>
+            </a>
 
             <NavItem
               to={getTabRoute("cart")}
@@ -55,8 +68,9 @@ const BottomNav = memo(() => {
               label={t("nav.cart")}
               isActive={activeTab === "cart"}
               badge={cartCount > 0 ? cartCount : undefined}
+              onClick={(e) => handleTabClick("cart", e)}
             />
-            <NavItem to={getTabRoute("profile")} icon={UserRound} label={t("nav.me")} isActive={activeTab === "profile"} />
+            <NavItem to={getTabRoute("profile")} icon={UserRound} label={t("nav.me")} isActive={activeTab === "profile"} onClick={(e) => handleTabClick("profile", e)} />
           </div>
         </div>
       </div>
@@ -72,15 +86,18 @@ const NavItem = memo(
     label,
     isActive,
     badge,
+    onClick,
   }: {
     to: string;
     icon: any;
     label: string;
     isActive: boolean;
     badge?: number;
+    onClick?: (e: React.MouseEvent) => void;
   }) => (
-    <Link
-      to={to}
+    <a
+      href={to}
+      onClick={onClick}
       className="relative flex flex-col items-center justify-center gap-0.5 py-2 active:opacity-70 transition-opacity duration-75"
     >
       <div className="relative">
@@ -103,7 +120,7 @@ const NavItem = memo(
       >
         {label}
       </span>
-    </Link>
+    </a>
   ),
 );
 
