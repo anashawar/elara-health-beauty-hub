@@ -23,7 +23,7 @@ const AppDownloadBanner = lazy(() => import("@/components/home/AppDownloadBanner
 import { ProductPageAppBanner } from "@/components/home/MobileAppBanners";
 import ImageZoomViewer from "@/components/product/ImageZoomViewer";
 
-const PUBLISHED_URL = "https://elara-health-beauty-hub.lovable.app";
+const PUBLISHED_URL = "https://elarastore.co";
 
 const getShareUrl = (slug: string) => `${PUBLISHED_URL}/product/${slug}`;
 
@@ -125,9 +125,9 @@ const ProductPage = () => {
 
   // Multilingual SEO alternates
   const seoAlternates = [
-    { lang: "en", url: `https://elara-health-beauty-hub.lovable.app/product/${product.slug}` },
-    { lang: "ar", url: `https://elara-health-beauty-hub.lovable.app/product/${product.slug}?lang=ar` },
-    { lang: "ku", url: `https://elara-health-beauty-hub.lovable.app/product/${product.slug}?lang=ku` },
+    { lang: "en", url: `https://elarastore.co/product/${product.slug}` },
+    { lang: "ar", url: `https://elarastore.co/product/${product.slug}?lang=ar` },
+    { lang: "ku", url: `https://elarastore.co/product/${product.slug}?lang=ku` },
   ];
 
   return (
@@ -135,7 +135,7 @@ const ProductPage = () => {
       <SEOHead
         title={seoTitle}
         description={seoDesc}
-        canonical={`https://elara-health-beauty-hub.lovable.app/product/${product.slug}`}
+        canonical={`https://elarastore.co/product/${product.slug}`}
         image={productImage}
         type="product"
         keywords={`${product.title}, ${brandName}, buy ${product.title} iraq, ${brandName} iraq, beauty iraq, skincare iraq`}
@@ -155,10 +155,10 @@ const ProductPage = () => {
             category: product.category_slug || undefined,
           }),
           breadcrumbJsonLd([
-            { name: "ELARA", url: "https://elara-health-beauty-hub.lovable.app" },
-            { name: "Shop", url: "https://elara-health-beauty-hub.lovable.app/shop" },
-            ...(brandName ? [{ name: brandName, url: `https://elara-health-beauty-hub.lovable.app/brand/${brandObj?.slug || product.brand_id}` }] : []),
-            { name: product.title, url: `https://elara-health-beauty-hub.lovable.app/product/${product.slug}` },
+            { name: "ELARA", url: "https://elarastore.co" },
+            { name: "Shop", url: "https://elarastore.co/shop" },
+            ...(brandName ? [{ name: brandName, url: `https://elarastore.co/brand/${brandObj?.slug || product.brand_id}` }] : []),
+            { name: product.title, url: `https://elarastore.co/product/${product.slug}` },
           ]),
         ]}
       />

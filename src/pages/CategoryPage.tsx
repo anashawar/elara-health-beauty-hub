@@ -143,12 +143,12 @@ const CategoryPage = () => {
       <SEOHead
         title={`${pageName} — Shop in Iraq`}
         description={`Browse ${pageName} products in Iraq. Original brands, fast delivery. Shop on ELARA.`}
-        canonical={`https://elara-health-beauty-hub.lovable.app${routerLocation.pathname}`}
+        canonical={`https://elarastore.co${routerLocation.pathname}`}
         keywords={`${pageName}, ${pageName} iraq, buy ${pageName} iraq, beauty iraq, cosmetics iraq`}
         jsonLd={breadcrumbJsonLd([
-          { name: "ELARA", url: "https://elara-health-beauty-hub.lovable.app" },
-          { name: "Categories", url: "https://elara-health-beauty-hub.lovable.app/categories" },
-          { name: pageName, url: `https://elara-health-beauty-hub.lovable.app${routerLocation.pathname}` },
+          { name: "ELARA", url: "https://elarastore.co" },
+          { name: "Categories", url: "https://elarastore.co/categories" },
+          { name: pageName, url: `https://elarastore.co${routerLocation.pathname}` },
         ])}
       />
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />

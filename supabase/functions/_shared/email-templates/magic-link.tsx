@@ -28,7 +28,7 @@ export const MagicLinkEmail = ({
     <Preview>Your login link for ELARA</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src="https://elara-health-beauty-hub.lovable.app/app-icon.png" width="48" height="48" alt="ELARA" style={{ marginBottom: '24px', borderRadius: '12px' }} />
+        <Img src="https://elarastore.co/app-icon.png" width="48" height="48" alt="ELARA" style={{ marginBottom: '24px', borderRadius: '12px' }} />
         <Heading style={h1}>Your login link</Heading>
         <Text style={text}>
           Click the button below to log in to ELARA. This link will expire shortly.
