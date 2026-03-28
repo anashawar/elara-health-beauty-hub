@@ -138,6 +138,9 @@ function SkinScanContent() {
   const [cameraActive, setCameraActive] = useState(false);
   const [expandedRoutine, setExpandedRoutine] = useState<string | null>("morning");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [webCountdown, setWebCountdown] = useState<number | null>(null);
+  const webCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const webAutoCapturedRef = useRef(false);
 
   // Fetch user gender to conditionally show makeup sections
   const { data: userGender } = useQuery({
@@ -219,6 +222,12 @@ function SkinScanContent() {
   // Capture photo from camera
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
+    // Clear web countdown
+    if (webCountdownRef.current) {
+      clearInterval(webCountdownRef.current);
+      webCountdownRef.current = null;
+    }
+    setWebCountdown(null);
     const v = videoRef.current;
     const c = canvasRef.current;
     c.width = v.videoWidth;
@@ -234,6 +243,30 @@ function SkinScanContent() {
     stopCamera();
     analyzeSkin(dataUrl);
   }, [stopCamera, useFrontCamera]);
+
+  // Web camera auto-capture: start 5s countdown when camera becomes active
+  useEffect(() => {
+    if (cameraActive && !isNative && !webAutoCapturedRef.current) {
+      setWebCountdown(5);
+      let remaining = 5;
+      webCountdownRef.current = setInterval(() => {
+        remaining -= 1;
+        setWebCountdown(remaining);
+        if (remaining <= 0) {
+          if (webCountdownRef.current) clearInterval(webCountdownRef.current);
+          webCountdownRef.current = null;
+          webAutoCapturedRef.current = true;
+          capturePhoto();
+        }
+      }, 1000);
+    }
+    return () => {
+      if (webCountdownRef.current) {
+        clearInterval(webCountdownRef.current);
+        webCountdownRef.current = null;
+      }
+    };
+  }, [cameraActive, isNative, capturePhoto]);
 
   // Handle file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -350,6 +383,8 @@ function SkinScanContent() {
     setMakeupProducts([]);
     setCapturedImage(null);
     setScanProgress(0);
+    webAutoCapturedRef.current = false;
+    setWebCountdown(null);
   };
 
   const getScoreColor = (score: number) => {
@@ -456,16 +491,32 @@ function SkinScanContent() {
               </div>
 
               {/* Controls */}
-              <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-6">
-                <button onClick={stopCamera} className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <button onClick={capturePhoto} className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg border-4 border-background/50">
-                  <Camera className="w-7 h-7 text-primary-foreground" />
-                </button>
-                <button onClick={() => { stopCamera(); setUseFrontCamera(p => !p); setTimeout(startCamera, 100); }} className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
-                  <RotateCcw className="w-5 h-5" />
-                </button>
+              <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2">
+                {/* Countdown text */}
+                {webCountdown != null && webCountdown > 0 && (
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-xs font-semibold text-white bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full"
+                  >
+                    {language === "ar" ? `التقاط تلقائي خلال ${webCountdown}` : `Auto-capture in ${webCountdown}s`}
+                  </motion.span>
+                )}
+                <div className="flex items-center justify-center gap-6">
+                  <button onClick={() => { if (webCountdownRef.current) clearInterval(webCountdownRef.current); stopCamera(); }} className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <button onClick={capturePhoto} className="relative w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg border-4 border-background/50">
+                    {webCountdown != null && webCountdown > 0 ? (
+                      <motion.span key={webCountdown} initial={{ scale: 1.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-lg font-display font-black text-primary-foreground">{webCountdown}</motion.span>
+                    ) : (
+                      <Camera className="w-7 h-7 text-primary-foreground" />
+                    )}
+                  </button>
+                  <button onClick={() => { if (webCountdownRef.current) clearInterval(webCountdownRef.current); stopCamera(); setUseFrontCamera(p => !p); webAutoCapturedRef.current = false; setTimeout(startCamera, 100); }} className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
+                    <RotateCcw className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
           ) : (

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { CameraPreview } from "@capgo/camera-preview";
 import { Camera as CapCamera } from "@capacitor/camera";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
@@ -15,6 +15,8 @@ const LEFT_EYEBROW = [276,283,282,295,285,300,293,334,296,336];
 const RIGHT_EYEBROW = [46,53,52,65,55,70,63,105,66,107];
 const CROSS_HAIR_POINTS = [168,6,195,4,1,2,98,327];
 
+const AUTO_CAPTURE_SECONDS = 5;
+
 interface NativeFaceScannerProps {
   onCapture: (base64DataUrl: string) => void;
   onClose: () => void;
@@ -28,6 +30,9 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
   const [useFront, setUseFront] = useState(true);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoCapturingRef = useRef(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const landmarkerRef = useRef<FaceLandmarker | null>(null);
   const captureIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -305,6 +310,12 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
         drawOverlay(ctx, results.faceLandmarks[0], img.naturalWidth, img.naturalHeight, displayW, displayH);
       } else {
         setFaceDetected(false);
+        // Reset countdown if face lost
+        if (countdownTimerRef.current) {
+          clearInterval(countdownTimerRef.current);
+          countdownTimerRef.current = null;
+          setCountdown(null);
+        }
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
     } catch {
@@ -342,6 +353,14 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
 
   // Handle capture
   const handleCapture = useCallback(async () => {
+    if (autoCapturingRef.current) return;
+    autoCapturingRef.current = true;
+    // Clear countdown
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+    setCountdown(null);
     try {
       const result = await CameraPreview.capture({ quality: 85 });
       const base64 = result.value;
@@ -351,14 +370,63 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
       }
     } catch (err) {
       console.error("[NativeScanner] Capture failed:", err);
+      autoCapturingRef.current = false;
     }
   }, [onCapture]);
+
+  // Auto-capture countdown: starts when face detected, resets if face lost
+  useEffect(() => {
+    if (faceDetected && !modelLoading && !autoCapturingRef.current) {
+      // Start countdown
+      if (!countdownTimerRef.current) {
+        setCountdown(AUTO_CAPTURE_SECONDS);
+        let remaining = AUTO_CAPTURE_SECONDS;
+        countdownTimerRef.current = setInterval(() => {
+          remaining -= 1;
+          setCountdown(remaining);
+          if (remaining <= 0) {
+            if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+            countdownTimerRef.current = null;
+            handleCapture();
+          }
+        }, 1000);
+      }
+    } else if (!faceDetected) {
+      // Reset countdown
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+      }
+      setCountdown(null);
+    }
+
+    return () => {
+      // Don't clear on unmount here — let the main cleanup handle it
+    };
+  }, [faceDetected, modelLoading, handleCapture]);
+
+  // Cleanup countdown on unmount
+  useEffect(() => {
+    return () => {
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Flip camera
   const flipCamera = useCallback(async () => {
     try {
       await CameraPreview.flip();
       setUseFront((p) => !p);
+      // Reset countdown on flip
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+      }
+      setCountdown(null);
+      autoCapturingRef.current = false;
     } catch (err) {
       console.error("[NativeScanner] Flip failed:", err);
     }
@@ -387,6 +455,12 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
       </div>
     );
   }
+
+  // Countdown ring progress (for the capture button)
+  const countdownProgress = countdown != null ? (AUTO_CAPTURE_SECONDS - countdown) / AUTO_CAPTURE_SECONDS : 0;
+  const ringRadius = 38;
+  const ringCirc = 2 * Math.PI * ringRadius;
+  const ringOffset = ringCirc - countdownProgress * ringCirc;
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col" style={{ backgroundColor: "transparent" }}>
@@ -425,23 +499,37 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
         </div>
       </div>
 
-      {/* Bottom section — opaque background so page content doesn't bleed through */}
+      {/* Bottom section */}
       <div className="flex-1 bg-black flex flex-col items-center justify-between pt-3 pb-safe">
-        {/* Face detection status */}
+        {/* Face detection status + countdown */}
         <div className="text-center">
           {modelLoading ? (
             <span className="text-xs text-white/50 animate-pulse">
               {language === "ar" ? "جاري تحميل الذكاء الاصطناعي..." : language === "ku" ? "AI بارکردنی..." : "Loading AI model..."}
             </span>
           ) : faceDetected ? (
-            <motion.span
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-xs font-semibold text-green-400 flex items-center justify-center gap-1.5"
+              className="flex flex-col items-center gap-1"
             >
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              {language === "ar" ? "تم اكتشاف الوجه" : language === "ku" ? "دەموچاو دۆزرایەوە" : "Face detected"}
-            </motion.span>
+              <span className="text-xs font-semibold text-green-400 flex items-center justify-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                {language === "ar" ? "تم اكتشاف الوجه" : language === "ku" ? "دەموچاو دۆزرایەوە" : "Face detected"}
+              </span>
+              <AnimatePresence>
+                {countdown != null && countdown > 0 && (
+                  <motion.span
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="text-[11px] text-white/60 font-medium"
+                  >
+                    {language === "ar" ? `التقاط تلقائي خلال ${countdown} ثانية` : language === "ku" ? `خۆکارانە وێنە دەگرێت لە ${countdown} چرکەدا` : `Auto-capturing in ${countdown}s`}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.div>
           ) : (
             <span className="text-xs text-white/50">
               {language === "ar" ? "وجّه وجهك للكاميرا" : language === "ku" ? "دەموچاوت بکە بەرەو کامێرا" : "Position your face in view"}
@@ -453,6 +541,7 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
         <div className="flex items-center justify-center gap-8 pb-6">
           <button
             onClick={() => {
+              if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
               CameraPreview.stop().catch(() => {});
               onClose();
             }}
@@ -461,17 +550,41 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
 
-          {/* Main capture button */}
+          {/* Main capture button with countdown ring */}
           <button
             onClick={handleCapture}
             disabled={!faceDetected && !modelLoading}
             className="relative w-20 h-20 rounded-full flex items-center justify-center disabled:opacity-40"
           >
-            {/* Outer ring */}
-            <div className="absolute inset-0 rounded-full border-4 border-white/30" />
+            {/* Countdown ring SVG */}
+            <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r={ringRadius} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="3" />
+              {countdown != null && (
+                <motion.circle
+                  cx="40" cy="40" r={ringRadius} fill="none"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="3" strokeLinecap="round"
+                  strokeDasharray={ringCirc}
+                  initial={{ strokeDashoffset: ringCirc }}
+                  animate={{ strokeDashoffset: ringOffset }}
+                  transition={{ duration: 0.3, ease: "linear" }}
+                />
+              )}
+            </svg>
             {/* Inner filled circle */}
             <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/40">
-              <Camera className="w-7 h-7 text-primary-foreground" />
+              {countdown != null && countdown > 0 ? (
+                <motion.span
+                  key={countdown}
+                  initial={{ scale: 1.4, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="text-xl font-display font-black text-primary-foreground"
+                >
+                  {countdown}
+                </motion.span>
+              ) : (
+                <Camera className="w-7 h-7 text-primary-foreground" />
+              )}
             </div>
           </button>
 
@@ -485,7 +598,7 @@ export default function NativeFaceScanner({ onCapture, onClose, language }: Nati
 
         {/* Hint text */}
         <p className="text-[10px] text-white/30 text-center pb-2">
-          {language === "ar" ? "التقط صورة لتحليل بشرتك" : language === "ku" ? "وێنە بگرە بۆ شیکردنەوەی پێستت" : "Capture a photo to analyze your skin"}
+          {language === "ar" ? "ثبّت وجهك وسيتم الالتقاط تلقائياً" : language === "ku" ? "دەموچاوت جێگیر بکە، خۆکارانە وێنە دەگرێت" : "Hold steady — auto-capture when face is detected"}
         </p>
       </div>
     </div>
