@@ -341,7 +341,11 @@ const CategoryPage = () => {
         )}
 
         <div className="px-4 md:px-6 mt-3 mb-2 flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">{filteredProducts.length} {t("common.products").toLowerCase()}</p>
+          <p className="text-xs text-muted-foreground">
+            {!isConcernRoute && catTotalCount > 0
+              ? `${catPage * 20 + 1}–${Math.min((catPage + 1) * 20, catTotalCount)} of ${catTotalCount} ${t("common.products").toLowerCase()}`
+              : `${filteredProducts.length} ${t("common.products").toLowerCase()}`}
+          </p>
           {activeFilterCount > 0 && (
             <button onClick={clearFilters} className="text-xs text-primary font-medium">{t("categories.clearFilters")}</button>
           )}
@@ -360,6 +364,28 @@ const CategoryPage = () => {
                 <ProductCard key={p.id} product={p} offerPricing={getOfferForProduct(p, activeOffers)} />
               ))}
             </div>
+
+            {!isConcernRoute && (catPage > 0 || catHasMore) && (
+              <div className="flex items-center justify-center gap-3 px-4 mt-6 mb-4">
+                <button
+                  onClick={() => { setCatPage(p => Math.max(0, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  disabled={catPage === 0}
+                  className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-secondary text-foreground disabled:opacity-40 hover:bg-accent transition-colors"
+                >
+                  ← {language === "ar" ? "السابق" : language === "ku" ? "پێشوو" : "Previous"}
+                </button>
+                <span className="text-sm text-muted-foreground font-medium">
+                  {language === "ar" ? `صفحة ${catPage + 1}` : language === "ku" ? `لاپەڕە ${catPage + 1}` : `Page ${catPage + 1}`}
+                </span>
+                <button
+                  onClick={() => { setCatPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  disabled={!catHasMore}
+                  className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-secondary text-foreground disabled:opacity-40 hover:bg-accent transition-colors"
+                >
+                  {language === "ar" ? "التالي" : language === "ku" ? "دواتر" : "Next"} →
+                </button>
+              </div>
+            )}
 
             {filteredProducts.length === 0 && (
               <div className="text-center mt-12 px-4">
