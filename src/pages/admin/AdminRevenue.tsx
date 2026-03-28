@@ -255,6 +255,7 @@ export default function AdminRevenue() {
         status: order.status,
         hasMissingCost: orderHasMissing,
       });
+    });
 
     // Profit only from products with known cost data
     const totalProfit = revenueWithCost - totalCost;
