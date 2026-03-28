@@ -299,6 +299,7 @@ export default function AdminRevenue() {
       totalOrders: deliveredOrders.length, allOrders: allActive.length,
       totalItemsSold, totalDeliveryFees, totalDiscounts,
       topProducts, topBrands, dailyData, paymentMethods, couponLeaderboard,
+      orderDetails: orderDetails.sort((a, b) => b.date.localeCompare(a.date)),
       pendingRevenue: allActive.filter((o: any) => o.status !== "delivered").reduce((s: number, o: any) => s + Number(o.total), 0),
       pendingCount: allActive.filter((o: any) => o.status !== "delivered").length,
       revenueWithCost,
