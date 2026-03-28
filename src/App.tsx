@@ -85,7 +85,7 @@ const SwipeBackWrapper = ({ children }: { children: React.ReactNode }) => {
 
 /**
  * Deferred push notification init via OneSignal.
- * On native: runs quickly (OneSignal initialized in main.tsx).
+ * On native: runs shortly after the shell loads.
  * On web: deferred to avoid blocking initial render.
  */
 const DeferredPushInit = () => {

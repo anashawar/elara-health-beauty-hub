@@ -1,79 +1,200 @@
 import { Capacitor } from "@capacitor/core";
+import OneSignal from "onesignal-cordova-plugin";
 import { supabase } from "@/integrations/supabase/client";
 
 const ONESIGNAL_APP_ID = "13744f00-e92d-4e78-84ca-4dffe5a16cea";
 
-/**
- * Returns true if running on a native iOS/Android platform (Capacitor).
- */
+let initialized = false;
+let listenersBound = false;
+let subscriptionObserverBound = false;
+let navigateHandler: ((url: string) => void) | undefined;
+
 export function isNativePlatform(): boolean {
   return Capacitor.isNativePlatform();
 }
 
-/**
- * Initialize OneSignal on native platforms.
- * On iOS, OneSignal is initialized natively in AppDelegate.swift.
- * This function is a no-op on native — init happens in Swift.
- */
-export async function initOneSignal(): Promise<void> {
-  if (!isNativePlatform()) return;
-  console.log("[Push] OneSignal native init handled by AppDelegate on", Capacitor.getPlatform());
+function hasCordovaBridge(): boolean {
+  return typeof window !== "undefined" && !!(window as Window & { cordova?: unknown }).cordova;
 }
 
-/**
- * Set external user ID via OneSignal and save subscription to DB.
- * Uses the native bridge if available, otherwise logs a warning.
- */
+async function waitForCordovaBridge(timeoutMs = 4000): Promise<boolean> {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    if (hasCordovaBridge()) return true;
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+
+  return false;
+}
+
+function normalizeInternalUrl(url?: string | null): string | null {
+  if (!url) return null;
+
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    try {
+      const parsed = new URL(url);
+      if (typeof window !== "undefined" && parsed.origin === window.location.origin) {
+        return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+
+      window.location.href = url;
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  return url.startsWith("/") ? url : `/${url}`;
+}
+
+function bindOneSignalListeners() {
+  if (listenersBound) return;
+
+  OneSignal.Notifications.addEventListener("foregroundWillDisplay", (event) => {
+    event.getNotification().display();
+  });
+
+  OneSignal.Notifications.addEventListener("click", (event) => {
+    const additionalData = (event.notification.additionalData ?? {}) as { link_url?: string };
+    const targetUrl = normalizeInternalUrl(
+      event.result?.url ?? event.notification.launchURL ?? additionalData.link_url ?? null,
+    );
+
+    if (!targetUrl) return;
+
+    if (navigateHandler) {
+      navigateHandler(targetUrl);
+      return;
+    }
+
+    window.location.href = targetUrl;
+  });
+
+  listenersBound = true;
+}
+
+function bindSubscriptionObserver() {
+  if (subscriptionObserverBound) return;
+
+  OneSignal.User.pushSubscription.addEventListener("change", async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session?.user) {
+      await saveOneSignalToken(session.user.id);
+    }
+  });
+
+  subscriptionObserverBound = true;
+}
+
+export async function initOneSignal(): Promise<void> {
+  if (!isNativePlatform()) return;
+
+  const bridgeReady = await waitForCordovaBridge();
+  if (!bridgeReady) {
+    console.warn("[Push] OneSignal bridge not ready yet");
+    return;
+  }
+
+  if (!initialized) {
+    OneSignal.initialize(ONESIGNAL_APP_ID);
+    initialized = true;
+  }
+
+  bindOneSignalListeners();
+  bindSubscriptionObserver();
+
+  try {
+    const hasPermission = await OneSignal.Notifications.getPermissionAsync();
+    if (!hasPermission) {
+      const canRequestPermission = await OneSignal.Notifications.canRequestPermission();
+      if (canRequestPermission) {
+        await OneSignal.Notifications.requestPermission(false);
+      }
+    }
+  } catch (error) {
+    console.warn("[Push] Failed to request notification permission:", error);
+  }
+}
+
 export async function saveOneSignalToken(userId: string): Promise<void> {
   if (!isNativePlatform()) return;
 
   try {
-    const OneSignal = (window as any).plugins?.OneSignal ?? (window as any).OneSignalPlugin;
+    await initOneSignal();
+    if (!initialized) return;
 
-    // Login sets the external user ID for targeting
-    if (OneSignal?.login) {
-      OneSignal.login(userId);
-      console.log(`[Push] OneSignal login called for user ${userId.substring(0, 8)}`);
-    } else {
-      console.log("[Push] OneSignal JS bridge not available — native SDK handles registration");
+    OneSignal.login(userId);
+
+    const platform = Capacitor.getPlatform();
+    const subscriptionId = await OneSignal.User.pushSubscription.getIdAsync();
+    const pushToken = await OneSignal.User.pushSubscription.getTokenAsync();
+    const isOptedIn = await OneSignal.User.pushSubscription.getOptedInAsync();
+    const endpoint = `onesignal:${platform}:${subscriptionId ?? userId}`;
+
+    if (!subscriptionId && !pushToken) {
+      console.log("[Push] OneSignal subscription not ready yet");
+      return;
     }
 
-    // Save a record to our DB for tracking
-    const platform = Capacitor.getPlatform();
-    const endpoint = `onesignal_${platform}_${userId}`;
+    const payload = {
+      user_id: userId,
+      endpoint,
+      p256dh: pushToken ?? platform,
+      auth: "onesignal",
+      is_active: isOptedIn,
+    };
 
-    const { data: existing } = await supabase
+    const { data: existing, error: lookupError } = await supabase
       .from("push_subscriptions")
       .select("id")
       .eq("user_id", userId)
       .eq("endpoint", endpoint)
       .maybeSingle();
 
-    if (!existing) {
-      await supabase.from("push_subscriptions").insert({
-        user_id: userId,
-        endpoint,
-        p256dh: platform,
-        auth: "onesignal",
-        is_active: true,
-      });
-      console.log(`[Push] Subscription record saved for ${platform}`);
+    if (lookupError) throw lookupError;
+
+    if (existing?.id) {
+      const { error: updateError } = await supabase
+        .from("push_subscriptions")
+        .update(payload)
+        .eq("id", existing.id);
+
+      if (updateError) throw updateError;
+    } else {
+      const { error: insertError } = await supabase.from("push_subscriptions").insert(payload);
+      if (insertError) throw insertError;
     }
+
+    console.log(`[Push] OneSignal subscription saved for ${platform}`);
   } catch (err) {
     console.error("[Push] saveOneSignalToken error:", err);
   }
 }
 
-/**
- * Set up notification tap listeners (deep linking).
- */
-export async function setupNativeListeners(onNavigate?: (url: string) => void): Promise<void> {
+export async function clearOneSignalUser(): Promise<void> {
   if (!isNativePlatform()) return;
-  // Deep link handling is done natively; JS-side navigation handled via URL scheme
-  console.log("[Push] Native listeners handled by OneSignal SDK");
+
+  try {
+    await initOneSignal();
+    if (initialized) {
+      OneSignal.logout();
+    }
+  } catch (error) {
+    console.warn("[Push] Failed to clear OneSignal user:", error);
+  }
 }
 
-/**
- * Cleanup — no-op, OneSignal manages its own lifecycle.
- */
-export async function removeNativeListeners(): Promise<void> {}
+export async function setupNativeListeners(onNavigate?: (url: string) => void): Promise<void> {
+  if (!isNativePlatform()) return;
+
+  navigateHandler = onNavigate;
+  await initOneSignal();
+}
+
+export async function removeNativeListeners(): Promise<void> {
+  navigateHandler = undefined;
+}

@@ -6,6 +6,9 @@ const config: CapacitorConfig = {
   appId: 'com.elarashop.app',
   appName: 'ELARA',
   webDir: 'dist',
+  ios: {
+    handleApplicationNotifications: false,
+  },
   // Only use live-reload server in development — production loads from local bundle
   ...(isDevMode ? {
     server: {

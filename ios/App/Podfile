@@ -12,7 +12,6 @@ end
 
 target 'App' do
   capacitor_pods
-  pod 'OneSignalXCFramework', '5.2.9'
 end
 
 post_install do |installer|

@@ -3,11 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import {
+  clearOneSignalUser,
   isNativePlatform,
   initOneSignal,
   saveOneSignalToken,
   setupNativeListeners,
 } from "@/lib/nativePush";
+
+let authListenerBound = false;
 
 /**
  * Unified push notification hook using OneSignal.
@@ -24,9 +27,9 @@ export function usePushNotifications() {
     initialized.current = true;
 
     if (isNativePlatform()) {
-      initOneSignal();
-      saveOneSignalToken(user.id);
-      setupNativeListeners((url) => navigate(url));
+      void initOneSignal();
+      void setupNativeListeners((url) => navigate(url));
+      void saveOneSignalToken(user.id);
     }
   }, [user, navigate]);
 
@@ -38,33 +41,33 @@ export function usePushNotifications() {
  */
 export async function initPushNotifications() {
   try {
-    if (isNativePlatform()) {
-      // Initialize OneSignal
-      await initOneSignal();
-      await setupNativeListeners();
+    if (!isNativePlatform()) return;
 
-      // If user is logged in, save token
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    await initOneSignal();
+    await setupNativeListeners();
 
-      if (session?.user) {
-        await saveOneSignalToken(session.user.id);
-      } else {
-        // Listen for future sign-in
-        const {
-          data: { subscription },
-        } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-          if (event === "SIGNED_IN" && newSession?.user) {
-            subscription.unsubscribe();
-            await saveOneSignalToken(newSession.user.id);
-          }
-        });
-      }
-      return;
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session?.user) {
+      await saveOneSignalToken(session.user.id);
+    } else {
+      await clearOneSignalUser();
     }
 
-    // Web: no-op for now (OneSignal web can be added later)
+    if (!authListenerBound) {
+      supabase.auth.onAuthStateChange(async (_event, newSession) => {
+        if (newSession?.user) {
+          await saveOneSignalToken(newSession.user.id);
+          return;
+        }
+
+        await clearOneSignalUser();
+      });
+
+      authListenerBound = true;
+    }
   } catch (e) {
     console.warn("Deferred push init failed:", e);
   }
