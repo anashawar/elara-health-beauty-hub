@@ -1,7 +1,7 @@
-import { useParams, Link, Navigate } from "react-router-dom";
-import { ArrowLeft, Package, ShieldAlert } from "lucide-react";
+import { useParams, Link } from "react-router-dom";
+import { ArrowLeft, Package, ShieldAlert, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { useBrands, useBrandProducts } from "@/hooks/useProducts";
+import { useBrands, useBrandProductsPaginated, useBrandProductCount } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 import BottomNav from "@/components/layout/BottomNav";
 import DesktopHeader from "@/components/layout/DesktopHeader";
@@ -15,24 +15,34 @@ import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 import { useMemo, useState } from "react";
 import { useUserCity, isBrandAvailableInCity } from "@/hooks/useUserCity";
 
+const COUNTRY_FLAGS: Record<string, string> = {
+  "France": "🇫🇷", "USA": "🇺🇸", "United States": "🇺🇸", "South Korea": "🇰🇷", "Korea": "🇰🇷",
+  "Germany": "🇩🇪", "Japan": "🇯🇵", "UK": "🇬🇧", "United Kingdom": "🇬🇧", "Italy": "🇮🇹",
+  "Spain": "🇪🇸", "Canada": "🇨🇦", "Australia": "🇦🇺", "Switzerland": "🇨🇭", "Sweden": "🇸🇪",
+  "Turkey": "🇹🇷", "India": "🇮🇳", "Iraq": "🇮🇶", "Jordan": "🇯🇴", "UAE": "🇦🇪",
+  "Lebanon": "🇱🇧", "Morocco": "🇲🇦", "Egypt": "🇪🇬", "China": "🇨🇳", "Brazil": "🇧🇷",
+  "Netherlands": "🇳🇱", "Belgium": "🇧🇪", "Poland": "🇵🇱", "Ireland": "🇮🇪",
+};
+
 const BrandPage = () => {
   const { id } = useParams<{ id: string }>();
   const { data: brands = [] } = useBrands();
   const { t, language } = useLanguage();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [page, setPage] = useState(0);
   const { data: activeOffers = [] } = useActiveOffers();
   const { userCity, isLoggedIn } = useUserCity();
 
   const brand = brands.find((b) => b.slug === id) || brands.find((b) => b.id === id);
-
-  // Block access if brand is city-restricted and user is not in allowed city
   const isBrandRestricted = brand && !isBrandAvailableInCity((brand as any).restricted_cities, userCity, isLoggedIn);
   
-  const { data: brandProducts = [], isLoading } = useBrandProducts(isBrandRestricted ? undefined : brand?.id);
+  const { data: pageData, isLoading } = useBrandProductsPaginated(isBrandRestricted ? undefined : brand?.id, page);
+  const { data: totalCount = 0 } = useBrandProductCount(isBrandRestricted ? undefined : brand?.id);
+  const brandProducts = pageData?.products || [];
+  const hasMore = pageData?.hasMore || false;
 
   const brandCountry = brand?.country_of_origin;
-  const productCountries = [...new Set(brandProducts.map(p => p.country_of_origin).filter(Boolean))];
-  const countries = brandCountry ? [brandCountry] : productCountries;
+  const countries = brandCountry ? [brandCountry] : [];
 
   const offerMap = useMemo(() => {
     const map = new Map<string, ReturnType<typeof getOfferForProduct>>();
@@ -42,18 +52,6 @@ const BrandPage = () => {
     return map;
   }, [brandProducts, activeOffers]);
 
-  const countryFlag = (country: string): string => {
-    const map: Record<string, string> = {
-      "France": "🇫🇷", "USA": "🇺🇸", "United States": "🇺🇸", "South Korea": "🇰🇷", "Korea": "🇰🇷",
-      "Germany": "🇩🇪", "Japan": "🇯🇵", "UK": "🇬🇧", "United Kingdom": "🇬🇧", "Italy": "🇮🇹",
-      "Spain": "🇪🇸", "Canada": "🇨🇦", "Australia": "🇦🇺", "Switzerland": "🇨🇭", "Sweden": "🇸🇪",
-      "Turkey": "🇹🇷", "India": "🇮🇳", "Iraq": "🇮🇶", "Jordan": "🇯🇴", "UAE": "🇦🇪",
-      "Lebanon": "🇱🇧", "Morocco": "🇲🇦", "Egypt": "🇪🇬", "China": "🇨🇳", "Brazil": "🇧🇷",
-      "Netherlands": "🇳🇱", "Belgium": "🇧🇪", "Poland": "🇵🇱", "Ireland": "🇮🇪",
-    };
-    return map[country] || "🌍";
-  };
-
   const getBrandName = (b: any) => {
     if (language === "ar" && b.name_ar) return b.name_ar;
     if (language === "ku" && b.name_ku) return b.name_ku;
@@ -62,6 +60,7 @@ const BrandPage = () => {
 
   const displayName = brand ? getBrandName(brand) : t("product.brand");
   const brandSlug = brand?.slug || id;
+  const totalPages = Math.ceil(totalCount / 20);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -70,9 +69,9 @@ const BrandPage = () => {
 
       <SEOHead
         title={`${displayName} — Buy Original ${displayName} Products in Iraq`}
-        description={`Shop ${brandProducts.length}+ original ${displayName} products in Iraq. ${countries.length > 0 ? `Made in ${countries[0]}.` : ""} Fast delivery across Iraq. 100% authentic.`}
+        description={`Shop original ${displayName} products in Iraq. ${countries.length > 0 ? `Made in ${countries[0]}.` : ""} Fast delivery across Iraq. 100% authentic.`}
         canonical={`${SITE_BASE}/brand/${brandSlug}`}
-        keywords={`${displayName}, ${displayName} iraq, buy ${displayName} iraq, ${displayName} products, ${displayName} skincare, ${displayName} beauty, original ${displayName}`}
+        keywords={`${displayName}, ${displayName} iraq, buy ${displayName} iraq, ${displayName} products`}
         jsonLd={[
           breadcrumbJsonLd([
             { name: "ELARA", url: SITE_BASE },
@@ -85,7 +84,6 @@ const BrandPage = () => {
             name: displayName,
             url: `${SITE_BASE}/brand/${brandSlug}`,
             ...(brand?.logo_url ? { logo: brand.logo_url } : {}),
-            ...(countries.length > 0 ? { description: `Original ${displayName} products from ${countries[0]}` } : {}),
           },
         ]}
       />
@@ -102,31 +100,17 @@ const BrandPage = () => {
 
       {isBrandRestricted ? (
         <div className="flex-1 flex flex-col items-center justify-center py-20 px-6">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center max-w-sm text-center"
-          >
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center max-w-sm text-center">
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-5">
               <ShieldAlert className="w-10 h-10 text-muted-foreground" />
             </div>
-            <h2 className="text-lg font-display font-bold text-foreground mb-2">
-              {t("brand.notAvailable")}
-            </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-              {t("brand.notAvailableDesc")}
-            </p>
+            <h2 className="text-lg font-display font-bold text-foreground mb-2">{t("brand.notAvailable")}</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-6">{t("brand.notAvailableDesc")}</p>
             <div className="flex flex-col sm:flex-row gap-3 w-full">
-              <Link
-                to="/addresses"
-                className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
-              >
+              <Link to="/addresses" className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
                 {t("brand.updateAddress")}
               </Link>
-              <Link
-                to="/brands"
-                className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-secondary text-secondary-foreground text-sm font-semibold hover:bg-secondary/80 transition-colors"
-              >
+              <Link to="/brands" className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-secondary text-secondary-foreground text-sm font-semibold hover:bg-secondary/80 transition-colors">
                 {t("brand.browseOther")}
               </Link>
             </div>
@@ -143,11 +127,7 @@ const BrandPage = () => {
           </div>
 
           {/* Brand Hero Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mx-4 md:mx-6 mt-4 relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-card to-accent/10 border border-border/50"
-          >
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mx-4 md:mx-6 mt-4 relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-card to-accent/10 border border-border/50">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
             <div className="relative p-6 flex items-center gap-5">
               {brand?.logo_url && (
@@ -159,13 +139,13 @@ const BrandPage = () => {
                 <h2 className="text-xl font-display font-bold text-foreground">{displayName}</h2>
                 {countries.length > 0 && (
                   <div className="flex items-center gap-1.5 mt-1.5">
-                    <span className="text-base leading-none flex-shrink-0">{countryFlag(countries[0] as string)}</span>
+                    <span className="text-base leading-none flex-shrink-0">{COUNTRY_FLAGS[countries[0] as string] || "🌍"}</span>
                     <span className="text-xs text-muted-foreground">{countries.join(", ")}</span>
                   </div>
                 )}
                 <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary">
                   <span className="text-[11px] font-semibold">
-                    {brandProducts.length} {brandProducts.length !== 1 ? t("common.products").toLowerCase() : t("common.product").toLowerCase()}
+                    {totalCount} {totalCount !== 1 ? t("common.products").toLowerCase() : t("common.product").toLowerCase()}
                   </span>
                 </div>
               </div>
@@ -191,7 +171,7 @@ const BrandPage = () => {
                 ))}
               </div>
             </div>
-          ) : brandProducts.length === 0 ? (
+          ) : brandProducts.length === 0 && page === 0 ? (
             <div className="flex flex-col items-center justify-center mt-16 px-4">
               <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
                 <Package className="w-8 h-8 text-muted-foreground" />
@@ -207,6 +187,53 @@ const BrandPage = () => {
                   <ProductCard key={product.id} product={product} offerPricing={offerMap.get(product.id) ?? null} />
                 ))}
               </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 px-4 mt-6 mb-4">
+                  <button
+                    onClick={() => { setPage(p => p - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    disabled={page === 0}
+                    className="p-2 rounded-xl border border-border hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      let pageNum: number;
+                      if (totalPages <= 5) {
+                        pageNum = i;
+                      } else if (page < 3) {
+                        pageNum = i;
+                      } else if (page > totalPages - 4) {
+                        pageNum = totalPages - 5 + i;
+                      } else {
+                        pageNum = page - 2 + i;
+                      }
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => { setPage(pageNum); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                          className={`w-9 h-9 rounded-xl text-sm font-semibold transition-colors ${
+                            pageNum === page
+                              ? "bg-primary text-primary-foreground"
+                              : "hover:bg-secondary text-muted-foreground"
+                          }`}
+                        >
+                          {pageNum + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    disabled={!hasMore}
+                    className="p-2 rounded-xl border border-border hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4 rtl:rotate-180" />
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>
