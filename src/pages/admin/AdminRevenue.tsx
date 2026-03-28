@@ -50,10 +50,32 @@ export default function AdminRevenue() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("id, total, subtotal, delivery_fee, discount, status, created_at, coupon_code, payment_method, order_items(product_id, quantity, price)")
+        .select("id, total, subtotal, delivery_fee, discount, status, created_at, coupon_code, payment_method, address_id, order_items(product_id, quantity, price)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
+    },
+  });
+
+  // Fetch addresses to determine city for actual delivery cost
+  const { data: addresses = [] } = useQuery({
+    queryKey: ["admin-revenue-addresses"],
+    queryFn: async () => {
+      const allAddresses: any[] = [];
+      let from = 0;
+      const PAGE = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("addresses")
+          .select("id, city")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allAddresses.push(...data);
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
+      return allAddresses;
     },
   });
 
