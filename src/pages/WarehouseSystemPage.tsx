@@ -97,22 +97,33 @@ export default function WarehouseSystemPage() {
     if (!authed || !user) return;
     setLoading(true);
 
-    const [reqRes, brandRes, prodRes, notifRes] = await Promise.all([
-      supabase.from("warehouse_requests").select("*").order("created_at", { ascending: false }),
+    const [warehouseRes, brandRes, prodRes] = await Promise.all([
+      supabase.functions.invoke("prep-orders", {
+        body: null,
+        method: "GET",
+      }).then(() => null).catch(() => null),
       supabase.from("brands").select("id, name").order("name"),
       supabase.from("products").select("id, title, price").order("title").limit(500),
-      supabase.from("warehouse_notifications")
-        .select("*")
-        .eq("warehouse_id", user.warehouse_id)
-        .order("created_at", { ascending: false })
-        .limit(50),
     ]);
 
-    setRequests(reqRes.data || []);
+    // Fetch warehouse data via edge function
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/prep-orders?action=warehouse-data&warehouse_id=${user.warehouse_id}&user_id=${user.id}`,
+        { headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, "Content-Type": "application/json" } }
+      );
+      const wData = await res.json();
+      setRequests(wData.requests || []);
+      setNotifications(wData.notifications || []);
+      setUnreadCount((wData.notifications || []).filter((n: any) => !n.is_read).length);
+    } catch {
+      setRequests([]);
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+
     setBrands(brandRes.data || []);
     setProducts(prodRes.data || []);
-    setNotifications(notifRes.data || []);
-    setUnreadCount((notifRes.data || []).filter((n: any) => !n.is_read).length);
     setLoading(false);
   }, [authed, user]);
 
@@ -121,44 +132,61 @@ export default function WarehouseSystemPage() {
   const handleAddRequest = async () => {
     if (!title.trim() || !user) return;
 
-    const payload: any = {
-      warehouse_id: user.warehouse_id,
-      type: tab,
-      title: title.trim(),
-      description: description.trim() || null,
-      priority,
-      created_by_username: user.username,
-      brand_id: selectedBrandId || null,
-      product_id: selectedProductId || null,
-    };
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/prep-orders`,
+        {
+          method: "POST",
+          headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "warehouse-add-request",
+            user_id: user.id,
+            warehouse_id: user.warehouse_id,
+            type: tab,
+            title: title.trim(),
+            description: description.trim() || null,
+            priority,
+            created_by_username: user.username,
+            brand_id: selectedBrandId || null,
+            product_id: selectedProductId || null,
+          }),
+        }
+      );
+      const result = await res.json();
+      if (!res.ok) { toast.error(result.error || "Failed to add request"); return; }
 
-    const { error } = await supabase.from("warehouse_requests").insert(payload);
-    if (error) { toast.error(error.message); return; }
-
-    // Create notification for admins (all warehouses)
-    await supabase.from("warehouse_notifications").insert({
-      warehouse_id: user.warehouse_id,
-      title: `New ${tab.replace("_", " ")}`,
-      body: `${user.full_name || user.username} added: ${title.trim()}`,
-      type: "request",
-    });
-
-    toast.success("Request added");
-    setAddOpen(false);
-    setTitle("");
-    setDescription("");
-    setSelectedBrandId("");
-    setSelectedProductId("");
-    setPriority("normal");
-    fetchData();
+      toast.success("Request added");
+      setAddOpen(false);
+      setTitle("");
+      setDescription("");
+      setSelectedBrandId("");
+      setSelectedProductId("");
+      setPriority("normal");
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add request");
+    }
   };
 
   const markNotifsRead = async () => {
     if (!user) return;
     const unread = notifications.filter((n: any) => !n.is_read);
-    for (const n of unread) {
-      await supabase.from("warehouse_notifications").update({ is_read: true }).eq("id", n.id);
-    }
+    if (unread.length === 0) return;
+    try {
+      await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/prep-orders`,
+        {
+          method: "POST",
+          headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "warehouse-mark-read",
+            user_id: user.id,
+            warehouse_id: user.warehouse_id,
+            notification_ids: unread.map((n: any) => n.id),
+          }),
+        }
+      );
+    } catch {}
     setUnreadCount(0);
     fetchData();
   };
