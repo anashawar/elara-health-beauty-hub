@@ -136,6 +136,8 @@ function mapRawProduct(p: any, language: "en" | "ar" | "ku"): ProductWithRelatio
     condition: p.condition || null,
     inStock: p.in_stock !== false,
     _brandRestrictedCities: p.brands?.restricted_cities || null,
+    _brandLogoUrl: p.brands?.logo_url || null,
+    _brandSlug: p.brands?.slug || null,
   } as ProductWithRelations;
 }
 
@@ -167,9 +169,23 @@ export function useProducts(options?: { enabled?: boolean }) {
  * Fetch a single product by ID — much faster than loading all products.
  * Falls back gracefully if product not found.
  */
+// Optimized select for single product — only needed columns, not *
+const PRODUCT_DETAIL_SELECT = `
+  id, title, title_ar, title_ku, slug, price, original_price,
+  is_new, is_trending, is_pick, in_stock,
+  brand_id, category_id, subcategory_id,
+  description, description_ar, description_ku,
+  benefits, benefits_ar, benefits_ku,
+  usage_instructions, usage_instructions_ar, usage_instructions_ku,
+  country_of_origin, form, gender, volume_ml, volume_unit, application, skin_type, condition,
+  brands ( name, name_ar, name_ku, slug, logo_url, restricted_cities ),
+  categories ( slug ),
+  product_images ( image_url, sort_order ),
+  product_tags ( tag )
+`;
+
 export function useProduct(id: string | undefined) {
   const { language } = useLanguage();
-  // Detect if the param is a UUID or a slug
   const isUuid = !!id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
   return useQuery<ProductWithRelations | null>({
@@ -178,13 +194,7 @@ export function useProduct(id: string | undefined) {
       if (!id) return null;
       const query = supabase
         .from("products")
-        .select(`
-          *,
-          brands ( name, name_ar, name_ku, restricted_cities ),
-          categories ( slug ),
-          product_images ( image_url, sort_order ),
-          product_tags ( tag )
-        `);
+        .select(PRODUCT_DETAIL_SELECT);
       const { data, error } = await (isUuid
         ? query.eq("id", id)
         : query.eq("slug", id)
@@ -194,6 +204,7 @@ export function useProduct(id: string | undefined) {
       return mapRawProduct(data, language);
     },
     enabled: !!id,
+    staleTime: 2 * 60 * 1000,
   });
 }
 

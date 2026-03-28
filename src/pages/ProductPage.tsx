@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/components/ui/sonner";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/hooks/useAuth";
-import { useProduct, useBrands, useFormatPrice } from "@/hooks/useProducts";
+import { useProduct, useFormatPrice } from "@/hooks/useProducts";
 const RelatedProducts = lazy(() => import("@/components/product/RelatedProducts"));
 const FrequentlyBoughtTogether = lazy(() => import("@/components/product/FrequentlyBoughtTogether"));
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
@@ -62,7 +62,6 @@ const ProductPage = () => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const { data: product, isLoading: productLoading } = useProduct(id);
   const { data: activeOffers = [] } = useActiveOffers();
-  const { data: brands = [] } = useBrands();
   // Related products are now handled by the RelatedProducts component
 
   if (productLoading) {
