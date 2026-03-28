@@ -84,9 +84,9 @@ const SwipeBackWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 /**
- * Deferred push notification init.
- * On native: runs quickly (permission already requested in main.tsx).
- * On web: delayed to avoid blocking initial render with Firebase SDK (~100KB+).
+ * Deferred push notification init via OneSignal.
+ * On native: runs quickly (OneSignal initialized in main.tsx).
+ * On web: deferred to avoid blocking initial render.
  */
 const DeferredPushInit = () => {
   useEffect(() => {
