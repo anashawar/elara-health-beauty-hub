@@ -294,8 +294,9 @@ export default function AdminRevenue() {
       });
     });
 
-    // Profit only from products with known cost data
-    const totalProfit = revenueWithCost - totalCost;
+    // Profit: product cost + actual delivery cost we pay
+    const totalProfit = revenueWithCost - totalCost - totalActualDeliveryCost;
+    const totalCostWithDelivery = totalCost + totalActualDeliveryCost;
     const profitMargin = revenueWithCost > 0 ? (totalProfit / revenueWithCost) * 100 : 0;
     const avgOrderValue = deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
 
@@ -332,9 +333,9 @@ export default function AdminRevenue() {
       .sort((a, b) => b.count - a.count);
 
     return {
-      totalRevenue, totalCost, totalProfit, profitMargin, avgOrderValue,
+      totalRevenue, totalCost: totalCostWithDelivery, totalProfit, profitMargin, avgOrderValue,
       totalOrders: deliveredOrders.length, allOrders: allActive.length,
-      totalItemsSold, totalDeliveryFees, totalDiscounts,
+      totalItemsSold, totalDeliveryFees, totalActualDeliveryCost, totalDiscounts,
       topProducts, topBrands, dailyData, paymentMethods, couponLeaderboard,
       orderDetails: orderDetails.sort((a, b) => b.date.localeCompare(a.date)),
       pendingRevenue: allActive.filter((o: any) => o.status !== "delivered").reduce((s: number, o: any) => s + Number(o.total), 0),
@@ -344,7 +345,7 @@ export default function AdminRevenue() {
       itemsMissingCost,
       missingCostCount: missingCostProductIds.size,
     };
-  }, [orders, costMap, productNameMap, productBrandMap, brandNameMap, datePreset, dateFrom, dateTo]);
+  }, [orders, costMap, productNameMap, productBrandMap, brandNameMap, addressCityMap, datePreset, dateFrom, dateTo]);
 
   const maxDailyRevenue = Math.max(...stats.dailyData.map((d) => d.revenue), 1);
 
