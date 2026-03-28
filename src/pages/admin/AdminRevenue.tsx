@@ -446,7 +446,7 @@ export default function AdminRevenue() {
       {/* Secondary metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Delivery Fees", value: formatPrice(stats.totalDeliveryFees), icon: Truck },
+          { label: "Delivery Cost (Ours)", value: formatPrice(stats.totalActualDeliveryCost), icon: Truck },
           { label: "Discounts Given", value: formatPrice(stats.totalDiscounts), icon: Percent },
           { label: "Pending Revenue", value: formatPrice(stats.pendingRevenue), icon: Clock },
           { label: "Pending Orders", value: stats.pendingCount, icon: ShoppingCart },
