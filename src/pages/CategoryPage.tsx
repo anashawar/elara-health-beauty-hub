@@ -8,7 +8,7 @@ import FloatingSearch from "@/components/layout/FloatingSearch";
 import DesktopFooter from "@/components/layout/DesktopFooter";
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
-import { useProducts, useCategoryProducts, useCategories, useSubcategories, concerns, type ProductWithRelations } from "@/hooks/useProducts";
+import { useCategoryProducts, useCategories, useSubcategories, concerns, type ProductWithRelations } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 import SEOHead, { breadcrumbJsonLd } from "@/components/SEOHead";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
