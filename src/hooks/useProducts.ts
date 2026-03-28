@@ -278,6 +278,8 @@ export function useCategoryProducts(categorySlug: string | undefined, subcategor
   });
 }
 
+const BRAND_PAGE_SIZE = 20;
+
 export function useBrandProducts(brandId: string | undefined) {
   const { language } = useLanguage();
 
@@ -289,9 +291,51 @@ export function useBrandProducts(brandId: string | undefined) {
         .from("products")
         .select(CARD_SELECT)
         .eq("brand_id", brandId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(0, BRAND_PAGE_SIZE - 1);
       if (error) throw error;
       return (data || []).map((p: any) => mapCardProduct(p, language));
+    },
+    enabled: !!brandId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useBrandProductsPaginated(brandId: string | undefined, page: number) {
+  const { language } = useLanguage();
+  const from = page * BRAND_PAGE_SIZE;
+  const to = from + BRAND_PAGE_SIZE - 1;
+
+  return useQuery<{ products: ProductWithRelations[]; hasMore: boolean }>({
+    queryKey: ["brand-products-page", brandId, page, language],
+    queryFn: async () => {
+      if (!brandId) return { products: [], hasMore: false };
+      const { data, error } = await supabase
+        .from("products")
+        .select(CARD_SELECT)
+        .eq("brand_id", brandId)
+        .order("created_at", { ascending: false })
+        .range(from, to);
+      if (error) throw error;
+      const products = (data || []).map((p: any) => mapCardProduct(p, language));
+      return { products, hasMore: products.length === BRAND_PAGE_SIZE };
+    },
+    enabled: !!brandId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useBrandProductCount(brandId: string | undefined) {
+  return useQuery<number>({
+    queryKey: ["brand-product-count", brandId],
+    queryFn: async () => {
+      if (!brandId) return 0;
+      const { count, error } = await supabase
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .eq("brand_id", brandId);
+      if (error) throw error;
+      return count || 0;
     },
     enabled: !!brandId,
     staleTime: 5 * 60 * 1000,
