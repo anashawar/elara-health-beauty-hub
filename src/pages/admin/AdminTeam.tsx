@@ -294,7 +294,7 @@ function PrepLinksSection() {
       const { error } = await (supabase.from("prep_access_tokens" as any).insert({
         label,
         username: newUsername.trim().toLowerCase(),
-        password_hash: newPassword,
+        password_hash: hashedPassword,
         created_by: user!.id,
         excluded_brand_ids: newExcludedBrands,
         excluded_product_ids: newExcludedProducts,
