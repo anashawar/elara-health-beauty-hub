@@ -697,8 +697,14 @@ export default function AdminRevenue() {
                       <td className="py-2.5 px-2 text-right text-xs text-muted-foreground">{o.items}</td>
                       <td className="py-2.5 px-2 text-right text-xs font-medium text-foreground">{formatPrice(o.revenue)}</td>
                       <td className="py-2.5 px-2 text-right text-xs font-medium text-red-500">
-                        {formatPrice(o.cost)}
+                        {formatPrice(o.cost - o.deliveryCost)}
                         {o.hasMissingCost && <span className="text-amber-500 ml-1">*</span>}
+                      </td>
+                      <td className="py-2.5 px-2 text-right text-xs font-medium text-red-500">
+                        {formatPrice(o.deliveryCost)}
+                      </td>
+                      <td className="py-2.5 px-2 text-right text-xs font-bold text-red-500">
+                        {formatPrice(o.cost)}
                       </td>
                       <td className={`py-2.5 px-2 text-right text-xs font-bold ${o.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                         {formatPrice(o.profit)}
