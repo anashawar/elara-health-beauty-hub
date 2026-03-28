@@ -1937,6 +1937,10 @@ export type Database = {
       validate_warehouse_login:
         | { Args: { _username: string }; Returns: Json }
         | { Args: { _password?: string; _username: string }; Returns: Json }
+      verify_prep_password: {
+        Args: { _plain_password: string; _stored_hash: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "operations" | "data_entry"
