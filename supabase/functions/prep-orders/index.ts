@@ -89,6 +89,67 @@ Deno.serve(async (req) => {
         return json({ success: true });
       }
 
+      // --- Warehouse portal: add request ---
+      if (body.action === "warehouse-add-request") {
+        const { user_id, warehouse_id, type, title, description, priority, created_by_username, brand_id, product_id } = body;
+        if (!user_id || !warehouse_id || !type || !title) return json({ error: "Missing required fields" }, 400);
+
+        // Verify warehouse user
+        const { data: wUser } = await supabase
+          .from("warehouse_users")
+          .select("id")
+          .eq("id", user_id)
+          .eq("warehouse_id", warehouse_id)
+          .eq("is_active", true)
+          .maybeSingle();
+        if (!wUser) return json({ error: "Unauthorized" }, 401);
+
+        const { error: insertErr } = await supabase.from("warehouse_requests").insert({
+          warehouse_id,
+          type,
+          title: title.substring(0, 500),
+          description: description ? description.substring(0, 2000) : null,
+          priority: priority || "normal",
+          created_by_username: created_by_username || null,
+          brand_id: brand_id || null,
+          product_id: product_id || null,
+        });
+        if (insertErr) throw insertErr;
+
+        await supabase.from("warehouse_notifications").insert({
+          warehouse_id,
+          title: `New ${type.replace("_", " ")}`,
+          body: `${created_by_username || "User"} added: ${title.substring(0, 200)}`,
+          type: "request",
+        });
+
+        return json({ success: true });
+      }
+
+      // --- Warehouse portal: mark notifications read ---
+      if (body.action === "warehouse-mark-read") {
+        const { user_id, warehouse_id, notification_ids } = body;
+        if (!user_id || !warehouse_id) return json({ error: "Missing fields" }, 400);
+
+        const { data: wUser } = await supabase
+          .from("warehouse_users")
+          .select("id")
+          .eq("id", user_id)
+          .eq("warehouse_id", warehouse_id)
+          .eq("is_active", true)
+          .maybeSingle();
+        if (!wUser) return json({ error: "Unauthorized" }, 401);
+
+        if (notification_ids && notification_ids.length > 0) {
+          await supabase.from("warehouse_notifications")
+            .update({ is_read: true })
+            .in("id", notification_ids)
+            .eq("warehouse_id", warehouse_id);
+        }
+
+        return json({ success: true });
+      }
+
       // Mark prepared action
       if (body.order_id) {
         const { data: tokenRow } = await supabase
