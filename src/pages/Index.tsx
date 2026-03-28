@@ -84,7 +84,7 @@ const Index = () => {
       <SEOHead
         title="Shop Skincare, Makeup, Vitamins & More in Iraq"
         description="Iraq's #1 online health & beauty store. Shop original skincare, makeup, haircare, vitamins & supplements from top brands like CeraVe, The Ordinary, L'Oréal. Fast 24h delivery across Iraq."
-        canonical="https://elara-health-beauty-hub.lovable.app/home"
+        canonical="https://elarastore.co/home"
         keywords="beauty iraq, skincare iraq, makeup iraq, cosmetics iraq, health products iraq, online beauty store iraq, elara beauty, erbil beauty shop, baghdad skincare, buy cosmetics iraq, original beauty products iraq"
         jsonLd={[organizationJsonLd, websiteJsonLd, storeJsonLd]}
       />

@@ -33,7 +33,7 @@ export const SignupEmail = ({
     <Preview>Confirm your email for ELARA</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src="https://elara-health-beauty-hub.lovable.app/app-icon.png" width="48" height="48" alt="ELARA" style={{ marginBottom: '24px', borderRadius: '12px' }} />
+        <Img src="https://elarastore.co/app-icon.png" width="48" height="48" alt="ELARA" style={{ marginBottom: '24px', borderRadius: '12px' }} />
         <Heading style={h1}>Welcome to ELARA ✨</Heading>
         <Text style={text}>
           Thanks for joining ELARA — your destination for health & beauty in Iraq.

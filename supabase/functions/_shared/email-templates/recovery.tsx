@@ -28,7 +28,7 @@ export const RecoveryEmail = ({
     <Preview>Reset your password for ELARA</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src="https://elara-health-beauty-hub.lovable.app/app-icon.png" width="48" height="48" alt="ELARA" style={{ marginBottom: '24px', borderRadius: '12px' }} />
+        <Img src="https://elarastore.co/app-icon.png" width="48" height="48" alt="ELARA" style={{ marginBottom: '24px', borderRadius: '12px' }} />
         <Heading style={h1}>Reset your password</Heading>
         <Text style={text}>
           We received a request to reset your ELARA account password. Click

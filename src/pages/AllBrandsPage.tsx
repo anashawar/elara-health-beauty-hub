@@ -94,7 +94,7 @@ const AllBrandsPage = () => {
       <SEOHead
         title="All Brands — ELARA Iraq"
         description="Discover all beauty and skincare brands available at ELARA Iraq. Shop original products from top international brands."
-        canonical="https://elara-health-beauty-hub.lovable.app/brands"
+        canonical="https://elarastore.co/brands"
         keywords="brands, beauty brands iraq, skincare brands, ELARA brands"
       />
 

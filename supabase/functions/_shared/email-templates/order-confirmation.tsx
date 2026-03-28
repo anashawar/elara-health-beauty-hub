@@ -61,7 +61,7 @@ export const OrderConfirmationEmail = ({
         {/* Header */}
         <Section style={header}>
           <Img
-            src="https://elara-health-beauty-hub.lovable.app/app-icon.png"
+            src="https://elarastore.co/app-icon.png"
             width="44"
             height="44"
             alt="ELARA"
@@ -142,7 +142,7 @@ export const OrderConfirmationEmail = ({
 
         {/* CTA */}
         <Section style={ctaSection}>
-          <Link href="https://elara-health-beauty-hub.lovable.app/orders" style={ctaButton}>
+          <Link href="https://elarastore.co/orders" style={ctaButton}>
             Track Your Order
           </Link>
         </Section>

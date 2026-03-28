@@ -13,7 +13,7 @@ interface SEOHeadProps {
 }
 
 const SITE_NAME = "ELARA";
-const SITE_URL = "https://elara-health-beauty-hub.lovable.app";
+const SITE_URL = "https://elarastore.co";
 const DEFAULT_TITLE = "ELARA — Iraq's #1 Health & Beauty Store | Skincare, Makeup & More";
 const DEFAULT_DESC = "Shop original skincare, makeup, haircare, vitamins & supplements online in Iraq. Brands like CeraVe, The Ordinary, L'Oréal & more. Fast 24h delivery across Iraq. AI-powered skincare advice.";
 const DEFAULT_IMAGE = "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/2aa7786f-71ce-45ec-9e23-10b076ea4ca5/id-preview-d384a627--9bdd477b-18ee-42b7-8219-b2a5905f72d1.lovable.app-1773334186955.png";
@@ -88,7 +88,7 @@ const SEOHead = ({
 
 export default SEOHead;
 
-export const SITE_BASE = "https://elara-health-beauty-hub.lovable.app";
+export const SITE_BASE = "https://elarastore.co";
 
 // Reusable JSON-LD builders
 export const organizationJsonLd = {

@@ -205,7 +205,7 @@ const ShopPage = () => {
       <SEOHead
         title="Shop All Beauty & Health Products in Iraq"
         description="Browse 2000+ original health & beauty products on ELARA. Top brands like CeraVe, The Ordinary, L'Oréal. Fast delivery across Iraq."
-        canonical="https://elara-health-beauty-hub.lovable.app/shop"
+        canonical="https://elarastore.co/shop"
         keywords="shop iraq, beauty products iraq, cosmetics iraq, skincare iraq, ELARA shop, buy beauty products iraq, online pharmacy iraq"
       />
       <DesktopHeader onSearchClick={() => setSearchOpen(true)} />

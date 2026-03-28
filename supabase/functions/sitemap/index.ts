@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const SITE = "https://elara-health-beauty-hub.lovable.app";
+const SITE = "https://elarastore.co";
 
 Deno.serve(async () => {
   const supabase = createClient(
