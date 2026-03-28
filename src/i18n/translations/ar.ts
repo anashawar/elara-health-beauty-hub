@@ -515,7 +515,7 @@ export const ar = {
     hairLoss: "تساقط الشعر",
     dandruff: "قشرة",
     sensitiveSkin: "بشرة حساسة",
-    darkCircles: "هالات سوداء",
+    oilySkin: "بشرة دهنية",
     antiAging: "مكافحة الشيخوخة",
   },
   rewards: {

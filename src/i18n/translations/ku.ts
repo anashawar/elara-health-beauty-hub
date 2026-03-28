@@ -515,7 +515,7 @@ export const ku = {
     hairLoss: "ڕژانی قژ",
     dandruff: "شۆرە",
     sensitiveSkin: "هەستیاری پێست",
-    darkCircles: "تاریکی ژێر چاو",
+    oilySkin: "پێستی چەور",
     antiAging: "دژی پیربوون",
   },
   rewards: {
