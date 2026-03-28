@@ -1,7 +1,6 @@
 require File.expand_path('../../node_modules/@capacitor/ios/scripts/pods_helpers.rb', __dir__)
 
 platform :ios, '16.0'
-use_frameworks!
 
 install! 'cocoapods', :disable_input_output_paths => true
 
@@ -13,8 +12,6 @@ end
 target 'App' do
   capacitor_pods
   pod 'CapacitorFirebaseMessaging', :path => '../../node_modules/@capacitor-firebase/messaging'
-  pod 'FirebaseCore'
-  pod 'FirebaseMessaging'
 end
 
 post_install do |installer|
