@@ -6,76 +6,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-/**
- * Get an OAuth2 access token for FCM v1 API using a service account.
- */
-async function getAccessToken(): Promise<string> {
-  const serviceAccountJson = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
-  if (!serviceAccountJson) {
-    throw new Error("FIREBASE_SERVICE_ACCOUNT secret not configured");
-  }
-
-  const sa = JSON.parse(serviceAccountJson);
-
-  // Create JWT
-  const header = { alg: "RS256", typ: "JWT" };
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    iss: sa.client_email,
-    scope: "https://www.googleapis.com/auth/firebase.messaging",
-    aud: "https://oauth2.googleapis.com/token",
-    iat: now,
-    exp: now + 3600,
-  };
-
-  const enc = (obj: unknown) =>
-    btoa(JSON.stringify(obj)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-
-  const unsignedToken = `${enc(header)}.${enc(payload)}`;
-
-  // Import the private key and sign
-  const pemContents = sa.private_key
-    .replace(/-----BEGIN PRIVATE KEY-----/, "")
-    .replace(/-----END PRIVATE KEY-----/, "")
-    .replace(/\n/g, "");
-
-  const binaryKey = Uint8Array.from(atob(pemContents), (c) => c.charCodeAt(0));
-
-  const cryptoKey = await crypto.subtle.importKey(
-    "pkcs8",
-    binaryKey,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-
-  const signature = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5",
-    cryptoKey,
-    new TextEncoder().encode(unsignedToken)
-  );
-
-  const sig = btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-
-  const jwt = `${unsignedToken}.${sig}`;
-
-  // Exchange JWT for access token
-  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
-  });
-
-  const tokenData = await tokenRes.json();
-  if (!tokenData.access_token) {
-    throw new Error("Failed to get access token: " + JSON.stringify(tokenData));
-  }
-
-  return tokenData.access_token;
-}
+const ONESIGNAL_APP_ID = "13744f00-e92d-4e78-84ca-4dffe5a16cea";
+const ONESIGNAL_API_URL = "https://api.onesignal.com/notifications";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -116,130 +48,70 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get FCM tokens for target users
-    const serviceClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-
-    let query = serviceClient
-      .from("push_subscriptions")
-      .select("endpoint, user_id")
-      .eq("is_active", true);
-
-    if (user_ids && user_ids.length > 0) {
-      query = query.in("user_id", user_ids);
-    }
-
-    const { data: subs, error: subsErr } = await query;
-    if (subsErr) throw subsErr;
-
-    if (!subs || subs.length === 0) {
-      return new Response(JSON.stringify({ sent: 0, message: "No push subscriptions found" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Use FCM v1 API with service account
-    const firebaseProjectId = Deno.env.get("FIREBASE_PROJECT_ID");
-    if (!firebaseProjectId) {
-      return new Response(JSON.stringify({ error: "FIREBASE_PROJECT_ID not configured" }), {
+    const restApiKey = Deno.env.get("ONESIGNAL_REST_API_KEY");
+    if (!restApiKey) {
+      return new Response(JSON.stringify({ error: "ONESIGNAL_REST_API_KEY not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    let accessToken: string;
-    try {
-      accessToken = await getAccessToken();
-    } catch (e) {
-      // Fallback: try legacy API if service account not configured
-      const fcmServerKey = Deno.env.get("FCM_SERVER_KEY");
-      if (!fcmServerKey) {
-        return new Response(
-          JSON.stringify({ error: "FIREBASE_SERVICE_ACCOUNT or FCM_SERVER_KEY not configured" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      console.warn("Falling back to legacy FCM API:", e.message);
-      // Legacy fallback (may not work anymore)
-      return await sendLegacy(subs, fcmServerKey, title, body, icon, image_url, link_url, serviceClient, corsHeaders);
+    // Build OneSignal notification payload
+    const payload: Record<string, unknown> = {
+      app_id: ONESIGNAL_APP_ID,
+      headings: { en: title },
+      contents: { en: body },
+      data: { link_url: link_url || "/home" },
+    };
+
+    // Add optional fields
+    if (image_url) {
+      payload.big_picture = image_url; // Android
+      payload.ios_attachments = { image: image_url }; // iOS
+    }
+    if (icon) {
+      payload.small_icon = icon;
+    }
+    if (link_url) {
+      payload.url = link_url;
     }
 
-    const fcmUrl = `https://fcm.googleapis.com/v1/projects/${firebaseProjectId}/messages:send`;
-
-    let sent = 0;
-    let failed = 0;
-    const failedTokens: string[] = [];
-
-    for (const sub of subs) {
-      try {
-        const message: Record<string, unknown> = {
-          token: sub.endpoint,
-          notification: {
-            title,
-            body,
-            ...(image_url ? { image: image_url } : {}),
-          },
-          data: {
-            title,
-            body,
-            link_url: link_url || "/home",
-          },
-          // iOS-specific: ensure notification appears
-          apns: {
-            payload: {
-              aps: {
-                alert: { title, body },
-                sound: "default",
-                badge: 1,
-              },
-            },
-          },
-          // Android-specific
-          android: {
-            notification: {
-              icon: icon || "ic_notification",
-              sound: "default",
-              click_action: link_url || "/home",
-              ...(image_url ? { image: image_url } : {}),
-            },
-          },
-        };
-
-        const res = await fetch(fcmUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ message }),
-        });
-
-        if (res.ok) {
-          sent++;
-        } else {
-          const errBody = await res.text();
-          console.error("FCM v1 error:", res.status, errBody);
-          failed++;
-          // If token is invalid/unregistered, mark for deactivation
-          if (errBody.includes("UNREGISTERED") || errBody.includes("INVALID_ARGUMENT")) {
-            failedTokens.push(sub.endpoint);
-          }
-        }
-      } catch (e) {
-        failed++;
-        console.error("FCM send error:", e);
-      }
+    // Target specific users or all
+    if (user_ids && user_ids.length > 0) {
+      // Use external_user_id targeting (set via OneSignal.login())
+      payload.include_aliases = { external_id: user_ids };
+      payload.target_channel = "push";
+    } else {
+      // Send to all subscribed users
+      payload.included_segments = ["Subscribed Users"];
     }
 
-    // Deactivate failed tokens
-    if (failedTokens.length > 0) {
-      await serviceClient
-        .from("push_subscriptions")
-        .update({ is_active: false })
-        .in("endpoint", failedTokens);
+    // Send via OneSignal REST API
+    const res = await fetch(ONESIGNAL_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Key ${restApiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      console.error("OneSignal API error:", res.status, JSON.stringify(result));
+      return new Response(
+        JSON.stringify({ error: "OneSignal API error", details: result }),
+        { status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     return new Response(
-      JSON.stringify({ sent, failed, total: subs.length }),
+      JSON.stringify({
+        sent: result.recipients || 0,
+        id: result.id,
+        total: result.recipients || 0,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
@@ -250,51 +122,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-
-/** Legacy FCM fallback (deprecated, may not work) */
-async function sendLegacy(
-  subs: { endpoint: string; user_id: string }[],
-  fcmServerKey: string,
-  title: string,
-  body: string,
-  icon: string | undefined,
-  image_url: string | undefined,
-  link_url: string | undefined,
-  serviceClient: ReturnType<typeof createClient>,
-  corsHeaders: Record<string, string>
-) {
-  let sent = 0;
-  let failed = 0;
-  const failedTokens: string[] = [];
-
-  for (const sub of subs) {
-    try {
-      const res = await fetch("https://fcm.googleapis.com/fcm/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `key=${fcmServerKey}`,
-        },
-        body: JSON.stringify({
-          to: sub.endpoint,
-          notification: { title, body, icon: icon || "/pwa-icon-192.png", image: image_url || undefined, click_action: link_url || "/home" },
-          data: { title, body, link_url: link_url || "/home" },
-        }),
-      });
-      const result = await res.text();
-      if (res.ok) {
-        const parsed = JSON.parse(result);
-        if (parsed.success === 1) sent++;
-        else { failed++; failedTokens.push(sub.endpoint); }
-      } else failed++;
-    } catch { failed++; }
-  }
-
-  if (failedTokens.length > 0) {
-    await serviceClient.from("push_subscriptions").update({ is_active: false }).in("endpoint", failedTokens);
-  }
-
-  return new Response(JSON.stringify({ sent, failed, total: subs.length }), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
