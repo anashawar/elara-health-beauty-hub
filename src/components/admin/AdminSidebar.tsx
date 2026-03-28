@@ -17,6 +17,7 @@ import {
   Headphones,
   Users,
   Warehouse,
+  Star,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -60,6 +61,7 @@ const navItems: NavItem[] = [
   { title: "Translate", url: "/admin/translate", icon: Languages, roles: ["admin", "operations", "data_entry"] },
   { title: "Image Finder", url: "/admin/images", icon: ImagePlus, roles: ["admin", "operations", "data_entry"] },
   { title: "Support Chat", url: "/admin/support", icon: Headphones, roles: ["admin", "operations"] },
+  { title: "Ratings", url: "/admin/ratings", icon: Star, roles: ["admin", "operations"] },
   { title: "Team", url: "/admin/team", icon: Users, roles: ["admin"] },
   { title: "Warehouses", url: "/admin/warehouses", icon: Warehouse, roles: ["admin", "operations"] },
 ];
