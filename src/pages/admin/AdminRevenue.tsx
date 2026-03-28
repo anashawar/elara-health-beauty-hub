@@ -617,6 +617,8 @@ export default function AdminRevenue() {
             </table>
           </div>
         )}
+      </motion.div>
+
       {/* Order Profitability */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
