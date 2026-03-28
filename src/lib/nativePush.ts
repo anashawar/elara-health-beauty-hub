@@ -20,6 +20,14 @@ export async function registerNativePush(): Promise<string | null> {
 
   try {
     const { FirebaseMessaging } = await import("@capacitor-firebase/messaging");
+    let tokenFromEvent: string | null = null;
+
+    await FirebaseMessaging.removeAllListeners();
+    await FirebaseMessaging.addListener("tokenReceived", (event) => {
+      tokenFromEvent = event.token;
+      const platform = Capacitor.getPlatform();
+      console.log(`[Push] tokenReceived on ${platform}:`, event.token?.substring(0, 12) + "...");
+    });
 
     // Check / request permission
     let permStatus = await FirebaseMessaging.checkPermissions();
@@ -37,14 +45,16 @@ export async function registerNativePush(): Promise<string | null> {
     // On iOS it automatically registers APNs token with Firebase and swaps it.
     const { token } = await FirebaseMessaging.getToken();
 
-    if (!token) {
-      console.warn("No FCM token returned from FirebaseMessaging.getToken()");
+    const resolvedToken = token || tokenFromEvent;
+
+    if (!resolvedToken) {
+      console.warn("No FCM token returned from FirebaseMessaging.getToken() or tokenReceived");
       return null;
     }
 
     const platform = Capacitor.getPlatform();
-    console.log(`[Push] FCM token obtained on ${platform}:`, token.substring(0, 12) + "...");
-    return token;
+    console.log(`[Push] FCM token obtained on ${platform}:`, resolvedToken.substring(0, 12) + "...");
+    return resolvedToken;
   } catch (err) {
     console.error("Native push registration failed:", err);
     return null;
