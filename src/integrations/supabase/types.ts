@@ -68,6 +68,45 @@ export type Database = {
         }
         Relationships: []
       }
+      app_config: {
+        Row: {
+          android_store_url: string | null
+          created_at: string
+          id: string
+          ios_store_url: string | null
+          min_android_version: string
+          min_ios_version: string
+          update_message: string | null
+          update_message_ar: string | null
+          update_message_ku: string | null
+          updated_at: string
+        }
+        Insert: {
+          android_store_url?: string | null
+          created_at?: string
+          id?: string
+          ios_store_url?: string | null
+          min_android_version?: string
+          min_ios_version?: string
+          update_message?: string | null
+          update_message_ar?: string | null
+          update_message_ku?: string | null
+          updated_at?: string
+        }
+        Update: {
+          android_store_url?: string | null
+          created_at?: string
+          id?: string
+          ios_store_url?: string | null
+          min_android_version?: string
+          min_ios_version?: string
+          update_message?: string | null
+          update_message_ar?: string | null
+          update_message_ku?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       banners: {
         Row: {
           created_at: string
