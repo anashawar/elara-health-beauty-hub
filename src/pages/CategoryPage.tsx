@@ -47,6 +47,7 @@ const CategoryPage = () => {
   const isConcernRoute = routerLocation.pathname.startsWith("/concern/");
   const [searchParams, setSearchParams] = useSearchParams();
   const activeSubId = searchParams.get("sub") || null;
+  const { t, language } = useLanguage();
 
   // For concern routes, use a fast server-side query instead of loading all products
   const { data: concernProducts = [], isLoading: loadingConcernProducts } = useQuery<ProductWithRelations[]>({
@@ -107,7 +108,7 @@ const CategoryPage = () => {
 
   const { data: categories = [] } = useCategories();
   const { data: subcategories = [] } = useSubcategories();
-  const { t, language } = useLanguage();
+  // language already declared above
   const [searchOpen, setSearchOpen] = useState(false);
   const category = !isConcernRoute ? categories.find(c => c.slug === id) : null;
   const activeConcern = isConcernRoute ? concerns.find(c => c.id === id) : null;
