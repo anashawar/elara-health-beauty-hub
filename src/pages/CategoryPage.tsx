@@ -64,19 +64,20 @@ const CategoryPage = () => {
       const { data, error } = await supabase
         .from("products")
         .select(`
-          *, brands ( name, name_ar, name_ku, restricted_cities ),
+          id, title, title_ar, title_ku, slug, price, original_price,
+          is_new, is_trending, is_pick, in_stock,
+          brand_id, category_id, subcategory_id,
+          condition,
+          brands ( name, restricted_cities ),
           categories ( slug ),
-          product_images ( image_url, sort_order ),
-          product_tags ( tag )
+          product_images ( image_url, sort_order )
         `)
         .or(orFilters.join(","))
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(200);
       if (error) throw error;
       return (data || []).map((p: any) => {
         const lt = language === "ar" ? (p.title_ar || p.title) : language === "ku" ? (p.title_ku || p.title) : p.title;
-        const ld = language === "ar" ? (p.description_ar || p.description || "") : language === "ku" ? (p.description_ku || p.description || "") : (p.description || "");
-        const lb = language === "ar" ? (p.benefits_ar || p.benefits || []) : language === "ku" ? (p.benefits_ku || p.benefits || []) : (p.benefits || []);
-        const lu = language === "ar" ? (p.usage_instructions_ar || p.usage_instructions || "") : language === "ku" ? (p.usage_instructions_ku || p.usage_instructions || "") : (p.usage_instructions || "");
         return {
           id: p.id, title: lt, slug: p.slug,
           brand: p.brands?.name || "", brand_id: p.brand_id,
@@ -85,12 +86,12 @@ const CategoryPage = () => {
           price: Number(p.price), originalPrice: p.original_price ? Number(p.original_price) : null,
           image: p.product_images?.[0]?.image_url || "/placeholder.svg",
           images: (p.product_images || []).sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)).map((img: any) => img.image_url),
-          tags: (p.product_tags || []).map((t: any) => t.tag),
-          description: ld, benefits: lb, usage: lu,
+          tags: [],
+          description: "", benefits: [], usage: "",
           isNew: p.is_new || false, isTrending: p.is_trending || false, isPick: p.is_pick || false,
-          country_of_origin: p.country_of_origin, form: p.form, gender: p.gender,
-          volume_ml: p.volume_ml, volume_unit: p.volume_unit || "ml",
-          application: p.application, skin_type: p.skin_type, condition: p.condition || null,
+          country_of_origin: null, form: null, gender: null,
+          volume_ml: null, volume_unit: "ml",
+          application: null, skin_type: null, condition: p.condition || null,
           inStock: p.in_stock !== false,
           _brandRestrictedCities: p.brands?.restricted_cities || null,
         } as any;
