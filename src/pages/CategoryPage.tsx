@@ -101,15 +101,31 @@ const CategoryPage = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // For category routes we query only that category's products directly
-  const { data: categoryProducts = [], isLoading: loadingCatProducts } = useCategoryProducts(
+  // Pagination state for category products
+  const [catPage, setCatPage] = useState(0);
+
+  // Reset page when category or subcategory changes
+  const catPageKey = `${id}-${activeSubId}`;
+  const [prevKey, setPrevKey] = useState(catPageKey);
+  if (catPageKey !== prevKey) {
+    setCatPage(0);
+    setPrevKey(catPageKey);
+  }
+
+  const { data: catPaginated, isLoading: loadingCatProducts } = useCategoryProductsPaginated(
+    !isConcernRoute ? id : undefined,
+    !isConcernRoute ? activeSubId : null,
+    catPage
+  );
+  const { data: catTotalCount = 0 } = useCategoryProductCount(
     !isConcernRoute ? id : undefined,
     !isConcernRoute ? activeSubId : null
   );
+  const categoryProducts = catPaginated?.products || [];
+  const catHasMore = catPaginated?.hasMore || false;
 
   const { data: categories = [] } = useCategories();
   const { data: subcategories = [] } = useSubcategories();
-  // language already declared above
   const [searchOpen, setSearchOpen] = useState(false);
   const category = !isConcernRoute ? categories.find(c => c.slug === id) : null;
   const activeConcern = isConcernRoute ? concerns.find(c => c.id === id) : null;
