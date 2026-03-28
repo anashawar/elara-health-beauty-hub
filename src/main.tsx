@@ -10,11 +10,9 @@ if (Capacitor.isNativePlatform()) {
     StatusBar.setStyle({ style: Style.Dark });
   }).catch(() => {});
 
-  // Request push permission eagerly on native — iOS requires early prompt
-  import('@/lib/nativePush').then(({ registerNativePush }) => {
-    registerNativePush().then((token) => {
-      if (token) console.log("Native push registered early, token:", token.substring(0, 10) + "...");
-    });
+  // Initialize OneSignal on native
+  import('@/lib/nativePush').then(({ initOneSignal }) => {
+    initOneSignal();
   }).catch((e) => console.warn("Early native push init failed:", e));
 }
 
