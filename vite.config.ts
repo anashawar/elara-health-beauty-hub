@@ -118,7 +118,6 @@ export default defineConfig(({ mode }) => ({
           'vendor-supabase': ['@supabase/supabase-js'],
           'vendor-motion': ['framer-motion'],
           'vendor-ui': ['embla-carousel-react', 'sonner', 'date-fns'],
-          'vendor-firebase': ['firebase/app', 'firebase/messaging'],
           'vendor-capacitor': ['@capacitor/core'],
         },
       },
