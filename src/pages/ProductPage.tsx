@@ -117,6 +117,7 @@ const ProductPage = () => {
   const brandName = product.brand || "";
   const brandLogoUrl = (product as any)._brandLogoUrl || null;
   const brandSlugVal = (product as any)._brandSlug || product.brand_id;
+  const productImage = images[0] || "";
   const seoTitle = `${product.title}${brandName ? ` by ${brandName}` : ""} — Buy in Iraq`;
   const seoDesc = product.description
     ? product.description.slice(0, 155)
@@ -156,7 +157,7 @@ const ProductPage = () => {
           breadcrumbJsonLd([
             { name: "ELARA", url: "https://elarastore.co" },
             { name: "Shop", url: "https://elarastore.co/shop" },
-            ...(brandName ? [{ name: brandName, url: `https://elarastore.co/brand/${brandObj?.slug || product.brand_id}` }] : []),
+            ...(brandName ? [{ name: brandName, url: `https://elarastore.co/brand/${brandSlugVal}` }] : []),
             { name: product.title, url: `https://elarastore.co/product/${product.slug}` },
           ]),
         ]}
