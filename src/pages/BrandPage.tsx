@@ -174,16 +174,22 @@ const BrandPage = () => {
 
           {/* Products */}
           {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 px-4 md:px-6 mt-5">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="rounded-2xl overflow-hidden bg-card border border-border/50">
-                  <Skeleton className="aspect-square w-full" />
-                  <div className="p-3 space-y-2">
-                    <Skeleton className="h-3 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
+            <div className="px-4 md:px-6 mt-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="rounded-2xl overflow-hidden bg-card border border-border/50">
+                    <Skeleton className="aspect-square w-full" />
+                    <div className="p-3 space-y-2">
+                      <Skeleton className="h-3 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           ) : brandProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center mt-16 px-4">

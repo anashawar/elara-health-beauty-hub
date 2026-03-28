@@ -516,7 +516,7 @@ export const en = {
     hairLoss: "Hair Loss",
     dandruff: "Dandruff",
     sensitiveSkin: "Sensitive Skin",
-    darkCircles: "Dark Circles",
+    oilySkin: "Oily Skin",
     antiAging: "Anti-Aging",
   },
   rewards: {

@@ -10,7 +10,7 @@ const allConcerns = [
   { id: "hairloss", key: "concerns.hairLoss", icon: "💇", gradient: "from-violet-500 to-purple-600" },
   { id: "dandruff", key: "concerns.dandruff", icon: "❄️", gradient: "from-cyan-500 to-teal-600" },
   { id: "sensitive", key: "concerns.sensitiveSkin", icon: "🌸", gradient: "from-pink-500 to-rose-600" },
-  { id: "darkcircles", key: "concerns.darkCircles", icon: "👁️", gradient: "from-emerald-500 to-green-600" },
+  { id: "oilyskin", key: "concerns.oilySkin", icon: "💦", gradient: "from-emerald-500 to-green-600" },
   { id: "antiaging", key: "concerns.antiAging", icon: "✨", gradient: "from-yellow-500 to-amber-600" },
 ];
 

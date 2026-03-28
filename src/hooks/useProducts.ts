@@ -393,6 +393,6 @@ export const concerns = [
   { id: "hairloss", name: "Hair Loss", icon: "💇" },
   { id: "dandruff", name: "Dandruff", icon: "❄️" },
   { id: "sensitive", name: "Sensitive Skin", icon: "🌸" },
-  { id: "immunity", name: "Immunity", icon: "🛡️" },
-  { id: "weightloss", name: "Weight Loss", icon: "⚡" },
+  { id: "oilyskin", name: "Oily Skin", icon: "💦" },
+  { id: "antiaging", name: "Anti-Aging", icon: "✨" },
 ];
