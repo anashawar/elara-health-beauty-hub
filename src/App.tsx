@@ -9,6 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/context/AppContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import AuthGuard from "./components/AuthGuard";
+import ForceUpdateGate from "./components/ForceUpdateGate";
 
 // Eagerly loaded — critical path
 import AuthPage from "./pages/AuthPage";
@@ -136,6 +137,7 @@ const App = () => (
     <TooltipProvider>
       <LanguageProvider>
         <AppProvider>
+          <ForceUpdateGate>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -201,6 +203,7 @@ const App = () => (
             </Suspense>
             </SwipeBackWrapper>
           </BrowserRouter>
+          </ForceUpdateGate>
         </AppProvider>
       </LanguageProvider>
     </TooltipProvider>
