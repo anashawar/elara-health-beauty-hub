@@ -43,7 +43,24 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (!row) return json({ error: "Invalid credentials" }, 401);
-        if (row.password_hash !== password) return json({ error: "Invalid credentials" }, 401);
+        // Verify password using bcrypt comparison via RPC
+        const { data: cryptResult } = await supabase.rpc("validate_prep_token", {
+          _username: username,
+          _token: row.token,
+        });
+        if (!cryptResult || !cryptResult.valid) return json({ error: "Invalid credentials" }, 401);
+        // Also verify password hash with crypt
+        const { data: pwCheck } = await supabase.from("prep_access_tokens")
+          .select("id")
+          .eq("id", row.id)
+          .filter("password_hash", "eq", password)
+          .maybeSingle();
+        // Use server-side crypt comparison
+        const { data: hashMatch, error: hashErr } = await supabase.rpc("validate_prep_password" as any, {
+          _plain_password: password,
+          _stored_hash: row.password_hash,
+        });
+        if (hashErr || !hashMatch) return json({ error: "Invalid credentials" }, 401);
 
         return json({ token: row.token, label: row.label });
       }

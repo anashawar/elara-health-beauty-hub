@@ -291,6 +291,8 @@ function PrepLinksSection() {
   const createLink = useMutation({
     mutationFn: async () => {
       if (!newUsername.trim() || !newPassword.trim()) throw new Error("Username and password required");
+      const { data: hashedPassword, error: hashError } = await supabase.rpc('hash_warehouse_password' as any, { _plain_password: newPassword.trim() } as any);
+      if (hashError || !hashedPassword) throw new Error("Failed to hash password");
       const { error } = await (supabase.from("prep_access_tokens" as any).insert({
         label,
         username: newUsername.trim().toLowerCase(),
