@@ -191,11 +191,6 @@ Deno.serve(async (req) => {
       return json({ error: "Invalid action" }, 400);
     }
 
-    // --- Warehouse portal actions (authenticated via warehouse_users) ---
-    if (req.method === "POST") {
-      // This block was already handled above, but let's add warehouse-specific actions
-    }
-
     // --- GET requests ---
     if (req.method === "GET") {
       const action = new URL(req.url).searchParams.get("action");
