@@ -95,7 +95,7 @@ export async function setupNativeListeners(onNavigate?: (url: string) => void): 
 
   // Tap on notification: navigate if link provided
   await FirebaseMessaging.addListener("notificationActionPerformed", (event) => {
-    const data = event.notification?.data;
+    const data = event.notification?.data as Record<string, string> | undefined;
     const linkUrl = data?.link_url || data?.url;
     if (linkUrl && onNavigate) {
       onNavigate(linkUrl);
