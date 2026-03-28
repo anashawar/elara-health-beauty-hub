@@ -77,6 +77,11 @@ export function getTabRoute(tab: TabKey): string {
   return tabHistory[tab] || TAB_ROOTS[tab];
 }
 
+/** Returns the root route for a tab. */
+export function getTabRoot(tab: TabKey): string {
+  return TAB_ROOTS[tab];
+}
+
 /** Returns which tab is currently active based on path. */
 export function getActiveTab(pathname: string): TabKey | null {
   return getTabForPath(pathname);
