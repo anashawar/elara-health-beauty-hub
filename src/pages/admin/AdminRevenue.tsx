@@ -182,8 +182,8 @@ export default function AdminRevenue() {
     let totalRevenue = 0;
     let totalCost = 0;
     let totalItemsSold = 0;
-    let totalDeliveryFees = 0;
-    let totalDiscounts = 0;
+    let totalDeliveryFees = 0; // What customer paid
+    let totalActualDeliveryCost = 0; // What we actually pay (always calculated by city)
     let revenueWithCost = 0;
     let revenueWithoutCost = 0;
     let itemsMissingCost = 0;
