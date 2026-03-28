@@ -20,8 +20,8 @@ const concernKeywords: Record<string, string[]> = {
   hairloss: ["hair loss", "hairloss", "hair fall", "thinning hair", "hair growth", "alopecia"],
   dandruff: ["dandruff", "flak", "scalp", "seborrh"],
   sensitive: ["sensitive", "redness", "irritat", "calm", "sooth", "rosacea", "gentle"],
-  immunity: ["immun", "vitamin c", "vitamin d", "zinc", "defense", "multivitamin"],
-  weightloss: ["weight loss", "weight", "slim", "fat burn", "metabolism", "diet"],
+  oilyskin: ["oily", "oil control", "sebum", "mattify", "shine control", "pore", "t-zone"],
+  antiaging: ["anti-aging", "anti aging", "wrinkle", "fine line", "firming", "collagen", "retinol", "aging"],
 };
 
 function matchesConcern(p: { condition?: string | null; tags: string[]; description: string; title: string; benefits: string[] }, concernId: string): boolean {
