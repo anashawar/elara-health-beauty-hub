@@ -1,5 +1,4 @@
 import { Capacitor } from "@capacitor/core";
-import { PushNotifications, type Token, type PushNotificationSchema, type ActionPerformed } from "@capacitor/push-notifications";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -11,20 +10,22 @@ export function isNativePlatform(): boolean {
 }
 
 /**
- * Get an FCM token on native iOS/Android.
- * On iOS, Capacitor gives an APNs token — we pass it to Firebase SDK 
- * which converts it to an FCM registration token that Firebase campaigns can target.
- * On Android, Capacitor already gives an FCM token directly.
+ * Get an FCM registration token on native iOS/Android using
+ * @capacitor-firebase/messaging — this plugin bridges to the
+ * NATIVE Firebase SDK, which correctly converts APNs tokens to
+ * FCM registration tokens on iOS (something the web SDK cannot do).
  */
 export async function registerNativePush(): Promise<string | null> {
   if (!isNativePlatform()) return null;
 
   try {
+    const { FirebaseMessaging } = await import("@capacitor-firebase/messaging");
+
     // Check / request permission
-    let permStatus = await PushNotifications.checkPermissions();
+    let permStatus = await FirebaseMessaging.checkPermissions();
 
     if (permStatus.receive === "prompt" || permStatus.receive === "prompt-with-rationale") {
-      permStatus = await PushNotifications.requestPermissions();
+      permStatus = await FirebaseMessaging.requestPermissions();
     }
 
     if (permStatus.receive !== "granted") {
@@ -32,51 +33,18 @@ export async function registerNativePush(): Promise<string | null> {
       return null;
     }
 
-    // Register with OS
-    await PushNotifications.register();
+    // getToken() returns an FCM registration token on BOTH iOS and Android.
+    // On iOS it automatically registers APNs token with Firebase and swaps it.
+    const { token } = await FirebaseMessaging.getToken();
 
-    // Get the native token (APNs on iOS, FCM on Android)
-    const nativeToken = await new Promise<string | null>((resolve) => {
-      const timeout = setTimeout(() => resolve(null), 10000);
-
-      PushNotifications.addListener("registration", (token: Token) => {
-        clearTimeout(timeout);
-        console.log("Native push token received:", token.value.substring(0, 10) + "...");
-        resolve(token.value);
-      });
-
-      PushNotifications.addListener("registrationError", (error) => {
-        clearTimeout(timeout);
-        console.error("Push registration error:", error);
-        resolve(null);
-      });
-    });
-
-    if (!nativeToken) return null;
-
-    const platform = Capacitor.getPlatform();
-
-    // On iOS, the native token is an APNs token.
-    // We need to use Firebase SDK to get the FCM registration token.
-    if (platform === "ios") {
-      try {
-        const { requestFCMToken } = await import("@/lib/firebase");
-        const fcmToken = await requestFCMToken();
-        if (fcmToken) {
-          console.log("iOS FCM token obtained via Firebase SDK");
-          return fcmToken;
-        }
-        // Fallback: store the APNs token anyway (won't work with Firebase campaigns)
-        console.warn("Could not get FCM token on iOS, falling back to APNs token");
-        return nativeToken;
-      } catch (e) {
-        console.warn("Firebase SDK not available on iOS, using APNs token:", e);
-        return nativeToken;
-      }
+    if (!token) {
+      console.warn("No FCM token returned from FirebaseMessaging.getToken()");
+      return null;
     }
 
-    // On Android, Capacitor already returns an FCM token
-    return nativeToken;
+    const platform = Capacitor.getPlatform();
+    console.log(`[Push] FCM token obtained on ${platform}:`, token.substring(0, 12) + "...");
+    return token;
   } catch (err) {
     console.error("Native push registration failed:", err);
     return null;
@@ -104,6 +72,7 @@ export async function saveNativeToken(userId: string, token: string): Promise<vo
       auth: "native",
       is_active: true,
     });
+    console.log(`[Push] Token saved for ${platform} user ${userId.substring(0, 8)}`);
   }
 }
 
@@ -111,30 +80,27 @@ export async function saveNativeToken(userId: string, token: string): Promise<vo
  * Set up foreground notification listeners on native.
  * Shows a toast when a push arrives while the app is open.
  */
-export function setupNativeListeners(onNavigate?: (url: string) => void): void {
+export async function setupNativeListeners(onNavigate?: (url: string) => void): Promise<void> {
   if (!isNativePlatform()) return;
 
+  const { FirebaseMessaging } = await import("@capacitor-firebase/messaging");
+
   // Foreground: show in-app toast
-  PushNotifications.addListener(
-    "pushNotificationReceived",
-    (notification: PushNotificationSchema) => {
-      toast(notification.title || "New notification", {
-        description: notification.body,
-      });
-    }
-  );
+  await FirebaseMessaging.addListener("notificationReceived", (event) => {
+    const notification = event.notification;
+    toast(notification?.title || "New notification", {
+      description: notification?.body,
+    });
+  });
 
   // Tap on notification: navigate if link provided
-  PushNotifications.addListener(
-    "pushNotificationActionPerformed",
-    (action: ActionPerformed) => {
-      const data = action.notification.data;
-      const linkUrl = data?.link_url || data?.url;
-      if (linkUrl && onNavigate) {
-        onNavigate(linkUrl);
-      }
+  await FirebaseMessaging.addListener("notificationActionPerformed", (event) => {
+    const data = event.notification?.data;
+    const linkUrl = data?.link_url || data?.url;
+    if (linkUrl && onNavigate) {
+      onNavigate(linkUrl);
     }
-  );
+  });
 }
 
 /**
@@ -142,5 +108,6 @@ export function setupNativeListeners(onNavigate?: (url: string) => void): void {
  */
 export async function removeNativeListeners(): Promise<void> {
   if (!isNativePlatform()) return;
-  await PushNotifications.removeAllListeners();
+  const { FirebaseMessaging } = await import("@capacitor-firebase/messaging");
+  await FirebaseMessaging.removeAllListeners();
 }
