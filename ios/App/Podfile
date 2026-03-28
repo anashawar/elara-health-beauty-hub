@@ -1,7 +1,6 @@
 require File.expand_path('../../node_modules/@capacitor/ios/scripts/pods_helpers.rb', __dir__)
 
 platform :ios, '16.0'
-use_frameworks!
 use_modular_headers!
 
 install! 'cocoapods', :disable_input_output_paths => true
