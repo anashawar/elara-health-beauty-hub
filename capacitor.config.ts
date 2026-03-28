@@ -1,3 +1,5 @@
+/// <reference types="@capacitor-firebase/messaging" />
+
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const isDevMode = process.env.NODE_ENV === 'development';
@@ -26,7 +28,7 @@ const config: CapacitorConfig = {
       overlaysWebView: true,
       style: 'DARK',
     },
-    PushNotifications: {
+    FirebaseMessaging: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
   },
