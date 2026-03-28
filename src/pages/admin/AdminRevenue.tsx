@@ -164,6 +164,7 @@ export default function AdminRevenue() {
     const dailyRevenue = new Map<string, { revenue: number; cost: number; orders: number; profit: number }>();
     const paymentMethods: Record<string, number> = {};
     const couponUsage: Record<string, { count: number; discount: number }> = {};
+    const orderDetails: { id: string; date: string; revenue: number; cost: number; profit: number; items: number; status: string; hasMissingCost: boolean }[] = [];
 
     deliveredOrders.forEach((order: any) => {
       totalRevenue += Number(order.total);
@@ -232,6 +233,28 @@ export default function AdminRevenue() {
           brandStats[brandId].profit = brandStats[brandId].revenue - brandStats[brandId].cost;
         }
       });
+
+      // Per-order cost & profit
+      let orderCost = 0;
+      let orderHasMissing = false;
+      items.forEach((item: any) => {
+        const hasCost = item.product_id in costMap;
+        if (hasCost) {
+          orderCost += costMap[item.product_id] * item.quantity;
+        } else {
+          orderHasMissing = true;
+        }
+      });
+      orderDetails.push({
+        id: order.id,
+        date: order.created_at.split("T")[0],
+        revenue: Number(order.total),
+        cost: orderCost,
+        profit: Number(order.total) - orderCost,
+        items: items.reduce((s: number, it: any) => s + it.quantity, 0),
+        status: order.status,
+        hasMissingCost: orderHasMissing,
+      });
     });
 
     // Profit only from products with known cost data
@@ -276,6 +299,7 @@ export default function AdminRevenue() {
       totalOrders: deliveredOrders.length, allOrders: allActive.length,
       totalItemsSold, totalDeliveryFees, totalDiscounts,
       topProducts, topBrands, dailyData, paymentMethods, couponLeaderboard,
+      orderDetails: orderDetails.sort((a, b) => b.date.localeCompare(a.date)),
       pendingRevenue: allActive.filter((o: any) => o.status !== "delivered").reduce((s: number, o: any) => s + Number(o.total), 0),
       pendingCount: allActive.filter((o: any) => o.status !== "delivered").length,
       revenueWithCost,
@@ -591,6 +615,65 @@ export default function AdminRevenue() {
                 </tr>
               </tfoot>
             </table>
+          </div>
+        )}
+      </motion.div>
+
+      {/* Order Profitability */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-card rounded-2xl border border-border/50 p-5"
+      >
+        <h2 className="text-sm font-bold text-foreground mb-4">Order Profitability</h2>
+        {stats.orderDetails.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-8 text-center">No delivered orders for this period.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">#</th>
+                  <th className="text-left py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Order ID</th>
+                  <th className="text-left py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Date</th>
+                  <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Items</th>
+                  <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Revenue</th>
+                  <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Cost</th>
+                  <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Profit</th>
+                  <th className="text-right py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Margin</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.orderDetails.map((o, i) => {
+                  const margin = o.revenue > 0 ? ((o.profit) / o.revenue * 100) : 0;
+                  return (
+                    <tr key={o.id} className={`border-b border-border/20 hover:bg-muted/20 transition-colors ${o.hasMissingCost ? "bg-amber-500/5" : ""}`}>
+                      <td className="py-2.5 px-2 text-xs text-muted-foreground">{i + 1}</td>
+                      <td className="py-2.5 px-2 text-xs font-mono text-muted-foreground">{o.id.slice(0, 8)}…</td>
+                      <td className="py-2.5 px-2 text-xs text-muted-foreground">
+                        {new Date(o.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </td>
+                      <td className="py-2.5 px-2 text-right text-xs text-muted-foreground">{o.items}</td>
+                      <td className="py-2.5 px-2 text-right text-xs font-medium text-foreground">{formatPrice(o.revenue)}</td>
+                      <td className="py-2.5 px-2 text-right text-xs font-medium text-red-500">
+                        {formatPrice(o.cost)}
+                        {o.hasMissingCost && <span className="text-amber-500 ml-1">*</span>}
+                      </td>
+                      <td className={`py-2.5 px-2 text-right text-xs font-bold ${o.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        {formatPrice(o.profit)}
+                      </td>
+                      <td className={`py-2.5 px-2 text-right text-xs font-medium ${margin >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        {margin.toFixed(1)}%
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {stats.orderDetails.some(o => o.hasMissingCost) && (
+              <p className="text-[10px] text-amber-600 mt-2">* Some products in this order have no cost data — profit may be higher than shown.</p>
+            )}
           </div>
         )}
       </motion.div>
