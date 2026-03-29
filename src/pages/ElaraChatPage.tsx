@@ -117,131 +117,53 @@ const quickQuestions: Record<string, Record<string, Record<string, string[]>>> =
 function getGreeting(language: string, name: string | null, isKurdistan: boolean, gender: string | null): { greeting: string; subtitle: string } {
   const hour = new Date().getHours();
   const firstName = name?.split(" ")[0] || null;
-  const isMale = gender === "male";
+  const region = isKurdistan ? (language === "ar" ? "أربيل" : language === "ku" ? "هەولێر" : "Erbil") : (language === "ar" ? "بغداد" : language === "ku" ? "بەغدا" : "Baghdad");
 
-  if (isKurdistan) {
-    if (language === "ku") {
-      const timeGreeting = hour < 12 ? "بەیانیت باش" : hour < 18 ? "ڕۆژت باش" : "ئێوارەت باش";
-      return {
-        greeting: firstName ? `${timeGreeting} ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
-        subtitle: isMale 
-          ? "چۆنی برام؟ من ئیلارام، پسپۆڕی چاودێری پێست و تەندروستیت لە هەولێر ✨"
-          : "چۆنی گیانم؟ من ئیلارام، هاوڕێی جوانکاریت لە هەولێر ✨",
-      };
-    }
-    if (language === "ar") {
-      const timeGreeting = hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء النور";
-      return {
-        greeting: firstName ? `${timeGreeting} ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
-        subtitle: isMale
-          ? "شلونك أخي؟ أنا إيلارا، صيدلانيتك من أربيل ✨"
-          : "شلونك؟ أنا إيلارا، صيدلانيتك من أربيل ✨",
-      };
-    }
-    const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-    return {
-      greeting: firstName ? `${timeGreeting}, ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
-      subtitle: isMale
-        ? "What's up? I'm Elara, your grooming & skincare expert from Erbil ✨"
-        : "How are you? I'm Elara, your beauty bestie from Erbil ✨",
-    };
-  }
-
-  // Iraqi personality
-  if (language === "ar") {
-    const timeGreeting = hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء النور";
-    return {
-      greeting: firstName ? `${timeGreeting} ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
-      subtitle: isMale
-        ? "شلونك يا بطل؟ أنا إيلارا، صيدلانيتك من بغداد ✨"
-        : "شلونچ اليوم يا گلبي؟ أنا إيلارا، صيدلانيتچ من بغداد ✨",
-    };
-  }
   if (language === "ku") {
     const timeGreeting = hour < 12 ? "بەیانیت باش" : hour < 18 ? "ڕۆژت باش" : "ئێوارەت باش";
     return {
-      greeting: firstName ? `${timeGreeting} ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
-      subtitle: isMale
-        ? "چۆنی برام؟ من ئیلارام، پسپۆڕی تەندروستی و چاودێری پێستت ✨"
-        : "چۆنی ئەمڕۆ؟ من ئیلارام، پسپۆڕی جوانکاریت ✨",
+      greeting: firstName ? `${timeGreeting}، ${firstName}` : timeGreeting,
+      subtitle: `من ئیلارام، فارماسیست و ڕاوێژکاری پێست لە ${region}`,
+    };
+  }
+  if (language === "ar") {
+    const timeGreeting = hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء النور";
+    return {
+      greeting: firstName ? `${timeGreeting} ${firstName}` : timeGreeting,
+      subtitle: `أنا إيلارا، صيدلانية ومستشارة عناية بالبشرة من ${region}`,
     };
   }
   const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   return {
-    greeting: firstName ? `${timeGreeting}, ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
-    subtitle: isMale
-      ? "What's up? I'm Elara, your grooming & skincare expert from Baghdad ✨"
-      : "How are you doing today? I'm Elara, your beauty bestie from Baghdad ✨",
+    greeting: firstName ? `${timeGreeting}, ${firstName}` : timeGreeting,
+    subtitle: `I'm Elara, your pharmacist & skincare consultant from ${region}`,
   };
 }
 
 function getContextualTips(language: string, isKurdistan: boolean, gender: string | null): { icon: React.ReactNode; text: string }[] {
   const month = new Date().getMonth();
   const tips: { icon: React.ReactNode; text: string }[] = [];
-  const isMale = gender === "male";
 
-  if (isKurdistan) {
-    if (language === "ku") {
-      if (month >= 4 && month <= 8) {
-        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: isMale ? "هەوا گەرمە لە هەولێر 🥵 واقی خۆرت لەبیر نەچێت SPF 50+!" : "هەوا گەرمە لە هەولێر 🥵 واقی خۆرت لەبیر نەچێت SPF 50+!" });
-      } else if (month >= 10 || month <= 2) {
-        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: isMale ? "زستانی کوردستان وشک و ساردە ❄️ پێستت پێویستی بە شێداری زۆرە!" : "زستانی کوردستان وشک و ساردە ❄️ پێستت پێویستی بە شێداری زۆرە!" });
-      }
-      if (month === 2) {
-        tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "نەورۆز پیرۆزبێت! 🌷🔥" });
-      }
-      tips.push({ icon: isMale ? <Dumbbell className="w-4 h-4 text-blue-500" /> : <Heart className="w-4 h-4 text-pink-400" />, text: isMale ? "هەر پرسیارێکت هەیە دەربارەی چاودێری پێست و ڕیش بپرسە برام 💪" : "هەر پرسیارێکت هەیە دەربارەی جوانکاری بپرسە گیانم 💆‍♀️" });
-    } else if (language === "ar") {
-      if (month >= 4 && month <= 8) {
-        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: isMale ? "الجو حار بأربيل 🥵 لا تنسى واقي شمس SPF 50+!" : "الجو حار بأربيل 🥵 لا تنسي واقي شمس SPF 50+!" });
-      } else if (month >= 10 || month <= 2) {
-        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: isMale ? "شتاء كوردستان بارد وجاف ❄️ بشرتك تحتاج ترطيب مكثف!" : "شتاء كوردستان بارد وجاف ❄️ بشرتك تحتاج ترطيب مكثف!" });
-      }
-      if (month === 2) {
-        tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "نوروز مبارك! 🌷🔥" });
-      }
-      tips.push({ icon: isMale ? <Dumbbell className="w-4 h-4 text-blue-500" /> : <Heart className="w-4 h-4 text-pink-400" />, text: isMale ? "اسألني عن العناية بالبشرة واللحية يا بطل 💪" : "اسأليني عن أي شي يخص جمالك 💆‍♀️" });
-    } else {
-      if (month >= 4 && month <= 8) {
-        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "Summer in Kurdistan 🥵 Don't skip SPF 50+ sunscreen!" });
-      } else if (month >= 10 || month <= 2) {
-        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "Kurdistan winters are cold & dry ❄️ Extra hydration is key!" });
-      }
-      if (month === 2) {
-        tips.push({ icon: <Sparkles className="w-4 h-4 text-green-500" />, text: "Happy Newroz! 🌷🔥" });
-      }
-      tips.push({ icon: isMale ? <Dumbbell className="w-4 h-4 text-blue-500" /> : <Heart className="w-4 h-4 text-pink-400" />, text: isMale ? "Ask me about skincare, beard care, or grooming 💪" : "Ask me anything about skincare and beauty 💆‍♀️" });
-    }
+  // Season-based tips
+  const isSummer = month >= 5 && month <= 8;
+  const isWinter = month >= 10 || month <= 1;
+  const isSpring = month >= 2 && month <= 4;
+
+  if (language === "ar") {
+    if (isSummer) tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "الجو حار — واقي الشمس SPF 50+ ضروري كل يوم" });
+    else if (isWinter) tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "الجو بارد وجاف — بشرتك تحتاج ترطيب مكثف" });
+    else if (isSpring) tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "الربيع — وقت مناسب لتجديد روتين العناية بالبشرة" });
+    tips.push({ icon: <Lightbulb className="w-4 h-4 text-primary" />, text: "اسألني عن أي منتج أو مشكلة جلدية — أنا هنا للمساعدة" });
+  } else if (language === "ku") {
+    if (isSummer) tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "هەوا گەرمە — واقی خۆر SPF 50+ هەر ڕۆژ پێویستە" });
+    else if (isWinter) tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "هەوا سارد و وشکە — پێستت پێویستی بە شێداری زیاترە" });
+    else if (isSpring) tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "بەهار — کاتی باشە بۆ نوێکردنەوەی ڕوتینی چاودێری پێست" });
+    tips.push({ icon: <Lightbulb className="w-4 h-4 text-primary" />, text: "هەر پرسیارێکت هەیە دەربارەی بەرهەم یان کێشەی پێست بپرسە" });
   } else {
-    // Iraqi Arab
-    if (language === "ar") {
-      if (month >= 4 && month <= 8) {
-        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: isMale ? "الجو حار هواية ببغداد 🥵 لا تنسى واقي الشمس SPF 50+ كل يوم!" : "الجو حار هواية ببغداد 🥵 لا تنسين واقي الشمس SPF 50+ كل يوم!" });
-      } else if (month >= 10 || month <= 2) {
-        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: isMale ? "الجو بارد وجاف هالفترة ❄️ بشرتك تحتاج ترطيب مكثف!" : "الجو بارد وجاف هالفترة ❄️ بشرتچ تحتاج ترطيب مكثف!" });
-      }
-      if (month >= 2 && month <= 4) {
-        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: isMale ? "الربيع وصل! 🌸 لا تنسى واقي الشمس مع بداية الحر" : "الربيع وصل! 🌸 لا تنسي واقي الشمس مع بداية الحر" });
-      }
-      tips.push({ icon: isMale ? <Dumbbell className="w-4 h-4 text-blue-500" /> : <Heart className="w-4 h-4 text-pink-400" />, text: isMale ? "اسألني عن العناية بالبشرة واللحية والشعر يا بطل 💪" : "اسأليني عن أي شي يخص بشرتچ وشعرچ وجمالچ يا گلبي 💆‍♀️" });
-    } else if (language === "ku") {
-      if (month >= 4 && month <= 8) {
-        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "کەش زۆر گەرمە ئەم ڕۆژانە 🥵 واقی خۆرت لەبیر نەچێت!" });
-      } else if (month >= 10 || month <= 2) {
-        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "کەش ساردە ئەم ماوەیە ❄️ پێستت پێویستی بە شێداری زۆرە!" });
-      }
-      tips.push({ icon: isMale ? <Dumbbell className="w-4 h-4 text-blue-500" /> : <Heart className="w-4 h-4 text-pink-400" />, text: isMale ? "هەر پرسیارێکت هەیە دەربارەی پێست و قژ بپرسە برام 💪" : "هەر پرسیارێکت هەیە دەربارەی پێست و قژ بپرسە 💆‍♀️" });
-    } else {
-      if (month >= 4 && month <= 8) {
-        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "It's scorching in Baghdad 🥵 Don't skip SPF 50+ sunscreen!" });
-      } else if (month >= 10 || month <= 2) {
-        tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "Cold & dry weather in Iraq ❄️ Your skin needs extra hydration!" });
-      }
-      if (month >= 2 && month <= 4) {
-        tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "Spring is here! 🌸 Start wearing sunscreen as it gets warmer" });
-      }
-      tips.push({ icon: isMale ? <Dumbbell className="w-4 h-4 text-blue-500" /> : <Heart className="w-4 h-4 text-pink-400" />, text: isMale ? "Ask me about skincare, beard care, or grooming 💪" : "Ask me anything about skincare, hair care, or beauty 💆‍♀️" });
-    }
+    if (isSummer) tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "Hot weather — daily SPF 50+ is essential for skin protection" });
+    else if (isWinter) tips.push({ icon: <CloudRain className="w-4 h-4 text-blue-400" />, text: "Cold & dry weather — your skin needs extra hydration" });
+    else if (isSpring) tips.push({ icon: <Sun className="w-4 h-4 text-amber-500" />, text: "Spring — great time to refresh your skincare routine" });
+    tips.push({ icon: <Lightbulb className="w-4 h-4 text-primary" />, text: "Ask me about any product or skin concern — I'm here to help" });
   }
 
   return tips.slice(0, 3);
