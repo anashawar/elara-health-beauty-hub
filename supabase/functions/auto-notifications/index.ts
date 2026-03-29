@@ -9,7 +9,6 @@ const corsHeaders = {
 const ONESIGNAL_APP_ID = "13744f00-e92d-4e78-84ca-4dffe5a16cea";
 const ONESIGNAL_API_URL = "https://api.onesignal.com/notifications";
 const MAX_DAILY_NOTIFICATIONS = 4;
-// Baghdad = UTC+3
 const BAGHDAD_OFFSET_MS = 3 * 3600000;
 
 type Lang = "en" | "ar" | "ku";
@@ -36,74 +35,8 @@ function getBaghdadDate(): string {
 
 function isInQuietHours(): boolean {
   const h = getBaghdadHour();
-  return h < 9 || h >= 21; // before 9:30 AM or after 8:30 PM (approximate with full hours)
+  return h < 9 || h >= 21;
 }
-
-// ─── LOCALIZED STRINGS ───────────────────────────────────────────────────
-
-const ORDER_STATUS_TEXTS: Record<string, { title: LocalizedText; body: LocalizedText; icon: string }> = {
-  confirmed: {
-    title: { en: "Order Confirmed ✅", ar: "تم تأكيد طلبك ✅", ku: "داواکاریەکەت پشتڕاست کرایەوە ✅" },
-    body: { en: "Your order is confirmed! We're getting it ready for you 🎉", ar: "طلبك مؤكد! نحضّره لك بكل حب 🎉", ku: "داواکاریەکەت پشتڕاست کرا! بۆت ئامادەی دەکەین 🎉" },
-    icon: "📦",
-  },
-  preparing: {
-    title: { en: "Packing Your Goodies 🎁", ar: "نجهّز منتجاتك بعناية 🎁", ku: "بەرهەمەکانت بە وریایی ئامادە دەکەین 🎁" },
-    body: { en: "Hang tight! Your products are being packed with care ✨", ar: "استنى شوية! منتجاتك تنلف بكل حب ✨", ku: "کەمێک چاوەڕوان بە! بەرهەمەکانت بە خۆشەویستی دەپێچرێنەوە ✨" },
-    icon: "🎁",
-  },
-  shipped: {
-    title: { en: "Your Order is on the Way! 🚚", ar: "طلبك في الطريق إليك! 🚚", ku: "داواکاریەکەت لە ڕێگایە! 🚚" },
-    body: { en: "Exciting — your beauty essentials are heading your way!", ar: "يا سلام — منتجاتك الحلوة في طريقها إليك!", ku: "بەرهەمە جوانەکانت لە ڕێگان بۆ لات!" },
-    icon: "🚚",
-  },
-  out_for_delivery: {
-    title: { en: "Almost There! 📍", ar: "وصلنا تقريباً! 📍", ku: "نزیک بووینەتەوە! 📍" },
-    body: { en: "Your order is super close — keep an eye out! 👀", ar: "طلبك قريب جداً — خلّي عينك عليه! 👀", ku: "داواکاریەکەت زۆر نزیکە — سەیری بکە! 👀" },
-    icon: "📍",
-  },
-  delivered: {
-    title: { en: "Delivered! Enjoy 🎉", ar: "وصل طلبك! استمتعي 🎉", ku: "گەیشت! خۆشت بێت 🎉" },
-    body: { en: "Your order has arrived — time to unbox and glow! ✨", ar: "طلبك وصل — وقت تفتحيه وتتألقي! ✨", ku: "داواکاریەکەت گەیشت — کاتی کردنەوە و درەوشانەوەیە! ✨" },
-    icon: "🎉",
-  },
-  cancelled: {
-    title: { en: "Order Cancelled ❌", ar: "تم إلغاء الطلب ❌", ku: "داواکاری هەڵوەشێنرایەوە ❌" },
-    body: { en: "Your order was cancelled. Need help? We're here for you!", ar: "طلبك تم إلغاؤه. محتاج مساعدة؟ إحنا هنا!", ku: "داواکاریەکەت هەڵوەشایەوە. یارمەتیت دەوێت؟ لێرەین!" },
-    icon: "❌",
-  },
-};
-
-const ABANDONED_CART = {
-  title: { en: "Psst... You forgot something! 🛒", ar: "هي... نسيتي شي بالسلة! 🛒", ku: "هەی... شتێکت لە سەبەتەکەت بیرچووە! 🛒" } as LocalizedText,
-  body: { en: "Your cart misses you 😢 Come back before your items run out!", ar: "سلتك مشتاقتلك 😢 ارجعي قبل ما المنتجات تخلص!", ku: "سەبەتەکەت بیری لێت دەچێتەوە 😢 بگەڕێرەوە پێش ئەوەی بەرهەمەکان تەواو بن!" } as LocalizedText,
-};
-
-const WELCOME = {
-  title: { en: "Welcome to ELARA! 💜", ar: "أهلاً بيك في ELARA! 💜", ku: "بەخێربێیت بۆ ELARA! 💜" } as LocalizedText,
-  body: { en: "Your beauty journey starts here! Explore premium products curated just for you ✨", ar: "رحلتك الجمالية تبدأ هنا! اكتشفي منتجات مميزة مختارة خصيصاً لك ✨", ku: "گەشتی جوانیت لێرەوە دەست پێدەکات! بەرهەمە تایبەتەکان ببینە کە تایبەت بۆ تۆ هەڵبژێردراون ✨" } as LocalizedText,
-};
-
-const FEEDBACK = {
-  title: { en: "How was your order? ⭐", ar: "شلون كان طلبك؟ ⭐", ku: "داواکاریەکەت چۆن بوو؟ ⭐" } as LocalizedText,
-  body: { en: "We'd love to hear from you! Rate your experience — it takes just a second 🙏", ar: "نحب نسمع رأيك! قيّمي تجربتك — بس ثانية وحدة 🙏", ku: "دەمانەوێت بیستینت! ئەزموونەکەت هەڵبسەنگێنە — تەنها چرکەیەک دەخایەنێت 🙏" } as LocalizedText,
-};
-
-const FREE_DELIVERY = {
-  title: { en: "SO close to FREE delivery! 🚚", ar: "قريب جداً من التوصيل المجاني! 🚚", ku: "زۆر نزیکی گەیاندنی بەخۆڕاییت! 🚚" } as LocalizedText,
-  bodyTemplate: { en: "Add just {{amount}} IQD more and get FREE delivery! You're almost there 🎯", ar: "ضيفي بس {{amount}} دينار وتوصيلك مجاني! قربتي تحققيها 🎯", ku: "تەنها {{amount}} دینار زیاد بکە و گەیاندنت بەخۆڕایی بێت! نزیکیت 🎯" } as LocalizedText,
-};
-
-const DAILY_OFFERS = {
-  title: { en: "Today's Deals Are 🔥", ar: "عروض اليوم ناااار 🔥", ku: "ئۆفەرەکانی ئەمڕۆ ئاگرن 🔥" } as LocalizedText,
-  bodyMultiple: { en: "{{count}} exclusive offers just dropped — don't sleep on these! 💅", ar: "{{count}} عروض حصرية نزلت — لا تطوفك! 💅", ku: "{{count}} ئۆفەری تایبەت دابەزین — لەدەست مەدەن! 💅" } as LocalizedText,
-  bodySingle: { en: "{{title}} — Save {{discount}} today only! Shop now 🏃‍♀️", ar: "{{title}} — وفّري {{discount}} اليوم بس! اشتري هسة 🏃‍♀️", ku: "{{title}} — {{discount}} ئەمڕۆ پاشەکەوت بخە! ئێستا بیکڕە 🏃‍♀️" } as LocalizedText,
-};
-
-const REORDER = {
-  title: { en: "Time to restock? 🔄", ar: "وقت تعيدي الطلب؟ 🔄", ku: "کاتی نوێکردنەوەیە؟ 🔄" } as LocalizedText,
-  body: { en: "It's been a month! Reorder your favorites + FREE delivery on orders over 40K IQD 💕", ar: "صار شهر! اطلبي منتجاتك المفضلة + توصيل مجاني للطلبات فوق 40 ألف دينار 💕", ku: "مانگێکە! بەرهەمە خۆشەویستەکانت دووبارە داوا بکە + گەیاندنی بەخۆڕایی بۆ داواکاری سەرووی 40 هەزار دینار 💕" } as LocalizedText,
-};
 
 // ─── CORE HELPERS ────────────────────────────────────────────────────────
 
@@ -131,9 +64,38 @@ async function getUserLangsMap(sb: ReturnType<typeof createClient>, ids: string[
   return m;
 }
 
+// Fetch first names for personalization
+interface UserInfo { lang: Lang; name: string; }
+async function getUserInfoMap(sb: ReturnType<typeof createClient>, ids: string[]): Promise<Record<string, UserInfo>> {
+  if (ids.length === 0) return {};
+  const m: Record<string, UserInfo> = {};
+  for (let i = 0; i < ids.length; i += 100) {
+    const { data } = await sb.from("profiles").select("user_id, language, full_name").in("user_id", ids.slice(i, i + 100));
+    for (const r of (data || [])) {
+      const l = (r as any).language;
+      const fullName = (r as any).full_name || "";
+      const firstName = fullName.split(" ")[0] || "";
+      m[(r as any).user_id] = { lang: (l === "ar" || l === "ku") ? l : "en", name: firstName };
+    }
+  }
+  return m;
+}
+
+async function getUserFirstName(sb: ReturnType<typeof createClient>, userId: string): Promise<string> {
+  const { data } = await sb.from("profiles").select("full_name").eq("user_id", userId).single();
+  const name = (data as any)?.full_name || "";
+  return name.split(" ")[0] || "";
+}
+
 function groupByLang(ulangs: Record<string, Lang>): Record<Lang, string[]> {
   const g: Record<Lang, string[]> = { en: [], ar: [], ku: [] };
   for (const [uid, l] of Object.entries(ulangs)) g[l].push(uid);
+  return g;
+}
+
+function groupByLangFromInfo(info: Record<string, UserInfo>): Record<Lang, string[]> {
+  const g: Record<Lang, string[]> = { en: [], ar: [], ku: [] };
+  for (const [uid, i] of Object.entries(info)) g[i.lang].push(uid);
   return g;
 }
 
@@ -143,13 +105,12 @@ async function getUsersUnderCap(sb: ReturnType<typeof createClient>, userIds: st
   const today = getBaghdadDate();
   const startOfDay = `${today}T00:00:00+03:00`;
 
-  // Count today's notifications per user
   const { data: counts } = await sb
     .from("notifications")
     .select("user_id")
     .in("user_id", userIds)
     .gte("created_at", startOfDay)
-    .not("type", "in", '("order","welcome","feedback")'); // Order/welcome/feedback don't count toward cap
+    .not("type", "in", '("order","welcome","feedback")');
 
   const userCounts: Record<string, number> = {};
   for (const row of (counts || [])) {
@@ -216,9 +177,102 @@ async function sendBroadcastPush(tit: LocalizedText, bod: LocalizedText, opts: {
   });
 }
 
+// Send personalized per-user pushes (each user gets their own name)
+async function sendPersonalizedPush(userInfos: Record<string, UserInfo>, titleFn: (name: string, lang: Lang) => string, bodyFn: (name: string, lang: Lang) => string, opts: { icon?: string; link_url?: string; image_url?: string }) {
+  // Group users with same lang and batch send (name is in the in-app notif, push uses a generic friendly version)
+  const groups = groupByLangFromInfo(userInfos);
+  for (const lang of ["en", "ar", "ku"] as Lang[]) {
+    if (groups[lang].length === 0) continue;
+    // For push, we can't personalize per-user via OneSignal segments easily, so use a warm generic
+    const genericName = lang === "ar" ? "حبيبي" : lang === "ku" ? "خۆشەویست" : "gorgeous";
+    await sendPushViaOneSignal({
+      title: titleFn(genericName, lang),
+      body: bodyFn(genericName, lang),
+      icon: opts.icon, link_url: opts.link_url, image_url: opts.image_url,
+      user_ids: groups[lang],
+    });
+  }
+}
+
 async function saveNotif(sb: ReturnType<typeof createClient>, userId: string | null, title: string, body: string, type: string, icon: string, linkUrl?: string, imageUrl?: string, metadata?: Record<string, unknown>) {
   await sb.from("notifications").insert({ user_id: userId, title, body, type, icon, link_url: linkUrl || null, image_url: imageUrl || null, metadata: metadata || null });
 }
+
+// ─── LOCALIZED STRINGS WITH NAME SUPPORT ─────────────────────────────────
+
+const ORDER_STATUS_TEXTS: Record<string, { title: (n: string) => LocalizedText; body: (n: string) => LocalizedText; icon: string }> = {
+  confirmed: {
+    title: (n) => ({ en: `Order Confirmed, ${n}! ✅`, ar: `تأكد طلبك يا ${n}! ✅`, ku: `${n}، داواکاریەکەت پشتڕاست کرا! ✅` }),
+    body: (n) => ({ en: `${n}, your order is confirmed! We're getting it ready 🎉`, ar: `${n}، طلبك مؤكد! نحضّره لك بكل حب 🎉`, ku: `${n}، داواکاریەکەت پشتڕاست کرا! بۆت ئامادەی دەکەین 🎉` }),
+    icon: "📦",
+  },
+  preparing: {
+    title: (n) => ({ en: `Packing your goodies, ${n}! 🎁`, ar: `نجهّز طلبك يا ${n}! 🎁`, ku: `${n}، بەرهەمەکانت ئامادە دەکەین! 🎁` }),
+    body: (n) => ({ en: `Hang tight ${n}! Your products are being packed with love ✨`, ar: `استنى شوية ${n}! منتجاتك تنلف بكل حب ✨`, ku: `${n} کەمێک چاوەڕوان بە! بەرهەمەکانت بە خۆشەویستی دەپێچرێنەوە ✨` }),
+    icon: "🎁",
+  },
+  shipped: {
+    title: (n) => ({ en: `On the way, ${n}! 🚚`, ar: `في الطريق إليك يا ${n}! 🚚`, ku: `${n}، لە ڕێگایە! 🚚` }),
+    body: (n) => ({ en: `${n}, your beauty essentials are heading your way! 💅`, ar: `${n}، منتجاتك الحلوة في طريقها إليك! 💅`, ku: `${n}، بەرهەمە جوانەکانت لە ڕێگان بۆ لات! 💅` }),
+    icon: "🚚",
+  },
+  out_for_delivery: {
+    title: (n) => ({ en: `Almost there, ${n}! 📍`, ar: `وصلنا تقريباً يا ${n}! 📍`, ku: `${n}، نزیک بووینەتەوە! 📍` }),
+    body: (n) => ({ en: `${n}, your order is super close — keep an eye out! 👀`, ar: `${n}، طلبك قريب جداً — خلّي عينك عليه! 👀`, ku: `${n}، داواکاریەکەت زۆر نزیکە — سەیری بکە! 👀` }),
+    icon: "📍",
+  },
+  delivered: {
+    title: (n) => ({ en: `Delivered! Enjoy, ${n} 🎉`, ar: `وصل طلبك يا ${n}! 🎉`, ku: `${n}، گەیشت! خۆشت بێت 🎉` }),
+    body: (n) => ({ en: `${n}, your order has arrived — time to unbox and glow! ✨`, ar: `${n}، طلبك وصل — وقت تفتحيه وتتألقي! ✨`, ku: `${n}، داواکاریەکەت گەیشت — کاتی کردنەوە و درەوشانەوەیە! ✨` }),
+    icon: "🎉",
+  },
+  cancelled: {
+    title: (n) => ({ en: `Order Cancelled, ${n} ❌`, ar: `تم إلغاء طلبك يا ${n} ❌`, ku: `${n}، داواکاری هەڵوەشێنرایەوە ❌` }),
+    body: (n) => ({ en: `${n}, your order was cancelled. Need help? We're here for you!`, ar: `${n}، طلبك تم إلغاؤه. محتاج مساعدة؟ إحنا هنا!`, ku: `${n}، داواکاریەکەت هەڵوەشایەوە. یارمەتیت دەوێت؟ لێرەین!` }),
+    icon: "❌",
+  },
+};
+
+const ABANDONED_CART_TEMPLATES: { title: (n: string) => LocalizedText; body: (n: string) => LocalizedText }[] = [
+  {
+    title: (n) => ({ en: `${n}, you left something behind! 🛒`, ar: `${n}، نسيتي شي بالسلة! 🛒`, ku: `${n}، شتێکت لە سەبەتەکەت بیرچووە! 🛒` }),
+    body: (n) => ({ en: `Your cart misses you ${n} 😢 Come back before your items run out!`, ar: `سلتك مشتاقتلك ${n} 😢 ارجعي قبل ما المنتجات تخلص!`, ku: `سەبەتەکەت بیری لێت دەچێتەوە ${n} 😢 بگەڕێرەوە پێش ئەوەی بەرهەمەکان تەواو بن!` }),
+  },
+  {
+    title: (n) => ({ en: `Psst... ${n}! Your cart is lonely 💔`, ar: `هي ${n}! سلتك وحيدة 💔`, ku: `${n}! سەبەتەکەت تەنیایە 💔` }),
+    body: (n) => ({ en: `${n}, those products won't wait forever! Grab them now 🏃‍♀️`, ar: `${n}، المنتجات ما راح تنطرك للأبد! اطلبيها هسة 🏃‍♀️`, ku: `${n}، بەرهەمەکان هەتا هەتایە چاوەڕێت ناکەن! ئێستا بیکڕە 🏃‍♀️` }),
+  },
+  {
+    title: (n) => ({ en: `${n}, your cart is giving you the look 👀`, ar: `${n}، سلتك تطالعك 👀`, ku: `${n}، سەبەتەکەت سەیرت دەکات 👀` }),
+    body: (n) => ({ en: `Don't ghost your cart, ${n}! Your picks are still waiting 💅`, ar: `لا تطنشي سلتك يا ${n}! اختياراتك لسه تنتظرك 💅`, ku: `سەبەتەکەت بەجێ مەهێڵە ${n}! هەڵبژاردەکانت هێشتا چاوەڕێن 💅` }),
+  },
+];
+
+const WELCOME = {
+  title: (n: string): LocalizedText => ({ en: `Welcome to ELARA, ${n}! 💜`, ar: `أهلاً بيك في ELARA يا ${n}! 💜`, ku: `بەخێربێیت بۆ ELARA، ${n}! 💜` }),
+  body: (n: string): LocalizedText => ({ en: `${n}, your beauty journey starts here! Explore premium products curated just for you ✨`, ar: `${n}، رحلتك الجمالية تبدأ هنا! اكتشفي منتجات مميزة مختارة خصيصاً لك ✨`, ku: `${n}، گەشتی جوانیت لێرەوە دەست پێدەکات! بەرهەمە تایبەتەکان ببینە ✨` }),
+};
+
+const FEEDBACK = {
+  title: (n: string): LocalizedText => ({ en: `${n}, how was your order? ⭐`, ar: `${n}، شلون كان طلبك؟ ⭐`, ku: `${n}، داواکاریەکەت چۆن بوو؟ ⭐` }),
+  body: (n: string): LocalizedText => ({ en: `We'd love your feedback, ${n}! Rate your experience 🙏`, ar: `نحب نسمع رأيك يا ${n}! قيّمي تجربتك 🙏`, ku: `${n}، ئەزموونەکەت هەڵبسەنگێنە 🙏` }),
+};
+
+const FREE_DELIVERY = {
+  title: (n: string): LocalizedText => ({ en: `${n}, SO close to FREE delivery! 🚚`, ar: `${n}، قريب جداً من التوصيل المجاني! 🚚`, ku: `${n}، زۆر نزیکی گەیاندنی بەخۆڕاییت! 🚚` }),
+  bodyTemplate: (n: string): LocalizedText => ({ en: `${n}, add just {{amount}} IQD more for FREE delivery! 🎯`, ar: `${n}، ضيفي بس {{amount}} دينار وتوصيلك مجاني! 🎯`, ku: `${n}، تەنها {{amount}} دینار زیاد بکە و گەیاندنت بەخۆڕایی بێت! 🎯` }),
+};
+
+const DAILY_OFFERS = {
+  title: { en: "Today's Deals Are 🔥", ar: "عروض اليوم ناااار 🔥", ku: "ئۆفەرەکانی ئەمڕۆ ئاگرن 🔥" } as LocalizedText,
+  bodyMultiple: { en: "{{count}} exclusive offers just dropped — don't sleep on these! 💅", ar: "{{count}} عروض حصرية نزلت — لا تطوفك! 💅", ku: "{{count}} ئۆفەری تایبەت دابەزین — لەدەست مەدەن! 💅" } as LocalizedText,
+  bodySingle: { en: "{{title}} — Save {{discount}} today only! Shop now 🏃‍♀️", ar: "{{title}} — وفّري {{discount}} اليوم بس! 🏃‍♀️", ku: "{{title}} — {{discount}} ئەمڕۆ داشکاندن! 🏃‍♀️" } as LocalizedText,
+};
+
+const REORDER = {
+  title: (n: string): LocalizedText => ({ en: `${n}, time to restock? 🔄`, ar: `${n}، وقت تعيدي الطلب؟ 🔄`, ku: `${n}، کاتی نوێکردنەوەیە؟ 🔄` }),
+  body: (n: string): LocalizedText => ({ en: `It's been a month, ${n}! Reorder your faves + FREE delivery on 40K+ IQD 💕`, ar: `صار شهر يا ${n}! اطلبي مفضلاتك + توصيل مجاني فوق 40 ألف 💕`, ku: `مانگێکە ${n}! بەرهەمە خۆشەویستەکانت دووبارە داوا بکە + گەیاندنی بەخۆڕایی 💕` }),
+};
 
 // ═══════════════════════════════════════════════════════════════════════
 // ORDER STATUS (instant — no cap, no quiet hours)
@@ -231,15 +285,16 @@ async function handleOrderStatusChange(sb: ReturnType<typeof createClient>, orde
   const { data: order } = await sb.from("orders").select("user_id, id, total").eq("id", orderId).single();
   if (!order) return { handled: false };
 
-  const lang = await getUserLang(sb, order.user_id);
+  const [lang, firstName] = await Promise.all([getUserLang(sb, order.user_id), getUserFirstName(sb, order.user_id)]);
+  const name = firstName || (lang === "ar" ? "عزيزي" : lang === "ku" ? "خۆشەویست" : "there");
   const short = orderId.slice(0, 8).toUpperCase();
 
-  await saveNotif(sb, order.user_id, tl(info.title, lang), `${tl(info.body, lang)} (#${short})`, "order", info.icon, "/orders", undefined, { order_id: orderId, status: newStatus });
-  await sendPushViaOneSignal({ title: tl(info.title, lang), body: `${tl(info.body, lang)} (#${short})`, icon: info.icon, link_url: "/orders", user_ids: [order.user_id] });
+  await saveNotif(sb, order.user_id, tl(info.title(name), lang), `${tl(info.body(name), lang)} (#${short})`, "order", info.icon, "/orders", undefined, { order_id: orderId, status: newStatus });
+  await sendPushViaOneSignal({ title: tl(info.title(name), lang), body: `${tl(info.body(name), lang)} (#${short})`, icon: info.icon, link_url: "/orders", user_ids: [order.user_id] });
 
   if (newStatus === "delivered") {
     await sb.from("notifications").insert({
-      user_id: order.user_id, title: tl(FEEDBACK.title, lang), body: `${tl(FEEDBACK.body, lang)} (#${short})`,
+      user_id: order.user_id, title: tl(FEEDBACK.title(name), lang), body: `${tl(FEEDBACK.body(name), lang)} (#${short})`,
       type: "feedback", icon: "⭐", link_url: "/orders",
       metadata: { order_id: orderId, scheduled_feedback: true, deliver_after: new Date(Date.now() + 2 * 3600000).toISOString() },
       is_read: true,
@@ -256,9 +311,10 @@ async function handleOrderStatusChange(sb: ReturnType<typeof createClient>, orde
 async function handleWelcome(sb: ReturnType<typeof createClient>, userId: string) {
   const { data: ex } = await sb.from("notifications").select("id").eq("user_id", userId).eq("type", "welcome").limit(1);
   if (ex && ex.length > 0) return { sent: false };
-  const lang = await getUserLang(sb, userId);
-  await saveNotif(sb, userId, tl(WELCOME.title, lang), tl(WELCOME.body, lang), "welcome", "💜", "/categories");
-  await sendPushViaOneSignal({ title: tl(WELCOME.title, lang), body: tl(WELCOME.body, lang), icon: "💜", link_url: "/categories", user_ids: [userId] });
+  const [lang, firstName] = await Promise.all([getUserLang(sb, userId), getUserFirstName(sb, userId)]);
+  const name = firstName || (lang === "ar" ? "عزيزي" : lang === "ku" ? "خۆشەویست" : "gorgeous");
+  await saveNotif(sb, userId, tl(WELCOME.title(name), lang), tl(WELCOME.body(name), lang), "welcome", "💜", "/categories");
+  await sendPushViaOneSignal({ title: tl(WELCOME.title(name), lang), body: tl(WELCOME.body(name), lang), icon: "💜", link_url: "/categories", user_ids: [userId] });
   return { sent: true };
 }
 
@@ -284,14 +340,22 @@ async function handleFeedbackReminders(sb: ReturnType<typeof createClient>) {
   if (toSend.length === 0) return { sent: 0 };
 
   const uids = [...new Set(toSend.map(o => o.user_id))];
-  const ulangs = await getUserLangsMap(sb, uids);
+  const userInfos = await getUserInfoMap(sb, uids);
 
   for (const o of toSend) {
-    const lang = ulangs[o.user_id] || "en";
+    const info = userInfos[o.user_id] || { lang: "en" as Lang, name: "" };
+    const name = info.name || (info.lang === "ar" ? "عزيزي" : info.lang === "ku" ? "خۆشەویست" : "there");
     const short = o.id.slice(0, 8).toUpperCase();
-    await saveNotif(sb, o.user_id, tl(FEEDBACK.title, lang), `${tl(FEEDBACK.body, lang)} (#${short})`, "feedback", "⭐", "/orders", undefined, { order_id: o.id, feedback_sent: "true" });
+    await saveNotif(sb, o.user_id, tl(FEEDBACK.title(name), info.lang), `${tl(FEEDBACK.body(name), info.lang)} (#${short})`, "feedback", "⭐", "/orders", undefined, { order_id: o.id, feedback_sent: "true" });
   }
-  await sendLocalizedPush(FEEDBACK.title, FEEDBACK.body, ulangs, { icon: "⭐", link_url: "/orders" });
+
+  const ulangs: Record<string, Lang> = {};
+  for (const [k, v] of Object.entries(userInfos)) ulangs[k] = v.lang;
+  await sendLocalizedPush(
+    { en: "How was your order? ⭐", ar: "شلون كان طلبك؟ ⭐", ku: "داواکاریەکەت چۆن بوو؟ ⭐" },
+    { en: "We'd love your feedback! Rate your experience 🙏", ar: "نحب نسمع رأيك! قيّمي تجربتك 🙏", ku: "ئەزموونەکەت هەڵبسەنگێنە 🙏" },
+    ulangs, { icon: "⭐", link_url: "/orders" }
+  );
   return { sent: toSend.length };
 }
 
@@ -299,7 +363,7 @@ async function handleFeedbackReminders(sb: ReturnType<typeof createClient>) {
 // SCHEDULED NOTIFICATIONS (respect cap + quiet hours)
 // ═══════════════════════════════════════════════════════════════════════
 
-// ── OFFERS REMINDER (2 PM & 9 PM Baghdad = slot "afternoon" & "evening2")
+// ── OFFERS REMINDER (broadcast — no name needed)
 async function handleOffersReminder(sb: ReturnType<typeof createClient>, slot: string) {
   const today = getBaghdadDate();
   const slotKey = `offers_${slot}_${today}`;
@@ -327,7 +391,7 @@ async function handleOffersReminder(sb: ReturnType<typeof createClient>, slot: s
   return { sent: 1, broadcast: true };
 }
 
-// ── FREE DELIVERY HINT (once per day, targeted)
+// ── FREE DELIVERY HINT (targeted, personalized with name)
 async function handleFreeDelivery(sb: ReturnType<typeof createClient>) {
   const oneDayAgo = new Date(Date.now() - 24 * 3600000).toISOString();
 
@@ -351,25 +415,32 @@ async function handleFreeDelivery(sb: ReturnType<typeof createClient>) {
   const filtered = toNotify.filter(([u]) => eligible.has(u));
   if (filtered.length === 0) return { sent: 0 };
 
-  const ulangs = await getUserLangsMap(sb, filtered.map(([u]) => u));
+  const userInfos = await getUserInfoMap(sb, filtered.map(([u]) => u));
 
   for (const [uid, total] of filtered) {
-    const lang = ulangs[uid] || "en";
+    const info = userInfos[uid] || { lang: "en" as Lang, name: "" };
+    const name = info.name || (info.lang === "ar" ? "حبيبي" : info.lang === "ku" ? "خۆشەویست" : "gorgeous");
     const rem = (40000 - total).toLocaleString();
-    await saveNotif(sb, uid, tl(FREE_DELIVERY.title, lang), tTemplate(FREE_DELIVERY.bodyTemplate, lang, { amount: rem }), "free_delivery_hint", "🚚", "/cart");
+    const bodyLoc = FREE_DELIVERY.bodyTemplate(name);
+    await saveNotif(sb, uid, tl(FREE_DELIVERY.title(name), info.lang), tTemplate(bodyLoc, info.lang, { amount: rem }), "free_delivery_hint", "🚚", "/cart");
   }
 
-  await sendLocalizedPush(FREE_DELIVERY.title, { en: "You're SO close to free delivery — add a little more! 🎯", ar: "قريب جداً من التوصيل المجاني — ضيفي شوية! 🎯", ku: "زۆر نزیکی گەیاندنی بەخۆڕاییت — کەمێک زیاد بکە! 🎯" }, ulangs, { icon: "🚚", link_url: "/cart" });
+  const ulangs: Record<string, Lang> = {};
+  for (const [k, v] of Object.entries(userInfos)) ulangs[k] = v.lang;
+  await sendLocalizedPush(
+    { en: "SO close to FREE delivery! 🚚", ar: "قريب جداً من التوصيل المجاني! 🚚", ku: "زۆر نزیکی گەیاندنی بەخۆڕاییت! 🚚" },
+    { en: "Add a little more for free delivery! 🎯", ar: "ضيفي شوية وتوصيلك مجاني! 🎯", ku: "کەمێک زیاد بکە و گەیاندنت بەخۆڕایی بێت! 🎯" },
+    ulangs, { icon: "🚚", link_url: "/cart" }
+  );
 
   return { sent: filtered.length };
 }
 
-// ── AI SEARCH RECOMMENDATIONS (targeted, cap-aware)
+// ── AI SEARCH RECOMMENDATIONS (targeted, cap-aware, name-personalized)
 async function handleAIRecommendations(sb: ReturnType<typeof createClient>) {
   const KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!KEY) return { sent: 0 };
 
-  const oneDayAgo = new Date(Date.now() - 24 * 3600000).toISOString();
   const { data: carts } = await sb.from("cart_items").select("user_id, products(title, slug, brands(name))").gte("updated_at", new Date(Date.now() - 48 * 3600000).toISOString());
   if (!carts || carts.length === 0) return { sent: 0 };
 
@@ -382,7 +453,6 @@ async function handleAIRecommendations(sb: ReturnType<typeof createClient>) {
     if (p?.brands?.name) userProds[u].brands.push(p.brands.name);
   }
 
-  // Check recent AI notifications (12h gap between AI recs)
   const twelveHAgo = new Date(Date.now() - 12 * 3600000).toISOString();
   const { data: recentAI } = await sb.from("notifications").select("user_id").eq("type", "ai_recommendation").gte("created_at", twelveHAgo);
   const recentSet = new Set((recentAI || []).map(n => n.user_id));
@@ -394,17 +464,18 @@ async function handleAIRecommendations(sb: ReturnType<typeof createClient>) {
   const toProcess = candidates.filter(u => eligible.has(u)).slice(0, 15);
   if (toProcess.length === 0) return { sent: 0 };
 
-  const ulangs = await getUserLangsMap(sb, toProcess);
+  const userInfos = await getUserInfoMap(sb, toProcess);
 
   const langInstr: Record<Lang, string> = {
-    en: "Write in English. Friendly, warm, slightly playful.",
-    ar: "Write in Iraqi Arabic (عراقي). Warm, funny sometimes. Use يا حلوة, يلا, هيا.",
-    ku: "Write in Kurdish Sorani. Warm and friendly with natural expressions.",
+    en: "Write in English. Call user by their first name. Be warm, witty, sometimes funny — like a best friend who's also a beauty expert.",
+    ar: "Write in Iraqi Arabic (عراقي). Call user by their first name. Be warm, catchy, sometimes funny. Use يلا, هيا, يا [name].",
+    ku: "Write in Kurdish Sorani. Call user by their first name. Be warm, friendly, catchy with natural Kurdish expressions.",
   };
 
   let sent = 0;
   for (const uid of toProcess) {
-    const lang = ulangs[uid] || "en";
+    const info = userInfos[uid] || { lang: "en" as Lang, name: "" };
+    const name = info.name || (info.lang === "ar" ? "حبيبي" : info.lang === "ku" ? "خۆشەویست" : "gorgeous");
     const prods = userProds[uid];
     const titles = [...new Set(prods.titles)].slice(0, 3).join(", ");
     const brands = [...new Set(prods.brands)].slice(0, 3).join(", ");
@@ -416,8 +487,8 @@ async function handleAIRecommendations(sb: ReturnType<typeof createClient>) {
         body: JSON.stringify({
           model: "google/gemini-2.5-flash-lite",
           messages: [
-            { role: "system", content: `You're ELARA's notification writer for a beauty app in Iraq. ${langInstr[lang]} Title max 40 chars, body max 100 chars. Be professional but warm — like a cool friend who knows beauty.` },
-            { role: "user", content: `User interested in: ${titles}. Brands: ${brands || "various"}. Write in ${lang === "ar" ? "Iraqi Arabic" : lang === "ku" ? "Kurdish Sorani" : "English"}.` },
+            { role: "system", content: `You're ELARA's notification writer. ${langInstr[info.lang]} The user's name is "${name}". Include their name naturally in title or body. Title max 40 chars, body max 100 chars. Make it memorable, catchy, sometimes cheeky or funny — something they'd screenshot and share.` },
+            { role: "user", content: `User "${name}" is interested in: ${titles}. Brands: ${brands || "various"}. Write a personalized push notification in ${info.lang === "ar" ? "Iraqi Arabic" : info.lang === "ku" ? "Kurdish Sorani" : "English"}.` },
           ],
           tools: [{ type: "function", function: { name: "notif", description: "Create notification", parameters: { type: "object", properties: { title: { type: "string" }, body: { type: "string" } }, required: ["title", "body"], additionalProperties: false } } }],
           tool_choice: { type: "function", function: { name: "notif" } },
@@ -426,7 +497,7 @@ async function handleAIRecommendations(sb: ReturnType<typeof createClient>) {
       if (!res.ok) continue;
       const d = await res.json();
       const tc = d.choices?.[0]?.message?.tool_calls?.[0];
-      let n = { title: "Still thinking? ✨", body: "Your favorites are waiting at ELARA!" };
+      let n = { title: `${name}, still thinking? ✨`, body: `Your favorites are waiting at ELARA, ${name}!` };
       if (tc?.function?.arguments) try { n = JSON.parse(tc.function.arguments); } catch {}
 
       await saveNotif(sb, uid, n.title, n.body, "ai_recommendation", "✨", `/product/${prods.slugs[0]}`);
@@ -438,7 +509,7 @@ async function handleAIRecommendations(sb: ReturnType<typeof createClient>) {
   return { sent };
 }
 
-// ── AI SKINCARE TIP
+// ── AI SKINCARE TIP (broadcast)
 async function handleSkincareTip(sb: ReturnType<typeof createClient>, slot: string) {
   const today = getBaghdadDate();
   const slotKey = `skincare_${slot}_${today}`;
@@ -459,8 +530,8 @@ async function handleSkincareTip(sb: ReturnType<typeof createClient>, slot: stri
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-lite",
         messages: [
-          { role: "system", content: `You're ELARA's skincare expert in Iraq. Write a quick, useful skincare tip as a push notification in 3 languages. Consider ${month} weather in Iraq. Be scientific but accessible. Friendly and warm, sometimes witty. Title max 35 chars, body max 110 chars each.` },
-          { role: "user", content: `Skincare tip for ${dayName}, ${month}. Slot: ${slot}. Make it unique and practical.` },
+          { role: "system", content: `You're ELARA's skincare expert in Iraq. Write a push notification skincare tip in 3 languages. Consider ${month} weather in Iraq/Kurdistan. Be scientific but fun — like that one friend who's a dermatologist but also hilarious. Sometimes use humor, surprising facts, or playful tone. Title max 35 chars, body max 110 chars each.` },
+          { role: "user", content: `Skincare tip for ${dayName}, ${month}. Slot: ${slot}. Make it catchy, memorable, and shareable!` },
         ],
         tools: [{ type: "function", function: { name: "tip", description: "Skincare tip in 3 languages", parameters: { type: "object", properties: { title_en: { type: "string" }, body_en: { type: "string" }, title_ar: { type: "string" }, body_ar: { type: "string" }, title_ku: { type: "string" }, body_ku: { type: "string" } }, required: ["title_en", "body_en", "title_ar", "body_ar", "title_ku", "body_ku"], additionalProperties: false } } }],
         tool_choice: { type: "function", function: { name: "tip" } },
@@ -482,7 +553,7 @@ async function handleSkincareTip(sb: ReturnType<typeof createClient>, slot: stri
   } catch (e) { console.warn("Skincare tip error:", e); return { sent: 0 }; }
 }
 
-// ── DAILY DOSE FROM ELARA (health/skin viral tips)
+// ── DAILY DOSE FROM ELARA
 async function handleDailyDose(sb: ReturnType<typeof createClient>, slot: string) {
   const today = getBaghdadDate();
   const slotKey = `daily_dose_${slot}_${today}`;
@@ -502,8 +573,8 @@ async function handleDailyDose(sb: ReturnType<typeof createClient>, slot: string
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-lite",
         messages: [
-          { role: "system", content: `You're ELARA's wellness expert. Write a "Daily Dose from ELARA" — a viral-worthy health/beauty tip. Can be funny, surprising, or mind-blowing. Think TikTok-worthy facts. Must be accurate. Write in 3 languages (English, Iraqi Arabic, Kurdish Sorani). Title max 35 chars, body max 110 chars. Be warm, sometimes humorous.` },
-          { role: "user", content: `Daily dose for ${month}, slot: ${slot}. Make it shareable and interesting!` },
+          { role: "system", content: `You're ELARA's wellness expert. Write a "Daily Dose from ELARA" — a viral-worthy health/beauty tip. Make it TikTok-level catchy: surprising, funny, mind-blowing, or "wait WHAT?!" moments. Must be accurate. Write in 3 languages (English, Iraqi Arabic عراقي, Kurdish Sorani). Title max 35 chars, body max 110 chars. Be that friend who drops random beauty gems at brunch.` },
+          { role: "user", content: `Daily dose for ${month}, slot: ${slot}. Make it the kind of tip people text their friends about!` },
         ],
         tools: [{ type: "function", function: { name: "dose", description: "Daily dose in 3 languages", parameters: { type: "object", properties: { title_en: { type: "string" }, body_en: { type: "string" }, title_ar: { type: "string" }, body_ar: { type: "string" }, title_ku: { type: "string" }, body_ku: { type: "string" } }, required: ["title_en", "body_en", "title_ar", "body_ar", "title_ku", "body_ku"], additionalProperties: false } } }],
         tool_choice: { type: "function", function: { name: "dose" } },
@@ -525,7 +596,7 @@ async function handleDailyDose(sb: ReturnType<typeof createClient>, slot: string
   } catch (e) { console.warn("Daily dose error:", e); return { sent: 0 }; }
 }
 
-// ── DID YOU KNOW? (beauty research facts)
+// ── DID YOU KNOW?
 async function handleDidYouKnow(sb: ReturnType<typeof createClient>) {
   const today = getBaghdadDate();
   const slotKey = `dyk_${today}`;
@@ -543,8 +614,8 @@ async function handleDidYouKnow(sb: ReturnType<typeof createClient>) {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-lite",
         messages: [
-          { role: "system", content: `You're ELARA's science communicator. Write a "Did You Know?" notification about a fascinating, recent beauty/skincare research finding. Must be scientifically accurate and cite a real concept. Make it mind-blowing and attractive. Write in 3 languages (English, Iraqi Arabic, Kurdish Sorani). Title should start with "Did you know?" or equivalent. Title max 35 chars, body max 120 chars.` },
-          { role: "user", content: `Write today's "Did you know?" fact. Make it something most people don't know about skincare/beauty science.` },
+          { role: "system", content: `You're ELARA's science communicator. Write a "Did You Know?" about a fascinating beauty/skincare research finding. Must be scientifically accurate and mind-blowing. Make people go "NO WAY!" Write in 3 languages (English, Iraqi Arabic عراقي, Kurdish Sorani). Title should start with "Did you know?" or equivalent. Title max 35 chars, body max 120 chars. Be entertaining and educational.` },
+          { role: "user", content: `Write today's "Did you know?" fact. Something most people don't know — the kind of fact you'd share at dinner.` },
         ],
         tools: [{ type: "function", function: { name: "dyk", description: "Did you know fact in 3 languages", parameters: { type: "object", properties: { title_en: { type: "string" }, body_en: { type: "string" }, title_ar: { type: "string" }, body_ar: { type: "string" }, title_ku: { type: "string" }, body_ku: { type: "string" } }, required: ["title_en", "body_en", "title_ar", "body_ar", "title_ku", "body_ku"], additionalProperties: false } } }],
         tool_choice: { type: "function", function: { name: "dyk" } },
@@ -566,7 +637,7 @@ async function handleDidYouKnow(sb: ReturnType<typeof createClient>) {
   } catch (e) { console.warn("DYK error:", e); return { sent: 0 }; }
 }
 
-// ── ABANDONED CART (targeted, cap-aware)
+// ── ABANDONED CART (targeted, cap-aware, name-personalized, rotating templates)
 async function handleAbandonedCarts(sb: ReturnType<typeof createClient>) {
   const threeH = new Date(Date.now() - 3 * 3600000).toISOString();
   const oneD = new Date(Date.now() - 24 * 3600000).toISOString();
@@ -584,12 +655,23 @@ async function handleAbandonedCarts(sb: ReturnType<typeof createClient>) {
   toNotify = toNotify.filter(u => eligible.has(u));
   if (toNotify.length === 0) return { sent: 0 };
 
-  const ulangs = await getUserLangsMap(sb, toNotify);
+  const userInfos = await getUserInfoMap(sb, toNotify);
+  const templateIdx = Math.floor(Date.now() / 86400000) % ABANDONED_CART_TEMPLATES.length;
+  const template = ABANDONED_CART_TEMPLATES[templateIdx];
+
   for (const uid of toNotify) {
-    const lang = ulangs[uid] || "en";
-    await saveNotif(sb, uid, tl(ABANDONED_CART.title, lang), tl(ABANDONED_CART.body, lang), "abandoned_cart", "🛒", "/cart");
+    const info = userInfos[uid] || { lang: "en" as Lang, name: "" };
+    const name = info.name || (info.lang === "ar" ? "حبيبي" : info.lang === "ku" ? "خۆشەویست" : "gorgeous");
+    await saveNotif(sb, uid, tl(template.title(name), info.lang), tl(template.body(name), info.lang), "abandoned_cart", "🛒", "/cart");
   }
-  await sendLocalizedPush(ABANDONED_CART.title, ABANDONED_CART.body, ulangs, { icon: "🛒", link_url: "/cart" });
+
+  const ulangs: Record<string, Lang> = {};
+  for (const [k, v] of Object.entries(userInfos)) ulangs[k] = v.lang;
+  await sendLocalizedPush(
+    template.title(""),
+    template.body(""),
+    ulangs, { icon: "🛒", link_url: "/cart" }
+  );
   return { sent: toNotify.length };
 }
 
@@ -616,21 +698,28 @@ async function handlePriceDrops(sb: ReturnType<typeof createClient>) {
     const filtered = uids.filter(u => eligible.has(u));
     if (filtered.length === 0) continue;
 
-    const ulangs = await getUserLangsMap(sb, filtered);
-    const tit: LocalizedText = { en: `Price Drop! ${disc}% OFF 💰`, ar: `انخفض السعر! ${disc}% خصم 💰`, ku: `نرخ کەمبووەتەوە! ${disc}% داشکاندن 💰` };
-    const bod: LocalizedText = { en: `${p.title} is now ${p.price.toLocaleString()} IQD 🏃‍♀️`, ar: `${p.title} صار ${p.price.toLocaleString()} دينار 🏃‍♀️`, ku: `${p.title} ئێستا ${p.price.toLocaleString()} دینارە 🏃‍♀️` };
+    const userInfos = await getUserInfoMap(sb, filtered);
 
     for (const uid of filtered) {
-      const lang = ulangs[uid] || "en";
-      await saveNotif(sb, uid, tl(tit, lang), tl(bod, lang), "price_drop", "💰", `/product/${p.slug}`, undefined, { product_id: p.id });
+      const info = userInfos[uid] || { lang: "en" as Lang, name: "" };
+      const name = info.name || "";
+      const namePrefix = name ? `${name}, ` : "";
+      const tit: LocalizedText = { en: `${namePrefix}Price Drop! ${disc}% OFF 💰`, ar: `${namePrefix}انخفض السعر! ${disc}% خصم 💰`, ku: `${namePrefix}نرخ کەمبووەتەوە! ${disc}% 💰` };
+      const bod: LocalizedText = { en: `${p.title} is now ${p.price.toLocaleString()} IQD — grab it! 🏃‍♀️`, ar: `${p.title} صار ${p.price.toLocaleString()} دينار — لا تفوتك! 🏃‍♀️`, ku: `${p.title} ئێستا ${p.price.toLocaleString()} دینارە — لەدەست مەدە! 🏃‍♀️` };
+      await saveNotif(sb, uid, tl(tit, info.lang), tl(bod, info.lang), "price_drop", "💰", `/product/${p.slug}`, undefined, { product_id: p.id });
     }
+
+    const ulangs: Record<string, Lang> = {};
+    for (const [k, v] of Object.entries(userInfos)) ulangs[k] = v.lang;
+    const tit: LocalizedText = { en: `Price Drop! ${disc}% OFF 💰`, ar: `انخفض السعر! ${disc}% خصم 💰`, ku: `نرخ کەمبووەتەوە! ${disc}% 💰` };
+    const bod: LocalizedText = { en: `${p.title} is now ${p.price.toLocaleString()} IQD 🏃‍♀️`, ar: `${p.title} صار ${p.price.toLocaleString()} دينار 🏃‍♀️`, ku: `${p.title} ئێستا ${p.price.toLocaleString()} دینارە 🏃‍♀️` };
     await sendLocalizedPush(tit, bod, ulangs, { icon: "💰", link_url: `/product/${p.slug}` });
     sent += filtered.length;
   }
   return { sent };
 }
 
-// ── REORDER REMINDER
+// ── REORDER REMINDER (targeted, name-personalized)
 async function handleReorder(sb: ReturnType<typeof createClient>) {
   const d30 = new Date(Date.now() - 30 * 86400000).toISOString();
   const d25 = new Date(Date.now() - 25 * 86400000).toISOString();
@@ -648,12 +737,20 @@ async function handleReorder(sb: ReturnType<typeof createClient>) {
   toNotify = toNotify.filter(u => eligible.has(u));
   if (toNotify.length === 0) return { sent: 0 };
 
-  const ulangs = await getUserLangsMap(sb, toNotify);
+  const userInfos = await getUserInfoMap(sb, toNotify);
   for (const uid of toNotify) {
-    const lang = ulangs[uid] || "en";
-    await saveNotif(sb, uid, tl(REORDER.title, lang), tl(REORDER.body, lang), "reorder_reminder", "🔄", "/orders");
+    const info = userInfos[uid] || { lang: "en" as Lang, name: "" };
+    const name = info.name || (info.lang === "ar" ? "حبيبي" : info.lang === "ku" ? "خۆشەویست" : "gorgeous");
+    await saveNotif(sb, uid, tl(REORDER.title(name), info.lang), tl(REORDER.body(name), info.lang), "reorder_reminder", "🔄", "/orders");
   }
-  await sendLocalizedPush(REORDER.title, REORDER.body, ulangs, { icon: "🔄", link_url: "/orders" });
+
+  const ulangs: Record<string, Lang> = {};
+  for (const [k, v] of Object.entries(userInfos)) ulangs[k] = v.lang;
+  await sendLocalizedPush(
+    { en: "Time to restock? 🔄", ar: "وقت تعيدي الطلب؟ 🔄", ku: "کاتی نوێکردنەوەیە؟ 🔄" },
+    { en: "Reorder your faves + FREE delivery on 40K+ IQD 💕", ar: "اطلبي مفضلاتك + توصيل مجاني فوق 40 ألف 💕", ku: "بەرهەمە خۆشەویستەکانت دووبارە داوا بکە 💕" },
+    ulangs, { icon: "🔄", link_url: "/orders" }
+  );
   return { sent: toNotify.length };
 }
 
@@ -682,20 +779,6 @@ async function handleNewOffers(sb: ReturnType<typeof createClient>) {
 // ═══════════════════════════════════════════════════════════════════════
 // SCHEDULED SLOTS
 // ═══════════════════════════════════════════════════════════════════════
-
-/*
-  SLOT SCHEDULE (Baghdad Time):
-  ┌─────────────┬───────────────────────────────────────────────┐
-  │ 10:00 AM    │ Skincare Tip + Daily Dose                     │
-  │ 2:00 PM     │ Offers Reminder + Free Delivery (targeted)    │
-  │ 5:00 PM     │ AI Recommendation + Did You Know?             │
-  │ 8:00 PM     │ Offers Reminder + Skincare Tip                │
-  ├─────────────┼───────────────────────────────────────────────┤
-  │ Continuous   │ Abandoned carts, price drops, new offers      │
-  │ Once/day     │ Reorder reminder, feedback                    │
-  └─────────────┴───────────────────────────────────────────────┘
-  Max 4 targeted per user/day. Broadcasts don't count individually.
-*/
 
 async function runSlotMorning(sb: ReturnType<typeof createClient>) {
   const [skincare, dose] = await Promise.all([
@@ -742,7 +825,6 @@ Deno.serve(async (req) => {
     const { action, ...params } = await req.json();
     let result: Record<string, unknown> = {};
 
-    // Quiet hours check for scheduled actions
     if (["slot_morning", "slot_afternoon", "slot_evening1", "slot_evening2"].includes(action) && isInQuietHours()) {
       return new Response(JSON.stringify({ ok: true, skipped: "quiet_hours", baghdad_hour: getBaghdadHour() }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -750,17 +832,12 @@ Deno.serve(async (req) => {
     }
 
     switch (action) {
-      // Instant (no quiet hours)
       case "order_status_change": result = await handleOrderStatusChange(sb, params.order_id, params.new_status); break;
       case "welcome": result = await handleWelcome(sb, params.user_id); break;
-
-      // Scheduled slots
       case "slot_morning": result = await runSlotMorning(sb); break;
       case "slot_afternoon": result = await runSlotAfternoon(sb); break;
       case "slot_evening1": result = await runSlotEvening1(sb); break;
       case "slot_evening2": result = await runSlotEvening2(sb); break;
-
-      // Individual actions (for manual testing)
       case "offers_reminder": result = await handleOffersReminder(sb, params.slot || "manual"); break;
       case "free_delivery": result = await handleFreeDelivery(sb); break;
       case "ai_recommendations": result = await handleAIRecommendations(sb); break;
@@ -772,8 +849,6 @@ Deno.serve(async (req) => {
       case "feedback_reminders": result = await handleFeedbackReminders(sb); break;
       case "reorder_reminder": result = await handleReorder(sb); break;
       case "new_offers": result = await handleNewOffers(sb); break;
-
-      // Continuous checks (every 30 min)
       case "run_continuous":
         const [aband, newOff, prices] = await Promise.all([
           handleAbandonedCarts(sb),
@@ -782,7 +857,6 @@ Deno.serve(async (req) => {
         ]);
         result = { abandoned_carts: aband, new_offers: newOff, price_drops: prices };
         break;
-
       default:
         return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
