@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { en } from "./translations/en";
 import { ar } from "./translations/ar";
 import { ku } from "./translations/ku";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Language = "en" | "ar" | "ku";
 
@@ -55,6 +56,12 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem("elara-language", lang);
+    // Sync language to profile for backend notifications
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase.from("profiles").update({ language: lang } as any).eq("user_id", user.id).then(() => {});
+      }
+    });
   }, []);
 
   const isRTL = rtlLanguages.includes(language);
