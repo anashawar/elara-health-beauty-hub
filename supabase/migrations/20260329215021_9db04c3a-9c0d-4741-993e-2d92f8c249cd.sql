@@ -1,0 +1,1 @@
+UPDATE app_config SET min_ios_version = '1.1.0', update_message = 'A new version of ELARA is here with exciting features! Please update to continue.', update_message_ar = 'نسخة جديدة من ELARA متوفرة مع ميزات رائعة! يرجى التحديث للمتابعة.', update_message_ku = 'وەشانێکی نوێی ELARA ئامادەیە بە تایبەتمەندییە نوێیەکان! تکایە نوێ بکەرەوە بۆ بەردەوام بوون.' WHERE id = 'main';
