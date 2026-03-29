@@ -90,6 +90,7 @@ const CheckoutPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    void hapticHeavy();
 
     if (!user) {
       console.error("Missing user");
