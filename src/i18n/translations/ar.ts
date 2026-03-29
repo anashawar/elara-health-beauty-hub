@@ -462,6 +462,7 @@ export const ar = {
     koreanSkincare: "عناية كورية بالبشرة",
     underBudget: "بأقل من 15,000 د.ع",
     askElaraAI: "اسأل إيلارا AI بدلاً من ذلك",
+    didYouMean: "هل تقصد",
   },
   install: {
     title: "نزّل إيلارا",

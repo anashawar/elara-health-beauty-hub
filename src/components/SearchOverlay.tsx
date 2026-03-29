@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { Search, X, ArrowRight, Sparkles, Clock, Trash2 } from "lucide-react";
+import { Search, X, ArrowRight, Sparkles, Clock, Trash2, HelpCircle } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import BottomNav from "@/components/layout/BottomNav";
 import { useProducts, useCategories, useBrands, useFormatPrice, concerns } from "@/hooks/useProducts";
@@ -43,6 +43,113 @@ const SearchOverlay = ({ isOpen, onClose, initialQuery }: SearchOverlayProps) =>
 
   const TRENDING_TERMS = ["CeraVe", "Retinol", "Niacinamide", "Collagen", "Hair Serum", "SPF"];
 
+  /* ── Smart search helpers ── */
+
+  // Common misspellings & synonyms map
+  const SYNONYMS: Record<string, string[]> = useMemo(() => ({
+    "moisturizer": ["moisturiser", "mosturizer", "moistrizer", "cream", "lotion", "hydrator"],
+    "sunscreen": ["sunblock", "spf", "sun cream", "sun protection", "suncream"],
+    "cleanser": ["face wash", "facewash", "cleaner", "wash"],
+    "serum": ["essence", "ampoule", "concentrate"],
+    "retinol": ["retinal", "retinoic", "vitamin a", "tretinoin"],
+    "vitamin c": ["vit c", "vitc", "ascorbic acid", "vitamin-c"],
+    "niacinamide": ["niacin", "vitamin b3", "nicotinamide"],
+    "hyaluronic": ["hyaluronic acid", "ha", "hyluronic", "hylaronic"],
+    "salicylic": ["salicylic acid", "bha", "salisilic", "salisylic"],
+    "toner": ["tonic", "tonner"],
+    "exfoliate": ["exfoliator", "exfoliant", "scrub", "peeling", "peel"],
+    "acne": ["pimple", "pimples", "breakout", "breakouts", "zit", "zits", "blemish"],
+    "dark spots": ["hyperpigmentation", "pigmentation", "dark marks", "spots", "melasma"],
+    "wrinkles": ["wrinkle", "fine lines", "anti aging", "anti-aging", "antiaging"],
+    "dry skin": ["dryness", "dehydrated", "flaky", "rough skin"],
+    "oily skin": ["oily", "oiliness", "greasy", "sebum"],
+    "hair loss": ["hair fall", "hairfall", "thinning hair", "baldness", "balding"],
+    "lip": ["lips", "lip balm", "lip care", "chapstick"],
+    "eye cream": ["eye", "under eye", "dark circles", "eye bags", "puffy eyes"],
+    "body lotion": ["body cream", "body moisturizer", "body butter"],
+    "shampoo": ["shampo", "shanpoo", "hair wash"],
+    "conditioner": ["conditoner", "hair conditioner"],
+    "cerave": ["serave", "cerve", "cera ve"],
+    "la roche-posay": ["la roche posay", "laroche", "laroshe", "la rosh", "lrp"],
+    "the ordinary": ["ordinary", "theordinary"],
+    "neutrogena": ["nutrogena", "neutragena", "nuetrogena"],
+    "bioderma": ["bioderm", "bioderme"],
+    "vichy": ["vishy", "vichy"],
+    "eucerin": ["euserin", "eucren"],
+    "cosrx": ["cosrex", "cos rx"],
+  }), []);
+
+  // Levenshtein distance for fuzzy matching
+  function levenshtein(a: string, b: string): number {
+    const m = a.length, n = b.length;
+    if (m === 0) return n;
+    if (n === 0) return m;
+    const dp: number[][] = Array.from({ length: m + 1 }, (_, i) => {
+      const row = new Array(n + 1).fill(0);
+      row[0] = i;
+      return row;
+    });
+    for (let j = 1; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        dp[i][j] = a[i - 1] === b[j - 1]
+          ? dp[i - 1][j - 1]
+          : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+      }
+    }
+    return dp[m][n];
+  }
+
+  // Expand query with synonyms
+  function expandQuery(q: string): string[] {
+    const terms = [q];
+    const qLow = q.toLowerCase();
+    for (const [canonical, aliases] of Object.entries(SYNONYMS)) {
+      if (qLow.includes(canonical) || aliases.some(a => qLow.includes(a))) {
+        terms.push(canonical);
+        terms.push(...aliases);
+      }
+    }
+    return [...new Set(terms)];
+  }
+
+  // Find "Did you mean?" suggestions from brands and popular terms
+  function findDidYouMean(q: string): string | null {
+    if (q.length < 3) return null;
+    const qLow = q.toLowerCase();
+
+    // Check against all brand names and synonym keys
+    const candidates = [
+      ...brands.map(b => b.name),
+      ...Object.keys(SYNONYMS),
+      ...TRENDING_TERMS,
+      ...["moisturizer", "sunscreen", "cleanser", "serum", "toner", "shampoo", "conditioner", "retinol", "vitamin c", "niacinamide", "hyaluronic acid", "salicylic acid"],
+    ];
+
+    let bestMatch: string | null = null;
+    let bestDist = Infinity;
+    const maxDist = Math.max(1, Math.floor(qLow.length * 0.4)); // Allow up to 40% character difference
+
+    for (const candidate of candidates) {
+      const cLow = candidate.toLowerCase();
+      if (cLow === qLow) return null; // Exact match exists, no suggestion needed
+
+      // Check if it starts similarly
+      const dist = levenshtein(qLow, cLow);
+      if (dist < bestDist && dist <= maxDist && dist > 0) {
+        bestDist = dist;
+        bestMatch = candidate;
+      }
+
+      // Also check partial matches (user typed beginning of word)
+      if (cLow.startsWith(qLow) && qLow.length >= 3) {
+        return candidate;
+      }
+    }
+
+    return bestMatch;
+  }
+
   // Debounce search query (300ms)
   const handleQueryChange = useCallback((value: string) => {
     setQuery(value);
@@ -75,6 +182,8 @@ const SearchOverlay = ({ isOpen, onClose, initialQuery }: SearchOverlayProps) =>
     return products.map(p => ({
       product: p,
       searchText: [p.title, p.brand, p.description, p.skin_type, p.application, p.form, p.country_of_origin, ...(p.tags || []), ...(p.benefits || [])].filter(Boolean).join(" ").toLowerCase(),
+      titleLower: (p.title || "").toLowerCase(),
+      brandLower: (p.brand || "").toLowerCase(),
     }));
   }, [products]);
 
@@ -82,8 +191,29 @@ const SearchOverlay = ({ isOpen, onClose, initialQuery }: SearchOverlayProps) =>
     const q = debouncedQuery.toLowerCase();
     if (q.length < 2 && !activeFilter && !priceFilter) return { products: [], categories: [], brands: [] };
 
-    let matchedProducts = searchIndex.filter(({ product: p, searchText }) => {
-      const matchesQuery = q.length >= 2 ? searchText.includes(q) : true;
+    // Expand query with synonyms
+    const expandedTerms = q.length >= 2 ? expandQuery(q) : [];
+
+    let matchedProducts = searchIndex.filter(({ product: p, searchText, titleLower, brandLower }) => {
+      let matchesQuery = true;
+      if (q.length >= 2) {
+        // Direct match
+        matchesQuery = expandedTerms.some(term => searchText.includes(term));
+
+        // Fuzzy match on title and brand if no direct match
+        if (!matchesQuery && q.length >= 3) {
+          const words = titleLower.split(/\s+/);
+          matchesQuery = words.some(w => {
+            if (w.length < 3) return false;
+            const dist = levenshtein(q, w);
+            return dist <= Math.max(1, Math.floor(Math.min(q.length, w.length) * 0.3));
+          });
+          if (!matchesQuery) {
+            const dist = levenshtein(q, brandLower);
+            matchesQuery = dist <= Math.max(1, Math.floor(Math.min(q.length, brandLower.length) * 0.3));
+          }
+        }
+      }
       let matchesPrice = true;
       if (priceFilter === "under15k") matchesPrice = p.price < 15000;
       else if (priceFilter === "15k-30k") matchesPrice = p.price >= 15000 && p.price <= 30000;
@@ -97,15 +227,41 @@ const SearchOverlay = ({ isOpen, onClose, initialQuery }: SearchOverlayProps) =>
         } else { matchesFilter = p.category_slug === activeFilter; }
       }
       return matchesQuery && matchesPrice && matchesFilter;
-    }).map(({ product }) => product);
+    }).map(({ product, searchText, titleLower, brandLower }) => {
+      // Score for relevance sorting
+      let score = 0;
+      if (q.length >= 2) {
+        if (titleLower.includes(q)) score += 10;
+        if (brandLower.includes(q)) score += 8;
+        if (titleLower.startsWith(q)) score += 5;
+        if (brandLower === q) score += 15;
+        // Boost exact word matches
+        const words = titleLower.split(/\s+/);
+        if (words.includes(q)) score += 12;
+      }
+      return { product, score };
+    }).sort((a, b) => b.score - a.score).map(({ product }) => product);
 
     if (q === "budget") matchedProducts = products.filter(p => p.price < 15000).sort((a, b) => a.price - b.price);
     return {
       products: matchedProducts.slice(0, 20),
-      categories: q.length >= 2 ? categories.filter(c => c.name.toLowerCase().includes(q)) : [],
-      brands: q.length >= 2 ? brands.filter(b => b.name.toLowerCase().includes(q)) : [],
+      categories: q.length >= 2 ? categories.filter(c => {
+        const cLow = c.name.toLowerCase();
+        return expandedTerms.some(term => cLow.includes(term)) || (q.length >= 3 && levenshtein(q, cLow) <= 2);
+      }) : [],
+      brands: q.length >= 2 ? brands.filter(b => {
+        const bLow = b.name.toLowerCase();
+        return expandedTerms.some(term => bLow.includes(term)) || (q.length >= 3 && levenshtein(q, bLow) <= Math.max(1, Math.floor(bLow.length * 0.3)));
+      }) : [],
     };
   }, [debouncedQuery, activeFilter, priceFilter, searchIndex, products, categories, brands]);
+
+  // "Did you mean?" suggestion
+  const didYouMean = useMemo(() => {
+    if (debouncedQuery.length < 3) return null;
+    if (filteredResults.products.length > 3) return null; // Good results already
+    return findDidYouMean(debouncedQuery);
+  }, [debouncedQuery, filteredResults.products.length, brands]);
 
   const hasResults = filteredResults.products.length > 0 || filteredResults.categories.length > 0 || filteredResults.brands.length > 0;
   const isSearching = query.length >= 2 || activeFilter || priceFilter;
@@ -217,6 +373,20 @@ const SearchOverlay = ({ isOpen, onClose, initialQuery }: SearchOverlayProps) =>
               {activeFilter && (<span className="text-[10px] bg-primary/10 text-primary font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1">{concerns.find(c => c.id === activeFilter)?.icon || "📂"} {concerns.find(c => c.id === activeFilter)?.name || categories.find(c => c.slug === activeFilter)?.name}<button onClick={() => setActiveFilter(null)}><X className="w-3 h-3" /></button></span>)}
               {priceFilter && (<span className="text-[10px] bg-primary/10 text-primary font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1">💰 {priceFilter}<button onClick={() => setPriceFilter(null)}><X className="w-3 h-3" /></button></span>)}
             </div>
+          )}
+
+          {/* Did you mean? suggestion */}
+          {isSearching && didYouMean && (
+            <button
+              onClick={() => { setQuery(didYouMean); setDebouncedQuery(didYouMean); }}
+              className="flex items-center gap-2 mb-4 px-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl w-full text-left rtl:text-right hover:bg-primary/10 transition-colors"
+            >
+              <HelpCircle className="w-4 h-4 text-primary flex-shrink-0" />
+              <span className="text-sm text-foreground">
+                {t("search.didYouMean") || "Did you mean"}{" "}
+                <span className="font-bold text-primary">{didYouMean}</span>?
+              </span>
+            </button>
           )}
 
           {filteredResults.brands.length > 0 && (<div className="mb-4"><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("categories.brands")}</p>{filteredResults.brands.map(b => (<Link key={b.id} to={`/brand/${b.id}`} onClick={handleResultClick} className="flex items-center justify-between py-2.5 border-b border-border/50"><div className="flex items-center gap-3">{b.logo_url && <img src={b.logo_url} alt={b.name} className="w-10 h-10 rounded-lg object-contain bg-secondary p-1" />}<span className="text-sm font-medium text-foreground">{b.name}</span></div><ArrowRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" /></Link>))}</div>)}
