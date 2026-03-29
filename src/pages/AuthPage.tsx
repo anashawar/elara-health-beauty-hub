@@ -93,7 +93,7 @@ const AuthPage = () => {
     setLoading(true);
     try {
       const fullPhone = countryCode.code + phone.trim().replace(/^0/, "");
-      const body: any = { phone: fullPhone };
+      const body: any = { phone: fullPhone, mode: authMode };
       if (authMode === "signup") {
         body.full_name = fullName.trim();
         body.email = email.trim();
