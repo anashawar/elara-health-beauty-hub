@@ -152,7 +152,7 @@ function SkinScanContent() {
     },
     enabled: !!user?.id,
   });
-  const showMakeupSections = userGender !== "male";
+  const showMakeupSections = userGender?.toLowerCase() !== "male";
   const [useFrontCamera, setUseFrontCamera] = useState(true);
   const [showNativeScanner, setShowNativeScanner] = useState(false);
   const isNative = Capacitor.isNativePlatform();
