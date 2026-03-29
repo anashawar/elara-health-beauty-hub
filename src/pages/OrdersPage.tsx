@@ -13,6 +13,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import OrderRatingDialog from "@/components/orders/OrderRatingDialog";
+import { useAdmin } from "@/hooks/useAdmin";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +52,7 @@ const OrdersPage = () => {
   const [ratingOrderId, setRatingOrderId] = useState<string | null>(null);
   const [, setTick] = useState(0); // force re-render for countdown
   const qc = useQueryClient();
+  const { isAdmin } = useAdmin();
   const prevOrderStatusesRef = useRef<Record<string, string>>({});
 
   const statusConfig: Record<string, { label: string; color: string; step: number }> = {
@@ -91,7 +93,7 @@ const OrdersPage = () => {
         const newRow = payload.new as any;
         const oldRow = payload.old as any;
         // If this order just became delivered, trigger rating popup
-        if (newRow.status === 'delivered' && oldRow.status !== 'delivered' && newRow.user_id === user.id) {
+        if (newRow.status === 'delivered' && oldRow.status !== 'delivered' && newRow.user_id === user.id && !isAdmin) {
           setRatingOrderId(newRow.id);
         }
         qc.invalidateQueries({ queryKey: ["orders", user.id] });
@@ -113,7 +115,7 @@ const OrdersPage = () => {
         .in("order_id", deliveredOrders.map(o => o.id));
       const ratedIds = new Set((rated || []).map((r: any) => r.order_id));
       const unrated = deliveredOrders.find(o => !ratedIds.has(o.id));
-      if (unrated) setRatingOrderId(unrated.id);
+      if (unrated && !isAdmin) setRatingOrderId(unrated.id);
     };
     checkUnrated();
   }, [user, orders]);
