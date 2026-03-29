@@ -5,6 +5,7 @@ import { useApp } from "@/context/AppContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useTabMemoryTracker, getTabRoute, getActiveTab, getTabRoot } from "@/hooks/useTabMemory";
 import type { TabKey } from "@/hooks/useTabMemory";
+import { hapticLight } from "@/lib/haptics";
 
 const BottomNav = memo(() => {
   const location = useLocation();
@@ -21,8 +22,8 @@ const BottomNav = memo(() => {
   /** If tapping the tab you're already in, go to root; otherwise go to last remembered route */
   const handleTabClick = useCallback((tab: TabKey, e: React.MouseEvent) => {
     e.preventDefault();
+    void hapticLight();
     if (activeTab === tab) {
-      // Already in this tab — go to root
       navigate(getTabRoot(tab));
     } else {
       navigate(getTabRoute(tab));
