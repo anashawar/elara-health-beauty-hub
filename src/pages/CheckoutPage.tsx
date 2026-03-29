@@ -13,7 +13,7 @@ import DesktopHeader from "@/components/layout/DesktopHeader";
 import SearchOverlay from "@/components/SearchOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { hapticHeavy, hapticSuccess } from "@/lib/haptics";
+
 import { calculatePoints, useAwardPoints } from "@/hooks/useLoyalty";
 import { getDeliveryFee } from "@/lib/deliveryFee";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
@@ -90,7 +90,6 @@ const CheckoutPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    void hapticHeavy();
 
     if (!user) {
       console.error("Missing user");
@@ -221,7 +220,6 @@ const CheckoutPage = () => {
     }
 
     setSubmitted(true);
-    void hapticSuccess();
     clearCart();
   };
 

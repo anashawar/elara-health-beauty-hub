@@ -13,7 +13,7 @@ import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { hapticLight } from "@/lib/haptics";
+
 import { getDeliveryFee, FREE_DELIVERY_MIN } from "@/lib/deliveryFee";
 import { useActiveOffers, getOfferForProduct } from "@/hooks/useOfferPricing";
 import { calcCouponDiscount, getEligibleSubtotal, calcOfferSavings, getEffectivePrice } from "@/lib/discountRules";
@@ -353,7 +353,7 @@ const CartPage = () => {
                           })()}
                           <div className="flex items-center bg-secondary rounded-xl overflow-hidden border border-border/30">
                             <button
-                              onClick={() => { void hapticLight(); updateQuantity(item.product.id, item.quantity - 1); }}
+                              onClick={() => { updateQuantity(item.product.id, item.quantity - 1); }}
                               className="p-2.5 hover:bg-muted transition-colors active:bg-muted active:scale-90"
                             >
                               {item.quantity === 1 ? (
@@ -364,7 +364,7 @@ const CartPage = () => {
                             </button>
                             <span className="text-sm font-bold text-foreground w-8 text-center tabular-nums">{item.quantity}</span>
                             <button
-                              onClick={() => { void hapticLight(); updateQuantity(item.product.id, item.quantity + 1); }}
+                              onClick={() => { updateQuantity(item.product.id, item.quantity + 1); }}
                               className="p-2.5 hover:bg-muted transition-colors active:bg-muted active:scale-90"
                             >
                               <Plus className="w-3.5 h-3.5 text-foreground" />
