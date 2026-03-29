@@ -8,6 +8,7 @@ import { useFormatPrice } from "@/hooks/useProducts";
 import { useLanguage } from "@/i18n/LanguageContext";
 import type { OfferPricing } from "@/hooks/useOfferPricing";
 import { toast } from "@/components/ui/sonner";
+import { hapticMedium, hapticSuccess } from "@/lib/haptics";
 
 interface ProductCardProps {
   product: ProductWithRelations;
@@ -48,12 +49,14 @@ const ProductCard = memo(({ product, variant = "vertical", offerPricing = null }
       return;
     }
     addToCart(product);
+    void hapticMedium();
     toast.success(t("product.addedToCart") || "Added to cart");
   }, [outOfStock, user, product, addToCart, navigate, t]);
 
   const handleToggleWishlist = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    void hapticSuccess();
     toggleWishlist(product.id);
   }, [product.id, toggleWishlist]);
 
