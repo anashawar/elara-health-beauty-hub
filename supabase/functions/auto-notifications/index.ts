@@ -479,6 +479,425 @@ async function handlePriceDrops(supabase: ReturnType<typeof createClient>) {
   return { sent };
 }
 
+// ─── AI PERSONALIZED SEARCH-BASED RECOMMENDATIONS ────────────────────────
+async function handleSearchBasedRecommendations(supabase: ReturnType<typeof createClient>) {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) {
+    console.warn("LOVABLE_API_KEY not set, skipping AI notifications");
+    return { sent: 0 };
+  }
+
+  // Get users who searched in the last 24h but didn't order
+  const oneDayAgo = new Date(Date.now() - 24 * 3600000).toISOString();
+  const twoDaysAgo = new Date(Date.now() - 48 * 3600000).toISOString();
+
+  // Get users with cart items (proxy for interest/search)
+  const { data: cartUsers } = await supabase
+    .from("cart_items")
+    .select("user_id, product_id, products(title, slug, price, brand_id, brands(name))")
+    .gte("updated_at", twoDaysAgo);
+
+  if (!cartUsers || cartUsers.length === 0) return { sent: 0 };
+
+  // Group by user
+  const userProducts: Record<string, { titles: string[]; slugs: string[]; brandNames: string[] }> = {};
+  for (const item of cartUsers) {
+    const uid = item.user_id;
+    if (!userProducts[uid]) userProducts[uid] = { titles: [], slugs: [], brandNames: [] };
+    const p = item.products as any;
+    if (p?.title) userProducts[uid].titles.push(p.title);
+    if (p?.slug) userProducts[uid].slugs.push(p.slug);
+    if (p?.brands?.name) userProducts[uid].brandNames.push(p.brands.name);
+  }
+
+  // Check who already received a search-based notification today
+  const { data: recentNotifs } = await supabase
+    .from("notifications")
+    .select("user_id")
+    .eq("type", "ai_recommendation")
+    .gte("created_at", oneDayAgo);
+
+  const alreadyNotified = new Set((recentNotifs || []).map((n) => n.user_id));
+  const usersToNotify = Object.entries(userProducts).filter(([uid]) => !alreadyNotified.has(uid));
+
+  if (usersToNotify.length === 0) return { sent: 0 };
+
+  let sent = 0;
+
+  // Process up to 20 users per run to stay within rate limits
+  for (const [userId, products] of usersToNotify.slice(0, 20)) {
+    const uniqueBrands = [...new Set(products.brandNames)].slice(0, 3).join(", ");
+    const uniqueTitles = [...new Set(products.titles)].slice(0, 3).join(", ");
+    const firstSlug = products.slugs[0];
+
+    try {
+      const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-lite",
+          messages: [
+            {
+              role: "system",
+              content: `You are ELARA's notification writer. Write a short, warm push notification (title max 40 chars, body max 100 chars) to remind a user about products they're interested in. Be professional, not pushy. Use beauty/skincare context. Return JSON: {"title":"...","body":"..."}`,
+            },
+            {
+              role: "user",
+              content: `User is interested in: ${uniqueTitles}. Brands: ${uniqueBrands || "various"}. Write a personalized push notification.`,
+            },
+          ],
+          tools: [{
+            type: "function",
+            function: {
+              name: "create_notification",
+              description: "Create a push notification",
+              parameters: {
+                type: "object",
+                properties: {
+                  title: { type: "string", description: "Notification title, max 40 chars" },
+                  body: { type: "string", description: "Notification body, max 100 chars" },
+                },
+                required: ["title", "body"],
+                additionalProperties: false,
+              },
+            },
+          }],
+          tool_choice: { type: "function", function: { name: "create_notification" } },
+        }),
+      });
+
+      if (!aiRes.ok) {
+        console.warn("AI gateway error:", aiRes.status);
+        continue;
+      }
+
+      const aiData = await aiRes.json();
+      const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+      let notif = { title: "Still thinking about it? ✨", body: "Your favorite products are waiting for you at ELARA!" };
+      
+      if (toolCall?.function?.arguments) {
+        try { notif = JSON.parse(toolCall.function.arguments); } catch {}
+      }
+
+      await saveInAppNotification(
+        supabase, userId, notif.title, notif.body,
+        "ai_recommendation", "✨", `/product/${firstSlug}`,
+      );
+
+      await sendPushViaOneSignal({
+        title: notif.title, body: notif.body, icon: "✨",
+        link_url: `/product/${firstSlug}`, user_ids: [userId],
+      });
+
+      sent++;
+      // Small delay to avoid rate limits
+      await new Promise((r) => setTimeout(r, 500));
+    } catch (e) {
+      console.warn("AI notification error for user:", userId, e);
+    }
+  }
+
+  return { sent };
+}
+
+// ─── DAILY OFFERS REMINDER ───────────────────────────────────────────────
+async function handleDailyOffersReminder(supabase: ReturnType<typeof createClient>) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Check if we already sent today's offers reminder
+  const { data: todayReminder } = await supabase
+    .from("notifications")
+    .select("id")
+    .eq("type", "daily_offers")
+    .gte("created_at", `${today}T00:00:00Z`)
+    .is("user_id", null)
+    .limit(1);
+
+  if (todayReminder && todayReminder.length > 0) return { sent: 0, reason: "already_sent_today" };
+
+  // Get active offers
+  const { data: activeOffers } = await supabase
+    .from("offers")
+    .select("id, title, discount_type, discount_value, image_url, link_url")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .limit(3);
+
+  if (!activeOffers || activeOffers.length === 0) return { sent: 0, reason: "no_active_offers" };
+
+  const topOffer = activeOffers[0];
+  const discountText = topOffer.discount_type === "percentage"
+    ? `${topOffer.discount_value}%`
+    : `${topOffer.discount_value.toLocaleString()} IQD`;
+
+  const offerCount = activeOffers.length;
+  const title = `Today's Deals — Up to ${discountText} OFF! 🎯`;
+  const body = offerCount > 1
+    ? `${offerCount} exclusive offers are live now. Don't miss out — shop before they expire!`
+    : `${topOffer.title} — Save ${discountText} today. Limited time only!`;
+
+  // Get all users
+  const { data: allUsers } = await supabase.from("profiles").select("user_id");
+  const userIds = (allUsers || []).map((u) => u.user_id);
+
+  if (userIds.length === 0) return { sent: 0 };
+
+  // Save broadcast in-app notification (null user_id = broadcast)
+  await supabase.from("notifications").insert({
+    user_id: null,
+    title,
+    body,
+    type: "daily_offers",
+    icon: "🎯",
+    link_url: topOffer.link_url || "/collection/offers",
+    image_url: topOffer.image_url || null,
+    metadata: { date: today, offer_ids: activeOffers.map((o) => o.id) },
+  });
+
+  // Push to all
+  await sendPushViaOneSignal({
+    title,
+    body,
+    icon: "🎯",
+    image_url: topOffer.image_url || undefined,
+    link_url: topOffer.link_url || "/collection/offers",
+    user_ids: [], // empty = all subscribed users
+  });
+
+  return { sent: userIds.length };
+}
+
+// ─── FREE DELIVERY REMINDER ─────────────────────────────────────────────
+async function handleFreeDeliveryReminder(supabase: ReturnType<typeof createClient>) {
+  const oneDayAgo = new Date(Date.now() - 24 * 3600000).toISOString();
+
+  // Find users with cart total between 25,000 and 39,999 IQD (close to free delivery threshold)
+  const { data: cartItems } = await supabase
+    .from("cart_items")
+    .select("user_id, quantity, products(price)")
+    .gte("updated_at", new Date(Date.now() - 48 * 3600000).toISOString());
+
+  if (!cartItems || cartItems.length === 0) return { sent: 0 };
+
+  // Calculate cart totals per user
+  const userTotals: Record<string, number> = {};
+  for (const item of cartItems) {
+    const price = (item.products as any)?.price || 0;
+    userTotals[item.user_id] = (userTotals[item.user_id] || 0) + price * item.quantity;
+  }
+
+  // Users close to 40,000 threshold (between 25,000 and 39,999)
+  const nearThreshold = Object.entries(userTotals)
+    .filter(([, total]) => total >= 25000 && total < 40000);
+
+  if (nearThreshold.length === 0) return { sent: 0 };
+
+  // Check who already got this reminder recently
+  const userIds = nearThreshold.map(([uid]) => uid);
+  const { data: recentNotifs } = await supabase
+    .from("notifications")
+    .select("user_id")
+    .eq("type", "free_delivery_hint")
+    .gte("created_at", oneDayAgo)
+    .in("user_id", userIds);
+
+  const alreadyNotified = new Set((recentNotifs || []).map((n) => n.user_id));
+  const toNotify = nearThreshold.filter(([uid]) => !alreadyNotified.has(uid));
+
+  if (toNotify.length === 0) return { sent: 0 };
+
+  let sent = 0;
+  for (const [userId, total] of toNotify) {
+    const remaining = 40000 - total;
+    const remainingFormatted = remaining.toLocaleString();
+
+    await saveInAppNotification(
+      supabase, userId,
+      "Almost there — Free Delivery! 🚚",
+      `Add just ${remainingFormatted} IQD more to your cart and enjoy FREE delivery! Orders over 40,000 IQD ship free.`,
+      "free_delivery_hint", "🚚", "/cart",
+    );
+
+    sent++;
+  }
+
+  // Push to all qualifying users
+  await sendPushViaOneSignal({
+    title: "You're so close to FREE delivery! 🚚",
+    body: "Add a little more to your cart and get free shipping on orders over 40,000 IQD!",
+    icon: "🚚",
+    link_url: "/cart",
+    user_ids: toNotify.map(([uid]) => uid),
+  });
+
+  return { sent };
+}
+
+// ─── SKINCARE ROUTINE REMINDER ───────────────────────────────────────────
+async function handleSkincareRoutineReminder(supabase: ReturnType<typeof createClient>) {
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon...
+
+  // Only send on Mon, Wed, Fri
+  if (![1, 3, 5].includes(dayOfWeek)) return { sent: 0, reason: "not_scheduled_day" };
+
+  const todayStr = today.toISOString().slice(0, 10);
+
+  // Check if already sent today
+  const { data: todayNotif } = await supabase
+    .from("notifications")
+    .select("id")
+    .eq("type", "skincare_tip")
+    .gte("created_at", `${todayStr}T00:00:00Z`)
+    .is("user_id", null)
+    .limit(1);
+
+  if (todayNotif && todayNotif.length > 0) return { sent: 0, reason: "already_sent" };
+
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) return { sent: 0, reason: "no_api_key" };
+
+  // Get current month for seasonal relevance
+  const month = today.toLocaleString("en", { month: "long" });
+
+  try {
+    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          {
+            role: "system",
+            content: `You are ELARA's beauty expert. Write a short, useful skincare tip as a push notification. Be scientific but accessible. Consider the season (${month}, Middle East climate — hot and dry). Return a notification with title (max 40 chars) and body (max 120 chars). Keep it professional and helpful.`,
+          },
+          {
+            role: "user",
+            content: `Write today's skincare tip notification for ${month}. Day of week: ${["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][dayOfWeek]}.`,
+          },
+        ],
+        tools: [{
+          type: "function",
+          function: {
+            name: "create_tip",
+            description: "Create a skincare tip notification",
+            parameters: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                body: { type: "string" },
+              },
+              required: ["title", "body"],
+              additionalProperties: false,
+            },
+          },
+        }],
+        tool_choice: { type: "function", function: { name: "create_tip" } },
+      }),
+    });
+
+    if (!aiRes.ok) return { sent: 0, reason: "ai_error" };
+
+    const aiData = await aiRes.json();
+    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+    let tip = { title: "Daily Skincare Tip 🌿", body: "Stay hydrated and always apply SPF before heading out — your skin will thank you!" };
+
+    if (toolCall?.function?.arguments) {
+      try { tip = JSON.parse(toolCall.function.arguments); } catch {}
+    }
+
+    // Broadcast notification
+    await supabase.from("notifications").insert({
+      user_id: null,
+      title: tip.title,
+      body: tip.body,
+      type: "skincare_tip",
+      icon: "🌿",
+      link_url: "/categories",
+      metadata: { date: todayStr },
+    });
+
+    await sendPushViaOneSignal({
+      title: tip.title,
+      body: tip.body,
+      icon: "🌿",
+      link_url: "/categories",
+      user_ids: [], // all users
+    });
+
+    return { sent: 1, broadcast: true };
+  } catch (e) {
+    console.warn("Skincare tip error:", e);
+    return { sent: 0, reason: "error" };
+  }
+}
+
+// ─── REORDER REMINDER ────────────────────────────────────────────────────
+async function handleReorderReminder(supabase: ReturnType<typeof createClient>) {
+  // Remind users who ordered 25-35 days ago (typical reorder window for skincare)
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+  const twentyFiveDaysAgo = new Date(Date.now() - 25 * 86400000).toISOString();
+  const oneDayAgo = new Date(Date.now() - 24 * 3600000).toISOString();
+
+  const { data: oldOrders } = await supabase
+    .from("orders")
+    .select("user_id, id, order_items(products(title, slug))")
+    .eq("status", "delivered")
+    .lte("created_at", twentyFiveDaysAgo)
+    .gte("created_at", thirtyDaysAgo);
+
+  if (!oldOrders || oldOrders.length === 0) return { sent: 0 };
+
+  const uniqueUsers = [...new Set(oldOrders.map((o) => o.user_id))];
+
+  // Check recent reorder notifications
+  const { data: recentNotifs } = await supabase
+    .from("notifications")
+    .select("user_id")
+    .eq("type", "reorder_reminder")
+    .gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString())
+    .in("user_id", uniqueUsers);
+
+  const alreadyNotified = new Set((recentNotifs || []).map((n) => n.user_id));
+  const toNotify = uniqueUsers.filter((uid) => !alreadyNotified.has(uid));
+
+  if (toNotify.length === 0) return { sent: 0 };
+
+  let sent = 0;
+  for (const userId of toNotify) {
+    const userOrder = oldOrders.find((o) => o.user_id === userId);
+    const firstProduct = (userOrder?.order_items as any)?.[0]?.products;
+    const productName = firstProduct?.title?.slice(0, 30) || "your favorites";
+
+    await saveInAppNotification(
+      supabase, userId,
+      "Time to restock? 🔄",
+      `It's been about a month since you ordered ${productName}. Running low? Reorder with free delivery on 40K+ IQD!`,
+      "reorder_reminder", "🔄", "/orders",
+    );
+
+    sent++;
+  }
+
+  if (toNotify.length > 0) {
+    await sendPushViaOneSignal({
+      title: "Time to restock? 🔄",
+      body: "It's been a month — reorder your favorites with free delivery on orders over 40,000 IQD!",
+      icon: "🔄",
+      link_url: "/orders",
+      user_ids: toNotify,
+    });
+  }
+
+  return { sent };
+}
+
 // ─── MAIN HANDLER ────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -519,17 +938,54 @@ Deno.serve(async (req) => {
         result = await handlePriceDrops(supabase);
         break;
 
+      case "search_recommendations":
+        result = await handleSearchBasedRecommendations(supabase);
+        break;
+
+      case "daily_offers":
+        result = await handleDailyOffersReminder(supabase);
+        break;
+
+      case "free_delivery_hint":
+        result = await handleFreeDeliveryReminder(supabase);
+        break;
+
+      case "skincare_tip":
+        result = await handleSkincareRoutineReminder(supabase);
+        break;
+
+      case "reorder_reminder":
+        result = await handleReorderReminder(supabase);
+        break;
+
       case "run_all_scheduled":
-        // Run all periodic checks
         const abandoned = await handleAbandonedCarts(supabase);
         const offers = await handleNewOffers(supabase);
         const feedback = await handleFeedbackReminders(supabase);
         const priceDrops = await handlePriceDrops(supabase);
+        const freeDelivery = await handleFreeDeliveryReminder(supabase);
+        const searchRecs = await handleSearchBasedRecommendations(supabase);
+        const reorder = await handleReorderReminder(supabase);
         result = {
           abandoned_carts: abandoned,
           new_offers: offers,
           feedback_reminders: feedback,
           price_drops: priceDrops,
+          free_delivery_hint: freeDelivery,
+          search_recommendations: searchRecs,
+          reorder_reminder: reorder,
+        };
+        break;
+
+      case "run_daily":
+        // Daily jobs (run once per day via separate cron)
+        const dailyOffers = await handleDailyOffersReminder(supabase);
+        const skincareTip = await handleSkincareRoutineReminder(supabase);
+        const dailyReorder = await handleReorderReminder(supabase);
+        result = {
+          daily_offers: dailyOffers,
+          skincare_tip: skincareTip,
+          reorder_reminder: dailyReorder,
         };
         break;
 
