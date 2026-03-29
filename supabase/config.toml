@@ -39,3 +39,5 @@ project_id = "mycpfwnfvtsgshdzggrm"
     verify_jwt = false
   [functions.prep-orders]
     verify_jwt = false
+  [functions.auto-notifications]
+    verify_jwt = false
