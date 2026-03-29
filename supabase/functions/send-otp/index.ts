@@ -104,6 +104,7 @@ serve(async (req) => {
     );
 
     const data = await response.json();
+    console.log("UltraMsg response:", JSON.stringify(data));
     if (!response.ok || data.error) {
       console.error("UltraMsg error:", JSON.stringify(data));
       throw new Error(`WhatsApp sending failed: ${data.error || data.message || "Unknown error"}`);
