@@ -117,61 +117,26 @@ const quickQuestions: Record<string, Record<string, Record<string, string[]>>> =
 function getGreeting(language: string, name: string | null, isKurdistan: boolean, gender: string | null): { greeting: string; subtitle: string } {
   const hour = new Date().getHours();
   const firstName = name?.split(" ")[0] || null;
-  const isMale = gender === "male";
+  const region = isKurdistan ? (language === "ar" ? "أربيل" : language === "ku" ? "هەولێر" : "Erbil") : (language === "ar" ? "بغداد" : language === "ku" ? "بەغدا" : "Baghdad");
 
-  if (isKurdistan) {
-    if (language === "ku") {
-      const timeGreeting = hour < 12 ? "بەیانیت باش" : hour < 18 ? "ڕۆژت باش" : "ئێوارەت باش";
-      return {
-        greeting: firstName ? `${timeGreeting} ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
-        subtitle: isMale 
-          ? "چۆنی برام؟ من ئیلارام، پسپۆڕی چاودێری پێست و تەندروستیت لە هەولێر ✨"
-          : "چۆنی گیانم؟ من ئیلارام، هاوڕێی جوانکاریت لە هەولێر ✨",
-      };
-    }
-    if (language === "ar") {
-      const timeGreeting = hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء النور";
-      return {
-        greeting: firstName ? `${timeGreeting} ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
-        subtitle: isMale
-          ? "شلونك أخي؟ أنا إيلارا، صيدلانيتك من أربيل ✨"
-          : "شلونك؟ أنا إيلارا، صيدلانيتك من أربيل ✨",
-      };
-    }
-    const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-    return {
-      greeting: firstName ? `${timeGreeting}, ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
-      subtitle: isMale
-        ? "What's up? I'm Elara, your grooming & skincare expert from Erbil ✨"
-        : "How are you? I'm Elara, your beauty bestie from Erbil ✨",
-    };
-  }
-
-  // Iraqi personality
-  if (language === "ar") {
-    const timeGreeting = hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء النور";
-    return {
-      greeting: firstName ? `${timeGreeting} ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
-      subtitle: isMale
-        ? "شلونك يا بطل؟ أنا إيلارا، صيدلانيتك من بغداد ✨"
-        : "شلونچ اليوم يا گلبي؟ أنا إيلارا، صيدلانيتچ من بغداد ✨",
-    };
-  }
   if (language === "ku") {
     const timeGreeting = hour < 12 ? "بەیانیت باش" : hour < 18 ? "ڕۆژت باش" : "ئێوارەت باش";
     return {
-      greeting: firstName ? `${timeGreeting} ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
-      subtitle: isMale
-        ? "چۆنی برام؟ من ئیلارام، پسپۆڕی تەندروستی و چاودێری پێستت ✨"
-        : "چۆنی ئەمڕۆ؟ من ئیلارام، پسپۆڕی جوانکاریت ✨",
+      greeting: firstName ? `${timeGreeting}، ${firstName}` : timeGreeting,
+      subtitle: `من ئیلارام، فارماسیست و ڕاوێژکاری پێست لە ${region}`,
+    };
+  }
+  if (language === "ar") {
+    const timeGreeting = hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء النور";
+    return {
+      greeting: firstName ? `${timeGreeting} ${firstName}` : timeGreeting,
+      subtitle: `أنا إيلارا، صيدلانية ومستشارة عناية بالبشرة من ${region}`,
     };
   }
   const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   return {
-    greeting: firstName ? `${timeGreeting}, ${firstName}! ${isMale ? "💪" : "💕"}` : `${timeGreeting}! ${isMale ? "💪" : "💕"}`,
-    subtitle: isMale
-      ? "What's up? I'm Elara, your grooming & skincare expert from Baghdad ✨"
-      : "How are you doing today? I'm Elara, your beauty bestie from Baghdad ✨",
+    greeting: firstName ? `${timeGreeting}, ${firstName}` : timeGreeting,
+    subtitle: `I'm Elara, your pharmacist & skincare consultant from ${region}`,
   };
 }
 
