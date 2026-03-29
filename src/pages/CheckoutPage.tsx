@@ -221,6 +221,7 @@ const CheckoutPage = () => {
     }
 
     setSubmitted(true);
+    void hapticSuccess();
     clearCart();
   };
 
