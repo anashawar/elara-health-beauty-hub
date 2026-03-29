@@ -61,6 +61,7 @@ Deno.serve(async (req) => {
       headings: { en: title },
       contents: { en: body },
       data: { link_url: link_url || "/home" },
+      ios_sound: "notification.wav",
     };
 
     // Add optional fields
