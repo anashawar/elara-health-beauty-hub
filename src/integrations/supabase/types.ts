@@ -1293,6 +1293,7 @@ export type Database = {
           full_name: string | null
           gender: string | null
           id: string
+          language: string
           phone: string | null
           skin_tone: string | null
           skin_tone_hex: string | null
@@ -1307,6 +1308,7 @@ export type Database = {
           full_name?: string | null
           gender?: string | null
           id?: string
+          language?: string
           phone?: string | null
           skin_tone?: string | null
           skin_tone_hex?: string | null
@@ -1321,6 +1323,7 @@ export type Database = {
           full_name?: string | null
           gender?: string | null
           id?: string
+          language?: string
           phone?: string | null
           skin_tone?: string | null
           skin_tone_hex?: string | null
