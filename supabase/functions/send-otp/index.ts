@@ -11,7 +11,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { phone } = await req.json();
+    const { phone, mode } = await req.json();
     if (!phone) throw new Error("Phone number is required");
 
     // Validate phone format
@@ -46,6 +46,23 @@ serve(async (req) => {
     if (!normalizedPhone.startsWith("+")) {
       // If no country code, strip leading 0 and assume Iraq
       normalizedPhone = "+964" + normalizedPhone.replace(/^0/, "");
+    }
+
+    // For sign-in mode, check if the phone number is registered
+    if (mode === "signin") {
+      const comparableDigits = normalizedPhone.replace(/\D/g, "").replace(/^0+/, "");
+      const { data: allUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+      const users = allUsers?.users ?? [];
+      const found = users.some((u: any) => {
+        const uPhone = (u.phone || u.user_metadata?.phone || "").replace(/\D/g, "").replace(/^0+/, "");
+        return uPhone.length > 0 && uPhone === comparableDigits;
+      });
+      if (!found) {
+        return new Response(
+          JSON.stringify({ error: "No account found with this phone number. Please sign up first." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Rate limit: max 5 OTPs per phone per hour
