@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
+import { App as CapacitorApp } from "@capacitor/app";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-/** Current app version — bump this with each native release */
-const APP_VERSION = "1.1.0";
+/** Fallback version for local web/dev only */
+const FALLBACK_APP_VERSION = "1.1.0";
 
 function compareVersions(current: string, minimum: string): boolean {
   const c = current.split(".").map(Number);
   const m = minimum.split(".").map(Number);
   for (let i = 0; i < 3; i++) {
-    if ((c[i] || 0) < (m[i] || 0)) return true; // outdated
+    if ((c[i] || 0) < (m[i] || 0)) return true;
     if ((c[i] || 0) > (m[i] || 0)) return false;
   }
-  return false; // equal = not outdated
+  return false;
 }
 
 interface AppConfig {
@@ -31,27 +32,35 @@ export default function ForceUpdateGate({ children }: { children: React.ReactNod
   const [config, setConfig] = useState<AppConfig | null>(null);
   const { language } = useLanguage();
 
-  const platform = Capacitor.getPlatform(); // 'ios' | 'android' | 'web'
+  const platform = Capacitor.getPlatform();
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
     if (!isNative) return;
 
-    supabase
-      .from("app_config")
-      .select("*")
-      .eq("id", "main")
-      .single()
-      .then(({ data }) => {
-        if (!data) return;
-        const cfg = data as unknown as AppConfig;
-        setConfig(cfg);
+    let cancelled = false;
 
-        const minVersion = platform === "ios" ? cfg.min_ios_version : cfg.min_android_version;
-        if (compareVersions(APP_VERSION, minVersion)) {
-          setNeedsUpdate(true);
-        }
-      });
+    const checkVersion = async () => {
+      const [{ data }, appInfo] = await Promise.all([
+        supabase.from("app_config").select("*").eq("id", "main").single(),
+        CapacitorApp.getInfo().catch(() => null),
+      ]);
+
+      if (cancelled || !data) return;
+
+      const cfg = data as unknown as AppConfig;
+      const currentVersion = appInfo?.version || FALLBACK_APP_VERSION;
+      const minVersion = platform === "ios" ? cfg.min_ios_version : cfg.min_android_version;
+
+      setConfig(cfg);
+      setNeedsUpdate(compareVersions(currentVersion, minVersion));
+    };
+
+    checkVersion();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isNative, platform]);
 
   if (!needsUpdate || !config) return <>{children}</>;

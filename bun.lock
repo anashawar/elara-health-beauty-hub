@@ -7,6 +7,7 @@
       "dependencies": {
         "@capacitor-community/app-icon": "^7.0.0",
         "@capacitor/android": "^8.2.0",
+        "@capacitor/app": "^8.0.1",
         "@capacitor/camera": "^8.0.2",
         "@capacitor/cli": "^8.2.0",
         "@capacitor/core": "^8.2.0",
@@ -295,6 +296,8 @@
     "@capacitor-community/app-icon": ["@capacitor-community/app-icon@7.0.0", "", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-yqm/nwsvJZl+opvGZ3OOnOhH4teOiQjC5lnuqm+hz7ESLNnbTu8v4m6bgpnODpbLO0BCac1xcVBbQRtJEDYh1g=="],
 
     "@capacitor/android": ["@capacitor/android@8.2.0", "", { "peerDependencies": { "@capacitor/core": "^8.2.0" } }, "sha512-XLm5OsWLPfXQxDxzFS7SOdMEgGvW+2c7TGLXkTR2cSKdkWK5Abns4imlT5qghKYhjM9r74IrDkBWg/9ALUGNKQ=="],
+
+    "@capacitor/app": ["@capacitor/app@8.1.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/app/-/app-8.1.0.tgz", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-MlmttTOWHDedr/G4SrhNRxsXMqY+R75S4MM4eIgzsgCzOYhb/MpCkA5Q3nuOCfL1oHm26xjUzqZ5aupbOwdfYg=="],
 
     "@capacitor/camera": ["@capacitor/camera@8.0.2", "", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-v2BsKFjJSg0dMl/UO7jEvrAvjChCGrzQG5jx4yN2t8LnC7eFDh0YkSg1t+AMNveSDSKCvAsTk/JUzzr5VAvzmg=="],
 
