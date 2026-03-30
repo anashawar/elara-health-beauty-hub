@@ -338,6 +338,30 @@ const OrdersPage = () => {
                         </div>
                       )}
 
+                      {/* Order edit history - visible to user */}
+                      {(() => {
+                        const logs = allEditLogs.filter((l: any) => l.order_id === order.id);
+                        if (logs.length === 0) return null;
+                        return (
+                          <div className="pt-3 border-t border-border/50">
+                            <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
+                              <FileText className="w-3.5 h-3.5 text-primary" />
+                              {t("orders.editHistory") || "Order Updates"}
+                            </p>
+                            <div className="space-y-2">
+                              {logs.map((log: any) => (
+                                <div key={log.id} className="px-3 py-2 rounded-xl bg-primary/5 border border-primary/10">
+                                  <p className="text-xs text-foreground">{log.details}</p>
+                                  <p className="text-[10px] text-muted-foreground mt-1">
+                                    {new Date(log.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {new Date(log.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
                       {/* Payment method */}
                       <div className="pt-3 border-t border-border/50">
                         <p className="text-xs font-bold text-foreground mb-1">{t("checkout.paymentMethod")}</p>
