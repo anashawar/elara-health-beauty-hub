@@ -77,6 +77,9 @@ const SearchOverlay = ({ isOpen, onClose, initialQuery }: SearchOverlayProps) =>
     "vichy": ["vishy", "vichy"],
     "eucerin": ["euserin", "eucren"],
     "cosrx": ["cosrex", "cos rx"],
+    "korea": ["korean", "korean skincare", "k-beauty", "kbeauty", "south korea"],
+    "japan": ["japanese", "japanese skincare", "j-beauty"],
+    "france": ["french", "french skincare"],
   }), []);
 
   // Levenshtein distance for fuzzy matching
