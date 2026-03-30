@@ -503,13 +503,37 @@ export default function AdminOrders() {
             <div className="mb-4 flex items-center justify-between gap-3 border-b border-border pb-3">
               <div>
                 <h3 className="text-base font-semibold text-foreground">Order Items</h3>
-                <p className="text-sm text-muted-foreground">Review every product included in this order.</p>
+                <p className="text-sm text-muted-foreground">Review and edit products in this order.</p>
               </div>
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">Grand Total</p>
-                <p className="text-lg font-bold text-foreground">{formatPrice(o.total)}</p>
+              <div className="flex items-center gap-2">
+                {editingOrderId !== o.id ? (
+                  <Button size="sm" variant="outline" className="rounded-lg text-xs gap-1.5" onClick={() => { setEditingOrderId(o.id); setEditNote(""); setProductSearch(""); }}>
+                    <Pencil className="h-3 w-3" /> Edit Order
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="ghost" className="rounded-lg text-xs gap-1.5" onClick={() => setEditingOrderId(null)}>
+                    <X className="h-3 w-3" /> Done Editing
+                  </Button>
+                )}
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Grand Total</p>
+                  <p className="text-lg font-bold text-foreground">{formatPrice(o.total)}</p>
+                </div>
               </div>
             </div>
+
+            {/* Edit note input - shown when editing */}
+            {editingOrderId === o.id && (
+              <div className="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400 mb-1.5">Edit Reason (visible to customer)</p>
+                <Input
+                  value={editNote}
+                  onChange={(e) => setEditNote(e.target.value)}
+                  placeholder="e.g. Product out of stock, replaced with..."
+                  className="text-xs h-9 bg-background rounded-lg"
+                />
+              </div>
+            )}
 
             <div className="space-y-3">
               {o.order_items?.map((item: any, index: number) => (
@@ -526,10 +550,106 @@ export default function AdminOrders() {
                     <p className="line-clamp-2 text-sm font-semibold text-foreground">{item.products?.title || "Unknown Product"}</p>
                     <p className="mt-1 text-xs text-muted-foreground">Qty: {item.quantity} × {formatPrice(item.price)}</p>
                   </div>
-                  <p className="whitespace-nowrap text-sm font-bold text-foreground">{formatPrice(item.price * item.quantity)}</p>
+                  <div className="flex items-center gap-2">
+                    {editingOrderId === o.id && (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 w-7 p-0 rounded-lg"
+                          disabled={savingEdit}
+                          onClick={() => handleUpdateQty(o.id, item.id, item.products?.title, item.quantity - 1)}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="text-xs font-bold w-6 text-center">{item.quantity}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 w-7 p-0 rounded-lg"
+                          disabled={savingEdit}
+                          onClick={() => handleUpdateQty(o.id, item.id, item.products?.title, item.quantity + 1)}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 rounded-lg text-destructive hover:bg-destructive/10 ml-1"
+                          disabled={savingEdit}
+                          onClick={() => handleRemoveItem(o.id, item.id, item.products?.title)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+                    <p className="whitespace-nowrap text-sm font-bold text-foreground">{formatPrice(item.price * item.quantity)}</p>
+                  </div>
                 </div>
               ))}
             </div>
+
+            {/* Add product search - shown when editing */}
+            {editingOrderId === o.id && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
+                  <Plus className="h-3.5 w-3.5" /> Add Product
+                </p>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    placeholder="Search products to add..."
+                    className="pl-9 text-xs h-9 rounded-lg"
+                  />
+                </div>
+                {searchProducts.length > 0 && (
+                  <div className="mt-2 space-y-1.5 max-h-48 overflow-y-auto">
+                    {searchProducts.map((p: any) => (
+                      <button
+                        key={p.id}
+                        className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-secondary/50 transition-colors text-left"
+                        disabled={savingEdit}
+                        onClick={() => handleAddProduct(o.id, p)}
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-secondary overflow-hidden flex-shrink-0">
+                          {p.product_images?.[0]?.image_url ? (
+                            <img src={p.product_images[0].image_url} className="w-full h-full object-cover" alt="" />
+                          ) : (
+                            <Package className="w-4 h-4 m-auto mt-2.5 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">{p.title}</p>
+                          <p className="text-[10px] text-muted-foreground">{formatPrice(p.price)}</p>
+                        </div>
+                        <Plus className="h-4 w-4 text-primary flex-shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Edit history */}
+            {editingOrderId === o.id && editLogs.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5" /> Edit History
+                </p>
+                <div className="space-y-2">
+                  {editLogs.map((log: any) => (
+                    <div key={log.id} className="px-3 py-2 rounded-lg bg-secondary/30 border border-border/50">
+                      <p className="text-xs text-foreground">{log.details}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {log.edited_by} · {format(new Date(log.created_at), "MMM d, h:mm a")}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
