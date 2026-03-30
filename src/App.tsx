@@ -66,6 +66,7 @@ const AdminTeam = lazy(() => import("./pages/admin/AdminTeam"));
 const AdminWarehouseCosts = lazy(() => import("./pages/admin/AdminWarehouseCosts"));
 const AdminWarehouses = lazy(() => import("./pages/admin/AdminWarehouses"));
 const AdminRatings = lazy(() => import("./pages/admin/AdminRatings"));
+const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -197,6 +198,7 @@ const App = () => (
                 <Route path="warehouse-costs" element={<AdminWarehouseCosts />} />
                 <Route path="warehouses" element={<AdminWarehouses />} />
                 <Route path="ratings" element={<AdminRatings />} />
+                <Route path="analytics" element={<AdminAnalytics />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
