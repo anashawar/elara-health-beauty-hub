@@ -3,13 +3,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Eye, User, Phone, MapPin, Package, Calendar, CreditCard, Tag, StickyNote, Users, Trash2, Bell, Send, Navigation } from "lucide-react";
+import { Loader2, Eye, User, Phone, MapPin, Package, Calendar, CreditCard, Tag, StickyNote, Users, Trash2, Bell, Send, Navigation, Pencil, Plus, Minus, Search, X, FileText } from "lucide-react";
 import { formatPrice } from "@/hooks/useProducts";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 const statuses = ["processing", "prepared", "on_the_way", "delivered", "cancelled"];
 
