@@ -7,6 +7,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -23,10 +25,14 @@ serve(async (req) => {
       );
     }
 
-    const ULTRAMSG_INSTANCE_ID = Deno.env.get("ULTRAMSG_INSTANCE_ID");
-    if (!ULTRAMSG_INSTANCE_ID) throw new Error("ULTRAMSG_INSTANCE_ID is not configured");
-    const ULTRAMSG_TOKEN = Deno.env.get("ULTRAMSG_TOKEN");
-    if (!ULTRAMSG_TOKEN) throw new Error("ULTRAMSG_TOKEN is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
+    if (!TWILIO_API_KEY) throw new Error("TWILIO_API_KEY is not configured");
+
+    const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
+    if (!TWILIO_PHONE_NUMBER) throw new Error("TWILIO_PHONE_NUMBER is not configured");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -89,25 +95,26 @@ serve(async (req) => {
     });
     if (insertError) throw insertError;
 
-    // Send WhatsApp message via UltraMsg
-    const response = await fetch(
-      `https://api.ultramsg.com/${ULTRAMSG_INSTANCE_ID}/messages/chat`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: ULTRAMSG_TOKEN,
-          to: normalizedPhone,
-          body: `Your ELARA verification code is: *${code}*\nValid for 5 minutes.`,
-        }),
-      }
-    );
+    // Send SMS via Twilio Gateway
+    const response = await fetch(`${GATEWAY_URL}/Messages.json`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": TWILIO_API_KEY,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        To: normalizedPhone,
+        From: TWILIO_PHONE_NUMBER,
+        Body: `Your ELARA verification code is: ${code}\nValid for 5 minutes.`,
+      }),
+    });
 
     const data = await response.json();
-    console.log("UltraMsg response:", JSON.stringify(data));
-    if (!response.ok || data.error) {
-      console.error("UltraMsg error:", JSON.stringify(data));
-      throw new Error(`WhatsApp sending failed: ${data.error || data.message || "Unknown error"}`);
+    console.log("Twilio response:", JSON.stringify(data));
+    if (!response.ok || data.error_code) {
+      console.error("Twilio error:", JSON.stringify(data));
+      throw new Error(`SMS sending failed: ${data.message || data.error_message || "Unknown error"}`);
     }
 
     return new Response(
