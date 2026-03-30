@@ -31,8 +31,8 @@ serve(async (req) => {
     const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
     if (!TWILIO_API_KEY) throw new Error("TWILIO_API_KEY is not configured");
 
-    const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
-    if (!TWILIO_PHONE_NUMBER) throw new Error("TWILIO_PHONE_NUMBER is not configured");
+    const TWILIO_MESSAGING_SERVICE_SID = Deno.env.get("TWILIO_PHONE_NUMBER");
+    if (!TWILIO_MESSAGING_SERVICE_SID) throw new Error("TWILIO_MESSAGING_SERVICE_SID is not configured");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -105,7 +105,7 @@ serve(async (req) => {
       },
       body: new URLSearchParams({
         To: normalizedPhone,
-        From: TWILIO_PHONE_NUMBER,
+        MessagingServiceSid: TWILIO_MESSAGING_SERVICE_SID,
         Body: `Your ELARA verification code is: ${code}\nValid for 5 minutes.`,
       }),
     });
