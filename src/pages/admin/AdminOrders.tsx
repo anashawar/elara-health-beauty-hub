@@ -91,6 +91,184 @@ export default function AdminOrders() {
     return () => { supabase.removeChannel(channel); };
   }, [qc]);
 
+  // Search products for adding to orders
+  const { data: searchProducts = [] } = useQuery({
+    queryKey: ["admin-product-search", productSearch],
+    queryFn: async () => {
+      if (!productSearch || productSearch.length < 2) return [];
+      const { data } = await supabase
+        .from("products")
+        .select("id, title, price, product_images(image_url)")
+        .ilike("title", `%${productSearch}%`)
+        .eq("in_stock", true)
+        .limit(8);
+      return data || [];
+    },
+    enabled: productSearch.length >= 2,
+  });
+
+  // Fetch edit logs for current viewing order
+  const { data: editLogs = [] } = useQuery({
+    queryKey: ["order-edit-logs", editingOrderId],
+    queryFn: async () => {
+      if (!editingOrderId) return [];
+      const { data } = await supabase
+        .from("order_edit_logs")
+        .select("*")
+        .eq("order_id", editingOrderId)
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!editingOrderId,
+  });
+
+  const handleRemoveItem = async (orderId: string, itemId: string, productTitle: string) => {
+    try {
+      setSavingEdit(true);
+      const order = orders.find((o: any) => o.id === orderId);
+      if (!order) return;
+      const item = order.order_items.find((i: any) => i.id === itemId);
+      if (!item) return;
+
+      // Delete the item
+      const { error } = await supabase.from("order_items").delete().eq("id", itemId);
+      if (error) throw error;
+
+      // Recalculate totals
+      const remainingItems = order.order_items.filter((i: any) => i.id !== itemId);
+      const newSubtotal = remainingItems.reduce((s: number, i: any) => s + i.price * i.quantity, 0);
+      const newTotal = Math.max(0, newSubtotal - Number(order.discount) + Number(order.delivery_fee));
+      await supabase.from("orders").update({ subtotal: newSubtotal, total: newTotal }).eq("id", orderId);
+
+      // Log the edit
+      if (editNote.trim()) {
+        await supabase.from("order_edit_logs").insert({
+          order_id: orderId,
+          edited_by: "Admin",
+          action: "removed_item",
+          details: `Removed "${productTitle}" — ${editNote.trim()}`,
+        });
+      } else {
+        await supabase.from("order_edit_logs").insert({
+          order_id: orderId,
+          edited_by: "Admin",
+          action: "removed_item",
+          details: `Removed "${productTitle}"`,
+        });
+      }
+
+      // Notify user
+      await supabase.from("notifications").insert({
+        user_id: order.user_id,
+        title: `Order #${orderId.slice(0, 8).toUpperCase()} Updated`,
+        body: editNote.trim() || `"${productTitle}" was removed from your order.`,
+        type: "order",
+        icon: "✏️",
+        link_url: "/orders",
+      });
+
+      qc.invalidateQueries({ queryKey: ["admin-orders"] });
+      qc.invalidateQueries({ queryKey: ["order-edit-logs", orderId] });
+      toast.success(`Removed "${productTitle}" from order`);
+      setEditNote("");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleAddProduct = async (orderId: string, product: any) => {
+    try {
+      setSavingEdit(true);
+      const order = orders.find((o: any) => o.id === orderId);
+      if (!order) return;
+
+      // Insert new order item
+      const { error } = await supabase.from("order_items").insert({
+        order_id: orderId,
+        product_id: product.id,
+        quantity: 1,
+        price: product.price,
+      });
+      if (error) throw error;
+
+      // Recalculate totals
+      const newSubtotal = Number(order.subtotal) + Number(product.price);
+      const newTotal = Math.max(0, newSubtotal - Number(order.discount) + Number(order.delivery_fee));
+      await supabase.from("orders").update({ subtotal: newSubtotal, total: newTotal }).eq("id", orderId);
+
+      // Log the edit
+      await supabase.from("order_edit_logs").insert({
+        order_id: orderId,
+        edited_by: "Admin",
+        action: "added_item",
+        details: editNote.trim() ? `Added "${product.title}" — ${editNote.trim()}` : `Added "${product.title}"`,
+      });
+
+      // Notify user
+      await supabase.from("notifications").insert({
+        user_id: order.user_id,
+        title: `Order #${orderId.slice(0, 8).toUpperCase()} Updated`,
+        body: editNote.trim() || `"${product.title}" was added to your order.`,
+        type: "order",
+        icon: "✏️",
+        link_url: "/orders",
+      });
+
+      qc.invalidateQueries({ queryKey: ["admin-orders"] });
+      qc.invalidateQueries({ queryKey: ["order-edit-logs", orderId] });
+      toast.success(`Added "${product.title}" to order`);
+      setProductSearch("");
+      setEditNote("");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleUpdateQty = async (orderId: string, itemId: string, productTitle: string, newQty: number) => {
+    try {
+      setSavingEdit(true);
+      const order = orders.find((o: any) => o.id === orderId);
+      if (!order) return;
+      const item = order.order_items.find((i: any) => i.id === itemId);
+      if (!item) return;
+
+      if (newQty <= 0) {
+        await handleRemoveItem(orderId, itemId, productTitle);
+        return;
+      }
+
+      const { error } = await supabase.from("order_items").update({ quantity: newQty }).eq("id", itemId);
+      if (error) throw error;
+
+      const diff = (newQty - item.quantity) * item.price;
+      const newSubtotal = Number(order.subtotal) + diff;
+      const newTotal = Math.max(0, newSubtotal - Number(order.discount) + Number(order.delivery_fee));
+      await supabase.from("orders").update({ subtotal: newSubtotal, total: newTotal }).eq("id", orderId);
+
+      await supabase.from("order_edit_logs").insert({
+        order_id: orderId,
+        edited_by: "Admin",
+        action: "updated_qty",
+        details: editNote.trim()
+          ? `Changed "${productTitle}" qty from ${item.quantity} to ${newQty} — ${editNote.trim()}`
+          : `Changed "${productTitle}" qty from ${item.quantity} to ${newQty}`,
+      });
+
+      qc.invalidateQueries({ queryKey: ["admin-orders"] });
+      qc.invalidateQueries({ queryKey: ["order-edit-logs", orderId] });
+      toast.success(`Updated quantity for "${productTitle}"`);
+      setEditNote("");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase.from("orders").update({ status }).eq("id", id);
