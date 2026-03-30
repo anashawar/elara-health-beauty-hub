@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 /** Current app version — bump this with each native release */
-const APP_VERSION = "1.1.0";
+const APP_VERSION = "1.2.0";
 
 function compareVersions(current: string, minimum: string): boolean {
   const c = current.split(".").map(Number);
@@ -57,15 +57,16 @@ export default function ForceUpdateGate({ children }: { children: React.ReactNod
   if (!needsUpdate || !config) return <>{children}</>;
 
   const message =
-    language === "ar" ? config.update_message_ar :
-    language === "ku" ? config.update_message_ku :
-    config.update_message;
+    language === "ar" ? config.update_message_ar : language === "ku" ? config.update_message_ku : config.update_message;
 
   const storeUrl = platform === "ios" ? config.ios_store_url : config.android_store_url;
   const isRtl = language === "ar" || language === "ku";
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center p-6" dir={isRtl ? "rtl" : "ltr"}>
+    <div
+      className="fixed inset-0 z-[9999] bg-background flex items-center justify-center p-6"
+      dir={isRtl ? "rtl" : "ltr"}
+    >
       <div className="text-center max-w-sm">
         <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-primary/60 mx-auto mb-6 flex items-center justify-center shadow-xl">
           <span className="text-4xl">🚀</span>
