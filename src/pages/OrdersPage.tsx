@@ -78,6 +78,22 @@ const OrdersPage = () => {
     enabled: !!user,
   });
 
+  // Fetch edit logs for all user orders
+  const { data: allEditLogs = [] } = useQuery({
+    queryKey: ["order-edit-logs-user", user?.id],
+    queryFn: async () => {
+      if (!orders.length) return [];
+      const orderIds = orders.map(o => o.id);
+      const { data } = await supabase
+        .from("order_edit_logs")
+        .select("*")
+        .in("order_id", orderIds)
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!user && orders.length > 0,
+  });
+
   // Tick every 30s to update countdown timers
   useEffect(() => {
     const interval = setInterval(() => setTick(t => t + 1), 30000);
