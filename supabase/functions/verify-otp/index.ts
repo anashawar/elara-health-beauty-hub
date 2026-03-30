@@ -9,17 +9,13 @@ const corsHeaders = {
 
 const normalizeIraqPhone = (value: string) => {
   let normalized = value.replace(/\s+/g, "").replace(/[^\d+]/g, "");
-
   if (normalized.startsWith("00")) {
     normalized = `+${normalized.slice(2)}`;
   }
-
   normalized = normalized.replace(/^0+/, "");
-
   if (!normalized.startsWith("+")) {
     normalized = `+964${normalized}`;
   }
-
   return normalized;
 };
 
@@ -36,18 +32,14 @@ const listAllAuthUsers = async (supabase: ReturnType<typeof createClient>) => {
   const users: any[] = [];
   const perPage = 1000;
   let page = 1;
-
   while (true) {
     const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
     if (error) throw error;
-
     const batch = data?.users ?? [];
     users.push(...batch);
-
     if (batch.length < perPage) break;
     page += 1;
   }
-
   return users;
 };
 
@@ -57,6 +49,14 @@ serve(async (req) => {
   try {
     const { phone, code, full_name, email, gender, birthdate } = await req.json();
     if (!phone || !code) throw new Error("Phone and code are required");
+
+    const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
+    const TWILIO_VERIFY_SERVICE_SID = Deno.env.get("TWILIO_VERIFY_SERVICE_SID");
+
+    if (!TWILIO_ACCOUNT_SID) throw new Error("TWILIO_ACCOUNT_SID is not configured");
+    if (!TWILIO_AUTH_TOKEN) throw new Error("TWILIO_AUTH_TOKEN is not configured");
+    if (!TWILIO_VERIFY_SERVICE_SID) throw new Error("TWILIO_VERIFY_SERVICE_SID is not configured");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -70,29 +70,33 @@ serve(async (req) => {
     const DEMO_PHONES: Record<string, string> = { "+9647510535548": "112233" };
     const isDemoAccount = DEMO_PHONES[normalizedPhone] && code === DEMO_PHONES[normalizedPhone];
 
-    // OTP verification
-    let otpRecord: any = null;
-    if (isDemoAccount) {
-      otpRecord = { id: "demo", phone: normalizedPhone, code, verified: false };
-    } else {
-      const { data: otpData } = await supabase
-        .from("otp_verifications")
-        .select("*")
-        .eq("phone", normalizedPhone)
-        .eq("code", code)
-        .eq("verified", false)
-        .gte("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-      otpRecord = otpData;
-    }
-
-    if (!otpRecord) {
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired code" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    // Verify OTP via Twilio Verify API (skip for demo accounts)
+    if (!isDemoAccount) {
+      const basicAuth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+      const verifyResponse = await fetch(
+        `https://verify.twilio.com/v2/Services/${TWILIO_VERIFY_SERVICE_SID}/VerificationCheck`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Basic ${basicAuth}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            To: normalizedPhone,
+            Code: code,
+          }),
+        }
       );
+
+      const verifyData = await verifyResponse.json();
+      console.log("Twilio VerificationCheck response:", JSON.stringify(verifyData));
+
+      if (!verifyResponse.ok || verifyData.status !== "approved") {
+        return new Response(
+          JSON.stringify({ error: "Invalid or expired code" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const existingUsers = await listAllAuthUsers(supabase);
@@ -124,7 +128,6 @@ serve(async (req) => {
     }
 
     const existingUser = userByPhone ?? userByEmail;
-
     let session;
 
     if (existingUser) {
@@ -160,14 +163,13 @@ serve(async (req) => {
       if (sessionError) throw sessionError;
       session = sessionData.session;
     } else {
-      // Create new user — email is required for signup
       if (!userEmail) {
         return new Response(
           JSON.stringify({ error: "Email is required to create an account" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      // Create new user
+
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email: userEmail,
         phone: normalizedPhone,
@@ -184,18 +186,15 @@ serve(async (req) => {
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-
         if (createError.code === "email_exists") {
           return new Response(
             JSON.stringify({ error: "This email is already in use" }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-
         throw createError;
       }
 
-      // Create/update profile
       const { error: profileError } = await supabase.from("profiles").upsert(
         {
           user_id: newUser.user.id,
@@ -208,7 +207,6 @@ serve(async (req) => {
       );
       if (profileError) throw profileError;
 
-      // Generate session for new user
       const { data, error } = await supabase.auth.admin.generateLink({
         type: "magiclink",
         email: userEmail,
@@ -221,12 +219,6 @@ serve(async (req) => {
       });
       if (sessionError) throw sessionError;
       session = sessionData.session;
-    }
-
-    // Mark OTP as verified and clean up (skip for demo accounts)
-    if (otpRecord && !isDemoAccount) {
-      await supabase.from("otp_verifications").update({ verified: true }).eq("id", otpRecord.id);
-      await supabase.from("otp_verifications").delete().eq("phone", normalizedPhone).neq("id", otpRecord.id);
     }
 
     return new Response(
