@@ -37,6 +37,10 @@ export default function AdminOrders() {
   const [notifyMessage, setNotifyMessage] = useState("");
   const [sendingNotify, setSendingNotify] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [editNote, setEditNote] = useState("");
+  const [productSearch, setProductSearch] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["admin-orders"],
