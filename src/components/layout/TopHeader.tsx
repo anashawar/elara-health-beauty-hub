@@ -57,9 +57,6 @@ interface TopHeaderProps {
   onSearchClick: () => void;
 }
 
-// Lazy-load NotificationCenter — it pulls in framer-motion + date-fns
-import { lazy, Suspense } from "react";
-const NotificationCenter = lazy(() => import("@/components/notifications/NotificationCenter"));
 
 const TopHeader = memo(({ onSearchClick }: TopHeaderProps) => {
   const { user } = useAuth();
