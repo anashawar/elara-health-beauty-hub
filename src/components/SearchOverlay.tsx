@@ -37,7 +37,7 @@ const SearchOverlay = ({ isOpen, onClose, initialQuery }: SearchOverlayProps) =>
     { label: t("search.vitaminCGlow"), query: "vitamin c", icon: "🍊" },
     { label: t("search.hairLossSolutions"), query: "hair loss", icon: "💇" },
     { label: t("search.drySkinRelief"), query: "moisturizer dry", icon: "💧" },
-    { label: t("search.koreanSkincare"), query: "korean", icon: "🇰🇷" },
+    { label: t("search.koreanSkincare"), query: "korea", icon: "🇰🇷" },
     { label: t("search.underBudget"), query: "budget", icon: "💰" },
   ];
 
@@ -77,6 +77,9 @@ const SearchOverlay = ({ isOpen, onClose, initialQuery }: SearchOverlayProps) =>
     "vichy": ["vishy", "vichy"],
     "eucerin": ["euserin", "eucren"],
     "cosrx": ["cosrex", "cos rx"],
+    "korea": ["korean", "korean skincare", "k-beauty", "kbeauty", "south korea"],
+    "japan": ["japanese", "japanese skincare", "j-beauty"],
+    "france": ["french", "french skincare"],
   }), []);
 
   // Levenshtein distance for fuzzy matching
