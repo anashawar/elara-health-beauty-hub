@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Package, ChevronDown, ChevronUp, X, Clock, AlertTriangle, Pencil } from "lucide-react";
+import { ArrowLeft, Package, ChevronDown, ChevronUp, X, Clock, AlertTriangle, Pencil, FileText } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
