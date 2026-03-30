@@ -1,0 +1,1 @@
+UPDATE app_config SET min_ios_version = '1.1.0' WHERE id = 'main';
