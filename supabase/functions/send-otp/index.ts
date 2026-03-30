@@ -57,14 +57,11 @@ serve(async (req) => {
       }
     }
 
-    // Demo account — skip Twilio Verify, just return success (bypass code handled in verify-otp)
+    // Demo phones still get real SMS, but bypass code also works in verify-otp
     const DEMO_PHONES = ["+9647510535548"];
-    if (DEMO_PHONES.includes(normalizedPhone)) {
-      console.log(`Demo phone ${normalizedPhone} — skipping Verify API, bypass code active`);
-      return new Response(
-        JSON.stringify({ success: true, phone: normalizedPhone }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const isDemoPhone = DEMO_PHONES.includes(normalizedPhone);
+    if (isDemoPhone) {
+      console.log(`Demo phone ${normalizedPhone} — will send real SMS + bypass code active`);
     }
 
     // Send verification via Twilio Verify API
