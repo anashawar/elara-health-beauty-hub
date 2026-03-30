@@ -848,6 +848,41 @@ export type Database = {
         }
         Relationships: []
       }
+      order_edit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: string
+          edited_by: string
+          id: string
+          order_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details: string
+          edited_by: string
+          id?: string
+          order_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: string
+          edited_by?: string
+          id?: string
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_edit_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string

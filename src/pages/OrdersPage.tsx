@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Package, ChevronDown, ChevronUp, X, Clock, AlertTriangle, Pencil } from "lucide-react";
+import { ArrowLeft, Package, ChevronDown, ChevronUp, X, Clock, AlertTriangle, Pencil, FileText } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -76,6 +76,22 @@ const OrdersPage = () => {
       return data;
     },
     enabled: !!user,
+  });
+
+  // Fetch edit logs for all user orders
+  const { data: allEditLogs = [] } = useQuery({
+    queryKey: ["order-edit-logs-user", user?.id],
+    queryFn: async () => {
+      if (!orders.length) return [];
+      const orderIds = orders.map(o => o.id);
+      const { data } = await supabase
+        .from("order_edit_logs")
+        .select("*")
+        .in("order_id", orderIds)
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!user && orders.length > 0,
   });
 
   // Tick every 30s to update countdown timers
@@ -321,6 +337,30 @@ const OrdersPage = () => {
                           {address.phone && <p className="text-xs text-muted-foreground mt-0.5">📞 {address.phone}</p>}
                         </div>
                       )}
+
+                      {/* Order edit history - visible to user */}
+                      {(() => {
+                        const logs = allEditLogs.filter((l: any) => l.order_id === order.id);
+                        if (logs.length === 0) return null;
+                        return (
+                          <div className="pt-3 border-t border-border/50">
+                            <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
+                              <FileText className="w-3.5 h-3.5 text-primary" />
+                              {t("orders.editHistory") || "Order Updates"}
+                            </p>
+                            <div className="space-y-2">
+                              {logs.map((log: any) => (
+                                <div key={log.id} className="px-3 py-2 rounded-xl bg-primary/5 border border-primary/10">
+                                  <p className="text-xs text-foreground">{log.details}</p>
+                                  <p className="text-[10px] text-muted-foreground mt-1">
+                                    {new Date(log.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {new Date(log.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {/* Payment method */}
                       <div className="pt-3 border-t border-border/50">
