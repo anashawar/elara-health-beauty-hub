@@ -113,9 +113,6 @@ const TopHeader = memo(({ onSearchClick }: TopHeaderProps) => {
           <div className="flex items-center gap-1.5">
             {user ? (
               <>
-                <Suspense fallback={<div className="w-9 h-9" />}>
-                  <NotificationCenter />
-                </Suspense>
                 <div className="flex flex-col items-end rtl:items-start">
                   <span className="text-xs font-medium text-foreground">
                     {greeting}
