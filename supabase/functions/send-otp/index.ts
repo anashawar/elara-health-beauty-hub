@@ -105,7 +105,7 @@ serve(async (req) => {
       },
       body: new URLSearchParams({
         To: normalizedPhone,
-        From: TWILIO_PHONE_NUMBER,
+        MessagingServiceSid: TWILIO_MESSAGING_SERVICE_SID,
         Body: `Your ELARA verification code is: ${code}\nValid for 5 minutes.`,
       }),
     });
