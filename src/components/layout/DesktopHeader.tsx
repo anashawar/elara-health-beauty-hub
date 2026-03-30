@@ -1,6 +1,6 @@
 import { Search, Heart, ShoppingBag, UserRound, Sparkles, MapPin, ChevronDown, Smartphone } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import NotificationCenter from "@/components/notifications/NotificationCenter";
+
 import elaraLogo from "@/assets/elara-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useApp } from "@/context/AppContext";
