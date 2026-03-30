@@ -11,6 +11,7 @@ import {
   Sparkles,
   BarChart3,
   Percent,
+  PieChart,
   Bell,
   Languages,
   ImagePlus,
@@ -64,6 +65,7 @@ const navItems: NavItem[] = [
   { title: "Ratings", url: "/admin/ratings", icon: Star, roles: ["admin", "operations"] },
   { title: "Team", url: "/admin/team", icon: Users, roles: ["admin"] },
   { title: "Warehouses", url: "/admin/warehouses", icon: Warehouse, roles: ["admin", "operations"] },
+  { title: "Analytics", url: "/admin/analytics", icon: PieChart, roles: ["admin"] },
 ];
 
 export default function AdminSidebar() {
