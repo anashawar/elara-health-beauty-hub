@@ -90,10 +90,21 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Additional warehouse contacts who always receive order notifications
+    const EXTRA_RECIPIENTS = [
+      { phone: "+9647501501221", name: "Yas Warehouse Admin" },
+    ];
+
+    // Combine admin/ops profiles + extra warehouse contacts
+    const allRecipients = [
+      ...profiles.map((p) => ({ phone: p.phone!, name: p.full_name || "Unknown" })),
+      ...EXTRA_RECIPIENTS,
+    ];
+
     let sentCount = 0;
 
-    for (const profile of profiles) {
-      let phone = profile.phone!.replace(/\s+/g, "");
+    for (const recipient of allRecipients) {
+      let phone = recipient.phone.replace(/\s+/g, "");
       if (!phone.startsWith("+")) phone = `+${phone}`;
 
       try {
@@ -112,7 +123,7 @@ Deno.serve(async (req) => {
 
         if (res.ok) {
           sentCount++;
-          console.log(`WhatsApp sent to ${profile.full_name}`);
+          console.log(`WhatsApp sent to ${recipient.name}`);
         } else {
           const err = await res.text();
           console.error(`Failed to send to ${phone}: ${err}`);
