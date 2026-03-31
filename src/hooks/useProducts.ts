@@ -190,11 +190,12 @@ export function useProduct(id: string | undefined) {
 
   return useQuery<ProductWithRelations | null>({
     queryKey: ["product", id, language],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!id) return null;
       const query = supabase
         .from("products")
-        .select(PRODUCT_DETAIL_SELECT);
+        .select(PRODUCT_DETAIL_SELECT)
+        .abortSignal(signal ?? AbortSignal.timeout(15000));
       const { data, error } = await (isUuid
         ? query.eq("id", id)
         : query.eq("slug", id)
@@ -205,6 +206,8 @@ export function useProduct(id: string | undefined) {
     },
     enabled: !!id,
     staleTime: 2 * 60 * 1000,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
   });
 }
 
