@@ -2,10 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, Smartphone, Monitor, Globe, MapPin, Calendar, UserCheck, TrendingUp, Baby, UserCircle, Search, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Users, Smartphone, Monitor, Globe, MapPin, Calendar, UserCheck, TrendingUp,
+  Baby, UserCircle, Search, ChevronDown, ChevronUp, Eye, ExternalLink, BarChart3,
+  Download,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
+  LineChart, Line, CartesianGrid, AreaChart, Area,
+} from "recharts";
 import { Input } from "@/components/ui/input";
 
 const COLORS = ["#e879a0", "#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#6366f1", "#14b8a6", "#f97316", "#ec4899"];
@@ -98,7 +105,32 @@ export default function AdminAnalytics() {
     },
   });
 
-  // Build user city map (first/default address city per user)
+  // Fetch page views (last 30 days)
+  const { data: pageViews = [] } = useQuery({
+    queryKey: ["admin-analytics-page-views"],
+    queryFn: async () => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const all: any[] = [];
+      let from = 0;
+      const batchSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("page_views" as any)
+          .select("page_path, created_at, referrer")
+          .gte("created_at", thirtyDaysAgo.toISOString())
+          .range(from, from + batchSize - 1) as any;
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < batchSize) break;
+        from += batchSize;
+      }
+      return all;
+    },
+  });
+
+  // Build user city map
   const userCityMap = useMemo(() => {
     const map: Record<string, string> = {};
     addresses.forEach((a: any) => {
@@ -106,6 +138,62 @@ export default function AdminAnalytics() {
     });
     return map;
   }, [addresses]);
+
+  // Page views stats
+  const pageViewStats = useMemo(() => {
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
+    const totalViews = pageViews.length;
+    const todayViews = pageViews.filter((pv: any) => pv.created_at?.startsWith(todayStr)).length;
+
+    // Daily views last 30 days
+    const dailyMap: Record<string, number> = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      dailyMap[d.toISOString().split("T")[0]] = 0;
+    }
+    pageViews.forEach((pv: any) => {
+      const day = pv.created_at?.split("T")[0];
+      if (day && day in dailyMap) dailyMap[day]++;
+    });
+    const dailyData = Object.entries(dailyMap).map(([date, count]) => ({
+      date,
+      label: new Date(date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      views: count,
+    }));
+
+    // Top pages
+    const pageMap: Record<string, number> = {};
+    pageViews.forEach((pv: any) => {
+      pageMap[pv.page_path] = (pageMap[pv.page_path] || 0) + 1;
+    });
+    const topPages = Object.entries(pageMap)
+      .map(([path, count]) => ({ path, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    // Referrer sources
+    const refMap: Record<string, number> = {};
+    pageViews.forEach((pv: any) => {
+      if (pv.referrer) {
+        try {
+          const hostname = new URL(pv.referrer).hostname || "Direct";
+          refMap[hostname] = (refMap[hostname] || 0) + 1;
+        } catch {
+          refMap["Direct"] = (refMap["Direct"] || 0) + 1;
+        }
+      } else {
+        refMap["Direct"] = (refMap["Direct"] || 0) + 1;
+      }
+    });
+    const referrerData = Object.entries(refMap)
+      .map(([source, count]) => ({ source, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+
+    return { totalViews, todayViews, dailyData, topPages, referrerData };
+  }, [pageViews]);
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -133,7 +221,7 @@ export default function AdminAnalytics() {
       .filter(([, v]) => v > 0)
       .map(([name, value]) => ({ name, value }));
 
-    // City breakdown (unique users per city)
+    // City breakdown
     const cityUserMap: Record<string, Set<string>> = {};
     addresses.forEach((a: any) => {
       if (!cityUserMap[a.city]) cityUserMap[a.city] = new Set();
@@ -172,9 +260,7 @@ export default function AdminAnalytics() {
     }
     profiles.forEach((p: any) => {
       const day = p.created_at?.split("T")[0];
-      if (day && day in dailyMap) {
-        dailyMap[day]++;
-      }
+      if (day && day in dailyMap) dailyMap[day]++;
     });
     const dailyNewUsers = Object.entries(dailyMap).map(([date, count]) => ({
       date,
@@ -186,15 +272,10 @@ export default function AdminAnalytics() {
     const orderingUsers = new Set(orders.map((o: any) => o.user_id));
     const conversionRate = totalUsers > 0 ? Math.round((orderingUsers.size / totalUsers) * 100) : 0;
 
-    // New users today
     const todayStr = now.toISOString().split("T")[0];
     const newToday = profiles.filter((p: any) => p.created_at?.startsWith(todayStr)).length;
-
-    // New users this month
     const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     const newThisMonth = registrationMap[thisMonth] || 0;
-
-    // New users last 7 days
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const newThisWeek = profiles.filter((p: any) => new Date(p.created_at) >= weekAgo).length;
 
@@ -205,10 +286,9 @@ export default function AdminAnalytics() {
     };
   }, [profiles, addresses, orders]);
 
-  // Detailed users list with sorting and search
+  // Detailed users list
   const usersList = useMemo(() => {
     const orderUserSet = new Set(orders.map((o: any) => o.user_id));
-
     let list = profiles.map((p: any) => ({
       user_id: p.user_id,
       full_name: p.full_name || "—",
@@ -220,7 +300,6 @@ export default function AdminAnalytics() {
       phone: p.phone || "—",
     }));
 
-    // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(
@@ -232,7 +311,6 @@ export default function AdminAnalytics() {
       );
     }
 
-    // Sort
     list.sort((a, b) => {
       let cmp = 0;
       switch (sortField) {
@@ -244,17 +322,12 @@ export default function AdminAnalytics() {
       }
       return sortDir === "desc" ? -cmp : cmp;
     });
-
     return list;
   }, [profiles, userCityMap, orders, searchQuery, sortField, sortDir]);
 
   const toggleSort = (field: typeof sortField) => {
-    if (sortField === field) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortField(field);
-      setSortDir("desc");
-    }
+    if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortField(field); setSortDir("desc"); }
   };
 
   const SortIcon = ({ field }: { field: typeof sortField }) => {
@@ -284,17 +357,70 @@ export default function AdminAnalytics() {
     { label: "New This Month", value: stats.newThisMonth, icon: Calendar, color: "text-blue-500" },
     { label: "Ordered", value: stats.orderingUsers, icon: UserCheck, color: "text-purple-500" },
     { label: "Conversion Rate", value: `${stats.conversionRate}%`, icon: TrendingUp, color: "text-pink-500" },
+    { label: "Page Views (30d)", value: pageViewStats.totalViews, icon: Eye, color: "text-indigo-500" },
+    { label: "Views Today", value: pageViewStats.todayViews, icon: BarChart3, color: "text-orange-500" },
+  ];
+
+  const externalDashboards = [
+    {
+      label: "App Store Connect",
+      desc: "iOS installs, downloads, crashes",
+      url: "https://appstoreconnect.apple.com",
+      icon: Smartphone,
+      color: "text-blue-500",
+      bg: "bg-blue-500/10",
+    },
+    {
+      label: "Meta Ads Manager",
+      desc: "Ad campaigns, installs, ROAS",
+      url: "https://adsmanager.facebook.com",
+      icon: BarChart3,
+      color: "text-blue-600",
+      bg: "bg-blue-600/10",
+    },
+    {
+      label: "Meta Events Manager",
+      desc: "App events, pixel data, conversions",
+      url: "https://business.facebook.com/events_manager2",
+      icon: TrendingUp,
+      color: "text-indigo-500",
+      bg: "bg-indigo-500/10",
+    },
+    {
+      label: "Google Play Console",
+      desc: "Android installs & analytics",
+      url: "https://play.google.com/console",
+      icon: Smartphone,
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+    },
+    {
+      label: "OneSignal Dashboard",
+      desc: "Push notifications & subscribers",
+      url: "https://dashboard.onesignal.com",
+      icon: Globe,
+      color: "text-red-500",
+      bg: "bg-red-500/10",
+    },
+    {
+      label: "Cloudflare Analytics",
+      desc: "Domain traffic & security",
+      url: "https://dash.cloudflare.com",
+      icon: Globe,
+      color: "text-orange-500",
+      bg: "bg-orange-500/10",
+    },
   ];
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl">
       <div>
         <h1 className="text-2xl font-bold text-foreground">App Analytics</h1>
-        <p className="text-sm text-muted-foreground mt-1">User demographics, geography, and detailed user data</p>
+        <p className="text-sm text-muted-foreground mt-1">Users, traffic, demographics & external dashboards</p>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3">
         {statCards.map((card, i) => (
           <motion.div key={card.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
             <Card className="border-border/50 shadow-sm">
@@ -310,11 +436,11 @@ export default function AdminAnalytics() {
         ))}
       </div>
 
-      {/* Daily New Users Chart */}
+      {/* Daily New Users */}
       <Card className="border-border/50">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-emerald-500" /> Daily New Users (Last 30 Days)
+            <Users className="h-4 w-4 text-emerald-500" /> Daily New Users (Last 30 Days)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -324,13 +450,110 @@ export default function AdminAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="label" tick={{ fontSize: 9 }} stroke="hsl(var(--muted-foreground))" interval={2} />
                 <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
-                  labelStyle={{ color: "hsl(var(--foreground))" }}
-                />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
                 <Bar dataKey="users" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Web Traffic Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-border/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Eye className="h-4 w-4 text-indigo-500" /> Daily Page Views (Last 30 Days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={pageViewStats.dailyData} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="label" tick={{ fontSize: 9 }} stroke="hsl(var(--muted-foreground))" interval={3} />
+                  <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" allowDecimals={false} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
+                  <Area type="monotone" dataKey="views" fill="hsl(var(--primary) / 0.15)" stroke="hsl(var(--primary))" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-purple-500" /> Top Pages & Traffic Sources
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Top Pages</p>
+                {pageViewStats.topPages.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No page view data yet — tracking just started</p>
+                ) : (
+                  <div className="space-y-1">
+                    {pageViewStats.topPages.map((p) => (
+                      <div key={p.path} className="flex items-center justify-between text-sm px-2 py-1 rounded-lg hover:bg-muted/50">
+                        <span className="text-foreground font-mono text-xs truncate max-w-[200px]">{p.path}</span>
+                        <span className="text-muted-foreground text-xs font-semibold">{p.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Traffic Sources</p>
+                {pageViewStats.referrerData.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No referrer data yet</p>
+                ) : (
+                  <div className="space-y-1">
+                    {pageViewStats.referrerData.map((r) => (
+                      <div key={r.source} className="flex items-center justify-between text-sm px-2 py-1 rounded-lg hover:bg-muted/50">
+                        <span className="text-foreground text-xs truncate max-w-[200px]">{r.source}</span>
+                        <span className="text-muted-foreground text-xs font-semibold">{r.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* External Dashboards */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <ExternalLink className="h-4 w-4 text-primary" /> External Dashboards — Installs, Ads & Detailed Analytics
+          </CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            App install counts, Meta Ads performance (installs, cost-per-install, ROAS), and detailed traffic data live in these platforms.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {externalDashboards.map((d) => (
+              <a
+                key={d.label}
+                href={d.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 rounded-xl border border-border/50 hover:border-primary/30 hover:bg-muted/30 transition-all group"
+              >
+                <div className={`w-10 h-10 rounded-xl ${d.bg} flex items-center justify-center flex-shrink-0`}>
+                  <d.icon className={`w-5 h-5 ${d.color}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{d.label}</p>
+                  <p className="text-[10px] text-muted-foreground">{d.desc}</p>
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+              </a>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -348,9 +571,7 @@ export default function AdminAnalytics() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={stats.genderData} cx="50%" cy="50%" outerRadius={90} innerRadius={50} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-                    {stats.genderData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
+                    {stats.genderData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
                   <Tooltip />
                 </PieChart>
@@ -408,13 +629,9 @@ export default function AdminAnalytics() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis type="number" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" allowDecimals={false} />
                       <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" width={80} />
-                      <Tooltip
-                        contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
-                      />
+                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
                       <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-                        {stats.cityData.slice(0, 10).map((_, i) => (
-                          <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                        ))}
+                        {stats.cityData.slice(0, 10).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -448,9 +665,7 @@ export default function AdminAnalytics() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                   <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip
-                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
-                  />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }} />
                   <Line type="monotone" dataKey="users" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(var(--primary))" }} />
                 </LineChart>
               </ResponsiveContainer>
@@ -472,9 +687,7 @@ export default function AdminAnalytics() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={stats.languageData} cx="50%" cy="50%" outerRadius={80} innerRadius={40} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-                    {stats.languageData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[(i + 3) % COLORS.length]} />
-                    ))}
+                    {stats.languageData.map((_, i) => <Cell key={i} fill={COLORS[(i + 3) % COLORS.length]} />)}
                   </Pie>
                   <Tooltip />
                 </PieChart>
@@ -554,9 +767,7 @@ export default function AdminAnalytics() {
               <TableBody>
                 {displayedUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      No users found
-                    </TableCell>
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No users found</TableCell>
                   </TableRow>
                 ) : (
                   displayedUsers.map((u, i) => (
@@ -585,20 +796,14 @@ export default function AdminAnalytics() {
           </div>
           {usersList.length > 50 && !showAllUsers && (
             <div className="p-4 text-center border-t border-border/50">
-              <button
-                onClick={() => setShowAllUsers(true)}
-                className="text-sm font-medium text-primary hover:underline"
-              >
+              <button onClick={() => setShowAllUsers(true)} className="text-sm font-medium text-primary hover:underline">
                 Show all {usersList.length} users
               </button>
             </div>
           )}
           {showAllUsers && usersList.length > 50 && (
             <div className="p-4 text-center border-t border-border/50">
-              <button
-                onClick={() => setShowAllUsers(false)}
-                className="text-sm font-medium text-primary hover:underline"
-              >
+              <button onClick={() => setShowAllUsers(false)} className="text-sm font-medium text-primary hover:underline">
                 Show less
               </button>
             </div>
