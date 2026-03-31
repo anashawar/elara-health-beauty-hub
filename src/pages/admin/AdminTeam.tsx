@@ -245,14 +245,9 @@ export default function AdminTeam() {
         )}
       </div>
 
-      <PrepLinksSection />
     </div>
   );
 }
-
-/* ─── Prep Links Section ─── */
-
-function PrepLinksSection() {
   const qc = useQueryClient();
   const { user } = useAdmin();
   const [label, setLabel] = useState("Warehouse A");
