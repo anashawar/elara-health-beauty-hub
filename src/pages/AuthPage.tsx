@@ -761,6 +761,31 @@ const AuthPage = () => {
               </Button>
             </motion.div>
           )}
+
+          {/* Step: Notification Permission Prompt */}
+          {step === "notifications" && (
+            <NotificationPermissionPrompt
+              onAllow={async () => {
+                localStorage.setItem("elara_notif_prompt_seen", "true");
+                try {
+                  if (isNativePlatform()) {
+                    await initOneSignal();
+                    const canRequest = await OneSignal.Notifications.canRequestPermission();
+                    if (canRequest) {
+                      await OneSignal.Notifications.requestPermission(true);
+                    }
+                  }
+                } catch (e) {
+                  console.warn("[Push] Permission request failed:", e);
+                }
+                navigate("/home");
+              }}
+              onSkip={() => {
+                localStorage.setItem("elara_notif_prompt_seen", "true");
+                navigate("/home");
+              }}
+            />
+          )}
         </AnimatePresence>
       </div>
 
