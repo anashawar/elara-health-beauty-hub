@@ -6,7 +6,6 @@ import NotificationPermissionPrompt from "@/components/NotificationPermissionPro
 import { isNativePlatform, initOneSignal } from "@/lib/nativePush";
 import OneSignal from "onesignal-cordova-plugin";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { lazy, Suspense } from "react";
 const MapPicker = lazy(() => import("@/components/MapPicker"));
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
