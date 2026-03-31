@@ -52,28 +52,64 @@ export default function WarehouseSystemPage() {
     if (!username || !password) return;
     setLogging(true);
     
-    // Use secure RPC with server-side password verification
-    const { data, error } = await supabase.rpc("validate_warehouse_login", {
-      _username: username,
-      _password: password,
-    }) as { data: any; error: any };
-    setLogging(false);
+    try {
+      // Try warehouse_users table first
+      const { data, error } = await supabase.rpc("validate_warehouse_login", {
+        _username: username,
+        _password: password,
+      }) as { data: any; error: any };
 
-    if (error || !data?.valid) {
+      if (!error && data?.valid) {
+        const userData = {
+          id: data.id,
+          username: data.username,
+          full_name: data.full_name,
+          warehouse_id: data.warehouse_id,
+        } as WarehouseUser;
+        setUser(userData);
+        setAuthed(true);
+        localStorage.setItem("warehouse_user", JSON.stringify(userData));
+        setLogging(false);
+        return;
+      }
+
+      // Fallback: try prep_access_tokens table
+      const { data: prepData, error: prepError } = await supabase.rpc("validate_prep_token", {
+        _username: username,
+        _token: "login",
+      }) as { data: any; error: any };
+
+      if (!prepError && prepData?.valid) {
+        // Verify password against stored hash
+        const { data: passValid } = await supabase.rpc("verify_prep_password", {
+          _plain_password: password,
+          _stored_hash: prepData.password_hash,
+        }) as { data: any; error: any };
+
+        if (passValid) {
+          const userData = {
+            id: prepData.id,
+            username: username,
+            full_name: prepData.label || username,
+            warehouse_id: "",
+          } as WarehouseUser;
+          setUser(userData);
+          setAuthed(true);
+          localStorage.setItem("warehouse_user", JSON.stringify(userData));
+          setLogging(false);
+          return;
+        }
+      }
+
       toast.error("Invalid credentials");
+      setLogging(false);
+      return;
+    } catch (err) {
+      console.error("Login error:", err);
+      toast.error("Connection error. Please try again.");
+      setLogging(false);
       return;
     }
-
-    const userData = {
-      id: data.id,
-      username: data.username,
-      full_name: data.full_name,
-      warehouse_id: data.warehouse_id,
-    } as WarehouseUser;
-    
-    setUser(userData);
-    setAuthed(true);
-    localStorage.setItem("warehouse_user", JSON.stringify(userData));
   };
 
   useEffect(() => {
