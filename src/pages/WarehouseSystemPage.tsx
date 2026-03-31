@@ -110,17 +110,6 @@ export default function WarehouseSystemPage() {
       setLogging(false);
       return;
     }
-
-    const userData = {
-      id: data.id,
-      username: data.username,
-      full_name: data.full_name,
-      warehouse_id: data.warehouse_id,
-    } as WarehouseUser;
-    
-    setUser(userData);
-    setAuthed(true);
-    localStorage.setItem("warehouse_user", JSON.stringify(userData));
   };
 
   useEffect(() => {
