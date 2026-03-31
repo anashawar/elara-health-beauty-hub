@@ -34,19 +34,19 @@ export default function FrequentlyBoughtTogether({ productId, categoryId, brandI
   // Find products frequently ordered together by querying order_items
   const { data: bundleProducts = [] } = useQuery({
     queryKey: ["frequently-bought", productId, language],
-    queryFn: async () => {
-      // Single query: find orders with this product, then co-purchased products
+    queryFn: async ({ signal }) => {
+      const abortSignal = signal ?? AbortSignal.timeout(15000);
       const { data: orderIds } = await supabase
         .from("order_items")
         .select("order_id")
         .eq("product_id", productId)
-        .limit(30);
+        .limit(30)
+        .abortSignal(abortSignal);
 
       if (!orderIds?.length) return [];
 
       const ids = [...new Set(orderIds.map(o => o.order_id))].slice(0, 20);
 
-      // Get co-purchased products with their details in one query
       const { data: coItems } = await supabase
         .from("order_items")
         .select(`
@@ -60,11 +60,11 @@ export default function FrequentlyBoughtTogether({ productId, categoryId, brandI
         `)
         .in("order_id", ids)
         .neq("product_id", productId)
-        .eq("products.in_stock", true);
+        .eq("products.in_stock", true)
+        .abortSignal(abortSignal);
 
       if (!coItems?.length) return [];
 
-      // Count co-occurrences and deduplicate
       const productMap = new Map<string, { count: number; product: any }>();
       for (const item of coItems) {
         const p = (item as any).products;
@@ -77,7 +77,6 @@ export default function FrequentlyBoughtTogether({ productId, categoryId, brandI
         }
       }
 
-      // Get top 3
       const top = [...productMap.entries()]
         .sort((a, b) => b[1].count - a[1].count)
         .slice(0, 3);
@@ -100,6 +99,7 @@ export default function FrequentlyBoughtTogether({ productId, categoryId, brandI
       });
     },
     staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
   const bundleTotal = useMemo(() => {
