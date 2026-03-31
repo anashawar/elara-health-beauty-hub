@@ -824,40 +824,45 @@ async function handleNewOffers(sb: ReturnType<typeof createClient>) {
 // SCHEDULED SLOTS
 // ═══════════════════════════════════════════════════════════════════════
 
+// ── SLOT 1: 9:30 AM Baghdad — Good morning + skincare tip
 async function runSlotMorning(sb: ReturnType<typeof createClient>) {
-  const [skincare, dose] = await Promise.all([
+  const [morning, skincare] = await Promise.all([
+    handleGoodMorning(sb),
     handleSkincareTip(sb, "morning"),
-    handleDailyDose(sb, "morning"),
   ]);
-  return { skincare_tip: skincare, daily_dose: dose };
+  return { good_morning: morning, skincare_tip: skincare };
 }
 
+// ── SLOT 2: 1:00 PM Baghdad — Offers + abandoned carts + free delivery
 async function runSlotAfternoon(sb: ReturnType<typeof createClient>) {
-  const [offers, freeDelivery, abandoned] = await Promise.all([
+  const [offers, freeDelivery, abandoned, dose] = await Promise.all([
     handleOffersReminder(sb, "afternoon"),
     handleFreeDelivery(sb),
     handleAbandonedCarts(sb),
+    handleDailyDose(sb, "afternoon"),
   ]);
-  return { offers_reminder: offers, free_delivery: freeDelivery, abandoned_carts: abandoned };
+  return { offers_reminder: offers, free_delivery: freeDelivery, abandoned_carts: abandoned, daily_dose: dose };
 }
 
+// ── SLOT 3: 5:00 PM Baghdad — AI recs + did you know + daily dose
 async function runSlotEvening1(sb: ReturnType<typeof createClient>) {
-  const [aiRec, dyk, dose] = await Promise.all([
+  const [aiRec, dyk, skincare] = await Promise.all([
     handleAIRecommendations(sb),
     handleDidYouKnow(sb),
-    handleDailyDose(sb, "evening"),
+    handleSkincareTip(sb, "evening"),
   ]);
-  return { ai_recommendations: aiRec, did_you_know: dyk, daily_dose: dose };
+  return { ai_recommendations: aiRec, did_you_know: dyk, skincare_tip: skincare };
 }
 
+// ── SLOT 4: 8:00 PM Baghdad — Evening offers + dose + feedback + reorder
 async function runSlotEvening2(sb: ReturnType<typeof createClient>) {
-  const [offers, skincare, feedback, reorder] = await Promise.all([
+  const [offers, dose, feedback, reorder] = await Promise.all([
     handleOffersReminder(sb, "evening"),
-    handleSkincareTip(sb, "evening"),
+    handleDailyDose(sb, "evening"),
     handleFeedbackReminders(sb),
     handleReorder(sb),
   ]);
-  return { offers_reminder: offers, skincare_tip: skincare, feedback: feedback, reorder: reorder };
+  return { offers_reminder: offers, daily_dose: dose, feedback: feedback, reorder: reorder };
 }
 
 // ─── MAIN HANDLER ────────────────────────────────────────────────────────
