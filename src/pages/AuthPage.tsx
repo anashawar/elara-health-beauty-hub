@@ -1,7 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, ArrowRight, Loader2, ShieldCheck, Mail, Sparkles, Calendar, MapPin, Globe, Check } from "lucide-react";
+import NotificationPermissionPrompt from "@/components/NotificationPermissionPrompt";
+import { isNativePlatform, initOneSignal } from "@/lib/nativePush";
+import OneSignal from "onesignal-cordova-plugin";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { lazy, Suspense } from "react";
 const MapPicker = lazy(() => import("@/components/MapPicker"));
