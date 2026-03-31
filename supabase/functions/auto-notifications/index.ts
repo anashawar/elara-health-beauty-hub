@@ -509,6 +509,50 @@ async function handleAIRecommendations(sb: ReturnType<typeof createClient>) {
   return { sent };
 }
 
+// ── GOOD MORNING GREETING (broadcast — first daily notification at 9:30 AM)
+async function handleGoodMorning(sb: ReturnType<typeof createClient>) {
+  const today = getBaghdadDate();
+  const slotKey = `good_morning_${today}`;
+
+  const { data: ex } = await sb.from("notifications").select("id").eq("type", "good_morning").filter("metadata->>slot_key", "eq", slotKey).limit(1);
+  if (ex && ex.length > 0) return { sent: 0, reason: "already_sent" };
+
+  const KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!KEY) return { sent: 0, reason: "no_key" };
+
+  const month = new Date().toLocaleString("en", { month: "long" });
+  const dayName = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date().getDay()];
+
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          { role: "system", content: `You're ELARA's best friend. Write a warm, uplifting good morning greeting + a quick beauty/health tip for ${dayName}. Be like that bestie who texts you every morning with good vibes. Consider ${month} weather in Iraq. Write in 3 languages (English, Iraqi Arabic عراقي, Kurdish Sorani). Title max 35 chars (include a morning emoji ☀️🌸🌞), body max 110 chars. Make it feel personal and warm.` },
+          { role: "user", content: `Good morning greeting for ${dayName}, ${month}. Include a small beauty/wellness tip. Make it the kind of message that makes someone smile when they wake up.` },
+        ],
+        tools: [{ type: "function", function: { name: "morning", description: "Morning greeting in 3 languages", parameters: { type: "object", properties: { title_en: { type: "string" }, body_en: { type: "string" }, title_ar: { type: "string" }, body_ar: { type: "string" }, title_ku: { type: "string" }, body_ku: { type: "string" } }, required: ["title_en", "body_en", "title_ar", "body_ar", "title_ku", "body_ku"], additionalProperties: false } } }],
+        tool_choice: { type: "function", function: { name: "morning" } },
+      }),
+    });
+    if (!res.ok) return { sent: 0, reason: "ai_error" };
+
+    const d = await res.json();
+    const tc = d.choices?.[0]?.message?.tool_calls?.[0];
+    let gm = { title_en: "Good Morning, gorgeous! ☀️", body_en: "Start your day with a splash of cold water — your skin will thank you! 🌸", title_ar: "صباح الخير يا حلوة! ☀️", body_ar: "ابدي يومك بغسل وجهك بماي بارد — بشرتك راح تشكرك! 🌸", title_ku: "بەیانیت باش، جوانەکەم! ☀️", body_ku: "ڕۆژەکەت بە ئاوی ساردەوە دەست پێ بکە — چەرمەکەت سوپاست دەکات! 🌸" };
+    if (tc?.function?.arguments) try { gm = JSON.parse(tc.function.arguments); } catch {}
+
+    const tit: LocalizedText = { en: gm.title_en, ar: gm.title_ar, ku: gm.title_ku };
+    const bod: LocalizedText = { en: gm.body_en, ar: gm.body_ar, ku: gm.body_ku };
+
+    await saveNotif(sb, null, tit.en, bod.en, "good_morning", "☀️", "/home", undefined, { date: today, slot_key: slotKey });
+    await sendBroadcastPush(tit, bod, { icon: "☀️", link_url: "/home" });
+    return { sent: 1, broadcast: true };
+  } catch (e) { console.warn("Good morning error:", e); return { sent: 0 }; }
+}
+
 // ── AI SKINCARE TIP (broadcast)
 async function handleSkincareTip(sb: ReturnType<typeof createClient>, slot: string) {
   const today = getBaghdadDate();
