@@ -166,7 +166,12 @@ const AuthPage = () => {
       }
 
       if (!data.isNewUser) {
-        navigate("/home");
+        const seenPrompt = localStorage.getItem("elara_notif_prompt_seen");
+        if (!seenPrompt && isNativePlatform()) {
+          setStep("notifications");
+        } else {
+          navigate("/home");
+        }
       }
     } catch (e: any) {
       toast(e.message);
