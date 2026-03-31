@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, ArrowRight, Loader2, ShieldCheck, Mail, Sparkles, Calendar, MapPin, Globe, Check } from "lucide-react";
+import NotificationPermissionPrompt from "@/components/NotificationPermissionPrompt";
+import { isNativePlatform, initOneSignal } from "@/lib/nativePush";
+import OneSignal from "onesignal-cordova-plugin";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { lazy, Suspense } from "react";
 const MapPicker = lazy(() => import("@/components/MapPicker"));
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +18,7 @@ import elaraLogo from "@/assets/elara-logo.png";
 
 import { iraqCities } from "@/data/iraqCities";
 
-type Step = "phone" | "otp" | "address" | "language";
+type Step = "phone" | "otp" | "address" | "language" | "notifications";
 type AuthMode = "signup" | "signin";
 
 const OTP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
@@ -164,7 +166,12 @@ const AuthPage = () => {
       }
 
       if (!data.isNewUser) {
-        navigate("/home");
+        const seenPrompt = localStorage.getItem("elara_notif_prompt_seen");
+        if (!seenPrompt && isNativePlatform()) {
+          setStep("notifications");
+        } else {
+          navigate("/home");
+        }
       }
     } catch (e: any) {
       toast(e.message);
@@ -240,11 +247,11 @@ const AuthPage = () => {
       </div>
 
       {/* Progress bar */}
-      <div className="px-5 pt-4 pb-2 flex gap-2">
+      <div className={`px-5 pt-4 pb-2 flex gap-2 ${step === "notifications" ? "hidden" : ""}`}>
         <div className="h-1 flex-1 rounded-full transition-colors duration-300 bg-primary" />
-        <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${["otp","address","language"].includes(step) ? "bg-primary" : "bg-muted"}`} />
-        <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${["address","language"].includes(step) ? "bg-primary" : "bg-muted"}`} />
-        {isSignUp && <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === "language" ? "bg-primary" : "bg-muted"}`} />}
+        <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${["otp","address","language","notifications"].includes(step) ? "bg-primary" : "bg-muted"}`} />
+        <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${["address","language","notifications"].includes(step) ? "bg-primary" : "bg-muted"}`} />
+        {isSignUp && <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${["language","notifications"].includes(step) ? "bg-primary" : "bg-muted"}`} />}
       </div>
 
       <div className="flex-1 px-5 overflow-hidden">
@@ -746,13 +753,38 @@ const AuthPage = () => {
               </div>
 
               <Button
-                onClick={() => navigate("/home")}
+                onClick={() => isNativePlatform() ? setStep("notifications") : navigate("/home")}
                 className="w-full h-12 rounded-2xl text-sm font-semibold gap-2 shadow-md shadow-primary/20"
               >
                 {t("common.startShopping") || "Start Shopping"}
                 <ArrowRight className="w-4 h-4 rtl:rotate-180" />
               </Button>
             </motion.div>
+          )}
+
+          {/* Step: Notification Permission Prompt */}
+          {step === "notifications" && (
+            <NotificationPermissionPrompt
+              onAllow={async () => {
+                localStorage.setItem("elara_notif_prompt_seen", "true");
+                try {
+                  if (isNativePlatform()) {
+                    await initOneSignal();
+                    const canRequest = await OneSignal.Notifications.canRequestPermission();
+                    if (canRequest) {
+                      await OneSignal.Notifications.requestPermission(true);
+                    }
+                  }
+                } catch (e) {
+                  console.warn("[Push] Permission request failed:", e);
+                }
+                navigate("/home");
+              }}
+              onSkip={() => {
+                localStorage.setItem("elara_notif_prompt_seen", "true");
+                navigate("/home");
+              }}
+            />
           )}
         </AnimatePresence>
       </div>
