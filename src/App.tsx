@@ -85,6 +85,11 @@ const SwipeBackWrapper = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const PageViewTracker = () => {
+  usePageViewTracker();
+  return null;
+};
+
 /**
  * Deferred push notification init via OneSignal.
  * On native: runs shortly after the shell loads.
