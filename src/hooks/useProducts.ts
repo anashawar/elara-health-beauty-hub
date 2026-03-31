@@ -219,7 +219,7 @@ export function useRelatedProducts(categoryId: string | null | undefined, exclud
 
   return useQuery<ProductWithRelations[]>({
     queryKey: ["related-products", categoryId, excludeId, language],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!categoryId) return [];
       const { data, error } = await supabase
         .from("products")
@@ -234,7 +234,8 @@ export function useRelatedProducts(categoryId: string | null | undefined, exclud
         .eq("category_id", categoryId)
         .neq("id", excludeId || "")
         .limit(8)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .abortSignal(signal ?? AbortSignal.timeout(15000));
       if (error) throw error;
       return (data || []).map((p: any) => ({
         ...mapRawProduct({ ...p, product_tags: [] }, language),
@@ -245,6 +246,8 @@ export function useRelatedProducts(categoryId: string | null | undefined, exclud
       }));
     },
     enabled: !!categoryId,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
   });
 }
 

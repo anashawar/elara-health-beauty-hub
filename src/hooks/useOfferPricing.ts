@@ -20,15 +20,17 @@ export interface OfferPricing {
 export function useActiveOffers() {
   return useQuery({
     queryKey: ["active-offers-pricing"],
-    queryFn: async (): Promise<ActiveOffer[]> => {
+    queryFn: async ({ signal }): Promise<ActiveOffer[]> => {
       const { data, error } = await supabase
         .from("offers")
         .select("id, discount_type, discount_value, target_type, target_id, title")
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .abortSignal(signal ?? AbortSignal.timeout(10000));
       if (error) throw error;
       return data || [];
     },
     staleTime: 1000 * 60 * 5,
+    retry: 2,
   });
 }
 
