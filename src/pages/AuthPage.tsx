@@ -753,7 +753,7 @@ const AuthPage = () => {
               </div>
 
               <Button
-                onClick={() => navigate("/home")}
+                onClick={() => isNativePlatform() ? setStep("notifications") : navigate("/home")}
                 className="w-full h-12 rounded-2xl text-sm font-semibold gap-2 shadow-md shadow-primary/20"
               >
                 {t("common.startShopping") || "Start Shopping"}
