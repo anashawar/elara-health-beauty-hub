@@ -7,86 +7,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Cache 2FA app/message IDs across warm invocations
-let cachedAppId: string | null = null;
-let cachedMsgId: string | null = null;
-
-async function infobipFetch(baseUrl: string, apiKey: string, path: string, options: RequestInit = {}) {
-  const url = `https://${baseUrl}${path}`;
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      "Authorization": `App ${apiKey}`,
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    console.error(`Infobip API error [${res.status}] ${path}:`, JSON.stringify(data));
-    throw new Error(`Infobip API error: ${data?.requestError?.serviceException?.text || JSON.stringify(data)}`);
+function generateOTP(): string {
+  const digits = "0123456789";
+  let otp = "";
+  for (let i = 0; i < 6; i++) {
+    otp += digits[Math.floor(Math.random() * 10)];
   }
-  return data;
-}
-
-async function getOrCreate2FAApp(baseUrl: string, apiKey: string): Promise<{ appId: string; msgId: string }> {
-  if (cachedAppId && cachedMsgId) return { appId: cachedAppId, msgId: cachedMsgId };
-
-  // List existing applications
-  const apps = await infobipFetch(baseUrl, apiKey, "/2fa/2/applications");
-  let appId: string;
-
-  const existing = Array.isArray(apps) ? apps.find((a: any) => a.name === "ELARA_OTP") : null;
-  if (existing) {
-    appId = existing.applicationId;
-  } else {
-    const newApp = await infobipFetch(baseUrl, apiKey, "/2fa/2/applications", {
-      method: "POST",
-      body: JSON.stringify({
-        name: "ELARA_OTP",
-        enabled: true,
-        configuration: {
-          pinAttempts: 5,
-          allowMultiplePinVerifications: true,
-          pinTimeToLive: "10m",
-          verifyPinLimit: "1/3s",
-          sendPinPerApplicationLimit: "10000/1d",
-          sendPinPerPhoneNumberLimit: "5/1h",
-        },
-      }),
-    });
-    appId = newApp.applicationId;
-    console.log("Created Infobip 2FA application:", appId);
-  }
-
-  // List existing message templates
-  const msgs = await infobipFetch(baseUrl, apiKey, `/2fa/2/applications/${appId}/messages`);
-  let msgId: string;
-
-  const existingMsg = Array.isArray(msgs) ? msgs.find((m: any) => m.pinType === "NUMERIC" && m.pinLength === 6) : null;
-  if (existingMsg) {
-    msgId = existingMsg.messageId;
-  } else {
-    const newMsg = await infobipFetch(baseUrl, apiKey, `/2fa/2/applications/${appId}/messages`, {
-      method: "POST",
-      body: JSON.stringify({
-        pinType: "NUMERIC",
-        pinLength: 6,
-        pinPlaceholder: "{{pin}}",
-        messageText: "Your ELARA verification code is {{pin}}. Do not share it with anyone.",
-        senderId: "ELARA",
-        language: "en",
-        repeatDTMF: "1#",
-        speechRate: 1,
-      }),
-    });
-    msgId = newMsg.messageId;
-    console.log("Created Infobip 2FA message template:", msgId);
-  }
-
-  cachedAppId = appId;
-  cachedMsgId = msgId;
-  return { appId, msgId };
+  return otp;
 }
 
 serve(async (req) => {
@@ -106,9 +33,11 @@ serve(async (req) => {
 
     const INFOBIP_API_KEY = Deno.env.get("INFOBIP_API_KEY");
     const INFOBIP_BASE_URL = Deno.env.get("INFOBIP_BASE_URL");
+    const INFOBIP_WHATSAPP_SENDER = Deno.env.get("INFOBIP_WHATSAPP_SENDER");
 
     if (!INFOBIP_API_KEY) throw new Error("INFOBIP_API_KEY is not configured");
     if (!INFOBIP_BASE_URL) throw new Error("INFOBIP_BASE_URL is not configured");
+    if (!INFOBIP_WHATSAPP_SENDER) throw new Error("INFOBIP_WHATSAPP_SENDER is not configured");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -137,33 +66,61 @@ serve(async (req) => {
       }
     }
 
-    // Demo phones — bypass code also works in verify-otp, but still send real OTP
+    // Generate a 6-digit OTP
+    const otpCode = generateOTP();
+
+    // Demo phones — bypass code also works in verify-otp
     const DEMO_PHONES = ["+9647510535548"];
     const isDemoPhone = DEMO_PHONES.includes(normalizedPhone);
     if (isDemoPhone) {
-      console.log(`Demo phone ${normalizedPhone} — will send real OTP + bypass code active`);
+      console.log(`Demo phone ${normalizedPhone} — bypass code active, also sending real OTP`);
     }
 
-    // Get or create 2FA application and message template
-    const { appId, msgId } = await getOrCreate2FAApp(INFOBIP_BASE_URL, INFOBIP_API_KEY);
+    // Strip the + for Infobip WhatsApp API (expects digits only)
+    const toNumber = normalizedPhone.replace(/^\+/, "");
 
-    // Send PIN via Infobip 2FA API
-    const sendResult = await infobipFetch(INFOBIP_BASE_URL, INFOBIP_API_KEY, "/2fa/2/pin", {
+    // Send OTP via Infobip WhatsApp Authentication Template
+    const whatsappPayload = {
+      messages: [
+        {
+          from: INFOBIP_WHATSAPP_SENDER,
+          to: toNumber,
+          content: {
+            templateName: "elara_otp_auth",
+            templateData: {
+              body: {
+                placeholders: [otpCode],
+              },
+            },
+            language: "en",
+          },
+        },
+      ],
+    };
+
+    const sendRes = await fetch(`https://${INFOBIP_BASE_URL}/whatsapp/1/message/template`, {
       method: "POST",
-      body: JSON.stringify({
-        applicationId: appId,
-        messageId: msgId,
-        to: normalizedPhone,
-      }),
+      headers: {
+        "Authorization": `App ${INFOBIP_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(whatsappPayload),
     });
 
-    console.log("Infobip send PIN response:", JSON.stringify(sendResult));
-    const pinId = sendResult.pinId;
+    const sendData = await sendRes.json();
+    console.log("Infobip WhatsApp send response:", JSON.stringify(sendData));
 
-    // Store pinId in otp_verifications so verify-otp can look it up
+    if (!sendRes.ok) {
+      const errText = sendData?.messages?.[0]?.status?.description ||
+        sendData?.requestError?.serviceException?.text ||
+        JSON.stringify(sendData);
+      throw new Error(`Infobip WhatsApp error: ${errText}`);
+    }
+
+    // Store OTP in database for verification
     await supabase.from("otp_verifications").insert({
       phone: normalizedPhone,
-      code: pinId, // Store pinId as 'code' for lookup
+      code: otpCode,
       expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
       verified: false,
     });
