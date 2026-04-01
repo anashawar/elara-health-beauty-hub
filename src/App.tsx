@@ -145,7 +145,6 @@ const App = () => (
           <BrowserRouter>
             <DeferredPushInit />
             <PageViewTracker />
-            <SwipeBackWrapper>
             <Suspense fallback={PageFallback}>
             <Routes>
               <Route path="/" element={<ResponsiveHome />} />

@@ -8,6 +8,7 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   ios: {
     handleApplicationNotifications: false,
+    allowsLinkPreview: false,
   },
   // Only use live-reload server in development — production loads from local bundle
   ...(isDevMode ? {
