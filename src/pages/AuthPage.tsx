@@ -139,6 +139,7 @@ const AuthPage = () => {
     if (otpCode.length !== 6) { toast(t("auth.enterOtp") || "Enter the 6-digit code"); return; }
 
     setLoading(true);
+    setOtpInProgress(true);
     try {
       const body: any = { phone: normalizedPhone, code: otpCode };
       if (authMode === "signup") {
@@ -160,30 +161,33 @@ const AuthPage = () => {
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || "Verification failed");
 
-      if (data.isNewUser) {
-        toast(t("auth.accountCreated") || "Account created!");
-        setStep("address");
-      } else {
-        toast(t("auth.welcomeBackToast") || "Welcome back!");
-      }
+      const isNew = !!data.isNewUser;
 
+      // Set session first, then decide navigation
       if (data.session) {
         await supabase.auth.setSession({
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
         });
+        // Small delay to let auth state propagate on mobile
+        await new Promise(r => setTimeout(r, 300));
       }
 
-      if (!data.isNewUser) {
+      if (isNew) {
+        toast(t("auth.accountCreated") || "Account created!");
+        setStep("address");
+      } else {
+        toast(t("auth.welcomeBackToast") || "Welcome back!");
         const seenPrompt = localStorage.getItem("elara_notif_prompt_seen");
         if (!seenPrompt && isNativePlatform()) {
           setStep("notifications");
         } else {
-          navigate("/home");
+          navigate("/home", { replace: true });
         }
       }
     } catch (e: any) {
       toast(e.message);
+      setOtpInProgress(false);
     } finally {
       setLoading(false);
     }
