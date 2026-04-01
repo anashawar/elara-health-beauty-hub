@@ -45,7 +45,8 @@ const AuthPage = () => {
     localStorage.setItem("elara_has_visited", "true");
   }, []);
   const [step, setStep] = useState<Step>("phone");
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [gender, setGender] = useState("");
@@ -90,14 +91,10 @@ const AuthPage = () => {
   const handleSendOTP = async () => {
     if (!phone.trim()) { toast(t("auth.enterPhone")); return; }
     if (authMode === "signup" && !email.trim()) { toast(t("auth.enterEmail") || "Please enter your email"); return; }
-    if (authMode === "signup" && !fullName.trim()) { toast(t("auth.enterFullName") || "Please enter your name"); return; }
-    if (authMode === "signup") {
-      const nameParts = fullName.trim().split(/\s+/);
-      if (nameParts.length < 2 || nameParts.some(p => p.length < 2)) {
-        toast(t("auth.enterFirstAndLastName") || "Please enter your first and last name");
-        return;
-      }
-    }
+    if (authMode === "signup" && !firstName.trim()) { toast(t("auth.enterFirstName") || "Please enter your first name"); return; }
+    if (authMode === "signup" && firstName.trim().length < 2) { toast(t("auth.nameTooShort") || "First name must be at least 2 characters"); return; }
+    if (authMode === "signup" && !lastName.trim()) { toast(t("auth.enterLastName") || "Please enter your last name"); return; }
+    if (authMode === "signup" && lastName.trim().length < 2) { toast(t("auth.nameTooShort") || "Last name must be at least 2 characters"); return; }
     if (authMode === "signup" && !gender) { toast(t("auth.selectGender") || "Please select your gender"); return; }
     if (authMode === "signup" && !birthdate) { toast(t("auth.enterBirthdate") || "Please enter your date of birth"); return; }
 
@@ -106,7 +103,7 @@ const AuthPage = () => {
       const fullPhone = countryCode.code + phone.trim().replace(/^0/, "");
       const body: any = { phone: fullPhone, mode: authMode };
       if (authMode === "signup") {
-        body.full_name = fullName.trim();
+        body.full_name = `${firstName.trim()} ${lastName.trim()}`;
         body.email = email.trim();
         body.gender = gender || undefined;
         body.birthdate = birthdate || undefined;
@@ -143,7 +140,7 @@ const AuthPage = () => {
     try {
       const body: any = { phone: normalizedPhone, code: otpCode };
       if (authMode === "signup") {
-        body.full_name = fullName.trim();
+        body.full_name = `${firstName.trim()} ${lastName.trim()}`;
         body.email = email.trim();
         body.gender = gender || undefined;
         body.birthdate = birthdate || undefined;
@@ -220,7 +217,7 @@ const AuthPage = () => {
 
       if (error) { toast(error.message); return; }
 
-      toast(t("auth.welcomeToElara", { name: fullName.split(" ")[0] }) || "Welcome to ELARA!");
+      toast(t("auth.welcomeToElara", { name: firstName.trim() }) || "Welcome to ELARA!");
       setStep("language");
     } finally {
       setLoading(false);
@@ -330,18 +327,27 @@ const AuthPage = () => {
                       className="overflow-hidden"
                     >
                       <div className="space-y-1.5 pb-1">
-                        <label className="text-xs font-medium text-muted-foreground">{t("auth.fullName")} *</label>
-                        <p className="text-[10px] text-muted-foreground -mt-1">
-                          {t("auth.realNameRequired") || "Please use your real first and last name"}
+                        <p className="text-[10px] text-muted-foreground">
+                          {t("auth.realNameRequired") || "Please use your real name"}
                         </p>
-                        <div className="relative">
-                          <User className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            placeholder={t("auth.enterFirstAndLastName") || "First and Last Name"}
-                            className="pl-10 rtl:pl-3 rtl:pr-10 h-12 rounded-2xl border-border/60 bg-muted/40 focus:bg-card transition-colors"
-                          />
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <User className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                              value={firstName}
+                              onChange={(e) => setFirstName(e.target.value)}
+                              placeholder={t("auth.firstName") || "First Name"}
+                              className="pl-10 rtl:pl-3 rtl:pr-10 h-12 rounded-2xl border-border/60 bg-muted/40 focus:bg-card transition-colors"
+                            />
+                          </div>
+                          <div className="relative flex-1">
+                            <Input
+                              value={lastName}
+                              onChange={(e) => setLastName(e.target.value)}
+                              placeholder={t("auth.lastName") || "Last Name"}
+                              className="h-12 rounded-2xl border-border/60 bg-muted/40 focus:bg-card transition-colors px-3"
+                            />
+                          </div>
                         </div>
                       </div>
                     </motion.div>
