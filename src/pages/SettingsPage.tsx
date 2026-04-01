@@ -549,7 +549,7 @@ function DeleteAccountSection({ user, phone, signOut, navigate, t }: { user: any
       if (data?.error) throw new Error(data.error);
       setStep("otp");
       const masked = normalized.slice(0, 4) + "****" + normalized.slice(-3);
-      toast(t("settings.otpSentWhatsApp") || `Verification code sent to ${masked} via SMS`);
+      toast(t("settings.otpSentWhatsApp") || `Verification code sent to ${masked} via WhatsApp`);
     } catch (err: any) {
       console.error("Send OTP error:", err);
       toast(err.message || "Failed to send verification code. Please try again.");
