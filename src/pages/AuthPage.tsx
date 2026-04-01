@@ -89,6 +89,13 @@ const AuthPage = () => {
     if (!phone.trim()) { toast(t("auth.enterPhone")); return; }
     if (authMode === "signup" && !email.trim()) { toast(t("auth.enterEmail") || "Please enter your email"); return; }
     if (authMode === "signup" && !fullName.trim()) { toast(t("auth.enterFullName") || "Please enter your name"); return; }
+    if (authMode === "signup") {
+      const nameParts = fullName.trim().split(/\s+/);
+      if (nameParts.length < 2 || nameParts.some(p => p.length < 2)) {
+        toast(t("auth.enterFirstAndLastName") || "Please enter your first and last name");
+        return;
+      }
+    }
     if (authMode === "signup" && !gender) { toast(t("auth.selectGender") || "Please select your gender"); return; }
     if (authMode === "signup" && !birthdate) { toast(t("auth.enterBirthdate") || "Please enter your date of birth"); return; }
 
@@ -181,7 +188,8 @@ const AuthPage = () => {
   };
 
   const handleSaveAddress = async () => {
-    if (!city) { toast(t("auth.selectCity")); return; }
+    if (!city) { toast(t("auth.selectCity") || "Please select your city"); return; }
+    if (!gpsLat || !gpsLng) { toast(t("auth.selectLocationRequired") || "Please select your location on the map"); return; }
 
     setLoading(true);
     try {
@@ -316,13 +324,16 @@ const AuthPage = () => {
                       className="overflow-hidden"
                     >
                       <div className="space-y-1.5 pb-1">
-                        <label className="text-xs font-medium text-muted-foreground">{t("auth.fullName")}</label>
+                        <label className="text-xs font-medium text-muted-foreground">{t("auth.fullName")} *</label>
+                        <p className="text-[10px] text-muted-foreground -mt-1">
+                          {t("auth.realNameRequired") || "Please use your real first and last name"}
+                        </p>
                         <div className="relative">
                           <User className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
-                            placeholder={t("auth.enterFullName")}
+                            placeholder={t("auth.enterFirstAndLastName") || "First and Last Name"}
                             className="pl-10 rtl:pl-3 rtl:pr-10 h-12 rounded-2xl border-border/60 bg-muted/40 focus:bg-card transition-colors"
                           />
                         </div>
@@ -691,12 +702,9 @@ const AuthPage = () => {
                 {!loading && <ArrowRight className="w-4 h-4 rtl:rotate-180" />}
               </Button>
 
-              <button
-                onClick={() => setStep("language")}
-                className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
-              >
-                {t("auth.skipForNow")}
-              </button>
+              <p className="text-center text-[11px] text-muted-foreground">
+                {t("auth.locationRequiredNote") || "City and location are required to personalize your experience"}
+              </p>
             </motion.div>
           )}
 
