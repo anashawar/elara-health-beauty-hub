@@ -205,7 +205,6 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
             </Suspense>
-            </SwipeBackWrapper>
           </BrowserRouter>
           </ForceUpdateGate>
         </AppProvider>
