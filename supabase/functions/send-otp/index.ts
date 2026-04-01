@@ -91,6 +91,12 @@ serve(async (req) => {
               body: {
                 placeholders: [otpCode],
               },
+              buttons: [
+                {
+                  type: "URL",
+                  parameter: otpCode,
+                },
+              ],
             },
             language: "en_GB",
           },
