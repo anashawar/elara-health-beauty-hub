@@ -39,44 +39,12 @@ const listAllAuthUsers = async (supabase: ReturnType<typeof createClient>) => {
   return users;
 };
 
-async function verifyPinWithInfobip(
-  baseUrl: string,
-  apiKey: string,
-  pinId: string,
-  pin: string
-): Promise<{ verified: boolean }> {
-  const url = `https://${baseUrl}/2fa/2/pin/${pinId}/verify`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Authorization": `App ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ pin }),
-  });
-  const data = await res.json();
-  console.log("Infobip verify PIN response:", JSON.stringify(data));
-
-  if (!res.ok) {
-    // 401 means wrong pin, not an API error
-    if (res.status === 401) return { verified: false };
-    throw new Error(`Infobip verify error: ${data?.requestError?.serviceException?.text || JSON.stringify(data)}`);
-  }
-  return { verified: data.verified === true || data.pinVerified === true };
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { phone, code, full_name, email, gender, birthdate } = await req.json();
     if (!phone || !code) throw new Error("Phone and code are required");
-
-    const INFOBIP_API_KEY = Deno.env.get("INFOBIP_API_KEY");
-    const INFOBIP_BASE_URL = Deno.env.get("INFOBIP_BASE_URL");
-
-    if (!INFOBIP_API_KEY) throw new Error("INFOBIP_API_KEY is not configured");
-    if (!INFOBIP_BASE_URL) throw new Error("INFOBIP_BASE_URL is not configured");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -90,9 +58,8 @@ serve(async (req) => {
     const DEMO_PHONES: Record<string, string> = { "+9647510535548": "112233" };
     const isDemoAccount = DEMO_PHONES[normalizedPhone] && code === DEMO_PHONES[normalizedPhone];
 
-    // Verify OTP (skip for demo accounts)
+    // Verify OTP from database (skip for demo accounts)
     if (!isDemoAccount) {
-      // Look up the pinId from otp_verifications
       const { data: otpRecord } = await supabase
         .from("otp_verifications")
         .select("code")
@@ -110,10 +77,7 @@ serve(async (req) => {
         );
       }
 
-      const pinId = otpRecord.code; // We stored pinId in the 'code' column
-      const { verified } = await verifyPinWithInfobip(INFOBIP_BASE_URL, INFOBIP_API_KEY, pinId, code);
-
-      if (!verified) {
+      if (otpRecord.code !== code) {
         return new Response(
           JSON.stringify({ error: "Invalid or expired code" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -125,7 +89,7 @@ serve(async (req) => {
         .from("otp_verifications")
         .update({ verified: true })
         .eq("phone", normalizedPhone)
-        .eq("code", pinId);
+        .eq("code", code);
     }
 
     const existingUsers = await listAllAuthUsers(supabase);
