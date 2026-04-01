@@ -844,25 +844,25 @@ async function runSlotAfternoon(sb: ReturnType<typeof createClient>) {
   return { offers_reminder: offers, free_delivery: freeDelivery, abandoned_carts: abandoned, daily_dose: dose };
 }
 
-// ── SLOT 3: 5:00 PM Baghdad — AI recs + did you know + daily dose
+// ── SLOT 3: 4:00 PM Baghdad — "Order now, receive in 24 hours" CTA
 async function runSlotEvening1(sb: ReturnType<typeof createClient>) {
-  const [aiRec, dyk, skincare] = await Promise.all([
-    handleAIRecommendations(sb),
-    handleDidYouKnow(sb),
-    handleSkincareTip(sb, "evening"),
+  const [orderCta, abandoned, freeDelivery] = await Promise.all([
+    handleOrderNowCta(sb),
+    handleAbandonedCarts(sb),
+    handleFreeDelivery(sb),
   ]);
-  return { ai_recommendations: aiRec, did_you_know: dyk, skincare_tip: skincare };
+  return { order_now_cta: orderCta, abandoned_carts: abandoned, free_delivery: freeDelivery };
 }
 
-// ── SLOT 4: 8:00 PM Baghdad — Evening offers + dose + feedback + reorder
+// ── SLOT 4: 8:00 PM Baghdad — Attractive beauty/wellness tip
 async function runSlotEvening2(sb: ReturnType<typeof createClient>) {
-  const [offers, dose, feedback, reorder] = await Promise.all([
+  const [eveningTip, offers, feedback, reorder] = await Promise.all([
+    handleEveningTip(sb),
     handleOffersReminder(sb, "evening"),
-    handleDailyDose(sb, "evening"),
     handleFeedbackReminders(sb),
     handleReorder(sb),
   ]);
-  return { offers_reminder: offers, daily_dose: dose, feedback: feedback, reorder: reorder };
+  return { evening_tip: eveningTip, offers_reminder: offers, feedback: feedback, reorder: reorder };
 }
 
 // ─── MAIN HANDLER ────────────────────────────────────────────────────────
