@@ -55,7 +55,7 @@ export default function WarehouseSystemPage() {
     try {
       // Try warehouse_users table first
       const { data, error } = await supabase.rpc("validate_warehouse_login", {
-        _username: username,
+        _username: username.toLowerCase().trim(),
         _password: password,
       }) as { data: any; error: any };
 
