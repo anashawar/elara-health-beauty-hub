@@ -73,11 +73,13 @@ const AuthPage = () => {
     toast(t("addresses.locationCaptured") || "📍 Location saved!");
   };
 
+  // Redirect already-authenticated users (only on initial load, not during OTP flow)
+  const [otpInProgress, setOtpInProgress] = useState(false);
   useEffect(() => {
-    if (!authLoading && user && step === "phone") {
+    if (!authLoading && user && step === "phone" && !otpInProgress) {
       navigate("/home", { replace: true });
     }
-  }, [user, authLoading, navigate, step]);
+  }, [user, authLoading, navigate, step, otpInProgress]);
 
   useEffect(() => {
     if (countdown <= 0) return;
