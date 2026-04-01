@@ -91,14 +91,10 @@ const AuthPage = () => {
   const handleSendOTP = async () => {
     if (!phone.trim()) { toast(t("auth.enterPhone")); return; }
     if (authMode === "signup" && !email.trim()) { toast(t("auth.enterEmail") || "Please enter your email"); return; }
-    if (authMode === "signup" && !fullName.trim()) { toast(t("auth.enterFullName") || "Please enter your name"); return; }
-    if (authMode === "signup") {
-      const nameParts = fullName.trim().split(/\s+/);
-      if (nameParts.length < 2 || nameParts.some(p => p.length < 2)) {
-        toast(t("auth.enterFirstAndLastName") || "Please enter your first and last name");
-        return;
-      }
-    }
+    if (authMode === "signup" && !firstName.trim()) { toast(t("auth.enterFirstName") || "Please enter your first name"); return; }
+    if (authMode === "signup" && firstName.trim().length < 2) { toast(t("auth.nameTooShort") || "First name must be at least 2 characters"); return; }
+    if (authMode === "signup" && !lastName.trim()) { toast(t("auth.enterLastName") || "Please enter your last name"); return; }
+    if (authMode === "signup" && lastName.trim().length < 2) { toast(t("auth.nameTooShort") || "Last name must be at least 2 characters"); return; }
     if (authMode === "signup" && !gender) { toast(t("auth.selectGender") || "Please select your gender"); return; }
     if (authMode === "signup" && !birthdate) { toast(t("auth.enterBirthdate") || "Please enter your date of birth"); return; }
 
