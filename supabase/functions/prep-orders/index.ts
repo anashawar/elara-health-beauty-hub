@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
       const excludedBrandIds: string[] = tokenRow.excluded_brand_ids || [];
       const excludedProductIds: string[] = tokenRow.excluded_product_ids || [];
 
-      const action = url.searchParams.get("action");
+      // action already declared above
 
       // --- COSTS SUMMARY endpoint ---
       if (action === "costs-summary") {
