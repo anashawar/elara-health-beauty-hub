@@ -9,13 +9,9 @@ const corsHeaders = {
 
 const normalizeIraqPhone = (value: string) => {
   let normalized = value.replace(/\s+/g, "").replace(/[^\d+]/g, "");
-  if (normalized.startsWith("00")) {
-    normalized = `+${normalized.slice(2)}`;
-  }
+  if (normalized.startsWith("00")) normalized = `+${normalized.slice(2)}`;
   normalized = normalized.replace(/^0+/, "");
-  if (!normalized.startsWith("+")) {
-    normalized = `+964${normalized}`;
-  }
+  if (!normalized.startsWith("+")) normalized = `+964${normalized}`;
   return normalized;
 };
 
@@ -43,6 +39,32 @@ const listAllAuthUsers = async (supabase: ReturnType<typeof createClient>) => {
   return users;
 };
 
+async function verifyPinWithInfobip(
+  baseUrl: string,
+  apiKey: string,
+  pinId: string,
+  pin: string
+): Promise<{ verified: boolean }> {
+  const url = `https://${baseUrl}/2fa/2/pin/${pinId}/verify`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Authorization": `App ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ pin }),
+  });
+  const data = await res.json();
+  console.log("Infobip verify PIN response:", JSON.stringify(data));
+
+  if (!res.ok) {
+    // 401 means wrong pin, not an API error
+    if (res.status === 401) return { verified: false };
+    throw new Error(`Infobip verify error: ${data?.requestError?.serviceException?.text || JSON.stringify(data)}`);
+  }
+  return { verified: data.verified === true || data.pinVerified === true };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -50,13 +72,11 @@ serve(async (req) => {
     const { phone, code, full_name, email, gender, birthdate } = await req.json();
     if (!phone || !code) throw new Error("Phone and code are required");
 
-    const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
-    const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
-    const TWILIO_VERIFY_SERVICE_SID = Deno.env.get("TWILIO_VERIFY_SERVICE_SID");
+    const INFOBIP_API_KEY = Deno.env.get("INFOBIP_API_KEY");
+    const INFOBIP_BASE_URL = Deno.env.get("INFOBIP_BASE_URL");
 
-    if (!TWILIO_ACCOUNT_SID) throw new Error("TWILIO_ACCOUNT_SID is not configured");
-    if (!TWILIO_AUTH_TOKEN) throw new Error("TWILIO_AUTH_TOKEN is not configured");
-    if (!TWILIO_VERIFY_SERVICE_SID) throw new Error("TWILIO_VERIFY_SERVICE_SID is not configured");
+    if (!INFOBIP_API_KEY) throw new Error("INFOBIP_API_KEY is not configured");
+    if (!INFOBIP_BASE_URL) throw new Error("INFOBIP_BASE_URL is not configured");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -70,40 +90,48 @@ serve(async (req) => {
     const DEMO_PHONES: Record<string, string> = { "+9647510535548": "112233" };
     const isDemoAccount = DEMO_PHONES[normalizedPhone] && code === DEMO_PHONES[normalizedPhone];
 
-    // Verify OTP via Twilio Verify API (skip for demo accounts)
+    // Verify OTP (skip for demo accounts)
     if (!isDemoAccount) {
-      const basicAuth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
-      const verifyResponse = await fetch(
-        `https://verify.twilio.com/v2/Services/${TWILIO_VERIFY_SERVICE_SID}/VerificationCheck`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Basic ${basicAuth}`,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({
-            To: normalizedPhone,
-            Code: code,
-          }),
-        }
-      );
+      // Look up the pinId from otp_verifications
+      const { data: otpRecord } = await supabase
+        .from("otp_verifications")
+        .select("code")
+        .eq("phone", normalizedPhone)
+        .eq("verified", false)
+        .gte("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
 
-      const verifyData = await verifyResponse.json();
-      console.log("Twilio VerificationCheck response:", JSON.stringify(verifyData));
+      if (!otpRecord) {
+        return new Response(
+          JSON.stringify({ error: "No pending verification found. Please request a new code." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
-      if (!verifyResponse.ok || verifyData.status !== "approved") {
+      const pinId = otpRecord.code; // We stored pinId in the 'code' column
+      const { verified } = await verifyPinWithInfobip(INFOBIP_BASE_URL, INFOBIP_API_KEY, pinId, code);
+
+      if (!verified) {
         return new Response(
           JSON.stringify({ error: "Invalid or expired code" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+
+      // Mark as verified
+      await supabase
+        .from("otp_verifications")
+        .update({ verified: true })
+        .eq("phone", normalizedPhone)
+        .eq("code", pinId);
     }
 
     const existingUsers = await listAllAuthUsers(supabase);
     const userByPhone = existingUsers.find((u: any) => isSamePhone(u.phone, normalizedPhone));
     const userByEmail = userEmail ? existingUsers.find((u: any) => u.email?.toLowerCase() === userEmail) : null;
 
-    // If no email provided (sign-in mode), user must already exist by phone
     if (!userEmail && !userByPhone) {
       return new Response(
         JSON.stringify({ error: "No account found with this phone number. Please sign up first." }),
@@ -111,7 +139,6 @@ serve(async (req) => {
       );
     }
 
-    // Strict one-phone-per-account rule
     if (userEmail && userByPhone && userByPhone.email?.toLowerCase() !== userEmail) {
       return new Response(
         JSON.stringify({ error: "This phone number is already linked to another account" }),
@@ -119,7 +146,6 @@ serve(async (req) => {
       );
     }
 
-    // Strict one-email-per-account rule
     if (userEmail && userByEmail && !isSamePhone(userByEmail.phone, normalizedPhone)) {
       return new Response(
         JSON.stringify({ error: "This email is already linked to another phone number" }),
