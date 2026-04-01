@@ -188,7 +188,8 @@ const AuthPage = () => {
   };
 
   const handleSaveAddress = async () => {
-    if (!city) { toast(t("auth.selectCity")); return; }
+    if (!city) { toast(t("auth.selectCity") || "Please select your city"); return; }
+    if (!gpsLat || !gpsLng) { toast(t("auth.selectLocationRequired") || "Please select your location on the map"); return; }
 
     setLoading(true);
     try {
