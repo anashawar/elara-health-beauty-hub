@@ -324,13 +324,16 @@ const AuthPage = () => {
                       className="overflow-hidden"
                     >
                       <div className="space-y-1.5 pb-1">
-                        <label className="text-xs font-medium text-muted-foreground">{t("auth.fullName")}</label>
+                        <label className="text-xs font-medium text-muted-foreground">{t("auth.fullName")} *</label>
+                        <p className="text-[10px] text-muted-foreground -mt-1">
+                          {t("auth.realNameRequired") || "Please use your real first and last name"}
+                        </p>
                         <div className="relative">
                           <User className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
-                            placeholder={t("auth.enterFullName")}
+                            placeholder={t("auth.enterFirstAndLastName") || "First and Last Name"}
                             className="pl-10 rtl:pl-3 rtl:pr-10 h-12 rounded-2xl border-border/60 bg-muted/40 focus:bg-card transition-colors"
                           />
                         </div>
