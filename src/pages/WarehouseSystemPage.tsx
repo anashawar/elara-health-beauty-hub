@@ -75,7 +75,7 @@ export default function WarehouseSystemPage() {
 
       // Fallback: try prep_access_tokens table
       const { data: prepData, error: prepError } = await supabase.rpc("validate_prep_token", {
-        _username: username,
+        _username: username.toLowerCase().trim(),
         _token: "login",
       }) as { data: any; error: any };
 
