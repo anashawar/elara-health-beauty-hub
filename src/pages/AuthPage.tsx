@@ -140,7 +140,7 @@ const AuthPage = () => {
     try {
       const body: any = { phone: normalizedPhone, code: otpCode };
       if (authMode === "signup") {
-        body.full_name = fullName.trim();
+        body.full_name = `${firstName.trim()} ${lastName.trim()}`;
         body.email = email.trim();
         body.gender = gender || undefined;
         body.birthdate = birthdate || undefined;
