@@ -45,7 +45,8 @@ const AuthPage = () => {
     localStorage.setItem("elara_has_visited", "true");
   }, []);
   const [step, setStep] = useState<Step>("phone");
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [gender, setGender] = useState("");
