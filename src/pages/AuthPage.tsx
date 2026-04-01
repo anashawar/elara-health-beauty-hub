@@ -702,12 +702,9 @@ const AuthPage = () => {
                 {!loading && <ArrowRight className="w-4 h-4 rtl:rotate-180" />}
               </Button>
 
-              <button
-                onClick={() => setStep("language")}
-                className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
-              >
-                {t("auth.skipForNow")}
-              </button>
+              <p className="text-center text-[11px] text-muted-foreground">
+                {t("auth.locationRequiredNote") || "City and location are required to personalize your experience"}
+              </p>
             </motion.div>
           )}
 
