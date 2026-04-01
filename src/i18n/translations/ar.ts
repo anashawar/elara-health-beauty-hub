@@ -242,7 +242,7 @@ export const ar = {
     enterEmail: "اكتب بريدك الإلكتروني",
     phoneNumber: "رقم الهاتف",
     enterPhone: "دخّل رقم تلفونك",
-    whatsappNote: "راح نرسلك رمز تحقق برسالة نصية",
+    whatsappNote: "راح نرسلك رمز تحقق عبر واتساب",
     sendCode: "ارسل رمز التحقق",
     sending: "يرسل...",
     otpSent: "رسلنالك الرمز برسالة نصية!",
