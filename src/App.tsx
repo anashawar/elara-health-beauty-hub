@@ -80,10 +80,6 @@ const queryClient = new QueryClient({
   },
 });
 
-const SwipeBackWrapper = ({ children }: { children: React.ReactNode }) => {
-  useSwipeBack();
-  return <>{children}</>;
-};
 
 const PageViewTracker = () => {
   usePageViewTracker();
