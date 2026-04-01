@@ -92,7 +92,7 @@ serve(async (req) => {
                 placeholders: [otpCode],
               },
             },
-            language: "en",
+            language: "en_GB",
           },
         },
       ],
