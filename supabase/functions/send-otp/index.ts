@@ -86,13 +86,13 @@ serve(async (req) => {
           from: INFOBIP_WHATSAPP_SENDER,
           to: toNumber,
           content: {
-            templateName: "elara_otp_auth",
+            templateName: "authentication",
             templateData: {
               body: {
                 placeholders: [otpCode],
               },
             },
-            language: "en",
+            language: "en_GB",
           },
         },
       ],
