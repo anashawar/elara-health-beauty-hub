@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-import { useSwipeBack } from "@/hooks/useSwipeBack";
+
 import { usePageViewTracker } from "@/hooks/usePageViewTracker";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -80,10 +80,6 @@ const queryClient = new QueryClient({
   },
 });
 
-const SwipeBackWrapper = ({ children }: { children: React.ReactNode }) => {
-  useSwipeBack();
-  return <>{children}</>;
-};
 
 const PageViewTracker = () => {
   usePageViewTracker();
@@ -149,7 +145,6 @@ const App = () => (
           <BrowserRouter>
             <DeferredPushInit />
             <PageViewTracker />
-            <SwipeBackWrapper>
             <Suspense fallback={PageFallback}>
             <Routes>
               <Route path="/" element={<ResponsiveHome />} />
@@ -210,7 +205,6 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
             </Suspense>
-            </SwipeBackWrapper>
           </BrowserRouter>
           </ForceUpdateGate>
         </AppProvider>
