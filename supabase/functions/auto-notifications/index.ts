@@ -820,6 +820,90 @@ async function handleNewOffers(sb: ReturnType<typeof createClient>) {
   return { sent: total };
 }
 
+// ── "ORDER NOW, RECEIVE IN 24 HOURS" CTA (broadcast — 4:00 PM)
+async function handleOrderNowCta(sb: ReturnType<typeof createClient>) {
+  const today = getBaghdadDate();
+  const slotKey = `order_cta_${today}`;
+
+  const { data: ex } = await sb.from("notifications").select("id").eq("type", "order_cta").filter("metadata->>slot_key", "eq", slotKey).limit(1);
+  if (ex && ex.length > 0) return { sent: 0, reason: "already_sent" };
+
+  const KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!KEY) return { sent: 0, reason: "no_key" };
+
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          { role: "system", content: `You're ELARA's marketing expert. Write a push notification encouraging users to order NOW with the promise of fast delivery (within 24 hours). Make it urgent, exciting, and irresistible. Use FOMO, limited time vibes, or "treat yourself" energy. Write in 3 languages (English, Iraqi Arabic عراقي, Kurdish Sorani). Title max 35 chars (include delivery emoji 🚚📦), body max 110 chars. Be catchy and action-oriented.` },
+          { role: "user", content: `Write an "order now, receive within 24 hours" push notification. Make it feel like they're missing out if they don't order RIGHT NOW.` },
+        ],
+        tools: [{ type: "function", function: { name: "cta", description: "Order CTA in 3 languages", parameters: { type: "object", properties: { title_en: { type: "string" }, body_en: { type: "string" }, title_ar: { type: "string" }, body_ar: { type: "string" }, title_ku: { type: "string" }, body_ku: { type: "string" } }, required: ["title_en", "body_en", "title_ar", "body_ar", "title_ku", "body_ku"], additionalProperties: false } } }],
+        tool_choice: { type: "function", function: { name: "cta" } },
+      }),
+    });
+    if (!res.ok) return { sent: 0, reason: "ai_error" };
+
+    const d = await res.json();
+    const tc = d.choices?.[0]?.message?.tool_calls?.[0];
+    let cta = { title_en: "Order Now, Get It Tomorrow! 🚚", body_en: "Place your order now and receive it within 24 hours! Free delivery on 40K+ IQD ✨", title_ar: "اطلبي هسة ويوصلك بكرة! 🚚", body_ar: "اطلبي هسة ويوصلك خلال 24 ساعة! توصيل مجاني فوق 40 ألف ✨", title_ku: "ئێستا داوا بکە، بەیانی دەگاتە! 🚚", body_ku: "ئێستا داوا بکە و لە 24 کاتژمێردا دەتگاتە! گەیاندنی بەخۆڕایی لەسەر 40 هەزار+ ✨" };
+    if (tc?.function?.arguments) try { cta = JSON.parse(tc.function.arguments); } catch {}
+
+    const tit: LocalizedText = { en: cta.title_en, ar: cta.title_ar, ku: cta.title_ku };
+    const bod: LocalizedText = { en: cta.body_en, ar: cta.body_ar, ku: cta.body_ku };
+
+    await saveNotif(sb, null, tit.en, bod.en, "order_cta", "🚚", "/home", undefined, { date: today, slot_key: slotKey });
+    await sendBroadcastPush(tit, bod, { icon: "🚚", link_url: "/home" });
+    return { sent: 1, broadcast: true };
+  } catch (e) { console.warn("Order CTA error:", e); return { sent: 0 }; }
+}
+
+// ── EVENING ATTRACTIVE TIP (broadcast — 8:00 PM)
+async function handleEveningTip(sb: ReturnType<typeof createClient>) {
+  const today = getBaghdadDate();
+  const slotKey = `evening_tip_${today}`;
+
+  const { data: ex } = await sb.from("notifications").select("id").eq("type", "evening_tip").filter("metadata->>slot_key", "eq", slotKey).limit(1);
+  if (ex && ex.length > 0) return { sent: 0, reason: "already_sent" };
+
+  const KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!KEY) return { sent: 0, reason: "no_key" };
+
+  const month = new Date().toLocaleString("en", { month: "long" });
+
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          { role: "system", content: `You're ELARA's beauty bestie. Write an attractive evening beauty/wellness tip or fun beauty fact for ${month}. Make it the kind of message that makes someone smile before bed. Topics: night skincare routine tips, beauty sleep hacks, relaxing self-care ideas, interesting beauty facts, ingredient spotlights, or wellness tips. Be warm, engaging, sometimes surprising. Write in 3 languages (English, Iraqi Arabic عراقي, Kurdish Sorani). Title max 35 chars (include a night/beauty emoji 🌙✨💫💆‍♀️), body max 110 chars.` },
+          { role: "user", content: `Write an attractive evening beauty tip or fun fact for tonight. Make it memorable and worth reading!` },
+        ],
+        tools: [{ type: "function", function: { name: "tip", description: "Evening tip in 3 languages", parameters: { type: "object", properties: { title_en: { type: "string" }, body_en: { type: "string" }, title_ar: { type: "string" }, body_ar: { type: "string" }, title_ku: { type: "string" }, body_ku: { type: "string" } }, required: ["title_en", "body_en", "title_ar", "body_ar", "title_ku", "body_ku"], additionalProperties: false } } }],
+        tool_choice: { type: "function", function: { name: "tip" } },
+      }),
+    });
+    if (!res.ok) return { sent: 0, reason: "ai_error" };
+
+    const d = await res.json();
+    const tc = d.choices?.[0]?.message?.tool_calls?.[0];
+    let tip = { title_en: "Tonight's Beauty Secret 🌙", body_en: "Apply your night cream on slightly damp skin — it locks in 2x more moisture! Sweet dreams ✨", title_ar: "سر جمالك الليلة 🌙", body_ar: "حطي كريم الليل على بشرة رطبة شوية — يرطب ضعفين! أحلام سعيدة ✨", title_ku: "نهێنی جوانیت ئەمشەو 🌙", body_ku: "کرێمی شەوانەت لەسەر چەرمی کەمێک شێ دابنێ — دوو قات زیاتر شێ دەکات! خەونی خۆش ✨" };
+    if (tc?.function?.arguments) try { tip = JSON.parse(tc.function.arguments); } catch {}
+
+    const tit: LocalizedText = { en: tip.title_en, ar: tip.title_ar, ku: tip.title_ku };
+    const bod: LocalizedText = { en: tip.body_en, ar: tip.body_ar, ku: tip.body_ku };
+
+    await saveNotif(sb, null, tit.en, bod.en, "evening_tip", "🌙", "/home", undefined, { date: today, slot_key: slotKey });
+    await sendBroadcastPush(tit, bod, { icon: "🌙", link_url: "/home" });
+    return { sent: 1, broadcast: true };
+  } catch (e) { console.warn("Evening tip error:", e); return { sent: 0 }; }
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // SCHEDULED SLOTS
 // ═══════════════════════════════════════════════════════════════════════
