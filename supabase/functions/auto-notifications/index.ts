@@ -172,13 +172,42 @@ async function sendLocalizedPush(tit: LocalizedText, bod: LocalizedText, ulangs:
   }
 }
 
-async function sendBroadcastPush(tit: LocalizedText, bod: LocalizedText, opts: { icon?: string; link_url?: string; image_url?: string }) {
-  await sendPushViaOneSignal({
-    title: tit.en, body: bod.en,
-    headings: { en: tit.en, ar: tit.ar, ku: tit.ku },
-    contents: { en: bod.en, ar: bod.ar, ku: bod.ku },
-    icon: opts.icon, link_url: opts.link_url, image_url: opts.image_url, user_ids: [],
-  });
+async function getAllSubscribedUserIds(sb: ReturnType<typeof createClient>): Promise<string[]> {
+  const { data } = await sb.from("push_subscriptions").select("user_id").eq("is_active", true);
+  if (!data || data.length === 0) return [];
+  return [...new Set(data.map(d => d.user_id))];
+}
+
+async function sendBroadcastPush(sb: ReturnType<typeof createClient>, tit: LocalizedText, bod: LocalizedText, opts: { icon?: string; link_url?: string; image_url?: string }) {
+  // Get all subscribed user IDs and target via external_id instead of segments
+  const userIds = await getAllSubscribedUserIds(sb);
+  console.log(`[Push] Broadcast: found ${userIds.length} subscribed users`);
+  if (userIds.length === 0) {
+    // Fallback to segment-based broadcast
+    await sendPushViaOneSignal({
+      title: tit.en, body: bod.en,
+      headings: { en: tit.en, ar: tit.ar, ku: tit.ku },
+      contents: { en: bod.en, ar: bod.ar, ku: bod.ku },
+      icon: opts.icon, link_url: opts.link_url, image_url: opts.image_url, user_ids: [],
+    });
+    return;
+  }
+
+  // Get user languages for localized sending
+  const ulangs = await getUserLangsMap(sb, userIds);
+  const groups = groupByLang(ulangs);
+  for (const lang of ["en", "ar", "ku"] as Lang[]) {
+    if (groups[lang].length === 0) continue;
+    // Send in batches of 2000 (OneSignal limit)
+    for (let i = 0; i < groups[lang].length; i += 2000) {
+      const batch = groups[lang].slice(i, i + 2000);
+      await sendPushViaOneSignal({
+        title: tl(tit, lang), body: tl(bod, lang),
+        icon: opts.icon, link_url: opts.link_url, image_url: opts.image_url,
+        user_ids: batch,
+      });
+    }
+  }
 }
 
 // Send personalized per-user pushes (each user gets their own name)
