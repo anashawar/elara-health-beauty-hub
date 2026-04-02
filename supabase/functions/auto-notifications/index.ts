@@ -581,7 +581,7 @@ async function handleGoodMorning(sb: ReturnType<typeof createClient>) {
     const bod: LocalizedText = { en: gm.body_en, ar: gm.body_ar, ku: gm.body_ku };
 
     await saveNotif(sb, null, tit.en, bod.en, "good_morning", "☀️", "/home", undefined, { date: today, slot_key: slotKey });
-    await sendBroadcastPush(tit, bod, { icon: "☀️", link_url: "/home" });
+    await sendBroadcastPush(sb, tit, bod, { icon: "☀️", link_url: "/home" });
     return { sent: 1, broadcast: true };
   } catch (e) { console.warn("Good morning error:", e); return { sent: 0 }; }
 }
