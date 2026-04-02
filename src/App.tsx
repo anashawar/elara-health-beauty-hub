@@ -11,6 +11,7 @@ import { AppProvider } from "@/context/AppContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import AuthGuard from "./components/AuthGuard";
 import ForceUpdateGate from "./components/ForceUpdateGate";
+import { useAppResumeRecovery } from "@/hooks/useAppResumeRecovery";
 
 // All pages lazy loaded for faster initial bundle
 const ResponsiveHome = lazy(() => import("./components/ResponsiveHome"));
@@ -74,7 +75,7 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes — data stays fresh, no refetch
       gcTime: 1000 * 60 * 30,   // 30 minutes — cache persists in memory
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
       retry: 1,
     },
   },
@@ -83,6 +84,12 @@ const queryClient = new QueryClient({
 
 const PageViewTracker = () => {
   usePageViewTracker();
+  return null;
+};
+
+/** Recovers auth + data when app resumes from background */
+const AppResumeRecovery = () => {
+  useAppResumeRecovery();
   return null;
 };
 
@@ -144,6 +151,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <DeferredPushInit />
+            <AppResumeRecovery />
             <PageViewTracker />
             <Suspense fallback={PageFallback}>
             <Routes>

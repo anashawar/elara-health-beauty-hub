@@ -8,9 +8,14 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Safety timeout: never stay in loading state forever (e.g. after app resume)
+    const timeout = setTimeout(() => setLoading(false), 8000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setLoading(false);
+    }).catch(() => {
       setLoading(false);
     });
 
@@ -20,7 +25,10 @@ export function useAuth() {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string, phone: string) => {
