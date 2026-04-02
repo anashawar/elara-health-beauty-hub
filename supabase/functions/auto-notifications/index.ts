@@ -419,7 +419,7 @@ async function handleOffersReminder(sb: ReturnType<typeof createClient>, slot: s
 
   const link = top.link_url || "/collection/offers";
   await saveNotif(sb, null, tl(DAILY_OFFERS.title, "en"), bodyLoc.en, "daily_offers", "🎯", link, top.image_url, { date: today, slot_key: slotKey });
-  await sendBroadcastPush(DAILY_OFFERS.title, bodyLoc, { icon: "🎯", image_url: top.image_url, link_url: link });
+  await sendBroadcastPush(sb, DAILY_OFFERS.title, bodyLoc, { icon: "🎯", image_url: top.image_url, link_url: link });
 
   return { sent: 1, broadcast: true };
 }
