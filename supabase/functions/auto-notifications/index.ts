@@ -959,10 +959,21 @@ Deno.serve(async (req) => {
 
   try {
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { action, ...params } = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      console.error("[auto-notifications] Failed to parse request body");
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { action, ...params } = body;
+    console.log(`[auto-notifications] Action: ${action}, Baghdad hour: ${getBaghdadHour()}, date: ${getBaghdadDate()}`);
     let result: Record<string, unknown> = {};
 
-    if (["slot_morning", "slot_afternoon", "slot_evening1", "slot_evening2"].includes(action) && isInQuietHours()) {
+    if (["slot_morning", "slot_afternoon", "slot_evening1", "slot_evening2"].includes(action as string) && isInQuietHours()) {
+      console.log(`[auto-notifications] Skipping ${action} — quiet hours (Baghdad hour: ${getBaghdadHour()})`);
       return new Response(JSON.stringify({ ok: true, skipped: "quiet_hours", baghdad_hour: getBaghdadHour() }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
