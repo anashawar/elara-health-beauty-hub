@@ -128,7 +128,7 @@ async function getUsersUnderCap(sb: ReturnType<typeof createClient>, userIds: st
 
 async function sendPushViaOneSignal(p: NotificationPayload): Promise<{ sent: number }> {
   const key = Deno.env.get("ONESIGNAL_REST_API_KEY");
-  if (!key) return { sent: 0 };
+  if (!key) { console.error("[Push] ONESIGNAL_REST_API_KEY not set!"); return { sent: 0 }; }
 
   const os: Record<string, unknown> = {
     app_id: ONESIGNAL_APP_ID,
@@ -148,16 +148,20 @@ async function sendPushViaOneSignal(p: NotificationPayload): Promise<{ sent: num
     os.included_segments = ["Subscribed Users"];
   }
 
+  const payload = JSON.stringify(os);
+  console.log(`[Push] Sending to OneSignal: segment=${p.user_ids.length > 0 ? "targeted:" + p.user_ids.length : "Subscribed Users"}, title="${p.title}"`);
+
   try {
     const res = await fetch(ONESIGNAL_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Key ${key}` },
-      body: JSON.stringify(os),
+      body: payload,
     });
     const result = await res.json();
-    if (!res.ok) { console.error("OneSignal error:", JSON.stringify(result)); return { sent: 0 }; }
+    console.log(`[Push] OneSignal response: status=${res.status}, recipients=${result.recipients}, id=${result.id}, errors=${JSON.stringify(result.errors || null)}`);
+    if (!res.ok) { console.error("[Push] OneSignal API error:", res.status, JSON.stringify(result)); return { sent: 0 }; }
     return { sent: result.recipients || 0 };
-  } catch (e) { console.error("OneSignal fetch error:", e); return { sent: 0 }; }
+  } catch (e) { console.error("[Push] OneSignal fetch error:", e); return { sent: 0 }; }
 }
 
 async function sendLocalizedPush(tit: LocalizedText, bod: LocalizedText, ulangs: Record<string, Lang>, opts: { icon?: string; link_url?: string; image_url?: string }) {
