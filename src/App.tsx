@@ -11,6 +11,7 @@ import { AppProvider } from "@/context/AppContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import AuthGuard from "./components/AuthGuard";
 import ForceUpdateGate from "./components/ForceUpdateGate";
+import { useAppResumeRecovery } from "@/hooks/useAppResumeRecovery";
 
 // All pages lazy loaded for faster initial bundle
 const ResponsiveHome = lazy(() => import("./components/ResponsiveHome"));
