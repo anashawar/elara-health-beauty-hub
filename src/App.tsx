@@ -87,6 +87,12 @@ const PageViewTracker = () => {
   return null;
 };
 
+/** Recovers auth + data when app resumes from background */
+const AppResumeRecovery = () => {
+  useAppResumeRecovery();
+  return null;
+};
+
 /**
  * Deferred push notification init via OneSignal.
  * On native: runs shortly after the shell loads.
