@@ -847,7 +847,7 @@ async function handleNewOffers(sb: ReturnType<typeof createClient>) {
     const bod: LocalizedText = { en: `Don't miss this deal! ${disc} off 🛍️`, ar: `لا تفوتي هالعرض! ${disc} خصم 🛍️`, ku: `ئەم ئۆفەرە لەدەست مەدە! ${disc} داشکاندن 🛍️` };
 
     await saveNotif(sb, null, tit.en, bod.en, "offer", "🔥", o.link_url || "/collection/offers", o.image_url, { offer_id: o.id });
-    await sendBroadcastPush(tit, bod, { icon: "🔥", image_url: o.image_url, link_url: o.link_url || "/collection/offers" });
+    await sendBroadcastPush(sb, tit, bod, { icon: "🔥", image_url: o.image_url, link_url: o.link_url || "/collection/offers" });
     total++;
   }
   return { sent: total };
