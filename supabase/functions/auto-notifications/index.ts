@@ -889,7 +889,7 @@ async function handleOrderNowCta(sb: ReturnType<typeof createClient>) {
     const bod: LocalizedText = { en: cta.body_en, ar: cta.body_ar, ku: cta.body_ku };
 
     await saveNotif(sb, null, tit.en, bod.en, "order_cta", "🚚", "/home", undefined, { date: today, slot_key: slotKey });
-    await sendBroadcastPush(tit, bod, { icon: "🚚", link_url: "/home" });
+    await sendBroadcastPush(sb, tit, bod, { icon: "🚚", link_url: "/home" });
     return { sent: 1, broadcast: true };
   } catch (e) { console.warn("Order CTA error:", e); return { sent: 0 }; }
 }
