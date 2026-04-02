@@ -128,7 +128,7 @@ async function getUsersUnderCap(sb: ReturnType<typeof createClient>, userIds: st
 
 async function sendPushViaOneSignal(p: NotificationPayload): Promise<{ sent: number }> {
   const key = Deno.env.get("ONESIGNAL_REST_API_KEY");
-  if (!key) return { sent: 0 };
+  if (!key) { console.error("[Push] ONESIGNAL_REST_API_KEY not set!"); return { sent: 0 }; }
 
   const os: Record<string, unknown> = {
     app_id: ONESIGNAL_APP_ID,
@@ -148,16 +148,20 @@ async function sendPushViaOneSignal(p: NotificationPayload): Promise<{ sent: num
     os.included_segments = ["Subscribed Users"];
   }
 
+  const payload = JSON.stringify(os);
+  console.log(`[Push] Sending to OneSignal: segment=${p.user_ids.length > 0 ? "targeted:" + p.user_ids.length : "Subscribed Users"}, title="${p.title}"`);
+
   try {
     const res = await fetch(ONESIGNAL_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Key ${key}` },
-      body: JSON.stringify(os),
+      body: payload,
     });
     const result = await res.json();
-    if (!res.ok) { console.error("OneSignal error:", JSON.stringify(result)); return { sent: 0 }; }
+    console.log(`[Push] OneSignal response: status=${res.status}, recipients=${result.recipients}, id=${result.id}, errors=${JSON.stringify(result.errors || null)}`);
+    if (!res.ok) { console.error("[Push] OneSignal API error:", res.status, JSON.stringify(result)); return { sent: 0 }; }
     return { sent: result.recipients || 0 };
-  } catch (e) { console.error("OneSignal fetch error:", e); return { sent: 0 }; }
+  } catch (e) { console.error("[Push] OneSignal fetch error:", e); return { sent: 0 }; }
 }
 
 async function sendLocalizedPush(tit: LocalizedText, bod: LocalizedText, ulangs: Record<string, Lang>, opts: { icon?: string; link_url?: string; image_url?: string }) {
@@ -168,13 +172,42 @@ async function sendLocalizedPush(tit: LocalizedText, bod: LocalizedText, ulangs:
   }
 }
 
-async function sendBroadcastPush(tit: LocalizedText, bod: LocalizedText, opts: { icon?: string; link_url?: string; image_url?: string }) {
-  await sendPushViaOneSignal({
-    title: tit.en, body: bod.en,
-    headings: { en: tit.en, ar: tit.ar, ku: tit.ku },
-    contents: { en: bod.en, ar: bod.ar, ku: bod.ku },
-    icon: opts.icon, link_url: opts.link_url, image_url: opts.image_url, user_ids: [],
-  });
+async function getAllSubscribedUserIds(sb: ReturnType<typeof createClient>): Promise<string[]> {
+  const { data } = await sb.from("push_subscriptions").select("user_id").eq("is_active", true);
+  if (!data || data.length === 0) return [];
+  return [...new Set(data.map(d => d.user_id))];
+}
+
+async function sendBroadcastPush(sb: ReturnType<typeof createClient>, tit: LocalizedText, bod: LocalizedText, opts: { icon?: string; link_url?: string; image_url?: string }) {
+  // Get all subscribed user IDs and target via external_id instead of segments
+  const userIds = await getAllSubscribedUserIds(sb);
+  console.log(`[Push] Broadcast: found ${userIds.length} subscribed users`);
+  if (userIds.length === 0) {
+    // Fallback to segment-based broadcast
+    await sendPushViaOneSignal({
+      title: tit.en, body: bod.en,
+      headings: { en: tit.en, ar: tit.ar, ku: tit.ku },
+      contents: { en: bod.en, ar: bod.ar, ku: bod.ku },
+      icon: opts.icon, link_url: opts.link_url, image_url: opts.image_url, user_ids: [],
+    });
+    return;
+  }
+
+  // Get user languages for localized sending
+  const ulangs = await getUserLangsMap(sb, userIds);
+  const groups = groupByLang(ulangs);
+  for (const lang of ["en", "ar", "ku"] as Lang[]) {
+    if (groups[lang].length === 0) continue;
+    // Send in batches of 2000 (OneSignal limit)
+    for (let i = 0; i < groups[lang].length; i += 2000) {
+      const batch = groups[lang].slice(i, i + 2000);
+      await sendPushViaOneSignal({
+        title: tl(tit, lang), body: tl(bod, lang),
+        icon: opts.icon, link_url: opts.link_url, image_url: opts.image_url,
+        user_ids: batch,
+      });
+    }
+  }
 }
 
 // Send personalized per-user pushes (each user gets their own name)
@@ -386,7 +419,7 @@ async function handleOffersReminder(sb: ReturnType<typeof createClient>, slot: s
 
   const link = top.link_url || "/collection/offers";
   await saveNotif(sb, null, tl(DAILY_OFFERS.title, "en"), bodyLoc.en, "daily_offers", "🎯", link, top.image_url, { date: today, slot_key: slotKey });
-  await sendBroadcastPush(DAILY_OFFERS.title, bodyLoc, { icon: "🎯", image_url: top.image_url, link_url: link });
+  await sendBroadcastPush(sb, DAILY_OFFERS.title, bodyLoc, { icon: "🎯", image_url: top.image_url, link_url: link });
 
   return { sent: 1, broadcast: true };
 }
@@ -548,7 +581,7 @@ async function handleGoodMorning(sb: ReturnType<typeof createClient>) {
     const bod: LocalizedText = { en: gm.body_en, ar: gm.body_ar, ku: gm.body_ku };
 
     await saveNotif(sb, null, tit.en, bod.en, "good_morning", "☀️", "/home", undefined, { date: today, slot_key: slotKey });
-    await sendBroadcastPush(tit, bod, { icon: "☀️", link_url: "/home" });
+    await sendBroadcastPush(sb, tit, bod, { icon: "☀️", link_url: "/home" });
     return { sent: 1, broadcast: true };
   } catch (e) { console.warn("Good morning error:", e); return { sent: 0 }; }
 }
@@ -592,7 +625,7 @@ async function handleSkincareTip(sb: ReturnType<typeof createClient>, slot: stri
     const bod: LocalizedText = { en: tip.body_en, ar: tip.body_ar, ku: tip.body_ku };
 
     await saveNotif(sb, null, tit.en, bod.en, "skincare_tip", "🌿", "/categories", undefined, { date: today, slot_key: slotKey });
-    await sendBroadcastPush(tit, bod, { icon: "🌿", link_url: "/categories" });
+    await sendBroadcastPush(sb, tit, bod, { icon: "🌿", link_url: "/categories" });
     return { sent: 1, broadcast: true };
   } catch (e) { console.warn("Skincare tip error:", e); return { sent: 0 }; }
 }
@@ -635,7 +668,7 @@ async function handleDailyDose(sb: ReturnType<typeof createClient>, slot: string
     const bod: LocalizedText = { en: dose.body_en, ar: dose.body_ar, ku: dose.body_ku };
 
     await saveNotif(sb, null, tit.en, bod.en, "daily_dose", "💊", "/home", undefined, { date: today, slot_key: slotKey });
-    await sendBroadcastPush(tit, bod, { icon: "💊", link_url: "/home" });
+    await sendBroadcastPush(sb, tit, bod, { icon: "💊", link_url: "/home" });
     return { sent: 1, broadcast: true };
   } catch (e) { console.warn("Daily dose error:", e); return { sent: 0 }; }
 }
@@ -676,7 +709,7 @@ async function handleDidYouKnow(sb: ReturnType<typeof createClient>) {
     const bod: LocalizedText = { en: dyk.body_en, ar: dyk.body_ar, ku: dyk.body_ku };
 
     await saveNotif(sb, null, tit.en, bod.en, "did_you_know", "🧬", "/home", undefined, { date: today, slot_key: slotKey });
-    await sendBroadcastPush(tit, bod, { icon: "🧬", link_url: "/home" });
+    await sendBroadcastPush(sb, tit, bod, { icon: "🧬", link_url: "/home" });
     return { sent: 1, broadcast: true };
   } catch (e) { console.warn("DYK error:", e); return { sent: 0 }; }
 }
@@ -814,7 +847,7 @@ async function handleNewOffers(sb: ReturnType<typeof createClient>) {
     const bod: LocalizedText = { en: `Don't miss this deal! ${disc} off 🛍️`, ar: `لا تفوتي هالعرض! ${disc} خصم 🛍️`, ku: `ئەم ئۆفەرە لەدەست مەدە! ${disc} داشکاندن 🛍️` };
 
     await saveNotif(sb, null, tit.en, bod.en, "offer", "🔥", o.link_url || "/collection/offers", o.image_url, { offer_id: o.id });
-    await sendBroadcastPush(tit, bod, { icon: "🔥", image_url: o.image_url, link_url: o.link_url || "/collection/offers" });
+    await sendBroadcastPush(sb, tit, bod, { icon: "🔥", image_url: o.image_url, link_url: o.link_url || "/collection/offers" });
     total++;
   }
   return { sent: total };
@@ -856,7 +889,7 @@ async function handleOrderNowCta(sb: ReturnType<typeof createClient>) {
     const bod: LocalizedText = { en: cta.body_en, ar: cta.body_ar, ku: cta.body_ku };
 
     await saveNotif(sb, null, tit.en, bod.en, "order_cta", "🚚", "/home", undefined, { date: today, slot_key: slotKey });
-    await sendBroadcastPush(tit, bod, { icon: "🚚", link_url: "/home" });
+    await sendBroadcastPush(sb, tit, bod, { icon: "🚚", link_url: "/home" });
     return { sent: 1, broadcast: true };
   } catch (e) { console.warn("Order CTA error:", e); return { sent: 0 }; }
 }
@@ -899,7 +932,7 @@ async function handleEveningTip(sb: ReturnType<typeof createClient>) {
     const bod: LocalizedText = { en: tip.body_en, ar: tip.body_ar, ku: tip.body_ku };
 
     await saveNotif(sb, null, tit.en, bod.en, "evening_tip", "🌙", "/home", undefined, { date: today, slot_key: slotKey });
-    await sendBroadcastPush(tit, bod, { icon: "🌙", link_url: "/home" });
+    await sendBroadcastPush(sb, tit, bod, { icon: "🌙", link_url: "/home" });
     return { sent: 1, broadcast: true };
   } catch (e) { console.warn("Evening tip error:", e); return { sent: 0 }; }
 }
@@ -955,10 +988,21 @@ Deno.serve(async (req) => {
 
   try {
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { action, ...params } = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      console.error("[auto-notifications] Failed to parse request body");
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { action, ...params } = body;
+    console.log(`[auto-notifications] Action: ${action}, Baghdad hour: ${getBaghdadHour()}, date: ${getBaghdadDate()}`);
     let result: Record<string, unknown> = {};
 
-    if (["slot_morning", "slot_afternoon", "slot_evening1", "slot_evening2"].includes(action) && isInQuietHours()) {
+    if (["slot_morning", "slot_afternoon", "slot_evening1", "slot_evening2"].includes(action as string) && isInQuietHours()) {
+      console.log(`[auto-notifications] Skipping ${action} — quiet hours (Baghdad hour: ${getBaghdadHour()})`);
       return new Response(JSON.stringify({ ok: true, skipped: "quiet_hours", baghdad_hour: getBaghdadHour() }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -996,6 +1040,7 @@ Deno.serve(async (req) => {
         });
     }
 
+    console.log(`[auto-notifications] Completed action=${action}, result=${JSON.stringify(result)}`);
     return new Response(JSON.stringify({ ok: true, baghdad_hour: getBaghdadHour(), ...result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
