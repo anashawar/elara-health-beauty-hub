@@ -75,7 +75,7 @@ const HeroBanner = memo(() => {
   // Always render the container with fixed aspect ratio to prevent CLS
   if (isLoading || banners.length === 0) {
     return (
-      <div className="relative w-full overflow-hidden aspect-[2/1] md:aspect-[3/1] lg:aspect-[3.5/1] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none">
+      <div className="relative w-full overflow-hidden aspect-[2/1] md:aspect-[2.2/1] lg:aspect-[2.5/1] rounded-2xl mx-auto max-w-[calc(100%-16px)] md:max-w-full mt-2 md:mt-0 md:rounded-none">
         {isLoading && <div className="w-full h-full bg-secondary animate-pulse rounded-2xl md:rounded-none" />}
       </div>
     );
