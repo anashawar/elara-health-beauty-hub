@@ -77,10 +77,13 @@ const AuthPage = () => {
   // Redirect already-authenticated users (only on initial load, not during OTP flow)
   const [otpInProgress, setOtpInProgress] = useState(false);
   useEffect(() => {
+    // Only auto-redirect on initial page load when user is already signed in
+    // Skip during OTP flow or any step beyond "phone" to prevent race conditions
     if (!authLoading && user && step === "phone" && !otpInProgress) {
       navigate("/home", { replace: true });
     }
-  }, [user, authLoading, navigate, step, otpInProgress]);
+    // Intentionally NOT including step changes beyond phone — we handle navigation manually
+  }, [user, authLoading, navigate, otpInProgress]); // removed `step` to prevent mid-flow redirects
 
   useEffect(() => {
     if (countdown <= 0) return;
