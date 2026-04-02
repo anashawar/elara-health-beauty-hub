@@ -151,6 +151,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <DeferredPushInit />
+            <AppResumeRecovery />
             <PageViewTracker />
             <Suspense fallback={PageFallback}>
             <Routes>
