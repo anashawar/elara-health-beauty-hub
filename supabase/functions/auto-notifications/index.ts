@@ -971,7 +971,7 @@ async function runSlotEvening1(sb: ReturnType<typeof createClient>) {
   return { order_now_cta: orderCta, abandoned_carts: abandoned, free_delivery: freeDelivery };
 }
 
-// ── SLOT 4: 8:00 PM Baghdad — Attractive beauty/wellness tip
+// ── SLOT 4: 8:30 PM Baghdad — Attractive beauty/wellness tip
 async function runSlotEvening2(sb: ReturnType<typeof createClient>) {
   const [eveningTip, offers, feedback, reorder] = await Promise.all([
     handleEveningTip(sb),
