@@ -625,7 +625,7 @@ async function handleSkincareTip(sb: ReturnType<typeof createClient>, slot: stri
     const bod: LocalizedText = { en: tip.body_en, ar: tip.body_ar, ku: tip.body_ku };
 
     await saveNotif(sb, null, tit.en, bod.en, "skincare_tip", "🌿", "/categories", undefined, { date: today, slot_key: slotKey });
-    await sendBroadcastPush(tit, bod, { icon: "🌿", link_url: "/categories" });
+    await sendBroadcastPush(sb, tit, bod, { icon: "🌿", link_url: "/categories" });
     return { sent: 1, broadcast: true };
   } catch (e) { console.warn("Skincare tip error:", e); return { sent: 0 }; }
 }
