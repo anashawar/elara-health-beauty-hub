@@ -1011,6 +1011,7 @@ Deno.serve(async (req) => {
         });
     }
 
+    console.log(`[auto-notifications] Completed action=${action}, result=${JSON.stringify(result)}`);
     return new Response(JSON.stringify({ ok: true, baghdad_hour: getBaghdadHour(), ...result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
