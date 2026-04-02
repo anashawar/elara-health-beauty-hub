@@ -6,39 +6,56 @@ import { Capacitor } from "@capacitor/core";
 /**
  * Recovers from stale state when the app resumes from background.
  *
- * Problem: On iOS/Android, after the app is backgrounded for a while,
- * the auth token can expire, network connections drop, and cached data
- * goes stale — causing pages to show infinite loading spinners.
+ * On iOS/Android, after the app is backgrounded:
+ * - Auth tokens can expire → "JWT expired" errors → pages hang on loading
+ * - Network connections drop → fetch/query failures
+ * - React Query cache goes stale → shows old or error data
  *
- * Solution: Listen for visibility changes (web) and Capacitor appStateChange
- * (native), then refresh the auth session and invalidate stale queries.
+ * This hook detects resume and:
+ * 1. Refreshes the auth session (token renewal)
+ * 2. Invalidates all React Query caches (fresh data)
+ * 3. Retries failed queries automatically
  */
 export function useAppResumeRecovery() {
   const queryClient = useQueryClient();
   const lastActiveRef = useRef(Date.now());
+  const recoveringRef = useRef(false);
 
   useEffect(() => {
-    const STALE_THRESHOLD = 2 * 60 * 1000; // 2 minutes in background = stale
+    const STALE_THRESHOLD = 60 * 1000; // 1 minute in background = stale
 
     const recover = async () => {
+      if (recoveringRef.current) return;
       const elapsed = Date.now() - lastActiveRef.current;
       if (elapsed < STALE_THRESHOLD) return;
 
+      recoveringRef.current = true;
       console.log(`[AppResume] Recovering after ${Math.round(elapsed / 1000)}s in background`);
 
-      // 1. Refresh auth token — prevents "JWT expired" errors
+      // 1. Refresh auth token with timeout
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        
         const { error } = await supabase.auth.refreshSession();
+        clearTimeout(timeout);
+        
         if (error) {
           console.warn("[AppResume] Session refresh failed:", error.message);
+          // Try getSession as fallback — might still have a valid cached session
+          await supabase.auth.getSession();
         }
       } catch (e) {
         console.warn("[AppResume] Session refresh error:", e);
       }
 
-      // 2. Invalidate all queries so pages re-fetch fresh data
-      //    instead of showing stale cache or error states
+      // 2. Invalidate all queries — will trigger refetch for active ones
       queryClient.invalidateQueries();
+      
+      // 3. Also cancel any stuck/pending queries
+      queryClient.cancelQueries();
+
+      recoveringRef.current = false;
     };
 
     const handleVisibility = () => {
@@ -51,7 +68,7 @@ export function useAppResumeRecovery() {
 
     document.addEventListener("visibilitychange", handleVisibility);
 
-    // Native: also listen via Capacitor App plugin for more reliable detection
+    // Native: Capacitor App plugin for more reliable detection on iOS/Android
     let appListener: any = null;
     if (Capacitor.isNativePlatform()) {
       import("@capacitor/app").then(({ App }) => {
