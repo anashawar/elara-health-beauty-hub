@@ -709,7 +709,7 @@ async function handleDidYouKnow(sb: ReturnType<typeof createClient>) {
     const bod: LocalizedText = { en: dyk.body_en, ar: dyk.body_ar, ku: dyk.body_ku };
 
     await saveNotif(sb, null, tit.en, bod.en, "did_you_know", "🧬", "/home", undefined, { date: today, slot_key: slotKey });
-    await sendBroadcastPush(tit, bod, { icon: "🧬", link_url: "/home" });
+    await sendBroadcastPush(sb, tit, bod, { icon: "🧬", link_url: "/home" });
     return { sent: 1, broadcast: true };
   } catch (e) { console.warn("DYK error:", e); return { sent: 0 }; }
 }
