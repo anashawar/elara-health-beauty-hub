@@ -112,6 +112,10 @@ const AuthPage = () => {
         body.birthdate = birthdate || undefined;
       }
 
+      // Timeout to prevent infinite loading on slow networks
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+
       const resp = await fetch(`${OTP_URL}/send-otp`, {
         method: "POST",
         headers: {
@@ -119,7 +123,9 @@ const AuthPage = () => {
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify(body),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
 
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || "Failed to send OTP");
@@ -129,7 +135,11 @@ const AuthPage = () => {
       setCountdown(60);
       toast(t("auth.otpSent") || "Verification code sent via WhatsApp!");
     } catch (e: any) {
-      toast(e.message);
+      if (e.name === "AbortError") {
+        toast(t("auth.timeout") || "Request timed out. Please try again.");
+      } else {
+        toast(e.message);
+      }
     } finally {
       setLoading(false);
     }
