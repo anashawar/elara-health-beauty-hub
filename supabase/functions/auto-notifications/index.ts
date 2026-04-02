@@ -668,7 +668,7 @@ async function handleDailyDose(sb: ReturnType<typeof createClient>, slot: string
     const bod: LocalizedText = { en: dose.body_en, ar: dose.body_ar, ku: dose.body_ku };
 
     await saveNotif(sb, null, tit.en, bod.en, "daily_dose", "💊", "/home", undefined, { date: today, slot_key: slotKey });
-    await sendBroadcastPush(tit, bod, { icon: "💊", link_url: "/home" });
+    await sendBroadcastPush(sb, tit, bod, { icon: "💊", link_url: "/home" });
     return { sent: 1, broadcast: true };
   } catch (e) { console.warn("Daily dose error:", e); return { sent: 0 }; }
 }
