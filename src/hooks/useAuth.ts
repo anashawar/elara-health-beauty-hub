@@ -8,7 +8,7 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Safety timeout: never stay in loading state forever
+    // Safety timeout: never stay in loading state forever (e.g. after app resume)
     const timeout = setTimeout(() => setLoading(false), 8000);
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -19,15 +19,16 @@ export function useAuth() {
       setLoading(false);
     });
 
-    clearTimeout(timeout);
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string, phone: string) => {
