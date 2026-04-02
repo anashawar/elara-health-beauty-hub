@@ -159,6 +159,10 @@ const AuthPage = () => {
         body.birthdate = birthdate || undefined;
       }
 
+      // Timeout to prevent infinite loading on slow networks
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+
       const resp = await fetch(`${OTP_URL}/verify-otp`, {
         method: "POST",
         headers: {
@@ -166,21 +170,46 @@ const AuthPage = () => {
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify(body),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
 
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || "Verification failed");
 
       const isNew = !!data.isNewUser;
 
-      // Set session first, then decide navigation
+      // Set session with timeout protection — this is where iOS hangs most often
       if (data.session) {
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
-        // Small delay to let auth state propagate on mobile
-        await new Promise(r => setTimeout(r, 300));
+        try {
+          const sessionPromise = supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          });
+          // Race against a 5-second timeout
+          await Promise.race([
+            sessionPromise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error("session_timeout")), 5000)),
+          ]);
+        } catch (sessionErr: any) {
+          // Even if setSession times out, the session may have been stored
+          // Check if we actually got a session
+          console.warn("[Auth] setSession issue:", sessionErr.message);
+          const { data: checkData } = await supabase.auth.getSession();
+          if (!checkData.session) {
+            // Session truly failed — try once more
+            try {
+              await supabase.auth.setSession({
+                access_token: data.session.access_token,
+                refresh_token: data.session.refresh_token,
+              });
+            } catch {
+              // Last resort: continue anyway, the token is in memory
+            }
+          }
+        }
+        // Brief pause for auth state propagation — shorter than before
+        await new Promise(r => setTimeout(r, 150));
       }
 
       if (isNew) {
@@ -196,7 +225,11 @@ const AuthPage = () => {
         }
       }
     } catch (e: any) {
-      toast(e.message);
+      if (e.name === "AbortError") {
+        toast(t("auth.timeout") || "Request timed out. Please try again.");
+      } else {
+        toast(e.message);
+      }
       setOtpInProgress(false);
     } finally {
       setLoading(false);
