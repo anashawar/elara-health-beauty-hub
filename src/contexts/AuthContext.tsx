@@ -4,6 +4,15 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
+/** Hide native splash screen once app is ready */
+const hideSplash = () => {
+  if (Capacitor.isNativePlatform()) {
+    import("@capacitor/splash-screen").then(({ SplashScreen }) => {
+      SplashScreen.hide();
+    }).catch(() => {});
+  }
+};
+
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
@@ -50,16 +59,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setUser(s?.user ?? null);
       setLoading(false);
+      hideSplash();
     };
 
-    // Safety timeout — NEVER stay in loading for more than 5 seconds
+    // Safety timeout — NEVER stay in loading for more than 3 seconds
     const safetyTimer = setTimeout(() => {
       if (!resolvedRef.current) {
         console.warn("[AuthProvider] Safety timeout — forcing loading=false");
         resolvedRef.current = true;
         setLoading(false);
+        hideSplash();
       }
-    }, 5000);
+    }, 3000);
 
     // 1. Set up listener FIRST (per Supabase best practices)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
