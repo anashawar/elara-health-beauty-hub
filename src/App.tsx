@@ -144,6 +144,7 @@ const PageFallback = (
 const App = () => (
   <HelmetProvider>
   <QueryClientProvider client={queryClient}>
+    <AuthProvider>
     <TooltipProvider>
       <LanguageProvider>
         <AppProvider>
