@@ -12,6 +12,7 @@ import { LanguageProvider } from "@/i18n/LanguageContext";
 import AuthGuard from "./components/AuthGuard";
 import ForceUpdateGate from "./components/ForceUpdateGate";
 import { useAppResumeRecovery } from "@/hooks/useAppResumeRecovery";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // All pages lazy loaded for faster initial bundle
 const ResponsiveHome = lazy(() => import("./components/ResponsiveHome"));
@@ -143,6 +144,7 @@ const PageFallback = (
 const App = () => (
   <HelmetProvider>
   <QueryClientProvider client={queryClient}>
+    <AuthProvider>
     <TooltipProvider>
       <LanguageProvider>
         <AppProvider>
@@ -218,6 +220,7 @@ const App = () => (
         </AppProvider>
       </LanguageProvider>
     </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
   </HelmetProvider>
 );
