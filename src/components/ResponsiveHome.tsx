@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { Capacitor } from "@capacitor/core";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -15,6 +15,12 @@ const ResponsiveHome = () => {
   const isNativeApp = Capacitor.isNativePlatform();
   const { user, loading } = useAuth();
   const [timedOut, setTimedOut] = useState(false);
+  // Once user was authenticated, never go back to showing AuthPage in this mount
+  const wasAuthenticatedRef = useRef(false);
+
+  if (user) {
+    wasAuthenticatedRef.current = true;
+  }
 
   // Safety: if auth loading takes more than 4 seconds on native, show auth page
   useEffect(() => {
@@ -23,19 +29,23 @@ const ResponsiveHome = () => {
       return;
     }
     const timer = setTimeout(() => {
-      console.warn("[ResponsiveHome] Auth loading timed out after 4s");
-      setTimedOut(true);
+      if (!wasAuthenticatedRef.current) {
+        console.warn("[ResponsiveHome] Auth loading timed out after 4s");
+        setTimedOut(true);
+      }
     }, 4000);
     return () => clearTimeout(timer);
   }, [loading, isNativeApp]);
 
   // Native app (iOS/Android): require auth on first open
   if (isNativeApp) {
-    if (loading && !timedOut) {
-      return LoadingSpinner;
+    // If user was previously authenticated, skip auth gate (prevents flash)
+    if (!wasAuthenticatedRef.current) {
+      if (loading && !timedOut) {
+        return LoadingSpinner;
+      }
+      if (!user) return <Suspense fallback={LoadingSpinner}><AuthPage /></Suspense>;
     }
-    // Not logged in (or timed out checking) → show auth
-    if (!user) return <Suspense fallback={LoadingSpinner}><AuthPage /></Suspense>;
   }
 
   // Mobile browser & desktop: always show home page
