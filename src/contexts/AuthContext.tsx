@@ -59,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setUser(s?.user ?? null);
       setLoading(false);
+      hideSplash();
     };
 
     // Safety timeout — NEVER stay in loading for more than 3 seconds
