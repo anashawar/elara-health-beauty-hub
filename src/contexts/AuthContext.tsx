@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
+import { Capacitor } from "@capacitor/core";
+import { App as CapacitorApp } from "@capacitor/app";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -19,6 +21,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const resolvedRef = useRef(false);
+  const rehydratingRef = useRef(false);
+
+  const syncSession = useCallback(async () => {
+    if (rehydratingRef.current) return;
+    rehydratingRef.current = true;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      resolvedRef.current = true;
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    } catch (err) {
+      console.warn("[AuthProvider] syncSession failed:", err);
+      resolvedRef.current = true;
+      setLoading(false);
+    } finally {
+      rehydratingRef.current = false;
+    }
+  }, []);
 
   useEffect(() => {
     resolvedRef.current = false;
@@ -47,31 +69,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // 2. Then restore session from storage
-    supabase.auth.getSession()
-      .then(({ data: { session } }) => {
-        markReady(session);
-      })
-      .catch((err) => {
-        console.warn("[AuthProvider] getSession failed:", err);
-        markReady(null);
-      });
+    syncSession().catch(() => {
+      markReady(null);
+    });
+
+    let appListener: { remove: () => Promise<void> } | null = null;
+    if (Capacitor.isNativePlatform()) {
+      CapacitorApp.addListener("appStateChange", ({ isActive }) => {
+        if (isActive) {
+          setLoading(true);
+          void syncSession();
+        }
+      }).then((listener) => {
+        appListener = listener;
+      }).catch(() => undefined);
+    }
 
     return () => {
       clearTimeout(safetyTimer);
       subscription.unsubscribe();
+      appListener?.remove?.();
     };
-  }, []);
+  }, [syncSession]);
 
   const forceRefresh = useCallback(async () => {
-    try {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-    } catch {
-      // Silently fail
-    }
-    setLoading(false);
-  }, []);
+    setLoading(true);
+    await syncSession();
+  }, [syncSession]);
 
   const signUp = async (email: string, password: string, fullName: string, phone: string) => {
     const { error } = await supabase.auth.signUp({
