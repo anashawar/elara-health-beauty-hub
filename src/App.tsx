@@ -220,6 +220,7 @@ const App = () => (
         </AppProvider>
       </LanguageProvider>
     </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
   </HelmetProvider>
 );
