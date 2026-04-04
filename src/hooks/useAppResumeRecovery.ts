@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Capacitor } from "@capacitor/core";
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * Recovers from stale state when the app resumes from background.
@@ -18,6 +19,7 @@ import { Capacitor } from "@capacitor/core";
  */
 export function useAppResumeRecovery() {
   const queryClient = useQueryClient();
+  const { forceRefresh } = useAuth();
   const lastActiveRef = useRef(Date.now());
   const recoveringRef = useRef(false);
 
@@ -32,28 +34,28 @@ export function useAppResumeRecovery() {
       recoveringRef.current = true;
       console.log(`[AppResume] Recovering after ${Math.round(elapsed / 1000)}s in background`);
 
-      // 1. Refresh auth token with timeout
+      // 1. Rehydrate auth first so queries don't resume with a stale/null session
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
-        
-        const { error } = await supabase.auth.refreshSession();
-        clearTimeout(timeout);
-        
-        if (error) {
-          console.warn("[AppResume] Session refresh failed:", error.message);
-          // Try getSession as fallback — might still have a valid cached session
-          await supabase.auth.getSession();
-        }
+        await Promise.race([
+          forceRefresh(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("auth_rehydrate_timeout")), 5000)),
+        ]);
       } catch (e) {
-        console.warn("[AppResume] Session refresh error:", e);
+        console.warn("[AppResume] Auth recovery failed:", e);
+        try {
+          const { error } = await supabase.auth.refreshSession();
+          if (error) {
+            console.warn("[AppResume] Session refresh failed:", error.message);
+            await supabase.auth.getSession();
+          }
+        } catch (refreshError) {
+          console.warn("[AppResume] Session refresh error:", refreshError);
+        }
       }
 
-      // 2. Invalidate all queries — will trigger refetch for active ones
-      queryClient.invalidateQueries();
-      
-      // 3. Also cancel any stuck/pending queries
-      queryClient.cancelQueries();
+      // 2. Cancel stuck queries first, then refetch active ones with fresh auth state
+      await queryClient.cancelQueries();
+      await queryClient.invalidateQueries({ refetchType: "active" });
 
       recoveringRef.current = false;
     };
@@ -88,5 +90,5 @@ export function useAppResumeRecovery() {
       document.removeEventListener("visibilitychange", handleVisibility);
       appListener?.remove?.();
     };
-  }, [queryClient]);
+  }, [forceRefresh, queryClient]);
 }
