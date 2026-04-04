@@ -179,37 +179,40 @@ const AuthPage = () => {
 
       const isNew = !!data.isNewUser;
 
-      // Set session with timeout protection — this is where iOS hangs most often
+      // Set session and wait for AuthContext to pick it up
       if (data.session) {
         try {
-          const sessionPromise = supabase.auth.setSession({
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token,
-          });
-          // Race against a 5-second timeout
           await Promise.race([
-            sessionPromise,
+            supabase.auth.setSession({
+              access_token: data.session.access_token,
+              refresh_token: data.session.refresh_token,
+            }),
             new Promise((_, reject) => setTimeout(() => reject(new Error("session_timeout")), 5000)),
           ]);
         } catch (sessionErr: any) {
-          // Even if setSession times out, the session may have been stored
-          // Check if we actually got a session
           console.warn("[Auth] setSession issue:", sessionErr.message);
-          const { data: checkData } = await supabase.auth.getSession();
-          if (!checkData.session) {
-            // Session truly failed — try once more
-            try {
-              await supabase.auth.setSession({
-                access_token: data.session.access_token,
-                refresh_token: data.session.refresh_token,
-              });
-            } catch {
-              // Last resort: continue anyway, the token is in memory
-            }
-          }
+          // Retry once
+          try {
+            await supabase.auth.setSession({
+              access_token: data.session.access_token,
+              refresh_token: data.session.refresh_token,
+            });
+          } catch { /* continue anyway */ }
         }
-        // Brief pause for auth state propagation — shorter than before
-        await new Promise(r => setTimeout(r, 150));
+
+        // Wait for the shared AuthContext to reflect the session (up to 3s)
+        // This prevents navigating before `user` is populated in the context
+        await new Promise<void>((resolve) => {
+          let checks = 0;
+          const poll = setInterval(async () => {
+            checks++;
+            const { data: checkData } = await supabase.auth.getSession();
+            if (checkData.session?.user || checks >= 15) {
+              clearInterval(poll);
+              resolve();
+            }
+          }, 200);
+        });
       }
 
       if (isNew) {
