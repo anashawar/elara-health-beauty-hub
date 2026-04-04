@@ -4,6 +4,15 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
+/** Hide native splash screen once app is ready */
+const hideSplash = () => {
+  if (Capacitor.isNativePlatform()) {
+    import("@capacitor/splash-screen").then(({ SplashScreen }) => {
+      SplashScreen.hide();
+    }).catch(() => {});
+  }
+};
+
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
