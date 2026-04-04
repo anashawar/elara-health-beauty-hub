@@ -35,7 +35,7 @@ const COUNTRY_CODES = [
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, forceRefresh } = useAuth();
   const { t, language, setLanguage } = useLanguage();
 
   const hasVisited = localStorage.getItem("elara_has_visited");
@@ -80,7 +80,7 @@ const AuthPage = () => {
     // Only auto-redirect on initial page load when user is already signed in
     // Skip during OTP flow or any step beyond "phone" to prevent race conditions
     if (!authLoading && user && step === "phone" && !otpInProgress) {
-      navigate("/home", { replace: true });
+      navigate("/", { replace: true });
     }
     // Intentionally NOT including step changes beyond phone — we handle navigation manually
   }, [user, authLoading, navigate, otpInProgress]); // removed `step` to prevent mid-flow redirects
@@ -200,19 +200,27 @@ const AuthPage = () => {
           } catch { /* continue anyway */ }
         }
 
-        // Wait for the shared AuthContext to reflect the session (up to 3s)
-        // This prevents navigating before `user` is populated in the context
-        await new Promise<void>((resolve) => {
+        // Wait for session storage and shared auth state to fully settle on native
+        await new Promise<void>((resolve, reject) => {
           let checks = 0;
           const poll = setInterval(async () => {
             checks++;
             const { data: checkData } = await supabase.auth.getSession();
-            if (checkData.session?.user || checks >= 15) {
+            if (checkData.session?.user) {
               clearInterval(poll);
               resolve();
+              return;
+            }
+
+            if (checks >= 20) {
+              clearInterval(poll);
+              reject(new Error("auth_sync_timeout"));
             }
           }, 200);
         });
+
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        await forceRefresh();
       }
 
       if (isNew) {
@@ -224,7 +232,7 @@ const AuthPage = () => {
         if (!seenPrompt && isNativePlatform()) {
           setStep("notifications");
         } else {
-          navigate("/home", { replace: true });
+          navigate("/", { replace: true });
         }
       }
     } catch (e: any) {
@@ -603,7 +611,7 @@ const AuthPage = () => {
               )}
 
               <button
-                onClick={() => navigate("/home")}
+                onClick={() => navigate("/")}
                 className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
               >
                 {t("common.continueAsGuest")}
@@ -822,7 +830,7 @@ const AuthPage = () => {
               </div>
 
               <Button
-                onClick={() => isNativePlatform() ? setStep("notifications") : navigate("/home")}
+                onClick={() => isNativePlatform() ? setStep("notifications") : navigate("/")}
                 className="w-full h-12 rounded-2xl text-sm font-semibold gap-2 shadow-md shadow-primary/20"
               >
                 {t("common.startShopping") || "Start Shopping"}
@@ -847,11 +855,11 @@ const AuthPage = () => {
                 } catch (e) {
                   console.warn("[Push] Permission request failed:", e);
                 }
-                navigate("/home");
+                navigate("/");
               }}
               onSkip={() => {
                 localStorage.setItem("elara_notif_prompt_seen", "true");
-                navigate("/home");
+                navigate("/");
               }}
             />
           )}
