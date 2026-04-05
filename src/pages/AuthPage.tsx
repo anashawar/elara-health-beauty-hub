@@ -35,7 +35,7 @@ const COUNTRY_CODES = [
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading, forceRefresh } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { t, language, setLanguage } = useLanguage();
 
   const hasVisited = localStorage.getItem("elara_has_visited");
