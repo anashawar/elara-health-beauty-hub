@@ -220,7 +220,10 @@ const AuthPage = () => {
         });
 
         await new Promise((resolve) => setTimeout(resolve, 300));
-        await forceRefresh();
+        await Promise.race<void>([
+          forceRefresh(),
+          new Promise<void>((resolve) => setTimeout(resolve, 4000)),
+        ]);
       }
 
       if (isNew) {

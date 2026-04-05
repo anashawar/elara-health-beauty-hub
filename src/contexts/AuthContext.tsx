@@ -4,6 +4,8 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
+const SESSION_SYNC_TIMEOUT = 4000;
+
 /** Hide native splash screen once app is ready */
 const hideSplash = () => {
   if (Capacitor.isNativePlatform()) {
@@ -31,35 +33,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const resolvedRef = useRef(false);
   const rehydratingRef = useRef(false);
+  const syncPromiseRef = useRef<Promise<void> | null>(null);
+
+  const resolveAuthState = useCallback((nextSession: Session | null) => {
+    resolvedRef.current = true;
+    setSession(nextSession);
+    setUser(nextSession?.user ?? null);
+    setLoading(false);
+    hideSplash();
+  }, []);
 
   const syncSession = useCallback(async () => {
-    if (rehydratingRef.current) return;
-    rehydratingRef.current = true;
+    if (syncPromiseRef.current) return syncPromiseRef.current;
 
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      resolvedRef.current = true;
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    } catch (err) {
-      console.warn("[AuthProvider] syncSession failed:", err);
-      resolvedRef.current = true;
-      setLoading(false);
-    } finally {
-      rehydratingRef.current = false;
-    }
-  }, []);
+    syncPromiseRef.current = (async () => {
+      rehydratingRef.current = true;
+
+      try {
+        const { data: { session } } = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error("session_sync_timeout")), SESSION_SYNC_TIMEOUT);
+          }),
+        ]);
+
+        resolveAuthState(session);
+      } catch (err) {
+        console.warn("[AuthProvider] syncSession failed:", err);
+        resolvedRef.current = true;
+        setLoading(false);
+        hideSplash();
+      } finally {
+        rehydratingRef.current = false;
+        syncPromiseRef.current = null;
+      }
+    })();
+
+    return syncPromiseRef.current;
+  }, [resolveAuthState]);
 
   useEffect(() => {
     resolvedRef.current = false;
 
     const markReady = (s: Session | null) => {
-      resolvedRef.current = true;
-      setSession(s);
-      setUser(s?.user ?? null);
-      setLoading(false);
-      hideSplash();
+      resolveAuthState(s);
     };
 
     // Safety timeout — NEVER stay in loading for more than 3 seconds
@@ -101,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
       appListener?.remove?.();
     };
-  }, [syncSession]);
+  }, [resolveAuthState, syncSession]);
 
   const forceRefresh = useCallback(async () => {
     setLoading(true);
