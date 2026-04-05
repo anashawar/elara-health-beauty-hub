@@ -12,6 +12,14 @@ import {
 
 let authListenerBound = false;
 
+const runAfterAuthChange = (task: () => Promise<void>) => {
+  setTimeout(() => {
+    void task().catch((error) => {
+      console.warn("[Push] Auth sync side-effect failed:", error);
+    });
+  }, 0);
+};
+
 /**
  * Unified push notification hook using OneSignal.
  * - On native iOS/Android: uses OneSignal Cordova plugin
@@ -57,13 +65,15 @@ export async function initPushNotifications() {
     }
 
     if (!authListenerBound) {
-      supabase.auth.onAuthStateChange(async (_event, newSession) => {
-        if (newSession?.user) {
-          await saveOneSignalToken(newSession.user.id);
-          return;
-        }
+      supabase.auth.onAuthStateChange((_event, newSession) => {
+        runAfterAuthChange(async () => {
+          if (newSession?.user) {
+            await saveOneSignalToken(newSession.user.id);
+            return;
+          }
 
-        await clearOneSignalUser();
+          await clearOneSignalUser();
+        });
       });
 
       authListenerBound = true;

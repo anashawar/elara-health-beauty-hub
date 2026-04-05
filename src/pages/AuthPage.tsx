@@ -35,7 +35,7 @@ const COUNTRY_CODES = [
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading, forceRefresh } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { t, language, setLanguage } = useLanguage();
 
   const hasVisited = localStorage.getItem("elara_has_visited");
@@ -220,10 +220,6 @@ const AuthPage = () => {
         });
 
         await new Promise((resolve) => setTimeout(resolve, 300));
-        await Promise.race<void>([
-          forceRefresh(),
-          new Promise<void>((resolve) => setTimeout(resolve, 4000)),
-        ]);
       }
 
       if (isNew) {
@@ -235,6 +231,7 @@ const AuthPage = () => {
         if (!seenPrompt && isNativePlatform()) {
           setStep("notifications");
         } else {
+          setOtpInProgress(false);
           navigate("/", { replace: true });
         }
       }
@@ -858,10 +855,12 @@ const AuthPage = () => {
                 } catch (e) {
                   console.warn("[Push] Permission request failed:", e);
                 }
+                setOtpInProgress(false);
                 navigate("/");
               }}
               onSkip={() => {
                 localStorage.setItem("elara_notif_prompt_seen", "true");
+                setOtpInProgress(false);
                 navigate("/");
               }}
             />
