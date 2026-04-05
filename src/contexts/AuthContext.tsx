@@ -105,7 +105,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (Capacitor.isNativePlatform()) {
       CapacitorApp.addListener("appStateChange", ({ isActive }) => {
         if (isActive) {
-          setLoading(true);
           void syncSession();
         }
       }).then((listener) => {
